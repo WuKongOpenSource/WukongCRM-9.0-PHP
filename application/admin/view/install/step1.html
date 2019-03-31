@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+        <title>悟空CRM安装向导</title>
+        <link rel="shortcut icon" href="__STATIC__/icon/favicon.ico">
+        <link rel="stylesheet" href="__STATIC__/style/base.css">
+        <link rel="stylesheet" href="__STATIC__/style/step1.css">
+        <script src="__STATIC__/js/jquery-3.3.1.min.js"></script>
+    </head>
+    <body>
+        <div class="header-wrapper">
+        {include file="public/header"}   
+        </div>
+        <div class="top">
+            <div class="step-group">
+                <div class="step active">
+                    <div class="sort">1</div>
+                    <div class="desc">检查安装环境</div>
+                </div>
+                <div class="step line"></div>
+                <div class="step">
+                    <div class="sort">2</div>
+                    <div class="desc">创建数据库</div>
+                </div>
+                <div class="step line"></div>
+                <div class="step">
+                    <div class="sort">3</div>
+                    <div class="desc">安装成功</div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="content">
+                <div class="base-top">
+                    <span class="title">1 检查安装环境</span>
+                    <span class="version">当前版本：{$data['version']['VERSION']} {$data['version']['RELEASE']}</span>
+                </div>
+                <div class="table">
+                    <table class="table_01">
+                        <thead>
+                            <tr>
+                                <th>检查项</th>
+                                <th>当前环境</th>
+                                <th>悟空CRM建议</th>
+                                <th>功能影响</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <volist name="{$data['env']}" id="row">
+                                <tr>
+                                    <td>{$data['env']['os'][0]}</td>
+                                    <td>{$data['env']['os'][3]}</td>
+                                    <td>{$data['env']['os'][2]}</td>
+                                    <td>功能影响 </td>
+                                </tr>
+                                <tr>
+                                    <td>{$data['env']['php'][0]}</td>
+                                    <td>{$data['env']['php'][3]}</td>
+                                    <td>{$data['env']['php'][2]}</td>
+                                    <td>功能影响 </td>
+                                </tr>
+                            </volist>
+                        </tbody>
+                    </table>
+                    <table class="catalogue-table">
+                    <thead>
+                    <tr>
+                    <th>目录文件</th>
+                    <th>所需状态</th>
+                    <th>当前状态{$data['dir'][0][1]}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($data['dir'] as $value){ ?>
+                        <tr>
+                            <td>{$value[1]}</td>
+                            <td>{$value[3]}</td>
+                        <?php if($value[5] =='ok') { ?>
+                            <td><img src="__STATIC__/icon/success.png" width="20"></td>
+                        <?php } else { ?>
+                            <td><img src="__STATIC__/icon/error.png" width="20"></td>
+                        <?php } ?>
+                        </tr>
+                        <?php } ?>
+                    </tbody>
+                    </table>
+                </div>
+                <div class="control">
+                    <div class="prev btn">上一步</div>
+                    <div class="next btn primary">下一步</div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-wrapper">
+            {include file="public/footer"}
+        </div>
+    </body>
+    <script src="__STATIC__/js/step1.js"></script>
+</html>

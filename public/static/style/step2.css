@@ -1,0 +1,73 @@
+.control {
+  width: 100%;
+  text-align: center;
+  margin: 20px 0;
+}
+.control .btn {
+  margin: 0 10px;
+}
+
+.container {}
+.container .content{}
+
+.content .form {
+  padding: 20px 40px;
+}
+
+.content .form .form-sec-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.content .form .form-item {
+  margin: 16px 0;
+  overflow: hidden;
+}
+.content .form .form-item .form-label {
+  width: 120px;
+  line-height: 34px;
+  float: left;
+}
+.content .form .form-item input {
+  width: 276px;
+  height: 34px;
+  line-height: 34px;
+  border: 1px solid #d7d7d7;
+  padding: 0 10px;
+  margin-right: 20px;
+  float: left;
+}
+.content .form .form-item input:focus {
+  border-color: transparent !important;
+  outline-color: #3e84e9;
+}
+.content .form .form-item input.input-error {
+  border-color: #f95835;
+}
+
+.content .form .form-item .error {
+  padding: 0 16px;
+  line-height: 34px;
+  color: #f95835;
+  float: left;
+}
+.content .form .form-item .remind {
+  width: 292px;
+  line-height: 34px;
+  color: #777;
+  background-color: #ecf8ff;
+  padding: 0 16px;
+  border-radius: 3px;
+  float: left;
+}
+
+.install_progress_a {
+  text-align: center;
+  margin: 20% auto;
+  display: none;
+}
+.install_pro{
+  text-align: center;
+  padding: 20px 0;
+  color: #777;
+
+}

@@ -1,0 +1,37 @@
+.container {
+  height: calc(100vh - 275px);
+}
+
+.result {
+
+}
+.result .status-box {
+  width: 102px;
+  margin: 60px 343px;
+  text-align: center;
+  display: inline-block;
+  overflow: hidden;
+}
+.result .status-box .pic {
+  width: 36px;
+  height: 36px;
+  margin-right: 10px;
+  display: block;
+  float: left;
+}
+.result .status-box .status {
+  height: 36px;
+  line-height: 36px;
+  display: block;
+  float: left;
+}
+
+.result .desc {
+  text-align: center;
+  letter-spacing: 2px;
+  color: #333;
+}
+.result .control {
+  margin: 80px auto 0;
+  width: 120px;
+}

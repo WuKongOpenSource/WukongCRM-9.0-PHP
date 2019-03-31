@@ -1,0 +1,50 @@
+.container {
+}
+.container .content {
+  width: 100%;
+  height: 100%;
+}
+
+.table {
+  width: 700px;
+  height: calc(100% - 180px);
+  margin: 36px auto 0;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border: 1px solid #e1e1e1;
+  border-collapse: collapse;
+}
+.table tr {
+  height: 34px;
+  text-align: center;
+}
+th, td {
+  border: 1px solid #e1e1e1;
+  width: 30%;
+}
+th:first-child, td:first-child, th:last-child, td:last-child {
+  width: 20%;
+}
+
+th {
+  font-weight: normal;
+  background-color: #3e84e9;
+  color: white;
+}
+
+
+
+.catalogue-table {
+  margin-top: 20px;
+}
+
+.control {
+  margin: 36px auto;
+  text-align: center;
+}
+.control .btn {
+  margin: 0 10px;
+}

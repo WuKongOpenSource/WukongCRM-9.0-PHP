@@ -111,7 +111,7 @@ export default {
       return this.crm[this.crmType].transfer
     },
     showEdit() {
-      return this.crm[this.crmType].update
+      return this.isSeas ? false : this.crm[this.crmType].update
     }
   },
   data() {
@@ -369,7 +369,11 @@ export default {
         ])
       } else if (this.crmType == 'customer') {
         if (this.isSeas) {
-          return this.forSelectionHandleItems(handleInfos, ['alloc', 'get'])
+          return this.forSelectionHandleItems(handleInfos, [
+            'alloc',
+            'get',
+            'delete'
+          ])
         } else {
           return this.forSelectionHandleItems(handleInfos, [
             'put_seas',

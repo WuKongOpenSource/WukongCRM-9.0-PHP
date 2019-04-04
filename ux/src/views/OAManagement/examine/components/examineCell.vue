@@ -4,6 +4,7 @@
       <flexbox class="header">
         <div v-photo="data.create_user_info"
              v-lazy:background-image="$options.filters.filterUserLazyImg(data.create_user_info.thumb_img)"
+             :key="data.create_user_info.thumb_img"
              class="div-photo head-img"></div>
         <div class="name-time">
           <span class="name">{{data.create_user_info.realname}}</span>

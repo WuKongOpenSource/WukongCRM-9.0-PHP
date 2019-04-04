@@ -226,12 +226,12 @@ class Leads extends ApiCommon
                 continue;                
             }
             if (!in_array($leadsInfo['owner_user_id'],$authIds)) {
-                $errorMessage[] = '"'.$leadsInfo['name'].'"转化失败，错误原因：无权限；';
+                $errorMessage[] = $leadsInfo['name'].'"转化失败，错误原因：无权限；';
                 continue;
             }
             $resCustomer = $customerModel->createData($data);
             if (!$resCustomer) {
-                $errorMessage[] = '"'.$leadsInfo['name'].'"转化失败，错误原因：数据出错；';
+                $errorMessage[] = $leadsInfo['name'].'"转化失败，错误原因：数据出错；';
                 continue;
             }
             $leadsData = [];
@@ -368,6 +368,7 @@ class Leads extends ApiCommon
         $param = $this->param;
         $userInfo = $this->userInfo;
         $excelModel = new \app\admin\model\Excel();
+        $param['types'] = 'crm_leads';
         $param['create_user_id'] = $userInfo['id'];
         $param['owner_user_id'] = $param['owner_user_id'] ? : $userInfo['id'];
         $file = request()->file('file');

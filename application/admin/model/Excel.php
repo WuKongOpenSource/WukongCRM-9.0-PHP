@@ -76,22 +76,24 @@ class Excel extends Common
 					$k++;
 				}
 			} else {
-				if($field['form_type'] == 'box'){
-					eval('$setting='.$field['setting'].';');
-					$select_value = implode(',',$setting['data']);
-					//数据有效性   start
-					$objValidation = $objActSheet->getCell($cv.chr($ascii).'3')->getDataValidation();
-					$objValidation -> setType(PHPExcel_Cell_DataValidation::TYPE_LIST)  
-			           -> setErrorStyle(PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
-			           -> setAllowBlank(false)  
-			           -> setShowInputMessage(true)  
-			           -> setShowErrorMessage(true)  
-			           -> setShowDropDown(true)  
-			           -> setErrorTitle('输入的值有误')  
-			           -> setError('您输入的值不在下拉框列表内.')  
-			           -> setPromptTitle('--请选择--')  
-			           -> setFormula1('"'.$select_value.'"');
-			        //数据有效性  end
+				if($field['form_type'] == 'select' || $field['form_type'] == 'checkbox' || $field['form_type'] == 'radio'){
+ 					$setting = $field['setting'] ? : [];
+                    $select_value = implode(',',$setting);
+ 					if ($select_value) {				
+						//数据有效性   start
+						$objValidation = $objActSheet->getCell($this->stringFromColumnIndex($k).'3')->getDataValidation();
+						$objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)  
+				           -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
+				           -> setAllowBlank(false)  
+				           -> setShowInputMessage(true)  
+				           -> setShowErrorMessage(true)  
+				           -> setShowDropDown(true)  
+				           -> setErrorTitle('输入的值有误')  
+				           -> setError('您输入的值不在下拉框列表内.')  
+				           -> setPromptTitle('--请选择--')  
+				           -> setFormula1('"'.$select_value.'"');
+				        //数据有效性  end
+					}
 				}
 				//检查该字段若必填，加上"*"
 				$field['name'] = sign_required($field['is_null'], $field['name']);
@@ -227,18 +229,26 @@ class Excel extends Common
             
             //实例化主文件
 			vendor("phpexcel.PHPExcel");
-        	$objPHPExcel = new \phpexcel();       
-			$objWriter = new \PHPExcel_Writer_Excel5($objPHPExcel);
-			$objWriter = new \PHPExcel_Writer_Excel2007($objPHPExcel);		       
+        	$objPHPExcel = new \phpexcel();
 
-	        //创建读入器
-	        if ($ext == 'xlsx') {
-	            $objRender = \PHPExcel_IOFactory::createReader('excel2007');
-	        } else {
-	            $objRender = \PHPExcel_IOFactory::createReader('Excel5');
-	        }
-	        //读取excel文件
-	        $ExcelObj = $objRender->load($savePath);
+	        if ($ext =='xlsx') {
+	        	$objWriter = new \PHPExcel_Writer_Excel2007($objPHPExcel);
+			    $objRender = \PHPExcel_IOFactory::createReader('excel2007');
+			    $ExcelObj = $objRender->load($savePath);
+			} else if ($ext =='xls') {
+				$objWriter = new \PHPExcel_Writer_Excel5($objPHPExcel);
+			    $objRender = \PHPExcel_IOFactory::createReader('Excel5');
+			    $ExcelObj = $objRender->load($savePath);
+			} else if ($ext=='csv') {
+				$objWriter = new \PHPExcel_Reader_CSV($objPHPExcel);
+			    //默认输入字符集
+			    $objWriter->setInputEncoding('UTF-8');
+			    //默认的分隔符
+			    $objWriter->setDelimiter(',');
+			    //载入文件
+			    $ExcelObj = $objWriter->load($savePath);
+			}
+
 	        $currentSheet = $ExcelObj->getSheet(0);
 	        //查看有几个sheet
 	        $sheetContent = $ExcelObj->getSheet(0)->toArray();
@@ -247,7 +257,6 @@ class Excel extends Common
 	        unset($sheetContent[0]);
 	        unset($sheetContent[1]);
 	        //取出文件的内容描述信息，循环取出数据，写入数据库
-	        
 			switch ($types) {
 				case 'crm_leads' : $dataModel = new \app\crm\model\Leads(); $db = 'crm_leads'; $db_id = 'leads_id'; break;
 				case 'crm_customer' : $dataModel = new \app\crm\model\Customer(); $db = 'crm_customer'; $db_id = 'customer_id'; break;
@@ -271,20 +280,21 @@ class Excel extends Common
 	        if ($types == 'crm_customer') {
 	        	$defaultData['deal_time'] = time();
 	        }
-	        
 	       	$key = 2;
 	       	$errorMessage = [];
 	        foreach ($sheetContent as $val){
+	        	$data = '';
 	        	$k = 0;        	
 	        	$resNameIds = '';
 	        	$key++;
 	        	$name = ''; //客户、线索、联系人等名称
 	            $data = $defaultData; //导入数据
-				foreach ($excelHeader as $header) {
-					if (empty($header)) break; 
+				foreach ($excelHeader as $aa => $header) {
+					if (empty($header)) break; 					
 					$fieldName = trim(str_replace('*','',$header));
 					$info = '';
 					$info = $val[$k];
+					if (empty($fieldArr[$fieldName]['field'])) break; 
 					if ($fieldArr[$fieldName]['field'] == 'name') $name = $info;
 					if ($info) {
 						if ($fieldArr[$fieldName]['form_type'] == 'address') {
@@ -339,17 +349,19 @@ class Excel extends Common
 					}
 				}
 				if ($name) $resNameIds = db($db)->where(['name' => $name,'owner_user_id' => $param['owner_user_id']])->column($db_id);
-				if ($config == 1 && $resNameIds) {
-					//覆盖数据（以名称为查重规则，如存在则覆盖原数据）	
-					if ($resNameIds) {
-						foreach ($resNameIds as $nid) {
-							$upRes = $dataModel->updateDataById($data, $nid);
-							if (!$upRes) {
-								$errorMessage[] = '第'.$key.'行导入错误,失败原因：数据更新失败';
-								continue;	
+				if ($resNameIds) {
+					if ($config == 1) {
+						//覆盖数据（以名称为查重规则，如存在则覆盖原数据）	
+						if ($resNameIds) {
+							foreach ($resNameIds as $nid) {
+								$upRes = $dataModel->updateDataById($data, $nid);
+								if (!$upRes) {
+									$errorMessage[] = '第'.$key.'行导入错误,失败原因：数据更新失败';
+									continue;	
+								}
 							}
-						}
-					}
+						}	
+					}					
 				} else {
 					if (!$resData = $dataModel->createData($data)) {
 						$errorMessage[] = '第'.$key.'行导入错误,失败原因：'.$dataModel->getError();
@@ -360,8 +372,8 @@ class Excel extends Common
 					// 	$contactsData = $data;
 					// 	$contactsData['customer_id'] = $resData['customer_id'];
 					// 	$resData = $contactsModel->createData($contactsData);
-					// }
-				}			
+					// }						
+				}		
 	        }
 	        if ($errorMessage) {
 	        	$this->error = $errorMessage;

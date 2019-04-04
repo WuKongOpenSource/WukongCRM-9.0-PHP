@@ -3,6 +3,7 @@
     <flexbox class="fl-h">
       <div v-photo="data.create_user_info"
            v-lazy:background-image="$options.filters.filterUserLazyImg(data.create_user_info.thumb_img)"
+           :key="data.create_user_info.thumb_img"
            class="div-photo fl-h-img"></div>
       <div class="fl-h-b">
         <div class="fl-h-name">{{data.create_user_info.realname}}</div>

@@ -12,6 +12,7 @@
       <div class="ha-time">{{item.create_time|filterTimestampToFormatTime('H:mm')}}</div>
       <div v-photo="item.user_id_info"
            v-lazy:background-image="$options.filters.filterUserLazyImg(item.user_id_info.thumb_img)"
+           :key="item.user_id_info.thumb_img"
            class="div-photo ha-img"></div>
       <div class="ha-name">{{item.user_id_info.realname}}</div>
       <div class="ha-content">
@@ -53,6 +54,11 @@ export default {
       default: () => {
         return {}
       }
+    },
+    /** 是公海 默认是客户 */
+    isSeas: {
+      type: Boolean,
+      default: false
     },
     /** 没有值就是全部类型 有值就是当个类型 */
     crmType: {

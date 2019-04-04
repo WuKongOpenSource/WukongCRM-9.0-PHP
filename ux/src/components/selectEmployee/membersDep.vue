@@ -36,6 +36,7 @@
                                @change="userCheckboxChange(user, index)">
                     <div v-photo="user"
                          v-lazy:background-image="$options.filters.filterUserLazyImg(user.thumb_img)"
+                         :key="user.thumb_img"
                          class="div-photo search-img header-circle"></div>
                     <span>{{user.realname}}</span>
                   </el-checkbox>
@@ -91,6 +92,7 @@
               <div v-if="item.type == 'user'"
                    v-photo="item"
                    v-lazy:background-image="$options.filters.filterUserLazyImg(item.thumb_img)"
+                   :key="item.thumb_img"
                    class="div-photo"></div>
               <span v-if="item.type == 'user'"> {{item.realname}} </span>
               <span v-else> {{item.name}} </span>

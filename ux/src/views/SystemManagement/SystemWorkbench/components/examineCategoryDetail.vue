@@ -78,6 +78,7 @@
                        class="examine-users-item">
                     <div v-photo="userItem"
                          v-lazy:background-image="$options.filters.filterUserLazyImg(userItem.thumb_img)"
+                         :key="userItem.thumb_img"
                          class="div-photo"></div>
                     <div class="name">{{userItem.realname}}</div>
                   </div>

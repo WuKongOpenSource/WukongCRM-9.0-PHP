@@ -13,6 +13,7 @@
       <div class="person-head">
         <div v-photo="userInfo"
              v-lazy:background-image="$options.filters.filterUserLazyImg(userInfo.thumb_img)"
+             :key="userInfo.thumb_img"
              class="div-photo person-head-img"></div>
         <div class="select-picture"
              @click="changePersonImage">

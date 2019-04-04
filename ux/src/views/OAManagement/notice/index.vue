@@ -29,6 +29,7 @@
               <div class="header">
                 <div v-photo="item"
                      v-lazy:background-image="$options.filters.filterUserLazyImg(item.thumb_img)"
+                     :key="item.thumb_img"
                      class="div-photo"></div>
                 <div class="name-time">
                   <p class="name">{{item.realname}}</p>

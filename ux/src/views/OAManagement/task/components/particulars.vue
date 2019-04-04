@@ -112,6 +112,7 @@
                       </div>
                       <div v-photo="{thumb_img: taskData.main_user_img, realname: taskData.main_user_name}"
                            v-lazy:background-image="$options.filters.filterUserLazyImg(taskData.main_user_img)"
+                           :key="taskData.main_user_img"
                            class="div-photo main-user-name"></div>
                     </el-tooltip>
                     <img src="@/assets/img/delete_task.png"
@@ -228,6 +229,7 @@
                       </div>
                       <div v-photo="item"
                            v-lazy:background-image="$options.filters.filterUserLazyImg(item.thumb_img)"
+                           :key="item.thumb_img"
                            class="div-photo item-img"></div>
                     </el-tooltip>
                     <img src="@/assets/img/delete_task.png"
@@ -383,6 +385,7 @@
                 <div class="footer-img">
                   <div v-photo="userInfo"
                        v-lazy:background-image="$options.filters.filterUserLazyImg(userInfo.thumb_img)"
+                       :key="userInfo.thumb_img"
                        class="div-photo"></div>
                 </div>
                 <div class="comments-con">
@@ -424,6 +427,7 @@
                          :key="k">
                       <div v-photo="discussItem.userInfo"
                            v-lazy:background-image="$options.filters.filterUserLazyImg(discussItem.userInfo.thumb_img)"
+                           :key="discussItem.userInfo.thumb_img"
                            class="div-photo head-img header-circle"></div>
                       <span class="name">{{discussItem.userInfo.realname}}</span>
                       <span class="time">{{discussItem.create_time | moment("YYYY-MM-DD HH:mm")}}</span>
@@ -446,6 +450,7 @@
                              :key="k">
                           <div v-photo="childDiscussItem.userInfo"
                                v-lazy:background-image="$options.filters.filterUserLazyImg(childDiscussItem.userInfo.thumb_img)"
+                               :key="childDiscussItem.userInfo.thumb_img"
                                class="div-photo head-img header-circle"></div>
                           <span class="name">{{childDiscussItem.userInfo.realname}}</span>
                           <span class="time">{{childDiscussItem.create_time | moment("YYYY-MM-DD HH:mm")}}</span>

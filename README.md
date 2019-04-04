@@ -9,9 +9,13 @@
 
 论坛：[http://bbs.72crm.net](http://bbs.72crm.net/)
 
-演示地址：[demo9.5kcrm.net](http://demo9.5kcrm.net/)
+演示地址：[demo9.5kcrm.net](http://demo9.5kcrm.net/)(帐号：18888888888   密码：123456)
 
-QQ群交流群⑩群：[105157120](https:////shang.qq.com/wpa/qunwpa?idkey=f4687b809bf63f08f707aa1c56dee8dbcb9526237c429c4532222021d65bf83c)
+QQ群交流群⑩群：[486745026](https:////shang.qq.com/wpa/qunwpa?idkey=f4687b809bf63f08f707aa1c56dee8dbcb9526237c429c4532222021d65bf83c)
+
+赞赏一下吧~~
+
+![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g11.png)
 
 悟空CRM采用全新的前后端分离模式，本仓库代码中已集成前端vue打包后文件，可免去打包操作
 
@@ -31,11 +35,28 @@ UI框架：Element-UI 2.6.3
 
 悟空crm9.0的运行环境要求PHP5.6以上
 
-## 开发依赖
+
+## 一键安装
+
+代码中已集成前端vue打包后文件，可免去打包操作：
+以本地（phpstudy集成环境）搭建举例：
+下载悟空CRM9.0开源版，在服务器根目录（www目录）下创建72crm文件夹，并放置代码； 浏览器访问
+
+`http://localhost/72crm/index.php/admin/install/index.html `
+
+根据安装提示步骤，完成悟空CRM9.0 的部署安装
+
+
+
+
+
+## 开发依赖（需个性化安装或调整前端代码请按照以下教程，一键安装用户可忽略）
+
 ### 数据交互 
 数据交互通过axios以及RESTful架构来实现 
 用户校验通过登录返回的auth_key放在header 
 值得注意的一点是：跨域的情况下，会有预请求OPTION的情况
+
 ### Server搭建 
 服务端使用的框架为thinkphp5.0.2，搭建前请确保拥有lamp/lnmp/wamp环境。
 
@@ -52,7 +73,7 @@ PHP >= 5.6.0 （暂不支持PHP7及以上版本）
 
     npm install
 
-修改内部配置 修改请求地址或域名：`build/webpack.base.conf.js`里修改DEV_HOST（开发环境服务端地址，默认`localhost`） 修改自定义端口：`config/index.js`里面的dev对象的port参数（默认8080，不建议修改）
+修改内部配置 修改请求地址或域名：config/dev.env.js里修改BASE_API（开发环境服务端地址，默认localhost） 修改自定义端口：config/index.js里面的dev对象的port参数（默认8080，不建议修改）
 
 ### 运行前端
 
@@ -61,15 +82,7 @@ PHP >= 5.6.0 （暂不支持PHP7及以上版本）
 注意：前端服务启动，默认会占用8080端口，所以在启动前端服务之前，请确认8080端口没有被占用。
 程序运行之前需搭建好Server端
 
-## 一键安装
 
-代码中已集成前端vue打包后文件，可免去打包操作：
-以本地（phpstudy集成环境）搭建举例：
-下载悟空CRM9.0开源版，在服务器根目录（www目录）下创建5kcrm文件夹，并放置代码； 浏览器访问
-
-`http://localhost/5kcrm/index.php/admin/install/index.html `
-
-根据安装提示步骤，完成悟空CRM9.0 的部署安装
 
 ## 系统介绍
 
@@ -87,7 +100,6 @@ PHP >= 5.6.0 （暂不支持PHP7及以上版本）
 ![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g8.png)
 ![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g9.png)
 ![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g10.png)
-
 
 
 

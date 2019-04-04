@@ -162,6 +162,8 @@ class Leads extends Common
 		}
 
 		if ($this->data($param)->allowField(true)->isUpdate(false)->save()) {
+			//修改记录
+			updateActionLog($param['create_user_id'], 'crm_leads', $this->leads_id, '', '', '创建了线索');			
 			$data = [];
 			$data['leads_id'] = $this->leads_id;
 			return $data;

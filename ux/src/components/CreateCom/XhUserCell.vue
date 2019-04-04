@@ -81,7 +81,9 @@ export default {
     },
     /** 删除 */
     deleteuser(index) {
-      this.$refs.xhuser.cancelCheckItem(this.dataValue[index])
+      if (this.$refs.xhuser) {
+        this.$refs.xhuser.cancelCheckItem(this.dataValue[index])
+      }
       this.dataValue.splice(index, 1)
       this.$emit('value-change', {
         item: this.item,

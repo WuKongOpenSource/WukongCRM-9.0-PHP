@@ -134,7 +134,7 @@ export default {
       } else {
         params.config = this.config
         params.file = this.file
-        params.owner_user_id = this.user[0].id
+        params.owner_user_id = this.user.length > 0 ? this.user[0].id : ''
         var request
         if (this.crmType == 'customer') {
           request = crmCustomerExcelImport

@@ -3,7 +3,8 @@
        v-empty="nopermission"
        xs-empty-icon="nopermission"
        xs-empty-text="暂无权限">
-    <flexbox class="rc-head"
+    <flexbox v-if="!isSeas"
+             class="rc-head"
              direction="row-reverse">
       <el-button class="rc-head-item"
                  @click.native="createClick"
@@ -78,6 +79,11 @@ export default {
     crmType: {
       type: String,
       default: ''
+    },
+    /** 是公海 默认是客户 */
+    isSeas: {
+      type: Boolean,
+      default: false
     },
     /** 联系人人下 新建商机 需要联系人里的客户信息  合同下需要客户和商机信息 */
     detail: {

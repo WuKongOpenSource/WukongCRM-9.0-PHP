@@ -113,6 +113,7 @@
              :key="k">
           <div v-photo="discussItem.userInfo"
                v-lazy:background-image="$options.filters.filterUserLazyImg(discussItem.userInfo.thumb_img)"
+               :key="discussItem.userInfo.thumb_img"
                class="div-photo head-img header-circle"></div>
           <span class="name">{{discussItem.userInfo.realname}}</span>
           <span class="time">{{discussItem.create_time | moment("YYYY-MM-DD HH:mm")}}</span>
@@ -135,6 +136,7 @@
                  :key="k">
               <div v-photo="childDiscussItem.userInfo"
                    v-lazy:background-image="$options.filters.filterUserLazyImg(childDiscussItem.userInfo.thumb_img)"
+                   :key="childDiscussItem.userInfo.thumb_img"
                    class="div-photo head-img header-circle"></div>
               <span class="name">{{childDiscussItem.userInfo.realname}}</span>
               <span class="time">{{childDiscussItem.create_time | moment("YYYY-MM-DD HH:mm")}}</span>

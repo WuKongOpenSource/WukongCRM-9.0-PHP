@@ -117,6 +117,12 @@ export default {
       }
     }
   },
+  beforeRouteUpdate(to, from, next) {
+    if (to.query.routerKey == 1) {
+      this.newBtn()
+    }
+    next()
+  },
   created() {
     this.dataList(this.pageNum)
     if (this.$route.query.routerKey == 1) {

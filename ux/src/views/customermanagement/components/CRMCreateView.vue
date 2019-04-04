@@ -445,131 +445,12 @@ export default {
         const item = list[index]
         showStyleIndex += 1
         /**
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
          * 规则数据
          */
-        var tempList = []
 
-        //验证必填
-        if (item.is_null == 1) {
-          if (item.form_type == 'category') {
-            tempList.push({
-              required: true,
-              message: item.name + '不能为空',
-              trigger: []
-            })
-          } else {
-            tempList.push({
-              required: true,
-              message: item.name + '不能为空',
-              trigger: ['blur', 'change']
-            })
-          }
-        }
-
-        //验证唯一
-        if (item.is_unique == 1) {
-          var validateUnique = (rule, value, callback) => {
-            if (!value && rule.item.is_null == 0) {
-              callback()
-            } else {
-              var validatesParams = {}
-              validatesParams.field = rule.item.field
-              validatesParams.val = value
-              validatesParams.types = 'crm_' + this.crmType
-              if (this.action.type == 'update') {
-                validatesParams.id = this.action.id
-              }
-              filedValidates(validatesParams)
-                .then(res => {
-                  callback()
-                })
-                .catch(error => {
-                  callback(new Error(error.error ? error.error : '验证出错'))
-                })
-            }
-          }
-          tempList.push({
-            validator: validateUnique,
-            item: item,
-            trigger: ['blur']
-          })
-        }
-
-        // 特殊字符
-        if (item.form_type == 'number') {
-          var validateCRMNumber = (rule, value, callback) => {
-            if (!value || value == '' || regexIsCRMNumber(value)) {
-              callback()
-            } else {
-              callback(new Error('数字的整数部分须少于12位，小数部分须少于4位'))
-            }
-          }
-          tempList.push({
-            validator: validateCRMNumber,
-            item: item,
-            trigger: ['blur']
-          })
-        } else if (item.form_type == 'floatnumber') {
-          var validateCRMMoneyNumber = (rule, value, callback) => {
-            if (!value || value == '' || regexIsCRMMoneyNumber(value)) {
-              callback()
-            } else {
-              callback(new Error('货币的整数部分须少于10位，小数部分须少于2位'))
-            }
-          }
-          tempList.push({
-            validator: validateCRMMoneyNumber,
-            item: item,
-            trigger: ['blur']
-          })
-        } else if (item.form_type == 'mobile') {
-          var validateCRMMobile = (rule, value, callback) => {
-            if (!value || value == '' || regexIsCRMMobile(value)) {
-              callback()
-            } else {
-              callback(new Error('手机格式有误'))
-            }
-          }
-          tempList.push({
-            validator: validateCRMMobile,
-            item: item,
-            trigger: ['blur']
-          })
-        } else if (item.form_type == 'email') {
-          var validateCRMEmail = (rule, value, callback) => {
-            if (!value || value == '' || regexIsCRMEmail(value)) {
-              callback()
-            } else {
-              callback(new Error('邮箱格式有误'))
-            }
-          }
-          tempList.push({
-            validator: validateCRMEmail,
-            item: item,
-            trigger: ['blur']
-          })
-        }
-
-        this.crmRules[item.field] = tempList
+        this.crmRules[item.field] = this.getItemRulesArrayFromItem(item)
 
         /**
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
          * 表单数据
          */
         if (
@@ -583,164 +464,9 @@ export default {
           var params = {}
           params['key'] = item.field
           params['data'] = item
-          /**
-           * 客户 或 联系人 添加商机
-           */
-          if (this.action.type == 'relative' && this.crmType === 'business') {
-            if (
-              this.action.crmType === 'customer' ||
-              this.action.crmType === 'contacts'
-            ) {
-              if (item.form_type == 'customer') {
-                params['value'] = [this.action.data[item.form_type]]
-                // 客户不能点击
-                params['disabled'] = true
-              } else {
-                params['value'] = item.value
-                params['disabled'] = false
-              }
-            }
-            /** 客户下新建联系人 */
-          } else if (
-            this.action.type == 'relative' &&
-            this.crmType === 'contacts'
-          ) {
-            if (this.action.crmType === 'customer') {
-              if (item.form_type == 'customer') {
-                params['value'] = [this.action.data[item.form_type]]
-                // 客户不能点击
-                params['disabled'] = true
-              } else {
-                params['value'] = item.value
-                params['disabled'] = false
-              }
-            }
-          } else if (
-            /**
-             * 客户 或 商机下 添加合同
-             */
-            this.action.type == 'relative' &&
-            this.crmType === 'contract'
-          ) {
-            if (this.action.crmType === 'customer') {
-              if (item.form_type == 'customer') {
-                params['value'] = [this.action.data[item.form_type]]
-                // 客户不能点击
-                params['disabled'] = true
-              } else if (item.form_type == 'business') {
-                // 商机可以点击
-                var customerItem = this.action.data['customer']
-                customerItem['form_type'] = 'customer'
-                params['value'] = []
-                params['relation'] = customerItem
-                params['disabled'] = false
-              } else {
-                params['value'] = item.value
-                params['disabled'] = false
-              }
-            } else if (this.action.crmType === 'business') {
-              if (
-                item.form_type == 'customer' ||
-                item.form_type == 'business'
-              ) {
-                // 客户不能点击 商机不能点击
-                params['value'] = [this.action.data[item.form_type]]
-                params['disabled'] = true
-              } else {
-                params['value'] = item.value
-                params['disabled'] = false
-              }
-            }
-            /**
-             * 客户 和 合同下 新建回款计划
-             */
-          } else if (
-            this.action.type == 'relative' &&
-            this.crmType === 'receivables_plan'
-          ) {
-            if (this.action.crmType === 'contract') {
-              if (
-                item.form_type === 'customer' ||
-                item.form_type === 'contract'
-              ) {
-                params['value'] = [this.action.data[item.form_type]]
-                params['disabled'] = true
-              } else {
-                params['value'] = item.value
-                params['disabled'] = false
-              }
-            } else if (this.action.crmType === 'customer') {
-              if (item.form_type === 'customer') {
-                params['value'] = [this.action.data[item.form_type]]
-                params['disabled'] = true
-              } else if (item.form_type === 'contract') {
-                // 商机可以点击
-                var customerItem = this.action.data['customer']
-                customerItem['form_type'] = 'customer'
-                customerItem['params'] = { check_status: 2 }
-                params['relation'] = customerItem
-                params['disabled'] = false
-                params['value'] = []
-              } else {
-                params['value'] = item.value
-                params['disabled'] = false
-              }
-            }
-            /**
-             * 客户 和 合同下 新建回款
-             */
-          } else if (
-            this.action.type == 'relative' &&
-            this.crmType === 'receivables'
-          ) {
-            if (this.action.crmType === 'contract') {
-              if (item.form_type === 'customer') {
-                params['value'] = [this.action.data[item.form_type]]
-                params['disabled'] = true
-              } else if (item.form_type === 'contract') {
-                // 需要的客户信息
-                var customerItem = this.action.data['customer']
-                customerItem['form_type'] = 'customer'
-                params['relation'] = customerItem
-                params['value'] = [this.action.data[item.form_type]]
-                params['disabled'] = false
-              } else if (item.form_type === 'receivables_plan') {
-                // 需要的客户信息
-                var contractItem = this.action.data['contract']
-                contractItem['form_type'] = 'contract'
-                params['relation'] = contractItem
-              } else {
-                params['value'] = item.value
-                params['disabled'] = false
-              }
-            } else if (this.action.crmType === 'customer') {
-              if (item.form_type === 'customer') {
-                params['value'] = [this.action.data[item.form_type]]
-                params['disabled'] = true
-              } else {
-                params['value'] = item.value
-                params['disabled'] = false
-              }
-            }
-          } else {
-            params['value'] = item.value
-            params['disabled'] = false
-
-            // 新建合同 商机默认不能编辑
-            if (this.crmType === 'contract') {
-              if (item.form_type === 'business') {
-                params['disabled'] = this.action.type == 'update' ? false : true
-              }
-              // 回款下 新建 合同 和 回款计划 默认不能操作
-            } else if (this.crmType === 'receivables') {
-              if (item.form_type === 'contract') {
-                params['disabled'] = this.action.type == 'update' ? false : true
-              }
-              if (item.form_type === 'receivables_plan') {
-                params['disabled'] = this.action.type == 'update' ? false : true
-              }
-            }
-          }
+          // 获取 value relative 信息
+          this.getParamsValueAndRelativeInfo(params, item, list)
+          params['disabled'] = this.getItemDisabledFromItem(item)
           params['styleIndex'] = showStyleIndex
           this.crmForm.crmFields.push(params)
         } else if (item.form_type == 'category') {
@@ -824,6 +550,223 @@ export default {
           this.crmForm.crmFields.push(params)
         }
       }
+    },
+    /**
+     * 获取关联项的值 和 关联信息
+     */
+    getParamsValueAndRelativeInfo(params, item, list) {
+      if (this.action.type == 'relative') {
+        let relativeData = this.action.data[item.form_type]
+        if (item.form_type == 'receivables_plan') {
+          params['value'] = ''
+        } else {
+          params['value'] = relativeData ? [relativeData] : []
+        }
+      } else {
+        params['value'] = item.value
+      }
+      if (this.action.type == 'relative' || this.action.type == 'update') {
+        // 回款计划 需要合同信息
+        if (item.form_type === 'receivables_plan') {
+          let contractItem = this.getItemRelatveInfo(item, list, 'contract')
+          if (contractItem) {
+            contractItem['form_type'] = 'contract'
+            params['relation'] = contractItem
+          }
+          // 商机合同 需要客户信息
+        } else if (
+          item.form_type == 'business' ||
+          item.form_type == 'contract'
+        ) {
+          let customerItem = this.getItemRelatveInfo(item, list, 'customer')
+          if (item.form_type == 'business' && customerItem) {
+            customerItem['form_type'] = 'customer'
+            params['relation'] = customerItem
+          } else if (item.form_type == 'contract' && customerItem) {
+            customerItem['form_type'] = 'customer'
+            customerItem['params'] = { check_status: 2 }
+            params['relation'] = customerItem
+          }
+        }
+      }
+    },
+    /**
+     * 获取相关联item
+     */
+    getItemRelatveInfo(item, list, from_type) {
+      let crmItem = null
+      if (this.action.type == 'relative') {
+        crmItem = this.action.data[from_type]
+      } else {
+        let crmObj = list.find(listItem => {
+          return listItem.form_type === from_type
+        })
+        if (crmObj && crmObj.value && crmObj.value.length > 0) {
+          crmItem = crmObj.value[0]
+        }
+      }
+      return crmItem
+    },
+    /**
+     * 获取关联项是否可操作
+     */
+    getItemDisabledFromItem(item) {
+      // 相关添加
+      if (this.action.type == 'relative') {
+        let relativeDisInfos = {
+          business: {
+            customer: { customer: true },
+            contacts: { customer: true }
+          },
+          contacts: {
+            customer: { customer: true }
+          },
+          contract: {
+            customer: { customer: true },
+            business: { customer: true, business: true }
+          },
+          receivables_plan: {
+            contract: { customer: true, contract: true },
+            customer: { customer: true }
+          },
+          receivables: {
+            contract: { customer: true, contract: true },
+            customer: { customer: true }
+          }
+        }
+        // 添加类型
+        let crmTypeDisInfos = relativeDisInfos[this.crmType]
+        if (crmTypeDisInfos) {
+          // 在哪个类型下添加
+          let relativeTypeDisInfos = crmTypeDisInfos[this.action.crmType]
+          if (relativeTypeDisInfos) {
+            // 包含的字段值
+            return relativeTypeDisInfos[item.form_type] || false
+          }
+        }
+        return false
+      } else if (this.action.type != 'update') {
+        // 新建
+        if (this.crmType === 'contract' && item.form_type === 'business') {
+          return true
+          // 回款下 新建 合同 和 回款计划 默认不能操作
+        } else if (this.crmType === 'receivables') {
+          if (item.form_type === 'contract') {
+            return true
+          } else if (item.form_type === 'receivables_plan') {
+            return true
+          }
+        }
+      }
+      return false
+    },
+    /**
+     * item 当行数据源
+     */
+    getItemRulesArrayFromItem(item) {
+      var tempList = []
+
+      //验证必填
+      if (item.is_null == 1) {
+        if (item.form_type == 'category') {
+          tempList.push({
+            required: true,
+            message: item.name + '不能为空',
+            trigger: []
+          })
+        } else {
+          tempList.push({
+            required: true,
+            message: item.name + '不能为空',
+            trigger: ['blur', 'change']
+          })
+        }
+      }
+
+      //验证唯一
+      if (item.is_unique == 1) {
+        var validateUnique = (rule, value, callback) => {
+          if (!value && rule.item.is_null == 0) {
+            callback()
+          } else {
+            var validatesParams = {}
+            validatesParams.field = rule.item.field
+            validatesParams.val = value
+            validatesParams.types = 'crm_' + this.crmType
+            if (this.action.type == 'update') {
+              validatesParams.id = this.action.id
+            }
+            filedValidates(validatesParams)
+              .then(res => {
+                callback()
+              })
+              .catch(error => {
+                callback(new Error(error.error ? error.error : '验证出错'))
+              })
+          }
+        }
+        tempList.push({
+          validator: validateUnique,
+          item: item,
+          trigger: ['blur']
+        })
+      }
+
+      // 特殊字符
+      if (item.form_type == 'number') {
+        var validateCRMNumber = (rule, value, callback) => {
+          if (!value || value == '' || regexIsCRMNumber(value)) {
+            callback()
+          } else {
+            callback(new Error('数字的整数部分须少于12位，小数部分须少于4位'))
+          }
+        }
+        tempList.push({
+          validator: validateCRMNumber,
+          item: item,
+          trigger: ['blur']
+        })
+      } else if (item.form_type == 'floatnumber') {
+        var validateCRMMoneyNumber = (rule, value, callback) => {
+          if (!value || value == '' || regexIsCRMMoneyNumber(value)) {
+            callback()
+          } else {
+            callback(new Error('货币的整数部分须少于10位，小数部分须少于2位'))
+          }
+        }
+        tempList.push({
+          validator: validateCRMMoneyNumber,
+          item: item,
+          trigger: ['blur']
+        })
+      } else if (item.form_type == 'mobile') {
+        var validateCRMMobile = (rule, value, callback) => {
+          if (!value || value == '' || regexIsCRMMobile(value)) {
+            callback()
+          } else {
+            callback(new Error('手机格式有误'))
+          }
+        }
+        tempList.push({
+          validator: validateCRMMobile,
+          item: item,
+          trigger: ['blur']
+        })
+      } else if (item.form_type == 'email') {
+        var validateCRMEmail = (rule, value, callback) => {
+          if (!value || value == '' || regexIsCRMEmail(value)) {
+            callback()
+          } else {
+            callback(new Error('邮箱格式有误'))
+          }
+        }
+        tempList.push({
+          validator: validateCRMEmail,
+          item: item,
+          trigger: ['blur']
+        })
+      }
+      return tempList
     },
     // 保存数据
     saveField(saveAndCreate) {

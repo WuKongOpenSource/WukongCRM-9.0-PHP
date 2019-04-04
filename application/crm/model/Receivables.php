@@ -433,10 +433,10 @@ class Receivables extends Common
 			$reQuarterMoney = '0.00';
 			$start_time = strtotime($request['year'].'-'.$i.'-01');
 			$next_i = $i+1;
-			$end_time = strtotime($request['year'].'-'.$next_i.'-01');
+			$end_time = strtotime($request['year'].'-'.$next_i.'-01')-1;
 			if ($i == 12) {
 				$next_year = $request['year']+1;
-				$end_time = strtotime($next_year.'-01-01');
+				$end_time = strtotime($next_year.'-01-01')-1;
 			}
             $where_receivables = [];
 			$where_contract = [];
@@ -444,8 +444,8 @@ class Receivables extends Common
 			$where_receivables['owner_user_id'] = ['in',$useridstr];
     		$where_contract['create_time'] = array('between',array($start_time,$end_time));
 			$where_receivables['return_time'] = array('between',array( date('Y-m-d',$start_time),date('Y-m-d',$end_time)));
+			$where_receivables['owner_user_id'] = ['in',$useridstr];
     		$where_receivables['check_status'] = $where_contract['check_status'] = 2; //审核通过
-
     		$contractMoney = db('crm_contract')->where($where_contract)->sum('money'); 
 			$receivablesMoney = db('crm_receivables')->where($where_receivables)->sum('money');
 			

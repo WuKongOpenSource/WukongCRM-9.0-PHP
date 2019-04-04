@@ -327,7 +327,7 @@ class Contract extends Common
     		$contractInfo = [];
     		$contractInfo = db('crm_contract')->where(['contract_id' => $id])->find();
 			if (in_array($contractInfo['check_status'],['0','1'])) {
-	            $errorMessage[] = $contractInfo['name'].'"转移失败，错误原因：审批中，无法转移；';
+	            $errorMessage[] = '合同：'.$contractInfo['name'].'"转移失败，错误原因：审批中，无法转移；';
 	            continue;
 	        }	     		
 
@@ -335,7 +335,7 @@ class Contract extends Common
 	        $data['owner_user_id'] = $owner_user_id;
 	        $data['update_time'] = time(); 
 	        if (!db('crm_contract')->where(['contract_id' => $id])->update($data)) {
-				$errorMessage[] = $contractInfo['name'].'"转移失败，错误原因：数据出错；';
+				$errorMessage[] = '合同：'.$contractInfo['name'].'"转移失败，错误原因：数据出错；';
 	            continue;				      	
 	        }
 	        //团队成员

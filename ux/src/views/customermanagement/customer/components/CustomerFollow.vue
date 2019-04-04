@@ -1,6 +1,6 @@
 <template>
   <div class="f-container">
-    <div v-loading="sendLoading">
+    <div v-loading="sendLoading" v-if="!isSeas">
       <mix-add ref="mixadd"
                :crmType="crmType"
                :id="id"
@@ -28,6 +28,7 @@
                         v-model="next_time"
                         type="datetime"
                         placeholder="选择日期"
+                        :default-value="new Date"
                         value-format="yyyy-MM-dd HH:mm:ss"
                         :editable="false">
         </el-date-picker>
@@ -86,6 +87,11 @@ export default {
     crmType: {
       type: String,
       default: ''
+    },
+    /** 是公海 默认是客户 */
+    isSeas: {
+      type: Boolean,
+      default: false
     }
   },
   watch: {},

@@ -88,7 +88,7 @@ export default {
     /** 删除 */
     deleteinfo(index) {
       if (this.disabled) return
-      if (this.radio) {
+      if (this.radio && this.$refs.crmrelative) {
         // 如果单选告知删除
         this.$refs.crmrelative.clearAll()
       }

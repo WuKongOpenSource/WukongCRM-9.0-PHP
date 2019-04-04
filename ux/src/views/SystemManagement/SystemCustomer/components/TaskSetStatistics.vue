@@ -478,10 +478,19 @@ export default {
       } else if (type == 'edit') {
         this.isEdit = true
       } else if (type == 'export') {
-        let wb = XLSX.utils.table_to_book(
+        let fix = document.querySelector('.el-table__fixed')
+        let wb
+        if (fix) {
+          wb = XLSX.utils.table_to_book(
+            document.getElementById('task-set-table').removeChild(fix)
+          )
+          document.getElementById('task-set-table').appendChild(fix)
+        } else {
+          wb = XLSX.utils.table_to_book(
             document.getElementById('task-set-table')
-          ),
-          wopts = {
+          )
+        }
+        let wopts = {
             bookType: 'xlsx',
             bookSST: false,
             type: 'binary'

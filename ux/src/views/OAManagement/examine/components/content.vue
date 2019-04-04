@@ -256,6 +256,7 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
   .select-box {
     margin: 10px 0 20px;
     .select-group {
@@ -278,7 +279,6 @@ export default {
   .list-box {
     overflow: auto;
     padding-right: 30px;
-    margin-right: -30px;
   }
 }
 

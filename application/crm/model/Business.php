@@ -282,9 +282,8 @@ class Business extends Common
      * @return 
      */	
    	public function getDataById($id = '')
-   	{   		
-   		$map['business_id'] = $id;
-		$dataInfo = db('crm_business')->where($map)->find();
+   	{
+		$dataInfo = $this->get($id);
 		if (!$dataInfo) {
 			$this->error = '暂无此数据';
 			return false;
@@ -399,9 +398,8 @@ class Business extends Common
 			$data = [];
 	        $data['owner_user_id'] = $owner_user_id;
 	        $data['update_time'] = time(); 
-	        db('crm_business')->where(['business_id' => $id])->update($data);
 			if (!db('crm_business')->where(['business_id' => $id])->update($data)) {
-	            $errorMessage[] = $businessInfo['name'].'"转移失败，错误原因：数据出错；';
+	            $errorMessage[] = '商机：'.$businessInfo['name'].'"转移失败，错误原因：数据出错；';
 	            continue;
 	        }	        
 	        //团队成员

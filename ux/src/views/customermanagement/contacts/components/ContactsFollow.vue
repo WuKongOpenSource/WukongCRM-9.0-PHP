@@ -26,6 +26,7 @@
                         v-model="next_time"
                         type="datetime"
                         placeholder="选择日期"
+                        :default-value="new Date"
                         value-format="yyyy-MM-dd HH:mm:ss"
                         :editable="false">
         </el-date-picker>

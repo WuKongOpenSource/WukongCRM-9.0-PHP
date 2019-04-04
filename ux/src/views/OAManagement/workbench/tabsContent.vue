@@ -11,6 +11,7 @@
       <template v-else>
         <div v-photo="item.create_user_info"
              v-lazy:background-image="$options.filters.filterUserLazyImg(item.create_user_info.thumb_img)"
+             :key="item.create_user_info.thumb_img"
              class="div-photo"></div>
         <div class="img-text">
           <div class="name-time">
@@ -232,6 +233,7 @@ export default {
         img,
         .type-name {
           vertical-align: middle;
+          width: 20px;
         }
         .img-5 {
           margin-bottom: 3px;

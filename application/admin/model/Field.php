@@ -515,7 +515,7 @@ class Field extends Model
 		} else {
 			$field_list = $this->where($map)->field('field,name,form_type,default_value,is_unique,is_null,input_tips,setting')->order($order)->select();
 			//客户
-			if (in_array($param['types'],['crm_customer'])) {
+			if (in_array($param['types'],['crm_customer']) && $param['action'] !== 'excel') {
 				$new_field_list[] = [
 					'field' => 'customer_address',
 		            'name' => '地区定位',
@@ -1031,7 +1031,7 @@ class Field extends Model
 	public function getIndexFieldList($types, $user_id)
 	{
 		$fieldArr = $this->getIndexField($types, $user_id);
-		$fieldList = db('admin_field')->where(['field' => array('in',$fieldArr)])->where('types',['eq',$types],['eq',''],'or')->select();
+		$fieldList = db('admin_field')->where(['field' => array('in',$fieldArr)])->where('types',['eq',$types],['eq',''],'or')->order('order_id asc')->select();
 		return $fieldList ? : [];
 	}
 

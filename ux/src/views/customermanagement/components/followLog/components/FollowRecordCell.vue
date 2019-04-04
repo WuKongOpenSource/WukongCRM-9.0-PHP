@@ -2,6 +2,7 @@
   <div class="fl-c">
     <flexbox class="fl-h">
       <div v-photo="item.create_user_info"
+           :key="item.create_user_info.thumb_img"
            v-lazy:background-image="$options.filters.filterUserLazyImg(item.create_user_info.thumb_img)"
            class="div-photo fl-h-img"></div>
       <div class="fl-h-b">

@@ -99,6 +99,7 @@
           </div>
           <div v-photo="data.main_user"
                v-lazy:background-image="$options.filters.filterUserLazyImg(data.main_user.thumb_img)"
+               :key="data.main_user.thumb_img"
                class="div-photo"></div>
         </el-tooltip>
       </div>

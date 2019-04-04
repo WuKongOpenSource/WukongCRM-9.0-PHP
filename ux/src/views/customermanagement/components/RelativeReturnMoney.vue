@@ -1,6 +1,7 @@
 <template>
   <div class="rc-cont">
-    <flexbox class="rc-head"
+    <flexbox v-if="!isSeas"
+             class="rc-head"
              direction="row-reverse">
       <el-button class="rc-head-item"
                  @click.native="createClick('plan')"
@@ -25,7 +26,8 @@
     <flexbox class="rc-head"
              direction="row-reverse"
              style="margin-top: 15px;">
-      <el-button class="rc-head-item"
+      <el-button v-if="!isSeas"
+                 class="rc-head-item"
                  @click.native="createClick('money')"
                  type="primary">新建回款</el-button>
     </flexbox>
@@ -110,6 +112,11 @@ export default {
       default: () => {
         return {}
       }
+    },
+    /** 是公海 默认是客户 */
+    isSeas: {
+      type: Boolean,
+      default: false
     }
   },
   mounted() {

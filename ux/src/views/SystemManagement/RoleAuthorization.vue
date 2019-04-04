@@ -736,6 +736,7 @@ export default {
 .jurisdiction-content {
   display: flex;
   flex: 1;
+  overflow: hidden;
 }
 .content-left {
   flex: 1;

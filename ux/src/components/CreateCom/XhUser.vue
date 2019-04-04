@@ -18,6 +18,7 @@
                      class="colleagues-list">
           <div v-photo="item"
                v-lazy:background-image="$options.filters.filterUserLazyImg(item.thumb_img)"
+               :key="item.thumb_img"
                class="div-photo search-img"></div>
           <span>{{item.realname}}</span>
         </el-checkbox>

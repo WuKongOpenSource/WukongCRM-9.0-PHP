@@ -104,7 +104,6 @@ export default {
       crmType: 'leads',
       detailData: {}, // read 详情
       headDetails: [
-        { title: '姓名', value: '' },
         { title: '线索来源', value: '' },
         { title: '手机', value: '' },
         { title: '负责人', value: '' },
@@ -144,14 +143,13 @@ export default {
         .then(res => {
           this.detailData = res.data
 
-          this.headDetails[0].value = res.data.name
-          this.headDetails[1].value = res.data.source
-          this.headDetails[2].value = res.data.mobile
+          this.headDetails[0].value = res.data.source
+          this.headDetails[1].value = res.data.mobile
           // 负责人
-          this.headDetails[3].value = res.data.owner_user_id_info
+          this.headDetails[2].value = res.data.owner_user_id_info
             ? res.data.owner_user_id_info.realname
             : ''
-          this.headDetails[4].value = res.data.update_time
+          this.headDetails[3].value = res.data.update_time
           this.loading = false
         })
         .catch(() => {

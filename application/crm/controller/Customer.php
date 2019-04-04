@@ -268,7 +268,7 @@ class Customer extends ApiCommon
         }   
         $is_remove = ($param['is_remove'] == 2) ? 2 : 1;
         $type = $param['type'] == 2 ? : 1;
-        $types = $param['types'];
+        $types = $param['types'] ? : [];
         
         $data = [];
         $data['owner_user_id'] = $param['owner_user_id'];
@@ -279,9 +279,25 @@ class Customer extends ApiCommon
         foreach ($param['customer_id'] as $customer_id) {
             $customerInfo = db('crm_customer')->where(['customer_id' => $customer_id])->find();
 
+            if (!$customerInfo) {
+                $errorMessage[] = 'id:为'.$customer_id.'的客户转移失败，错误原因：数据不存在；';
+                continue;
+            }
+            $resCustomer = true;
+            //权限判断
+            if (!$customerModel->checkData($customer_id, $userInfo['id'])) {
+                $errorMessage[] = $customerInfo['name'].'转移失败，错误原因：无权限；';
+                continue;
+            }
+            $resCustomer = db('crm_customer')->where(['customer_id' => $customer_id])->update($data);
+            if (!$resCustomer) {
+                $errorMessage[] = $customerInfo['name'].'转移失败，错误原因：数据出错；';
+                continue;
+            }            
+
             if (in_array('crm_contacts',$types)) {
                 $contactsIds = [];
-                $contactsIds = db('crm_contacts')->where(['customer_id' => $customer_id])->column('contract_id');
+                $contactsIds = db('crm_contacts')->where(['customer_id' => $customer_id])->column('contacts_id');
                 if ($contactsIds) {
                     $resContacts = $contactsModel->transferDataById($contactsIds, $param['owner_user_id'], $type, $is_remove);
                     if ($resContacts !== true) {
@@ -298,7 +314,7 @@ class Customer extends ApiCommon
                 if ($businessIds) {
                     $resBusiness = $businessModel->transferDataById($businessIds, $param['owner_user_id'], $type, $is_remove);
                     if ($resBusiness !== true) {
-                        $errorMessage[] = $resBusiness;
+                        $errorMessage = $errorMessage ? array_merge($errorMessage,$resBusiness) : $resBusiness;
                         continue;                        
                     }                    
                 }
@@ -316,21 +332,6 @@ class Customer extends ApiCommon
                 }                
             }
 
-            if (!$customerInfo) {
-                $errorMessage[] = 'id:为'.$customer_id.'的客户转移失败，错误原因：数据不存在；';
-                continue;
-            }
-            $resCustomer = true;
-            //权限判断
-            if (!$customerModel->checkData($customer_id, $userInfo['id'])) {
-                $errorMessage[] = $customerInfo['name'].'转移失败，错误原因：无权限；';
-                continue;
-            }
-            $resCustomer = db('crm_customer')->where(['customer_id' => $customer_id])->update($data);
-            if (!$resCustomer) {
-                $errorMessage[] = $customerInfo['name'].'转移失败，错误原因：数据出错；';
-                continue;
-            }
             $teamData = [];
             $teamData['type'] = $type; //权限 1只读2读写
             $teamData['user_id'] = [$customerInfo['owner_user_id']]; //协作人
@@ -662,9 +663,8 @@ class Customer extends ApiCommon
                            -> setError('您输入的值不在下拉框列表内.')  
                            -> setPromptTitle('--请选择--')  
                            -> setFormula1('"'.$select_value.'"');
-                        //数据有效性  end                        
+                        //数据有效性  end            
                     }
-                    
                 }
                 //检查该字段若必填，加上"*"
                 $field['name'] = sign_required($field['is_null'], $field['name']);
@@ -753,7 +753,7 @@ class Customer extends ApiCommon
         $userInfo = $this->userInfo;
         $excelModel = new \app\admin\model\Excel();
         $param['create_user_id'] = $userInfo['id'];
-        $param['owner_user_id'] = $param['owner_user_id'] ? : $userInfo['id'];
+        $param['owner_user_id'] = $param['owner_user_id'] ? : 0;
         $param['deal_time'] = time();
         $param['deal_status'] = '未成交';
         $param['types'] = 'crm_customer';

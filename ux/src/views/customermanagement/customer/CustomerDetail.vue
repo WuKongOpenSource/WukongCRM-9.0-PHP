@@ -36,7 +36,8 @@
           <component v-bind:is="tabName"
                      crmType="customer"
                      :detail="detailData"
-                     :id="id"></component>
+                     :id="id"
+                     :isSeas="isSeas"></component>
         </keep-alive>
       </div>
     </flexbox>

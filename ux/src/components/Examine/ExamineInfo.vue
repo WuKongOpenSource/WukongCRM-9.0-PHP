@@ -36,6 +36,7 @@
                    style="width:auto;">
             <div v-photo="item.userInfo"
                  v-lazy:background-image="$options.filters.filterUserLazyImg(item.userInfo.thumb_img)"
+                 :key="item.userInfo.thumb_img"
                  class="div-photo check-item-img"></div>
             <div class="check-item-name">{{item.userInfo.realname}}</div>
           </flexbox>

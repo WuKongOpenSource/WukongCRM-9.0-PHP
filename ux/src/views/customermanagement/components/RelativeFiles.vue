@@ -1,6 +1,7 @@
 <template>
   <div class="rc-cont">
-    <flexbox class="rc-head"
+    <flexbox v-if="!isSeas"
+             class="rc-head"
              direction="row-reverse">
       <el-button class="rc-head-item"
                  @click.native="addFile"
@@ -110,6 +111,11 @@ export default {
     crmType: {
       type: String,
       default: ''
+    },
+    /** 是公海 默认是客户 */
+    isSeas: {
+      type: Boolean,
+      default: false
     }
   },
   mounted() {

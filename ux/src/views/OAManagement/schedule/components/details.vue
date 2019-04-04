@@ -25,6 +25,7 @@
                 </div>
                 <div v-photo="k"
                      v-lazy:background-image="$options.filters.filterUserLazyImg(k.thumb_img)"
+                     :key="k.thumb_img"
                      class="div-photo header-circle"></div>
               </el-tooltip>
             </span>

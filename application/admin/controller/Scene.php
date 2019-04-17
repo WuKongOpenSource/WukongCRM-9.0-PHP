@@ -10,6 +10,7 @@ namespace app\admin\controller;
 use think\Hook;
 use think\Session;
 use think\Request;
+use think\Db;
 
 class Scene extends ApiCommon
 {
@@ -113,16 +114,19 @@ class Scene extends ApiCommon
         $param = $this->param;
         $userInfo = $this->userInfo;
         //权限判断
-        $dataInfo = $sceneModel->getDataById($param['id'], $userInfo['id']);
-        if (!$dataInfo) {
+        if (!$sceneModel->getDataById($param['id'], $userInfo['id'])) {
             return resultArray(['error' => '数据不存在或已删除']);
         }
-
+        $dataInfo = db('admin_scene')->where(['scene_id' => $param['id']])->find();
         $resData = $sceneModel->delDataById($param['id']);
-        if (!$resData) {
+        if ($resData) {
+            //重新设置默认
+            $default = db('admin_scene')->where(['types' => $dataInfo['types'],'bydata' => 'all'])->find();
+            $sceneModel->defaultDataById(['types' => $dataInfo['types'],'user_id' => $userInfo['id']], $default['scene_id']);
+            return resultArray(['data' => '删除成功']);
+        } else {
             return resultArray(['error' => $sceneModel->getError()]);
         }
-        return resultArray(['data' => '删除成功']);
     } 
 
     /**

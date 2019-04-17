@@ -482,7 +482,7 @@
                                       v-model="childCommentsPopover"
                                       trigger="click">
                             <!-- 表情 -->
-                            <emoji @select="selectEmoji">
+                            <emoji @select="selectEmojiChild">
                             </emoji>
                             <img src="@/assets/img/smiling_face.png"
                                  class="smiling-img"

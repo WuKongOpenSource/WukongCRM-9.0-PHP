@@ -260,6 +260,13 @@ export default {
           { value: 'lt', label: '小于', disabled: false },
           { value: 'elt', label: '小于等于', disabled: false }
         ]
+      } else if (form_type == 'category') {
+        return [
+          { value: 'is', label: '等于', disabled: false },
+          { value: 'isnot', label: '不等于', disabled: false },
+          { value: 'contains', label: '包含', disabled: false },
+          { value: 'not_contain', label: '不包含', disabled: false }
+        ]
       } else {
         return [
           { value: 'is', label: '等于', disabled: false },

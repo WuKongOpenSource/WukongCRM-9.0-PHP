@@ -36,6 +36,16 @@ export function roleDelete (data) {
 // 角色复制
 export function roleCopy (data) {
     return request({
+        url: 'admin/groups/copy',
+        method: 'post',
+        data: data
+    })
+}
+
+
+// 角色编辑
+export function roleUpdate (data) {
+    return request({
         url: 'admin/groups/update',
         method: 'post',
         data: data

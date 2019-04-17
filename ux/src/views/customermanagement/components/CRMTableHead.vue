@@ -1,6 +1,6 @@
 <template>
   <div>
-    <flexbox v-if="selectionList.length == 0"
+    <flexbox v-show="selectionList.length == 0"
              class="th-container">
       <div v-if="!isSeas">场景：</div>
       <el-popover v-if="!isSeas"
@@ -15,7 +15,6 @@
         </flexbox>
         <scene-list ref="sceneList"
                     :crmType="crmType"
-                    :sceneID="sceneID"
                     @scene="sceneSelect"
                     @scene-handle="sceneHandle"
                     @hidden-scene="showScene=false"></scene-list>
@@ -69,14 +68,14 @@
                   :dialogVisible.sync="allocDialogShow"></alloc-handle>
 
     <scene-set :dialogVisible.sync="showSceneSet"
-               @save-success="setSaveSuccess"
+               @save-success="updateSceneList"
                :crmType="crmType">
     </scene-set>
 
     <scene-create :fieldList="fieldList"
                   :crmType="crmType"
                   :dialogVisible.sync="showSceneCreate"
-                  @saveSuccess="createSaveSuccess"
+                  @saveSuccess="updateSceneList"
                   :obj="sceneFilterObj">
     </scene-create>
   </div>
@@ -158,12 +157,7 @@ export default {
       allocDialogShow: false // 公海分配操作提示框
     }
   },
-  watch: {
-    scene_id: function(val) {
-      this.sceneID = this.scene_id
-      this.sceneName = this.scene_name
-    }
-  },
+  watch: {},
   props: {
     title: {
       type: String,
@@ -178,16 +172,6 @@ export default {
     isSeas: {
       type: Boolean,
       default: false
-    },
-    /** 场景信息 */
-    scene_id: {
-      type: [String, Number],
-      default: ''
-    },
-    /** 场景信息 */
-    scene_name: {
-      type: String,
-      default: ''
     }
   },
   mounted() {},
@@ -222,7 +206,7 @@ export default {
           data: form.obj
         })
           .then(res => {
-            this.createSaveSuccess()
+            this.updateSceneList()
           })
           .catch(() => {})
       }
@@ -235,10 +219,10 @@ export default {
     },
     // 场景操作
     /** 选择了场景 */
-    sceneSelect(scene_id, name) {
-      this.sceneName = name
-      this.sceneID = scene_id
-      this.$emit('scene', this.sceneID)
+    sceneSelect(data) {
+      this.sceneName = data.name
+      this.sceneID = data.id
+      this.$emit('scene', data)
     },
     sceneHandle(data) {
       if (data.type == 'set') {
@@ -254,26 +238,8 @@ export default {
           .catch(() => {})
       }
     },
-    /** 设置保存成功 */
-    setSaveSuccess() {
-      // crmSceneIndex({
-      //   types: 'crm_' + this.crmType
-      // })
-      //   .then(res => {
-      //     /** 如果 目前的不存在了 需要调整*/
-      //     var defaultScene = res.data.list.filter(function(item, index) {
-      //       return item.scene_id == this.sceneID
-      //     })
-      //     if (defaultScene && defaultScene.length == 0) {
-      //       this.sceneID = ''
-      //       this.sceneName = ''
-      //       this.$emit('scene', this.sceneID)
-      //     }
-      //   })
-      //   .catch(() => {})
-    },
     /**  创建保存成功 */
-    createSaveSuccess() {
+    updateSceneList() {
       this.$refs.sceneList.getSceneList()
     },
     /** 勾选后的表头操作 */

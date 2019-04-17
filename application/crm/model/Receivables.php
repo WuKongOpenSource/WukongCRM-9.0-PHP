@@ -69,10 +69,12 @@ class Receivables extends Common
 		if (isset($map['receivables.owner_user_id'])) {
 			if (!is_array($map['receivables.owner_user_id'][1])) {
 				$map['receivables.owner_user_id'][1] = [$map['receivables.owner_user_id'][1]];
-			}			
-	        //取交集
-	        $owner_user_id = array_intersect($map['receivables.owner_user_id'][1], $auth_user_ids) ? : [];
-	        $auth_user_ids = $owner_user_id;
+			}
+			if ($map['receivables.owner_user_id'][0] == 'neq') {
+				$auth_user_ids = array_diff($auth_user_ids, $map['receivables.owner_user_id'][1]) ? : [];	//取差集	
+			} else {
+				$auth_user_ids = array_intersect($map['receivables.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集
+			}
 	        unset($map['receivables.owner_user_id']);
 	    }		    
 	    $auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
@@ -451,15 +453,14 @@ class Receivables extends Common
 			
     		$conQuarterMoney += $charMonthArr[$i]['contractMoney'] = $contractMoney;
     		$reQuarterMoney += $charMonthArr[$i]['receivablesMoney'] = $receivablesMoney;
-    		if (in_array($i, array('3','6','9','12'))) {
+    		if (in_array($i, array('3','4','6','9','12'))) {    			
     			//季度
-    			$quarter++;
+    			$quarter++;	
 				$charQuarterArr[$quarter]['conQuarterMoney'] = $conQuarterMoney;
     			$charQuarterArr[$quarter]['reQuarterMoney'] = $reQuarterMoney;    			
     			$conQuarterMoney = '0.00';
     			$reQuarterMoney = '0.00';
     		}
-
     		$contractMoneyTotal += $contractMoney;
     		$receivablesMoneyTotal += $receivablesMoney;
     	}

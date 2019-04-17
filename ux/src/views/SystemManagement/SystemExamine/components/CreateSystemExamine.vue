@@ -510,7 +510,7 @@ export default {
     },
     selectOptionsFocus(item, index) {
       if (this.examineList.length > 1) {
-        var lastItem = this.examineList[index - 1]
+        var lastItem = index > 0 ? this.examineList[index - 1] : null
         var nextItem = null
         if (index < this.examineList.length - 1) {
           var nextItem = this.examineList[index + 1]
@@ -522,7 +522,7 @@ export default {
         // 第一级 不能选上一级主管
 
         // 任一 会签 的下面不能是 上一级
-        if (lastItem.type === 2 || lastItem.type === 3) {
+        if (lastItem && (lastItem.type === 2 || lastItem.type === 3)) {
           removeFour = true
         }
 

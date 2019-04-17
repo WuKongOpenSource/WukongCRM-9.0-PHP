@@ -2,15 +2,15 @@
   <div class="content">
     <div class="select-box">
       <div class="select-group"
-           v-if="!selectAuthority">
+           v-if="selectAuthority">
         <label>发起人</label>
-        <el-select v-model="fromData.name"
+        <el-select v-model="fromData.send_user_id"
                    size="small"
                    @change="selectChange"
                    placeholder="请选择">
           <el-option v-for="item in nameOptions"
                      :key="item.id"
-                     :label="item.username"
+                     :label="item.realname"
                      :value="item.id">
           </el-option>
         </el-select>
@@ -20,6 +20,7 @@
         <el-date-picker @change="selectChange"
                         v-model="fromData.create_time"
                         type="date"
+                        value-format="yyyy-MM-dd"
                         placeholder="选择日期">
         </el-date-picker>
       </div>
@@ -92,9 +93,12 @@ export default {
       this.fromData = {}
     }
   },
+  computed: {
+    selectAuthority() {
+      return this.activeName != 2 // 我发出的日志 的不展示
+    }
+  },
   props: {
-    // 筛选显示的权限
-    selectAuthority: Boolean,
     // 数据
     journalData: Array,
     depOptions: Array,

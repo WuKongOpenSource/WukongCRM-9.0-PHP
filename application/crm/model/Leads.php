@@ -71,8 +71,11 @@ class Leads extends Common
 	    	if (!is_array($map['leads.owner_user_id'][1])) {
 				$map['leads.owner_user_id'][1] = [$map['leads.owner_user_id'][1]];
 			}
-	        //取交集
-	        $auth_user_ids = array_intersect($map['leads.owner_user_id'][1], $auth_user_ids) ? : [];
+			if ($map['leads.owner_user_id'][0] == 'neq') {
+				$auth_user_ids = array_diff($auth_user_ids, $map['leads.owner_user_id'][1]) ? : [];	//取差集	
+			} else {
+				$auth_user_ids = array_intersect($map['leads.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集	
+			}
 	        unset($map['leads.owner_user_id']);
 	    }		    
 	    $auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];

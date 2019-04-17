@@ -67,7 +67,7 @@ export function crmReceivablesRead(data) {
  */
 export function crmReceivablesPlanIndex(data) {
   return request({
-    url: 'crm/receivablesPlan/index',
+    url: 'crm/receivables_plan/index',
     method: 'post',
     data: data
   })

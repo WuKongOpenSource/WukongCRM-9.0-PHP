@@ -81,9 +81,12 @@ class Business extends Common
 			if (isset($map['business.owner_user_id'])) {
 				if (!is_array($map['business.owner_user_id'][1])) {
 					$map['business.owner_user_id'][1] = [$map['business.owner_user_id'][1]];
-				}				
-		        //取交集
-		        $auth_user_ids = array_intersect($map['business.owner_user_id'][1], $auth_user_ids) ? : [];
+				}	
+				if ($map['business.owner_user_id'][0] == 'neq') {
+					$auth_user_ids = array_diff($auth_user_ids, $map['business.owner_user_id'][1]) ? : [];	//取差集	
+				} else {
+					$auth_user_ids = array_intersect($map['business.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集	
+				}
 		        unset($map['business.owner_user_id']);
 		        $auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
 		        $authMap['business.owner_user_id'] = array('in',$auth_user_ids); 
@@ -137,9 +140,18 @@ class Business extends Common
         	}
 			foreach ($structureField as $key => $val) {
         		$list[$k][$val.'_info'] = isset($v[$val]) ? $structureModel->getDataByStr($v[$val]) : [];
-        	}       	
-        	$list[$k]['status_id_info'] = db('crm_business_status')->where('status_id',$v['status_id'])->value('name');//销售阶段
+        	}
+        	$statusInfo = [];
+        	$status_count = 0;
+        	$statusInfo = db('crm_business_status')->where('status_id',$v['status_id'])->find();
+        	if ($statusInfo['order_id'] < 99) {
+				$status_count = db('crm_business_status')->where('type_id',['eq',$v['type_id']],['eq',''],'or')->count();
+        	}
+
+        	$list[$k]['status_id_info'] = $statusInfo['name'];//销售阶段
         	$list[$k]['type_id_info'] = db('crm_business_type')->where('type_id',$v['type_id'])->value('name');//商机状态组 
+        	//进度
+        	$list[$k]['status_progress'] = [$statusInfo['order_id'], $status_count+1];
 			//权限
         	$roPre = $userModel->rwPre($user_id, $v['ro_user_id'], $v['rw_user_id'], 'read');
         	$rwPre = $userModel->rwPre($user_id, $v['ro_user_id'], $v['rw_user_id'], 'update');
@@ -201,8 +213,8 @@ class Business extends Common
 				if ($resProduct == false) {
 		        	$this->error = '产品添加失败';
 		        	return false;
-		        }		        
-		    }
+		        }		       
+ 		    }
 			//添加商机日志
 			$data_log['business_id'] = $business_id;
 			$data_log['is_end'] = 0;

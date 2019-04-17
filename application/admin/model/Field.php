@@ -277,11 +277,13 @@ class Field extends Model
 				$data['setting'] = implode(chr(10), $new_setting);
 				//默认值
 				$new_default_value = [];
-				if ($data['default_value'] && $data['form_type'] == 'checkbox') {
-					foreach ($data['default_value'] as $k => $v) {
-						$new_default_value[] = str_replace(',', '，', $v);
+				if ($data['form_type'] == 'checkbox') {
+					if ($data['default_value']) {
+						foreach ($data['default_value'] as $k => $v) {
+							$new_default_value[] = str_replace(',', '，', $v);
+						}
 					}
-					$data['default_value'] = implode(',', $new_default_value);
+					$data['default_value'] = $new_default_value ? implode(',', $new_default_value) : '';
 				}
 			}
 			// 验证
@@ -388,7 +390,7 @@ class Field extends Model
 					$delMessage[] = $dataInfo['name'].',系统字段，不能删除';	
 				} else {
 					$resDel = $this->where(['field_id' => $id])->delete(); //删除自定义字段信息
-					if ($resDel) {
+					if ($resDel && $dataInfo['types'] !== 'oa_examine') {
 						$this->tableName = $dataInfo['types'];
 						if ($dataInfo['form_type'] == 'img') {
 							//图片类型需删除两个字段
@@ -550,7 +552,7 @@ class Field extends Model
 				$value = [];
 				if (in_array($v['form_type'], ['radio','select','checkbox'])) {
 					$setting = explode(chr(10), $v['setting']);
-					if ($v['form_type'] == 'checkbox') $default_value = explode(',', $v['default_value']);
+					if ($v['form_type'] == 'checkbox') $default_value = $v['default_value'] ? explode(',', $v['default_value']) : [];
 				}
 				//地图类型
 				if ($v['form_type'] == 'map_address') {

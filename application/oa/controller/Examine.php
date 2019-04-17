@@ -92,7 +92,6 @@ class Examine extends ApiCommon
         //流程审批人
         // $flow_user_id = $examineFlowModel->getUserByFlow($examineFlowData['flow_id'], $userInfo['id']); 
         // $param['flow_user_id'] = $flow_user_id ? arrayToString($flow_user_id) : ''; 
-
         $res = $examineModel->createData($param);
         if ($res) {
             $categoryModel = new \app\oa\model\ExamineCategory();

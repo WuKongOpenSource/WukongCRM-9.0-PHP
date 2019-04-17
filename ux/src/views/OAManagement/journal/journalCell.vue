@@ -49,7 +49,6 @@
         </div>
         <div class="rt-setting"
              v-if="!showWorkbench">
-          <span class="dep">{{data.range}}</span>
           <el-dropdown @command="handleCommand"
                        trigger="click">
             <i style="color:#CDCDCD; cursor: pointer;"

@@ -82,8 +82,11 @@ class Contract extends Common
 				if (!is_array($map['contract.owner_user_id'][1])) {
 					$map['contract.owner_user_id'][1] = [$map['contract.owner_user_id'][1]];
 				}				
-		        //取交集
-		        $auth_user_ids = array_intersect($map['contract.owner_user_id'][1], $auth_user_ids) ? : [];
+				if ($map['contract.owner_user_id'][0] == 'neq') {
+					$auth_user_ids = array_diff($auth_user_ids, $map['contract.owner_user_id'][1]) ? : [];	//取差集	
+				} else {
+					$auth_user_ids = array_intersect($map['contract.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集
+				}
 		        unset($map['contract.owner_user_id']);
 		        $auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
 		        $authMap['contract.owner_user_id'] = array('in',$auth_user_ids); 

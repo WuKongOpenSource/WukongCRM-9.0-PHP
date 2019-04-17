@@ -23,7 +23,7 @@ class Customer extends Common
 	protected $autoWriteTimestamp = true;
 
 	protected $type = [
-		'next_time' => 'timestamp',
+		// 'next_time' => 'timestamp',
 	];
 
 	/**
@@ -102,12 +102,15 @@ class Customer extends Common
 			    	if (!is_array($map['customer.owner_user_id'][1])) {
 						$map['customer.owner_user_id'][1] = [$map['customer.owner_user_id'][1]];
 					}
-			        //取交集
-			        $auth_user_ids = array_intersect($map['customer.owner_user_id'][1], $auth_user_ids) ? : [];
+					if ($map['customer.owner_user_id'][0] == 'neq') {
+						$auth_user_ids = array_diff($auth_user_ids, $map['customer.owner_user_id'][1]) ? : [];	//取差集	
+					} else {
+						$auth_user_ids = array_intersect($map['customer.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集	
+					}
 			        unset($map['customer.owner_user_id']);
 					$auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
 				    //负责人、相关团队
-				    $authMap['customer.owner_user_id'] = array('in',$auth_user_ids);        
+				    $authMap['customer.owner_user_id'] = array('in',$auth_user_ids);      
 			    } else {
 					$authMapData = [];
 			    	$authMapData['auth_user_ids'] = $auth_user_ids;
@@ -297,7 +300,6 @@ class Customer extends Common
 		foreach ($arrFieldAtt as $k=>$v) {
 			$param[$v] = arrayToString($param[$v]);
 		}
-
 		if ($this->allowField(true)->save($param, ['customer_id' => $customer_id])) {
 			//修改记录
 			updateActionLog($user_id, 'crm_customer', $customer_id, $dataInfo->data, $param);

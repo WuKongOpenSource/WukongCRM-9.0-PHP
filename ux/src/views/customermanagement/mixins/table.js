@@ -90,7 +90,7 @@ export default {
       if (this.isSeas) {
         this.getFieldList()
       } else {
-        this.getSceneList()
+        this.loading = true
       }
     }
   },
@@ -130,26 +130,6 @@ export default {
           this.loading = false
         })
     },
-    // 获取场景信息
-    getSceneList() {
-      this.loading = true
-      crmSceneIndex({
-          types: 'crm_' + this.crmType
-        })
-        .then(res => {
-          var defaultScene = res.data.list.filter(function (item, index) {
-            return item.is_default === 1
-          })
-          if (defaultScene && defaultScene.length > 0) {
-            this.scene_id = defaultScene[0].scene_id
-            this.scene_name = defaultScene[0].name
-          }
-          this.getFieldList()
-        })
-        .catch(() => {
-          this.loading = false
-        })
-    },
     /** 获取列表请求 */
     getIndexRequest() {
       if (this.crmType === 'leads') {
@@ -174,125 +154,130 @@ export default {
     },
     /** 获取字段 */
     getFieldList() {
-      this.fieldList = []
-      this.loading = true
-      var params = {
-        types: 'crm_' + this.crmType,
-        module: 'crm',
-        action: this.isSeas ? 'pool' : 'index'
-      }
-      params.controller = this.crmType
+      if (this.fieldList.length == 0) {
+        this.loading = true
+        var params = {
+          types: 'crm_' + this.crmType,
+          module: 'crm',
+          action: this.isSeas ? 'pool' : 'index'
+        }
+        params.controller = this.crmType
 
-      filedGetField(params)
-        .then(res => {
-          for (let index = 0; index < res.data.length; index++) {
-            const element = res.data[index]
-            /** 获取需要格式化的字段 和格式化的规则 */
-            if (element.form_type === 'date') {
-              function fieldFormatter(time) {
-                if (time == '0000-00-00') {
-                  time = ''
-                }
-                return time
-              }
-              this.formatterRules[element.field] = {
-                formatter: fieldFormatter
-              }
-            } else if (element.form_type === 'datetime') {
-              function fieldFormatter(time) {
-                if (time == 0 || !time) {
-                  return ""
-                }
-                return moment(getDateFromTimestamp(time)).format(
-                  "YYYY-MM-DD HH:mm:ss"
-                )
-              }
-              this.formatterRules[element.field] = {
-                formatter: fieldFormatter
-              }
-            } else if (element.field === 'create_user_id' || element.field === 'owner_user_id') {
-              function fieldFormatter(info) {
-                return info ? info.realname : ''
-              }
-              this.formatterRules[element.field] = {
-                type: 'crm',
-                formatter: fieldFormatter
-              }
-            } else if (element.form_type === 'user') {
-              function fieldFormatter(info) {
-                if (info) {
-                  var content = ''
-                  for (let index = 0; index < info.length; index++) {
-                    const element = info[index]
-                    content = content + element.realname + (index === (info.length - 1) ? '' : ',')
+        filedGetField(params)
+          .then(res => {
+            for (let index = 0; index < res.data.length; index++) {
+              const element = res.data[index]
+              /** 获取需要格式化的字段 和格式化的规则 */
+              if (element.form_type === 'date') {
+                function fieldFormatter(time) {
+                  if (time == '0000-00-00') {
+                    time = ''
                   }
-                  return content
+                  return time
                 }
-                return ''
-              }
-              this.formatterRules[element.field] = {
-                type: 'crm',
-                formatter: fieldFormatter
-              }
-            } else if (element.form_type === 'structure') {
-              function fieldFormatter(info) {
-                if (info) {
-                  var content = ''
-                  for (let index = 0; index < info.length; index++) {
-                    const element = info[index]
-                    content = content + element.name + (index === (info.length - 1) ? '' : ',')
+                this.formatterRules[element.field] = {
+                  formatter: fieldFormatter
+                }
+              } else if (element.form_type === 'datetime') {
+                function fieldFormatter(time) {
+                  if (time == 0 || !time) {
+                    return ""
                   }
-                  return content
+                  return moment(getDateFromTimestamp(time)).format(
+                    "YYYY-MM-DD HH:mm:ss"
+                  )
                 }
-                return ''
+                this.formatterRules[element.field] = {
+                  formatter: fieldFormatter
+                }
+              } else if (element.field === 'create_user_id' || element.field === 'owner_user_id') {
+                function fieldFormatter(info) {
+                  return info ? info.realname : ''
+                }
+                this.formatterRules[element.field] = {
+                  type: 'crm',
+                  formatter: fieldFormatter
+                }
+              } else if (element.form_type === 'user') {
+                function fieldFormatter(info) {
+                  if (info) {
+                    var content = ''
+                    for (let index = 0; index < info.length; index++) {
+                      const element = info[index]
+                      content = content + element.realname + (index === (info.length - 1) ? '' : ',')
+                    }
+                    return content
+                  }
+                  return ''
+                }
+                this.formatterRules[element.field] = {
+                  type: 'crm',
+                  formatter: fieldFormatter
+                }
+              } else if (element.form_type === 'structure') {
+                function fieldFormatter(info) {
+                  if (info) {
+                    var content = ''
+                    for (let index = 0; index < info.length; index++) {
+                      const element = info[index]
+                      content = content + element.name + (index === (info.length - 1) ? '' : ',')
+                    }
+                    return content
+                  }
+                  return ''
+                }
+                this.formatterRules[element.field] = {
+                  type: 'crm',
+                  formatter: fieldFormatter
+                }
+                /** 联系人 客户 商机 合同*/
+              } else if (element.field === 'contacts_id' || element.field === 'customer_id' || element.field === 'business_id' || element.field === 'contract_id') {
+                function fieldFormatter(info) {
+                  return info ? info.name : ''
+                }
+                this.formatterRules[element.field] = {
+                  type: 'crm',
+                  formatter: fieldFormatter
+                }
+              } else if (element.field === 'status_id' || element.field === 'type_id' || element.field === 'category_id') {
+                function fieldFormatter(info) {
+                  return info ? info : ''
+                }
+                this.formatterRules[element.field] = {
+                  type: 'crm',
+                  formatter: fieldFormatter
+                }
               }
-              this.formatterRules[element.field] = {
-                type: 'crm',
-                formatter: fieldFormatter
-              }
-              /** 联系人 客户 商机 合同*/
-            } else if (element.field === 'contacts_id' || element.field === 'customer_id' || element.field === 'business_id' || element.field === 'contract_id') {
-              function fieldFormatter(info) {
-                return info ? info.name : ''
-              }
-              this.formatterRules[element.field] = {
-                type: 'crm',
-                formatter: fieldFormatter
-              }
-            } else if (element.field === 'status_id' || element.field === 'type_id' || element.field === 'category_id') {
-              function fieldFormatter(info) {
-                return info ? info : ''
-              }
-              this.formatterRules[element.field] = {
-                type: 'crm',
-                formatter: fieldFormatter
-              }
-            }
 
-            var width = 0
-            if (!element.width) {
-              if (element.name && element.name.length <= 6) {
-                width = element.name.length * 15 + 45
+              var width = 0
+              if (!element.width) {
+                if (element.name && element.name.length <= 6) {
+                  width = element.name.length * 15 + 45
+                } else {
+                  width = 140
+                }
               } else {
-                width = 140
+                width = element.width
               }
-            } else {
-              width = element.width
+
+              this.fieldList.push({
+                prop: element.field,
+                label: element.name,
+                width: width
+              })
             }
 
-            this.fieldList.push({
-              prop: element.field,
-              label: element.name,
-              width: width
-            })
-          }
+            // 获取好字段开始请求数据
+            this.getList()
+          })
+          .catch(() => {
+            this.loading = false
+          })
+      } else {
+        // 获取好字段开始请求数据
+        this.getList()
+      }
 
-          // 获取好字段开始请求数据
-          this.getList()
-        })
-        .catch(() => {
-          this.loading = false
-        })
     },
     /** 格式化字段 */
     fieldFormatter(row, column) {
@@ -398,7 +383,8 @@ export default {
     handleScene(data) {
       this.scene_id = data.id
       this.scene_name = data.name
-      this.getList()
+      this.currentPage = 1
+      this.getFieldList()
     },
     /** 勾选操作 */
     handleHandle(data) {
@@ -409,6 +395,7 @@ export default {
     },
     /** 自定义字段管理 */
     setSave() {
+      this.fieldList = []
       this.getFieldList()
     },
     /** */

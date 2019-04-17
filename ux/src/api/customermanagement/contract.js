@@ -51,7 +51,7 @@ export function crmContractRead(data) {
  */
 export function crmReceivablesPlanSave(data) {
   return request({
-    url: 'crm/receivablesPlan/save',
+    url: 'crm/receivables_plan/save',
     method: 'post',
     data: data
   })

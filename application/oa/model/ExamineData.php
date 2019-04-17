@@ -37,6 +37,13 @@ class ExamineData extends Common
 		$unField = ['content','remark','start_time','end_time','duration','cause','money','category_id','check_user_id','check_status','flow_id','order_id','create_user_id'];
 		$data = [];
 		foreach ($fieldList as $k=>$v) {
+			$field_arr = [];
+			if (is_array($param[$v['field']])) {
+				foreach ($param[$v['field']] as $key=>$val) {
+					$field_arr[] = str_replace(',', '，', $val);
+				}
+				$param[$v['field']] = $field_arr ? ','.implode(',',$field_arr).',' : '';
+			}
 			if (!in_array($v['field'], $unField)) {
 				$data[$k]['examine_id'] = $examine_id;
 				$data[$k]['field'] = $v['field'];

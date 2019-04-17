@@ -59,7 +59,7 @@ class Scene extends Common
 				$defaultData = [];
 				$defaultData['types'] = $types;
 				$defaultData['user_id'] = $user_id;
-				$this->defaultDataById($defaultData, $res->scene_id);
+				$this->defaultDataById($defaultData, $this->scene_id);
 			}			
 			return true;
 		} else {
@@ -130,27 +130,32 @@ class Scene extends Common
 	 * @param  array   $param  [description]
 	 * @author Michael_xu
 	 */ 
-	public function getDataById($id = '', $user_id, $types)
+	public function getDataById($id = '', $user_id, $types = '')
 	{
 		$where = [];
 		$where['scene_id'] = $id;
 		$where['user_id'] = [['=',$user_id],['=',0],'or'];
 		$data = db('admin_scene')->where($where)->find();
+		if (!$types) {
+			$types = $data['types'] ? : '';
+		}
 		//处理data
-		if ($data['bydata']) {
+		if ($data['bydata'] && $types) {
 			$data = $this->getByData($types, $data['bydata'], $user_id);
 		} else {
 			$data = json_decode($data['data'],true);
-			foreach ($data as $k=>$v) {
-				if ($v['form_type'] == 'business_type') {
-					$v['value'] = $v['type_id'];
-					if ($v['status_id']) {
-						$v['value'] = $v['status_id'];
-						$data['status_id'] = $v;
+			if (is_array($data)) {
+				foreach ($data as $k=>$v) {
+					if ($v['form_type'] == 'business_type') {
+						$v['value'] = $v['type_id'];
+						if ($v['status_id']) {
+							$v['value'] = $v['status_id'];
+							$data['status_id'] = $v;
+						}
 					}
-				}
-			}	
-		}	
+				}	
+			}
+		}
 		return $data ? : [];		
 	}   
 

@@ -16,8 +16,6 @@
                         crm-type="customer"
                         :isSeas="isSeas"
                         @filter="handleFilter"
-                        :scene_id="scene_id"
-                        :scene_name="scene_name"
                         @handle="handleHandle"
                         @scene="handleScene"></c-r-m-table-head>
       <el-table class="n-table--border"

@@ -39,7 +39,8 @@ class Log extends ApiCommon
         $checkAction = ['update','delete'];
         if (in_array($a, $checkAction) && $param['log_id']) {
             $det = Db::name('OaLog')->where('log_id = '.$param['log_id'])->find();
-            if ($det['create_user_id'] != $userInfo['id']) {
+            $auth_user_ids = getSubUserId();
+            if (($det['create_user_id'] != $userInfo['id']) && in_array($v['create_user_id'],$auth_user_ids)) {
                 header('Content-Type:application/json; charset=utf-8');
                 exit(json_encode(['code'=>102,'error'=>'无权操作']));
             }

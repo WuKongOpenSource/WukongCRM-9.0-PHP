@@ -129,6 +129,9 @@ class Log extends Common
 				$is_update = 1;
 				$is_delete = 1;			
 			}
+			if (in_array($v['create_user_id'],$auth_user_ids)) {
+				$is_delete = 1;
+			}
 			$permission['is_update'] = $is_update;
 			$permission['is_delete'] = $is_delete;
 			$list[$k]['permission']  = $permission;
@@ -314,9 +317,14 @@ class Log extends Common
      * @return 
      */	
    	public function getDataById($id = '')
-   	{   		
+   	{   
+		$fileModel = new \app\admin\model\File();
+		$userModel = new \app\admin\model\User();
+		$structureModel = new \app\admin\model\Structure();	
+		$commonModel = new \app\admin\model\Comment();
+
    		$map['log.log_id'] = $id;
-		$data_view = $this
+		$data_view = db('oa_log')
 					 ->where($map)
 				     ->alias('log')
 				     ->join('__ADMIN_USER__ user', 'user.id = log.create_user_id', 'LEFT');
@@ -325,17 +333,39 @@ class Log extends Common
 			$this->error = '暂无此数据';
 			return false;
 		}
-		$dataInfo['thumb_img'] = $dataInfo['thumb_img'] ? getFullPath($dataInfo['thumb_img']) : '';
 		
 		$relation = Db::name('OaLogRelation')->where('log_id ='.$id)->find();
 		$BusinessModel = new \app\crm\model\Business();
-		$dataInfo['BusinessList'] = $relation['business_ids'] ? $BusinessModel->getDataByStr($relation['business_ids']) : []; //商机
+		$dataInfo['businessList'] = $relation['business_ids'] ? $BusinessModel->getDataByStr($relation['business_ids']) : []; //商机
 		$ContactsModel = new \app\crm\model\Contacts();
-		$dataInfo['ContactsList'] = $relation['contacts_ids'] ? $ContactsModel->getDataByStr($relation['contacts_ids']) : []; //联系人
+		$dataInfo['contactsList'] = $relation['contacts_ids'] ? $ContactsModel->getDataByStr($relation['contacts_ids']) : []; //联系人
 		$ContractModel = new \app\crm\model\Contract();
-		$dataInfo['ContractList'] = $relation['contract_ids'] ? $ContractModel->getDataByStr($relation['contract_ids']) : []; //合同
+		$dataInfo['contractList'] = $relation['contract_ids'] ? $ContractModel->getDataByStr($relation['contract_ids']) : []; //合同
 		$CustomerModel = new \app\crm\model\Customer();
-		$dataInfo['CustomerList'] = $relation['customer_ids'] ? $CustomerModel->getDataByStr($relation['customer_ids']) : []; //客户
+		$dataInfo['customerList'] = $relation['customer_ids'] ? $CustomerModel->getDataByStr($relation['customer_ids']) : []; //客户
+
+		$dataInfo['create_user_info']['realname'] = $dataInfo['realname'] ? : '';
+		$dataInfo['create_user_info']['id'] = $dataInfo['create_user_id'] ? : '';
+		$dataInfo['create_user_info']['thumb_img'] = $dataInfo['thumb_img'] ? getFullPath($dataInfo['thumb_img']) : '';
+		//附件、图片
+		$where['module'] = 'oa_log';
+		$where['module_id'] = $id;
+		$newFileList = $fileModel->getDataList($where);
+		foreach ($newFileList['list'] as $val) {
+			if ($val['types'] == 'file') {
+				$fileList[] = $val;
+			} else {
+				$imgList[] = $val;
+			}
+		}
+		$dataInfo['fileList'] = $fileList ? : [];
+		$dataInfo['imgList'] = $imgList ? : [];	
+		$dataInfo['sendUserList'] = $userModel->getDataByStr($dataInfo['send_user_ids']) ? : [];
+		$dataInfo['sendStructList'] = $structureModel->getDataByStr($dataInfo['send_structure_ids']) ? : [];
+		$param['type_id'] = $id;
+		$param['type'] = 'oa_log';
+		$dataInfo['replyList'] = $commonModel->read($param);
+
 		return $dataInfo;
    	}
 	
@@ -347,7 +377,7 @@ class Log extends Common
 	public function delDataById($param)
 	{
 		$map['log_id'] = $param['log_id'];
-		$dataInfo = $this->getDataById($map['log_id']);
+		$dataInfo = $this->get($map['log_id']);
 		if (!$dataInfo) {
 			$this->error = '数据不存在或已删除';
 			return false;

@@ -145,6 +145,7 @@ export default {
         request(params)
           .then(res => {
             loading.close()
+            this.$message.success(res.data)
             this.closeView()
           })
           .catch(() => {

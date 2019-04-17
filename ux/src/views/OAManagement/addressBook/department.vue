@@ -24,10 +24,10 @@
                      alt="">
                 <span>{{k.post}}</span>
               </div>
-              <div v-if="k.mobile">
+              <div v-if="k.username">
                 <img src="@/assets/img/mobile.png"
                      alt="">
-                <span>{{k.mobile}}</span>
+                <span>{{k.username}}</span>
               </div>
             </div>
           </div>

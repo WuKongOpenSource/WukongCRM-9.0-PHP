@@ -81,8 +81,11 @@ class User extends Common
 			$map['user.structure_id'] = ['in',$new_str_ids]; //$map['structure_id'];
 		}
 		unset($map['structure_id']);
-
-		$map['user.status'] = ($map['status'] !== 'all') ? ($map['status'] ? : ['gt',0]) : ['egt',0];
+		if ($map['status']) {
+			$map['user.status'] = ($map['status'] !== 'all') ? ($map['status'] ? : ['gt',0]) : ['egt',0];
+		} else {
+			$map['user.status'] = 0;
+		}
 		unset($map['status']);
 		$map['user.type'] = 1;
 		if(isset($map['type'])) $map['user.type'] == ($map['type'] == '0') ? 0 : 1;
@@ -361,7 +364,7 @@ class User extends Common
 	 * @param     Boolean                    $type       [是否重复登录]
 	 * @return    [type]                               [description]
 	 */
-	public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false)
+	public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false, $authKey)
 	{
         if (!$username) {
 			$this->error = '帐号不能为空';
@@ -420,7 +423,10 @@ class User extends Common
         $authKey = user_md5($userInfo['username'].$userInfo['password'].$info['sessionId'], $userInfo['salt']);
        // $info['_AUTH_LIST_'] = $dataList['rulesList'];
         $info['authKey'] = $authKey;
-    	cache('Auth_'.$userInfo['authkey'], NULL);
+        //手机登录
+        if (!$type) {
+        	cache('Auth_'.$userInfo['authkey'], NULL);
+        }
         unset($userInfo['authkey']);
 		cache('Auth_'.$authKey, $info, $loginExpire);
         // 返回信息

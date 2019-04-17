@@ -187,7 +187,7 @@ import {
   roleAdd,
   roleDelete,
   roleCopy,
-  usersEdit,
+  roleUpdate,
   usersDelete
 } from '@/api/systemManagement/RoleAuthorization'
 
@@ -486,7 +486,7 @@ export default {
             this.newRoleClose()
           })
         } else {
-          roleCopy(this.role).then(res => {
+          roleUpdate(this.role).then(res => {
             this.getRoleList()
             this.$message.success('编辑成功')
             this.newRoleClose()
@@ -638,7 +638,7 @@ export default {
 
       this.jurisdictionLoading = true
 
-      roleCopy({
+      roleUpdate({
         rules: this.roleRulesEdit['crm_upload'].concat(
           this.roleRulesEdit['bi_upload']
         ),

@@ -53,11 +53,6 @@ export default {
     crmType: {
       type: String,
       default: ''
-    },
-    /** 与父容器关联的数据源 */
-    sceneID: {
-      type: [String, Number],
-      default: ''
     }
   },
   mounted() {
@@ -71,10 +66,25 @@ export default {
         types: 'crm_' + this.crmType
       })
         .then(res => {
+          let defaultScene = res.data.list.filter(function(item, index) {
+            return item.is_default === 1
+          })
+
+          if (defaultScene && defaultScene.length > 0) {
+            this.scene_id = defaultScene[0].scene_id
+            this.scene_name = defaultScene[0].name
+            this.sceneSelectId = this.scene_id
+            this.$emit('scene', { id: this.scene_id, name: this.scene_name })
+          } else {
+            this.sceneSelectId = ''
+            this.$emit('scene', { id: '', name: '' })
+          }
+
           this.sceneList = res.data.list
-          this.sceneSelectId = this.sceneID
         })
-        .catch(() => {})
+        .catch(() => {
+          this.$emit('scene', { id: '', name: '' })
+        })
     },
 
     // 选择场景、

@@ -9,15 +9,14 @@
                    :name="item.key"
                    v-for="(item, index) in tabsData"
                    :key="index">
-        <v-content v-loading="contentLoading"
-                   id="journal-list-box"
+        <v-content id="journal-list-box"
+                   :ref="'log-list' + item.key"
                    :activeName="activeName"
                    :journalData="journalData"
-                   :selectAuthority="selectAuthority"
                    :depOptions="depOptions"
                    :nameOptions="nameOptions"
                    :journalLoading="journalLoading"
-                   @selectChange="selectChange"
+                   @selectChange="refreshLogList"
                    @editBtn="editBtn">
           <p class="load"
              slot="load">
@@ -42,6 +41,8 @@
 <script>
 import VContent from './content'
 import newDialog from './newDialog'
+import { objDeepCopy } from '@/utils'
+
 // API
 import {
   journalList,
@@ -64,7 +65,6 @@ export default {
         { label: '我收到的', key: '3' },
         { label: '未读', key: '4' }
       ],
-      selectAuthority: false,
       // 日志数据
       journalData: [],
       // 显示新建页面
@@ -83,7 +83,6 @@ export default {
       imgFileList: [],
       // 附件数组
       accessoryFileList: [],
-      contentLoading: true,
       nameOptions: [],
       depOptions: [],
       // 列表加loading
@@ -91,6 +90,13 @@ export default {
       newLoading: false,
       // 列表容器
       listBoxDom: null
+    }
+  },
+  computed: {
+    byData() {
+      return { '1': '', '2': 'me', '3': 'other', '4': 'notRead' }[
+        this.activeName
+      ]
     }
   },
   watch: {
@@ -123,8 +129,9 @@ export default {
     }
     next()
   },
-  created() {
-    this.dataList(this.pageNum)
+  mounted() {
+    this.initControlPage()
+    this.getLogList()
     if (this.$route.query.routerKey == 1) {
       this.newBtn()
     }
@@ -137,40 +144,48 @@ export default {
       this.nameOptions = res.data
     })
   },
-  mounted() {
-    // 分批次加载
-    let _this = this
-    for (let item of document.getElementsByClassName('list-box')) {
-      item.onscroll = function(e) {
-        if (e && e.target.id == 'list-box' + _this.activeName) {
-          _this.$bus.emit('journal-list-box-scroll', e.target)
-          let doms = item
-          var scrollTop = doms.scrollTop
-          var windowHeight = doms.clientHeight
-          var scrollHeight = doms.scrollHeight //滚动条到底部的条件
-          if (scrollTop + windowHeight == scrollHeight) {
-            _this.loadMoreLoading = true
-            if (_this.isPost) {
-              _this.pageNum++
-              _this.dataList(_this.pageNum)
-            } else {
-              _this.loadMoreLoading = false
+  methods: {
+    initControlPage() {
+      // 分批次加载
+      let _this = this
+      for (let item of document.getElementsByClassName('list-box')) {
+        item.onscroll = function(e) {
+          if (e && e.target.id == 'list-box' + _this.activeName) {
+            _this.$bus.emit('journal-list-box-scroll', e.target)
+            let doms = item
+            var scrollTop = doms.scrollTop
+            var windowHeight = doms.clientHeight
+            var scrollHeight = doms.scrollHeight //滚动条到底部的条件
+            if (scrollTop + windowHeight == scrollHeight) {
+              _this.loadMoreLoading = true
+              if (_this.isPost) {
+                _this.pageNum++
+                _this.getLogList()
+              } else {
+                _this.loadMoreLoading = false
+              }
             }
           }
         }
       }
-    }
-  },
-  methods: {
+    },
     // 数据
-    dataList(page) {
-      journalList({
-        page: page,
-        limit: 15,
-        search: ''
-      })
+    getLogList() {
+      let params = objDeepCopy(
+        this.$refs['log-list' + this.activeName][0].fromData
+      )
+      if (params.create_time) {
+        params.create_time = new Date(params.create_time).getTime() / 1000
+      } else {
+        params.create_time = ''
+      }
+      params.page = this.pageNum
+      params.limit = 15
+      params.by = this.byData
+      this.journalLoading = true
+      journalList(params)
         .then(res => {
-          this.contentLoading = false
+          this.journalLoading = false
           if (res.data.list.length == 0 || res.data.list.length != 15) {
             this.loadText = '没有更多了'
             this.isPost = false
@@ -188,23 +203,7 @@ export default {
           this.loadMoreLoading = false
         })
         .catch(err => {
-          this.contentLoading = false
-        })
-    },
-    dataAPI(key) {
-      // 请求列表
-      journalList({
-        page: 1,
-        limit: 15,
-        by: this.byData
-      })
-        .then(res => {
-          this.journalData = res.data.list
-          this.contentLoading = false
-          this.createInitAwaitMessage()
-        })
-        .catch(err => {
-          this.contentLoading = false
+          this.journalLoading = false
         })
     },
     createInitAwaitMessage() {
@@ -231,34 +230,20 @@ export default {
       this.accessoryFileList = []
     },
     tabClick(val) {
-      this.journalData = []
-      this.contentLoading = true
       this.listBoxDom = null
-      let byData = ''
-      switch (this.activeName) {
-        case '1':
-          this.selectAuthority = false
-          this.byData = ''
-          break
-        case '2':
-          this.selectAuthority = true
-          this.byData = 'me'
-          break
-        case '3':
-          this.selectAuthority = false
-          this.byData = 'other'
-          break
-        case '4':
-          this.selectAuthority = false
-          this.byData = 'notRead'
-          break
-      }
-      this.dataAPI()
+      this.refreshLogList()
+    },
+    // 刷新列表
+    refreshLogList() {
+      this.pageNum = 1
+      this.journalData = []
+      this.getLogList()
     },
     // 关闭新建页面
     newClose() {
       if (this.$route.query.routerKey == 1) {
-        this.$router.push('journal')
+        this.showNewDialog = false
+        this.$router.go(-1)
       } else {
         this.showNewDialog = false
       }
@@ -326,16 +311,7 @@ export default {
         }
         journalAdd(pramas)
           .then(res => {
-            journalList({
-              page: 1,
-              limit: 15,
-              search: ''
-            }).then(res => {
-              for (let item of res.data.list) {
-                item.showComment = false
-              }
-              this.journalData = res.data.list
-            })
+            this.refreshLogList()
             this.newLoading = false
             this.$message.success('新建成功')
             this.newClose()
@@ -362,7 +338,6 @@ export default {
         }
         journalEdit(pramas)
           .then(res => {
-            this.dataAPI('edit')
             this.newClose()
             this.$message.success('编辑成功')
             this.newLoading = false
@@ -396,25 +371,6 @@ export default {
       this.formData.depData = val.sendStructList ? val.sendStructList : []
       this.formData.sentWhoList = val.sendUserList ? val.sendUserList : []
       this.showNewDialog = true
-    },
-    selectChange(val) {
-      this.journalLoading = true
-      journalList({
-        send_user_id: val.name,
-        category_id: val.category_id,
-        create_time: new Date(val.create_time).getTime() / 1000
-      })
-        .then(res => {
-          this.contentLoading = false
-          this.journalData = res.data.list
-          if (res.data.list.length == 0) {
-            this.loadText = '没有更多了'
-          }
-          this.journalLoading = false
-        })
-        .catch(err => {
-          this.journalLoading = false
-        })
     }
   }
 }

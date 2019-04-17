@@ -22,7 +22,8 @@ class Base extends Common
         $password = $param['password'];
         $verifyCode = !empty($param['verifyCode'])? $param['verifyCode']: '';
         $isRemember = !empty($param['isRemember'])? $param['isRemember']: '';
-        $data = $userModel->login($username, $password, $verifyCode, $isRemember);
+        $type = $param['type'] ? : '';
+        $data = $userModel->login($username, $password, $verifyCode, $isRemember, $type, $authKey);
         
         Session::set('user_id', $data['userInfo']['id']);
         if (!$data) {

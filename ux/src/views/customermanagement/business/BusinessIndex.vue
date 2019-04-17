@@ -14,8 +14,6 @@
       <c-r-m-table-head ref="crmTableHead"
                         :crm-type="crmType"
                         @filter="handleFilter"
-                        :scene_id="scene_id"
-                        :scene_name="scene_name"
                         @handle="handleHandle"
                         @scene="handleScene"></c-r-m-table-head>
       <el-table class="n-table--border"

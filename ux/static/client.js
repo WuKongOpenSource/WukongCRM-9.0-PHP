@@ -55,6 +55,6 @@
   }
 
   if (Sys.appName === 'IE' && Number(Sys.version) < 10) {
-    window.location.href = '/static/index.html'
+    window.location.href = './static/index.html'
   }
 })();

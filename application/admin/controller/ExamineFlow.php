@@ -274,7 +274,7 @@ class ExamineFlow extends ApiCommon
         $examine_user_ids = getSubUserId(true, 1);
         $where = [];
         $where['user.id'] = array('in',$examine_user_ids);
-        $where['user.status'] = ['gt',0];
+        $where['status'] = ['gt',0];
         $where['pageType'] = 'all';
         $userList = $userModel->getDataList($where);
         return resultArray(['data' => $userList['list']]);

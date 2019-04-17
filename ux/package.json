@@ -29,7 +29,7 @@
     "v-distpicker": "^1.0.21",
     "vue": "2.5.17",
     "vue-bus": "^1.1.0",
-    "vue-calendar-component": "^2.7.4",
+    "vue-calendar-component": "^2.8.2",
     "vue-cropper": "^0.4.8",
     "vue-i18n": "^8.7.0",
     "vue-moment": "^4.0.0",

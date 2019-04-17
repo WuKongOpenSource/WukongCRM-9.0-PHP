@@ -79,9 +79,9 @@ export default {
   },
   methods: {
     // 点击哪一天
-    clickDay(data) {
+    clickDay(date) {
       this.loading = true
-      scheduleListAPI({ start_time: new Date(data).getTime() / 1000 })
+      scheduleListAPI({ start_time: Date.parse(date) / 1000 })
         .then(res => {
           this.scheduleList = res.data
           for (let item of document.getElementsByClassName('wh_item_date')) {

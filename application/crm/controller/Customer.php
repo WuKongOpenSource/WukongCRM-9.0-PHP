@@ -293,8 +293,8 @@ class Customer extends ApiCommon
             if (!$resCustomer) {
                 $errorMessage[] = $customerInfo['name'].'转移失败，错误原因：数据出错；';
                 continue;
-            }            
-
+            } 
+            
             if (in_array('crm_contacts',$types)) {
                 $contactsIds = [];
                 $contactsIds = db('crm_contacts')->where(['customer_id' => $customer_id])->column('contacts_id');
@@ -416,13 +416,13 @@ class Customer extends ApiCommon
         $param = $this->param;
         $userInfo = $this->userInfo;
         $customerModel = model('Customer');
-        $is_lock = $param['is_lock'] == 2 ? : 1;
-        $lock_name = $is_lock == 2 ? '解锁' : '锁定';
+        $is_lock = ((int)$param['is_lock'] == 2) ? (int)$param['is_lock'] : 1;
+        $lock_name = ($is_lock == 2) ? '解锁' : '锁定';
         if (!$param['customer_id'] || !is_array($param['customer_id'])) {
             return resultArray(['error' => '请选择需要'.$lock_name.'的客户']); 
         }
         $data = [];
-        $data['is_lock'] = $is_lock == 1 ? : 0;
+        $data['is_lock'] = ($is_lock == 1) ? $is_lock : 0;
         $data['update_time'] = time();        
         $errorMessage = [];
         foreach ($param['customer_id'] as $customer_id) {
@@ -434,12 +434,12 @@ class Customer extends ApiCommon
             }
             //权限判断
             if (!$customerModel->checkData($customer_id, $userInfo['id'])) {
-                $errorMessage[] = '"'.$customerInfo['name'].'"'.$lock_name.'失败，错误原因：无权限';
+                $errorMessage[] = $customerInfo['name'].$lock_name.'失败，错误原因：无权限';
                 continue;
             }
             $resCustomer = db('crm_customer')->where(['customer_id' => $customer_id])->update($data);
             if (!$resCustomer) {
-                $errorMessage[] = '"'.$customerInfo['name'].'"'.$lock_name.'失败，错误原因：数据出错；';
+                $errorMessage[] = $customerInfo['name'].$lock_name.'失败，错误原因：数据出错；';
             }
             //修改记录
             updateActionLog($userInfo['id'], 'crm_customer', $customer_id, '', '', '将客户'.$lock_name);

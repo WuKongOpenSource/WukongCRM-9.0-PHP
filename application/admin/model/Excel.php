@@ -210,7 +210,7 @@ class Excel extends Common
 				$this->error = '参数错误！';
             	return false;				
 			}
-			$info = $file->validate(['size'=>$get_filesize_byte,'ext'=>'xls,xlsx,csv'])->move(ROOT_PATH . 'public' . DS . 'uploads'); //验证规则
+			$info = $file->validate(['size'=>$get_filesize_byte,'ext'=>'xls,xlsx,csv'])->move(FILE_PATH . 'public' . DS . 'uploads'); //验证规则
 			if (!$info) {
 				$this->error = $file->getError();
             	return false;				
@@ -221,7 +221,7 @@ class Excel extends Common
 				$this->error = '文件上传失败，请重试！';
             	return false;
 			}
-			$savePath = ROOT_PATH . 'public' . DS . 'uploads'. DS . $saveName;
+			$savePath = FILE_PATH . 'public' . DS . 'uploads'. DS . $saveName;
             // require THINK_PATH.'vendor/PHPExcel/PHPExcelExcelToArrary.php';//导入excelToArray类
             // $ExcelToArrary = new ExcelToArrary();//实例化
             // //对上传的Excel数据进行处理生成编程数据,再进行数据库写入

@@ -13,6 +13,7 @@
           <my-task v-loading="loading"
                    :list="listData"
                    :listType="item.key"
+                   :ref="item.key"
                    :subUserListData="subUserListData"
                    :loadMoreLoading="loadMoreLoading"
                    @selectChange="selectChange">
@@ -131,7 +132,7 @@ export default {
         .catch(() => {})
     },
     handleClick() {
-      this.activePramas = { priority: 'all' }
+      this.activePramas = this.$refs[this.activeName][0].fromData
       this.refreshList()
     },
     newBtn() {

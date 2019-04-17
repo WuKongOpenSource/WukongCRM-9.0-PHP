@@ -42,7 +42,7 @@ class Product extends Common
 		unset($request['search']);
 		unset($request['user_id']);    	
 
-        $request = $this->fmtRequest( $request );
+        $request = $this->fmtRequest($request);
         $requestMap = $request['map'] ? : [];
 
 		$sceneModel = new \app\admin\model\Scene();
@@ -61,6 +61,10 @@ class Product extends Common
 		$map = $requestMap ? array_merge($sceneMap, $requestMap) : $sceneMap;
 		//高级筛选
 		$map = where_arr($map, 'crm', 'product', 'index');
+		if (isset($map['product.category_id'])) {
+			$map['product_category.name'] = $map['product.category_id'];
+			unset($map['product.category_id']);
+		}
 		//列表展示字段
 		// $indexField = $fieldModel->getIndexField('crm_product', $user_id) ? : ['name'];
 		$userField = $fieldModel->getFieldByFormType('crm_product', 'user'); //人员类型
@@ -97,7 +101,7 @@ class Product extends Common
         		$list[$k][$val.'_info'] = isset($v[$val]) ? $structureModel->getDataByStr($v[$val]) : [];
         	}
         	//产品类型
-        	$list[$k]['category_id_info'] = db('crm_product_category')->where(['category_id' => $v['category_id']])->value('name');    		
+        	$list[$k]['category_id_info'] = db('crm_product_category')->where(['category_id' => $v['category_id']])->value('name');
         }    
         $data = [];
         $data['list'] = $list;

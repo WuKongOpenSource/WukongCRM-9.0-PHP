@@ -90,6 +90,7 @@
               </el-select>
               <xh-user-cell v-else-if="formItem.form_type === 'user'"
                             :item="formItem"
+                            :infoParams="{m	:'crm',c: crmType,a: 'index' }"
                             :value="formItem.value"
                             @value-change="userValueChange"></xh-user-cell>
               <el-input v-else
@@ -328,6 +329,13 @@ export default {
           { value: 'egt', label: '大于等于', disabled: false },
           { value: 'lt', label: '小于', disabled: false },
           { value: 'elt', label: '小于等于', disabled: false }
+        ]
+      } else if (form_type == 'category') {
+        return [
+          { value: 'is', label: '等于', disabled: false },
+          { value: 'isnot', label: '不等于', disabled: false },
+          { value: 'contains', label: '包含', disabled: false },
+          { value: 'not_contain', label: '不包含', disabled: false }
         ]
       } else {
         return [

@@ -67,10 +67,12 @@ class Contacts extends Common
 		if (isset($map['contacts.owner_user_id'])) {
 			if (!is_array($map['contacts.owner_user_id'][1])) {
 				$map['contacts.owner_user_id'][1] = [$map['contacts.owner_user_id'][1]];
-			}			
-	        //取交集
-	        $owner_user_id = array_intersect($map['contacts.owner_user_id'][1], $auth_user_ids) ? : [];
-	        $auth_user_ids = $owner_user_id;
+			}
+			if ($map['contacts.owner_user_id'][0] == 'neq') {
+				$auth_user_ids = array_diff($auth_user_ids, $map['contacts.owner_user_id'][1]) ? : [];	//取差集	
+			} else {
+				$auth_user_ids = array_intersect($map['contacts.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集	
+			}
 	        unset($map['contacts.owner_user_id']);
 	    }		    
 	    $auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];

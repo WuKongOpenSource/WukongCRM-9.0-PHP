@@ -5,8 +5,7 @@
               @nav-items-click="navClick"></navbar>
     </el-header>
     <el-container>
-      <el-main id="crm-main-container"
-               style="padding:15px;">
+      <el-main id="crm-main-container">
         <app-main></app-main>
       </el-main>
     </el-container>

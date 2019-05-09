@@ -13,7 +13,7 @@ use think\Request;
 
 class Index extends ApiCommon
 {
-	/**
+    /**
      * 用于判断权限
      * @permission 无限制
      * @allow 登录用户可访问
@@ -64,22 +64,36 @@ class Index extends ApiCommon
         $map_user_ids = [];
         if ($param['user_id']) {
             $map_user_ids = $param['user_id'];
-        } elseif ($param['structure_id']) {
-            $map_structure_user_ids = $userModel->getSubUserByStr($param['structure_id']);
+        } 
+        if ($param['structure_id']) {
+            $map_structure_user_ids = [];
+            foreach ($param['structure_id'] as $v) {
+                $map_structure_user_ids = $userModel->getSubUserByStr($v,2);
+                if (!in_array($v,$map_structure_user_ids) && $map_structure_user_ids) {
+                    $map_structure_user_ids = array_merge($map_structure_user_ids,$map_structure_user_ids);
+                }
+            } 
             if ($map_user_ids && $map_structure_user_ids) {
                 $map_user_ids = array_merge($map_user_ids,$map_structure_user_ids);
             } elseif ($map_structure_user_ids) {
                 $map_user_ids = $map_structure_user_ids;
             }
         } else {
-           $map_user_ids = [$userInfo['id']]; 
+            // $map_user_ids = [$userInfo['id']]; 
+            $map_user_ids = getSubUserId(true);
         }
         $perUserIds = getSubUserId(); //权限范围内userIds
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
         $where['owner_user_id'] = array('in',$userIds);        
-
-        $between_time = getTimeByType($param['type']);
-        $where['create_time'] = array('between',$between_time);
+        if (!empty($param['type'])) {
+            $between_time = getTimeByType($param['type']);
+            $where['create_time'] = array('between',$between_time);
+        } else {
+            //自定义时间
+            if (!empty($param['start_time'])) {
+                $where['create_time'] = array('between',array($param['start_time'],$param['end_time']));
+            }   
+        }
         $customerNum = 0; //录入客户
         $contactsNum = 0; //新增联系人
         $businessNum = 0; //新增商机
@@ -111,7 +125,7 @@ class Index extends ApiCommon
         $data['recordNum'] = $recordNum;
         $data['receivablesNum'] = $receivablesNum;
         $data['businessStatusNum'] = $businessStatusNum;
-        return resultArray(['data' => $data]);  	
+        return resultArray(['data' => $data]);      
     }
 
     /**
@@ -132,27 +146,41 @@ class Index extends ApiCommon
         $map_user_ids = [];
         if ($param['user_id']) {
             $map_user_ids = $param['user_id'];
-        } elseif ($param['structure_id']) {
-            $map_structure_user_ids = $userModel->getSubUserByStr($param['structure_id']);
+        } 
+        if ($param['structure_id']) {
+            $map_structure_user_ids = [];
+            foreach ($param['structure_id'] as $v) {
+                $map_structure_user_ids = $userModel->getSubUserByStr($v,2);
+                if (!in_array($v,$map_structure_user_ids) && $map_structure_user_ids) {
+                    $map_structure_user_ids = array_merge($map_structure_user_ids,$map_structure_user_ids);
+                }
+            } 
             if ($map_user_ids && $map_structure_user_ids) {
                 $map_user_ids = array_merge($map_user_ids,$map_structure_user_ids);
             } elseif ($map_structure_user_ids) {
                 $map_user_ids = $map_structure_user_ids;
             }
         } else {
-           $map_user_ids = [$userInfo['id']]; 
+            // $map_user_ids = [$userInfo['id']]; 
+            $map_user_ids = getSubUserId(true);
         }
         $status = $param['status'] ? : 1; //1合同目标2回款目标    
 
         $perUserIds = getSubUserId(); //权限范围内userIds
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : array($userInfo['id']); //数组交集
         $where['owner_user_id'] = array('in',$userIds);
-
-        $start_time = $param['start_time'] ? : strtotime(date('Y-01-01',time()));
-        $end_time = $param['end_time'] ? strtotime(date('Y-m-01', $param['end_time']) . ' +1 month -1 day') : strtotime(date('Y-m-01', time()) . ' +1 month -1 day');
-        $between_time = array($start_time,$end_time);
-        $where['create_time'] = array('between',$between_time);
-
+        if (!empty($param['type'])) {
+            $between_time = getTimeByType($param['type']);
+            $start_time = $between_time[0];
+            $end_time = $between_time[1];
+            $where['create_time'] = array('between',$between_time);
+        } else {
+            //自定义时间
+            $start_time = $param['start_time'] ? : strtotime(date('Y-01-01',time()));
+            $end_time = $param['end_time'] ? strtotime(date('Y-m-01', $param['end_time']) . ' +1 month -1 day') : strtotime(date('Y-m-01', time()) . ' +1 month -1 day');
+            $between_time = array($start_time,$end_time);
+            $where['create_time'] = array('between',$between_time); 
+        }
         //合同金额
         $where_contract = $where;
         $where_contract['check_status'] = 2; //审核通过
@@ -169,10 +197,12 @@ class Index extends ApiCommon
         //获取时间段包含年份
         $year = getYearByTime($start_time, $end_time);
         $where_achievement['year'] = array('in',$year);
-        $where_achievement_str = '(( `obj_id` IN ('.implode(',',$user_id).') AND `type` = 3 ) OR ( `obj_id` IN ('.implode(',',$structure_id).') AND `type` = 2 ) )';
-       // p($where_achievement);
+        if(empty($param['user_id']) && empty($param['structure_id'])){
+            $where_achievement_str = '( `obj_id` IN ('.implode(',',$map_user_ids).') AND `type` = 3 )';
+        }else{
+            $where_achievement_str = '(( `obj_id` IN ('.implode(',',$user_id).') AND `type` = 3 ) OR ( `obj_id` IN ('.implode(',',$structure_id).') AND `type` = 2 ) )';
+        }
         $achievement = db('crm_achievement')->where($where_achievement)->where($where_achievement_str)->select();
-      //  p(  db('crm_achievement')->getLastSql() );
         $achievementMoney = 0.00;
         //获取需要查询的月份
         $month = getmonthByTime($start_time, $end_time);
@@ -212,60 +242,109 @@ class Index extends ApiCommon
         $userModel = new \app\admin\model\User();
         $param = $this->param;
         $userInfo = $this->userInfo;
-
+        //员工IDS
         $map_user_ids = [];
         if ($param['user_id']) {
             $map_user_ids = $param['user_id'];
-        } elseif ($param['structure_id']) {
-            $map_structure_user_ids = $userModel->getSubUserByStr($param['structure_id']);
+        } 
+        if ($param['structure_id']) {
+            $map_structure_user_ids = [];
+            foreach ($param['structure_id'] as $v) {
+                $map_structure_user_ids = $userModel->getSubUserByStr($v,2);
+                if (!in_array($v,$map_structure_user_ids) && $map_structure_user_ids) {
+                    $map_structure_user_ids = array_merge($map_structure_user_ids,$map_structure_user_ids);
+                }
+            } 
             if ($map_user_ids && $map_structure_user_ids) {
                 $map_user_ids = array_merge($map_user_ids,$map_structure_user_ids);
             } elseif ($map_structure_user_ids) {
                 $map_user_ids = $map_structure_user_ids;
             }
         } else {
-           $map_user_ids = [$userInfo['id']]; 
+            // $map_user_ids = [$userInfo['id']]; 
+            $map_user_ids = getSubUserId(true);
         }
         unset($param['user_id']);
         unset($param['structure_id']);
         $perUserIds = getSubUserId(); //权限范围内userIds
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : array($userInfo['id']); //数组交集  
         $param['userIds'] = $userIds ? : [];        
-		$param['end_time'] = $param['end_time']+3600*24;
+        $param['end_time'] = $param['end_time']?$param['end_time']+3600*24:'';
         $list = $businessModel->getFunnel($param);
         return resultArray(['data' => $list]);
-    }    
+    }  
 
-    //销售趋势
+    /**
+     * 销售趋势
+     * @return [type] [description]
+     */
     public function saletrend()
     {
         $receivablesModel = new \app\crm\model\Receivables();
         $userModel = new \app\admin\model\User();
+        $biCustomerModel = new \app\bi\model\Customer();
+        
         $param = $this->param;
         $userInfo = $this->userInfo;
-
+        //员工IDS
         $map_user_ids = [];
         if ($param['user_id']) {
             $map_user_ids = $param['user_id'];
-        } elseif ($param['structure_id']) {
-            $map_structure_user_ids = $userModel->getSubUserByStr($param['structure_id']);
+        } 
+        if ($param['structure_id']) {
+            $map_structure_user_ids = [];
+            foreach ($param['structure_id'] as $v) {
+                $map_structure_user_ids = $userModel->getSubUserByStr($v,2);
+                if (!in_array($v,$map_structure_user_ids) && $map_structure_user_ids) {
+                    $map_structure_user_ids = array_merge($map_structure_user_ids,$map_structure_user_ids);
+                }
+            } 
             if ($map_user_ids && $map_structure_user_ids) {
                 $map_user_ids = array_merge($map_user_ids,$map_structure_user_ids);
             } elseif ($map_structure_user_ids) {
                 $map_user_ids = $map_structure_user_ids;
             }
         } else {
-           $map_user_ids = [$userInfo['id']]; 
+            // $map_user_ids = [$userInfo['id']]; 
+            $map_user_ids = getSubUserId(true);
         }
-
         $perUserIds = getSubUserId(); //权限范围内userIds
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : array($userInfo['id']); //数组交集
 
-        $year = $param['year'];
-        $chartParam['year'] = $year;
-        $chartParam['userIds'] = $userIds ? : [];
-        $chartList = $receivablesModel->getStatistics($chartParam); //柱状图
-        return resultArray(['data' => $chartList]);
+        if(empty($param['type']) && empty($param['start_time'])){
+            $param['type'] = 'month';
+        }
+        $company = $biCustomerModel->getParamByCompany($param);
+        $list = array();
+        $totlaContractMoney = '0.00';
+        $totlaReceivablesMoney = '0.00';
+        $biContractModel = new \app\bi\model\Contract();
+        $receivablesModel = new \app\bi\model\Receivables();        
+        for ($i=1; $i <= $company['j']; $i++) { 
+            $whereArr = [];
+            $item = array();
+            //时间段
+            $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
+            $item['type'] = $timeArr['type'];
+            $day = $timeArr['day']?$timeArr['day']:'1';
+            $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
+            $next_day = $timeArr['next_day']?$timeArr['next_day']:'1';
+            $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
+            $create_time = [];
+            if ($start_time && $end_time) {
+                $create_time = array('between',array($start_time,$end_time));
+            }
+            $whereArr['create_time'] = $create_time;
+            $whereArr['check_status'] = array('eq',2);
+            $whereArr['owner_user_id'] = array('in',$userIds);
+            $totlaContractMoney += $item['contractMoney'] = $biContractModel->getDataMoney($whereArr);
+            $totlaReceivablesMoney += $item['receivablesMoney'] = $receivablesModel->getDataMoney($whereArr);
+            $list[] = $item;
+        }
+        $datas['list'] = $list;
+        $datas['totlaContractMoney'] = $totlaContractMoney ? : '0.00';
+        $datas['totlaReceivablesMoney'] = $totlaReceivablesMoney ? : '0.00';
+        return resultArray(['data' => $datas]);
     }
 
     /**
@@ -328,5 +407,36 @@ class Index extends ApiCommon
         $where['next_time'] = array('between',array(strtotime(date('Y-m-d',time())),strtotime(date('Y-m-d',time()))+86399+(86400*(int)$param['day'])));
         $customerList = db('crm_customer')->where($where)->select();
         return resultArray(['data' => $customerList]);
-    }          
+    }
+
+    /**
+     * 客户名称、联系人姓名、联系人手机号查询
+     * @author Michael_xu
+     * @param 
+     * @return 
+     */
+    public function search()
+    {
+        $param = $this->param;
+        $search = $param['search'] ? : '';
+        $page = $param['page'] ? : 1;
+        $limit = $param['limit'] ? : 15;
+        $types = $param['types'] ? : '';
+        if (!$search) return resultArray(['error' => '查询条件不能为空']);
+        if ($types == 'crm_customer' || !$types) {
+            $customerList = db('crm_customer')->where(['name' => ['like','%'.$search.'%']])->field('name,owner_user_id')->page($page, $limit)->select();
+            $customerCount = db('crm_customer')->where(['name' => ['like','%'.$search.'%']])->count();
+        }
+        
+        if ($types == 'crm_contacts' || !$types) {
+            $contactsList = db('crm_contacts')->where(['name' => ['like','%'.$search.'%']])->whereOr('mobile','like','%'.$search.'%')->field('name,owner_user_id')->page($page, $limit)->select();
+            $customerCount = db('crm_contacts')->where(['name' => ['like','%'.$search.'%']])->whereOr('mobile','like','%'.$search.'%')->count();
+        }
+        $data = [];
+        $data['customerList'] = $customerList ? : [];
+        $data['customerCount'] = $customerCount ? : 0;
+        $data['contactsList'] = $contactsList ? : [];
+        $data['customerCount'] = $customerCount ? : 0; 
+        return resultArray(['data' => $data]);     
+    }           
 }

@@ -40,7 +40,7 @@ class Product extends Common
     	$scene_id = (int)$request['scene_id'];
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);    	
+		unset($request['user_id']);   	
 
         $request = $this->fmtRequest($request);
         $requestMap = $request['map'] ? : [];
@@ -84,7 +84,7 @@ class Product extends Common
 					 ->where($map)
 				     ->join($join);
 		$list = $list_view
-        		->page($request['page'], $request['limit'])
+        		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		// ->field('product_id,'.implode(',',$indexField).',product_category.name as category_name')
         		->field('product.*,product_category.name as category_name')
         		->select();
@@ -94,6 +94,7 @@ class Product extends Common
 				     ->count('product_id');
         foreach ($list as $k=>$v) {
         	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
+        	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];
 			foreach ($userField as $key => $val) {
         		$list[$k][$val.'_info'] = isset($v[$val]) ? $userModel->getListByStr($v[$val]) : [];
         	}
@@ -250,6 +251,7 @@ class Product extends Common
     	}
 
     	$total_price = 0;
+
     	if ($param['product']) {
 			$product = [];
 			// 启动事务
@@ -257,14 +259,15 @@ class Product extends Common
 			try {
 				foreach ($param['product'] as $key => $value) {
 					$discount = 0;
-			    	$discount = ((100 - $value['discount']) > 0) ? (100 - $value['discount'])/100 : 0;	//折扣
+			    	// $discount = ((100 - $value['discount']) > 0) ? (100 - $value['discount'])/100 : 0;	//折扣
 					$product[$key]['product_id'] = $value['product_id'];
 		    		$product[$key]['price'] = $value['price']; //产品单价
 		    		$product[$key]['sales_price'] = $value['sales_price']; //售价
 		    		$product[$key]['num'] = $value['num']; //数量
 		    		$product[$key]['discount'] = $value['discount']; //折扣
 		    		$product[$key]['unit'] = $value['unit'] ? : ''; //单位
-		    		$total_price += $product[$key]['subtotal'] = round(($value['price'] * $value['num']) * $discount); //总价	
+		    		$product[$key]['subtotal'] = $value['subtotal'];
+		    		// $total_price += $product[$key]['subtotal'] = round(($value['price'] * $value['num']) * $discount); //总价	
 		    		$product[$key][$db_id] = $objId;
 		    	}
 
@@ -275,9 +278,10 @@ class Product extends Common
 
 		    	$rData = [];
 				//产品合计
-				$rData['discount_rate'] = !empty($param['discount_rate']) ? : 0.00; //整单折扣
+				$rData['discount_rate'] = !empty($param['discount_rate']) ? $param['discount_rate'] : 0.00; //整单折扣
 		    	$discount_rate = ((100 - $rData['discount_rate']) > 0) ? (100 - $rData['discount_rate'])/100 : 0;
-		    	$rData['total_price'] = $total_price ? $total_price*$discount_rate : '0.00'; //整单合计	
+		    	// $rData['total_price'] = $total_price ? $total_price*$discount_rate : '0.00'; //整单合计	
+		    	$rData['total_price'] = $param['total_price'] ? : '0.00'; //整单合计	
 		    	db($rDb)->where([$db_id => $objId])->update($rData);	    	
 		    	
 		    	// 提交事务
@@ -314,8 +318,8 @@ class Product extends Common
 		if ($request['user_id']) {
 			$map_user_ids = [$request['user_id']];
 		} else {
-			if ($param['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($param['structure_id'], 2);
+			if ($request['structure_id']) {
+                $map_user_ids = $userModel->getSubUserByStr($request['structure_id'], 2);
             }
 		}
 		$perUserIds = $userModel->getUserByPer('bi', 'product', 'read'); //权限范围内userIds
@@ -347,5 +351,25 @@ class Product extends Common
 			$list[$k]['owner_user_id_info'] = $owner_user_info ? : array();
 		}
         return $list;
-    }        	
+    }  
+
+	/**
+     * [根据产品类别ID，查询父级ID]
+     * @author Michael_xu
+     * @param 
+     * @return                   
+     */		
+	public function getPidStr($category_id, $idArr, $first)
+	{
+		if ($first == 1) $idArr = [];
+		$idArr[] = $category_id;
+		$pid = db('crm_product_category')->where(['category_id' => $category_id])->value('pid');
+		if ($pid) {
+			$idArr[] = $pid;
+			$this->getPidStr($pid, $idArr);
+		}
+		$arr = array_reverse($idArr);
+		$resStr = ','.implode(',',$arr).',';
+		return $resStr;
+	}         	
 }

@@ -108,7 +108,7 @@ export default {
   methods: {
     /** 通过回调控制style */
     cellStyle({ row, column, rowIndex, columnIndex }) {
-      if (columnIndex == 1) {
+      if (column.property === 'name') {
         return { color: '#3E84E9', cursor: 'pointer' }
       } else {
         return ''

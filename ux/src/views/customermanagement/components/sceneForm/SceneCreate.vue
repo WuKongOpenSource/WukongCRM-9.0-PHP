@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="新建场景"
+  <el-dialog :title="edit_id ? '编辑场景' : '新建场景'"
              :visible.sync="visible"
              @close="handleCancel"
              :append-to-body="true"

@@ -156,7 +156,7 @@
         <el-input v-model="treeInput"
                   placeholder="请输入内容"></el-input>
       </div>
-      <div class="nav-dialog-div">
+      <div v-if="depSelect != 0" class="nav-dialog-div">
         <label>上级部门：</label>
         <el-select v-model="depSelect"
                    :clearable="false"

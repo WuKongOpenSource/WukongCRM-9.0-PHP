@@ -127,7 +127,6 @@
 </template>
 
 <script>
-import { crmCustomerExcelExport } from '@/api/customermanagement/customer'
 import CRMAllDetail from '@/views/customermanagement/components/CRMAllDetail'
 import BusinessCheck from './components/BusinessCheck' // 相关商机
 import table from '../mixins/table'
@@ -160,36 +159,6 @@ export default {
       } else {
         return ''
       }
-    },
-    // 导出操作
-    exportInfos() {
-      var params = {
-        search: this.search
-      }
-      if (this.scene_id) {
-        params.scene_id = this.scene_id
-      }
-      for (var key in this.filterObj) {
-        params[key] = this.filterObj[key]
-      }
-      crmCustomerExcelExport(params)
-        .then(res => {
-          var blob = new Blob([res.data], {
-            type: 'application/vnd.ms-excel;charset=utf-8'
-          })
-          var downloadElement = document.createElement('a')
-          var href = window.URL.createObjectURL(blob) //创建下载的链接
-          downloadElement.href = href
-          downloadElement.download =
-            decodeURI(
-              res.headers['content-disposition'].split('filename=')[1]
-            ) || '' //下载后文件名
-          document.body.appendChild(downloadElement)
-          downloadElement.click() //点击下载
-          document.body.removeChild(downloadElement) //下载完成移除元素
-          window.URL.revokeObjectURL(href) //释放掉blob对象
-        })
-        .catch(() => {})
     },
     // 商机信息查看
     businessCheckClick(e, scope) {

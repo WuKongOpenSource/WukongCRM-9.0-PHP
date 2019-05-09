@@ -90,7 +90,13 @@ return [
 	// 【联系人】转移
 	'crm/contacts/transfer' => ['crm/contacts/transfer', ['method' => 'POST']],	
 	// 【联系人】删除
-	'crm/contacts/delete' => ['crm/contacts/delete', ['method' => 'POST']],						
+	'crm/contacts/delete' => ['crm/contacts/delete', ['method' => 'POST']],
+	// 【联系人】导出
+	'crm/contacts/excelExport' => ['crm/contacts/excelExport', ['method' => 'POST']],
+	// 【联系人】导入模板下载
+	'crm/contacts/excelDownload' => ['crm/contacts/excelDownload', ['method' => 'GET']],
+	// 【联系人】导入
+	'crm/contacts/excelImport' => ['crm/contacts/excelImport', ['method' => 'POST']],						
 
 	// 【商机】列表
 	'crm/business/index' => ['crm/business/index', ['method' => 'POST']],
@@ -145,7 +151,13 @@ return [
 	// 【产品】详情
 	'crm/product/read' => ['crm/product/read', ['method' => 'POST']],
 	// 【产品】上架/下架
-	'crm/product/status' => ['crm/product/status', ['method' => 'POST']],		
+	'crm/product/status' => ['crm/product/status', ['method' => 'POST']],
+	// 【产品】导出
+	'crm/product/excelExport' => ['crm/product/excelExport', ['method' => 'POST']],
+	// 【产品】导入模板下载
+	'crm/product/excelDownload' => ['crm/product/excelDownload', ['method' => 'GET']],
+	// 【产品】导入
+	'crm/product/excelImport' => ['crm/product/excelImport', ['method' => 'POST']],			
 
 	// 【回款】列表
 	'crm/receivables/index' => ['crm/receivables/index', ['method' => 'POST']],
@@ -167,13 +179,15 @@ return [
 	'crm/receivables/revokeCheck' => ['crm/receivables/revokeCheck', ['method' => 'POST']],		
 	
 	// 【回款计划】列表
-	'crm/receivablesPlan/index' => ['crm/receivablesPlan/index', ['method' => 'POST']],
+	'crm/receivables_plan/index' => ['crm/receivables_plan/index', ['method' => 'POST']],
 	// 【回款计划】创建
-	'crm/receivablesPlan/save' => ['crm/receivablesPlan/save', ['method' => 'POST']],	
+	'crm/receivables_plan/save' => ['crm/receivables_plan/save', ['method' => 'POST']],	
 	// 【回款计划】编辑
-	'crm/receivablesPlan/update' => ['crm/receivablesPlan/update', ['method' => 'POST']],	
+	'crm/receivables_plan/update' => ['crm/receivables_plan/update', ['method' => 'POST']],	
 	// 【回款计划】详情
-	'crm/receivablesPlan/read' => ['crm/receivablesPlan/read', ['method' => 'POST']],				
+	'crm/receivables_plan/read' => ['crm/receivables_plan/read', ['method' => 'POST']],	
+	// 【回款计划】删除
+	'crm/receivables_plan/delete' => ['crm/receivables_plan/delete', ['method' => 'POST']],				
 	
 	// 【相关团队】列表
 	'crm/setting/team' => ['crm/setting/team', ['method' => 'POST']],
@@ -182,7 +196,9 @@ return [
 	// 【客户保护规则】保存
 	'crm/setting/config' => ['crm/setting/config', ['method' => 'POST']],
 	// 【客户保护规则】详情
-	'crm/setting/configData' => ['crm/setting/configData', ['method' => 'POST']],			
+	'crm/setting/configData' => ['crm/setting/configData', ['method' => 'POST']],
+	// 【合同到期提醒】
+	'crm/setting/contractDay' => ['crm/setting/contractDay', ['method' => 'POST']],				
 
 	// 【商机状态组】列表
 	'crm/business_status/type' => ['crm/business_status/type', ['method' => 'POST']],
@@ -220,7 +236,9 @@ return [
 	// 【工作台】销售漏斗
 	'crm/index/funnel' => ['crm/index/funnel', ['method' => 'POST']],
 	// 【工作台】销售趋势
-	'crm/index/saletrend' => ['crm/index/saletrend', ['method' => 'POST']],				
+	'crm/index/saletrend' => ['crm/index/saletrend', ['method' => 'POST']],	
+	// 【工作台】查重
+	'crm/index/search' => ['crm/index/search', ['method' => 'POST']],				
 
 	// MISS路由
 	'__miss__'  => 'admin/base/miss',

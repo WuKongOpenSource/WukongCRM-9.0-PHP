@@ -24,7 +24,7 @@ class Scene extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','save','read','update','delete','sort','default']            
+            'allow'=>['index','save','read','update','delete','sort','defaults']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();

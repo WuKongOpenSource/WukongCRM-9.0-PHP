@@ -69,6 +69,9 @@ class User extends Common
 		//角色员工
 		if ($map['group_id']) {
 			$group_user_ids = db('admin_access')->where(['group_id' => $map['group_id']])->column('user_id');
+			if ($map['group_id'] == 1 && !$group_user_ids) {
+				$group_user_ids = ['1'];
+			}			
 			$map['user.id'] = array('in',$group_user_ids);
 		}
 		$exp = new \think\db\Expression('field(user.status,1,2,0)');
@@ -81,7 +84,7 @@ class User extends Common
 			$map['user.structure_id'] = ['in',$new_str_ids]; //$map['structure_id'];
 		}
 		unset($map['structure_id']);
-		if ($map['status']) {
+		if ($map['status'] || $map['group_id']) {
 			$map['user.status'] = ($map['status'] !== 'all') ? ($map['status'] ? : ['gt',0]) : ['egt',0];
 		} else {
 			$map['user.status'] = 0;
@@ -362,9 +365,10 @@ class User extends Common
 	 * @param     [string]                   $verifyCode [验证码]
 	 * @param     Boolean                  	 $isRemember [是否记住密码]
 	 * @param     Boolean                    $type       [是否重复登录]
+	 * @param     Boolean                    $mobile     [1手机登录]
 	 * @return    [type]                               [description]
 	 */
-	public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false, $authKey)
+	public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false, $authKey = '', $mobile = 0)
 	{
         if (!$username) {
 			$this->error = '帐号不能为空';
@@ -424,11 +428,15 @@ class User extends Common
        // $info['_AUTH_LIST_'] = $dataList['rulesList'];
         $info['authKey'] = $authKey;
         //手机登录
-        if (!$type) {
+        if ($mobile == 1) {
+        	cache('Auth_'.$userInfo['authkey'].'mobile', NULL);
+        	cache('Auth_'.$authKey.'mobile', $info, $loginExpire);
+        } else {
         	cache('Auth_'.$userInfo['authkey'], NULL);
+			cache('Auth_'.$authKey, $info, $loginExpire);
         }
         unset($userInfo['authkey']);
-		cache('Auth_'.$authKey, $info, $loginExpire);
+		
         // 返回信息
         $data['authKey']		= $authKey;
         $data['sessionId']		= $info['sessionId'];
@@ -648,7 +656,6 @@ class User extends Common
     	$mRuleId = db('admin_rule')->where(['name'=>$m,'level'=>1])->value('id');
     	$cRuleId = db('admin_rule')->where(['name'=>$c,'level'=>2,'pid'=>$mRuleId])->value('id');
     	$aRuleId = db('admin_rule')->where(['name'=>$a,'level'=>3,'pid'=>$cRuleId])->value('id');
-
 		//获取用户组
 		$groups = $this->get($uid)->groups;
 		if (!$groups) {

@@ -9,7 +9,7 @@
                   v-model="showScene"
                   width="150">
         <flexbox slot="reference">
-          <div class="condition_title">{{sceneName ? sceneName : getDefaultSceneName()}}</div>
+          <div class="condition_title">{{sceneData.name || getDefaultSceneName()}}</div>
           <i class="el-icon-arrow-down el-icon--right"
              style="color:#777;"></i>
         </flexbox>
@@ -100,11 +100,17 @@ import {
   crmCustomerDelete,
   crmCustomerReceive
 } from '@/api/customermanagement/customer'
-import { crmContactsDelete } from '@/api/customermanagement/contacts'
+import {
+  crmContactsExcelExport,
+  crmContactsDelete
+} from '@/api/customermanagement/contacts'
 import { crmBusinessDelete } from '@/api/customermanagement/business'
 import { crmContractDelete } from '@/api/customermanagement/contract'
 import { crmReceivablesDelete } from '@/api/customermanagement/money'
-import { crmProductStatus } from '@/api/customermanagement/product'
+import {
+  crmProductExcelExport,
+  crmProductStatus
+} from '@/api/customermanagement/product'
 
 import filterForm from './filterForm'
 import filterContent from './filterForm/filterContent'
@@ -143,8 +149,7 @@ export default {
       fieldList: [],
       filterObj: { form: [] }, // 筛选确定数据
 
-      sceneID: '', //场景默认信息
-      sceneName: '', //场景名称
+      sceneData: { id: '', bydata: '', name: '' },
       showSceneSet: false, // 展示场景设置
       showSceneCreate: false, // 展示场景添加
       sceneFilterObj: { form: [] }, // 筛选确定数据
@@ -220,8 +225,7 @@ export default {
     // 场景操作
     /** 选择了场景 */
     sceneSelect(data) {
-      this.sceneName = data.name
-      this.sceneID = data.id
+      this.sceneData = data
       this.$emit('scene', data)
     },
     sceneHandle(data) {
@@ -252,27 +256,17 @@ export default {
         // 转移
         this.transferDialogShow = true
       } else if (type == 'export') {
-        var params = { scene_id: this.scene_id }
-        var request
-        if (this.crmType == 'customer') {
-          request = crmCustomerExcelExport
-          params.customer_id = this.selectionList.map(function(
-            item,
-            index,
-            array
-          ) {
-            return item.customer_id
-          })
-        } else if (this.crmType == 'leads') {
-          request = crmLeadsExcelExport
-          params.leads_id = this.selectionList.map(function(
-            item,
-            index,
-            array
-          ) {
-            return item.leads_id
-          })
-        }
+        let params = { scene_id: this.scene_id }
+
+        let request = {
+          customer: crmCustomerExcelExport,
+          leads: crmLeadsExcelExport,
+          contacts: crmContactsExcelExport,
+          product: crmProductExcelExport
+        }[this.crmType]
+        params[this.crmType + '_id'] = this.selectionList.map(item => {
+          return item[this.crmType + '_id']
+        })
         request(params)
           .then(res => {
             var blob = new Blob([res.data], {
@@ -548,7 +542,11 @@ export default {
           ])
         }
       } else if (this.crmType == 'contacts') {
-        return this.forSelectionHandleItems(handleInfos, ['transfer', 'delete'])
+        return this.forSelectionHandleItems(handleInfos, [
+          'transfer',
+          'export',
+          'delete'
+        ])
       } else if (this.crmType == 'business') {
         return this.forSelectionHandleItems(handleInfos, [
           'transfer',
@@ -566,7 +564,11 @@ export default {
       } else if (this.crmType == 'receivables') {
         return this.forSelectionHandleItems(handleInfos, ['delete'])
       } else if (this.crmType == 'product') {
-        return this.forSelectionHandleItems(handleInfos, ['start', 'disable'])
+        return this.forSelectionHandleItems(handleInfos, [
+          'export',
+          'start',
+          'disable'
+        ])
       }
     },
     forSelectionHandleItems(handleInfos, array) {
@@ -579,9 +581,13 @@ export default {
     // 判断是否展示
     whetherTypeShowByPermision: function(type) {
       if (type == 'transfer') {
-        return this.crm[this.crmType].transfer
+        return this.sceneData.bydata == 'is_transform'
+          ? false
+          : this.crm[this.crmType].transfer
       } else if (type == 'transform') {
-        return this.crm[this.crmType].transform
+        return this.sceneData.bydata == 'is_transform'
+          ? false
+          : this.crm[this.crmType].transform
       } else if (type == 'export') {
         return this.crm[this.crmType].excelexport
       } else if (type == 'delete') {

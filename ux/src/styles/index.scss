@@ -166,6 +166,11 @@ div[lazy=loading] {
   overflow: hidden;
 }
 
+// 内容区域padding
+.el-main {
+  padding: 15px;
+}
+
 .project-settings-list-top {
   top: 110px !important;
 }

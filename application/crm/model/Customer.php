@@ -46,7 +46,7 @@ class Customer extends Common
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);	
-		if ($request['is_excel']) unset($request['is_excel']);	
+		unset($request['is_excel']);	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -133,7 +133,7 @@ class Customer extends Common
 		$structureField = $fieldModel->getFieldByFormType('crm_customer', 'structure'); //部门类型
 		//排序
 		if ($request['order_type'] && $request['order_field']) {
-			$order = trim($request['order_field']).' '.trim($request['order_type']);
+			$order = 'customer.'.trim($request['order_field']).' '.trim($request['order_type']);
 		} else {
 			$order = 'customer.update_time desc';
 		}
@@ -144,7 +144,7 @@ class Customer extends Common
 				->where($authMap)
 				->where($partMap)
 				->where($poolMap)
-        		->page($request['page'], $request['limit'])
+        		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		// ->field('customer_id,'.implode(',',$indexField))
         		->order($order)
         		->select();
@@ -232,6 +232,10 @@ class Customer extends Common
 		}
 		//地址
 		$param['address'] = $param['address'] ? implode(chr(10),$param['address']) : '';
+		$param['deal_time'] = time();
+		if (!$param['deal_status']) {
+            $param['deal_status'] = '未成交';
+        }	
 
 		//处理部门、员工、附件、多选类型字段
 		$arrFieldAtt = $fieldModel->getArrayField('crm_customer');
@@ -294,12 +298,16 @@ class Customer extends Common
 		}
 		//地址
 		$param['address'] = $param['address'] ? implode(chr(10),$param['address']) : '';
+		if ($param['deal_status'] == '已成交' && $dataInfo->data['deal_status'] == '未成交') {
+            $param['deal_time'] = time();
+        }		
 
 		//处理部门、员工、附件、多选类型字段
 		$arrFieldAtt = $fieldModel->getArrayField('crm_customer');
 		foreach ($arrFieldAtt as $k=>$v) {
 			$param[$v] = arrayToString($param[$v]);
 		}
+		$param['follow'] = '已跟进';
 		if ($this->allowField(true)->save($param, ['customer_id' => $customer_id])) {
 			//修改记录
 			updateActionLog($user_id, 'crm_customer', $customer_id, $dataInfo->data, $param);
@@ -346,12 +354,13 @@ class Customer extends Common
 		$where = [];
 		//时间段
 		$start_time = $map['start_time'];
-		$end_time = $map['end_time'] ? $map['end_time']+86399 : time();
+		// $end_time = $map['end_time'] ? $map['end_time']+86399 : time();
+		$end_time = $map['end_time'] ? $map['end_time'] : time();
 		$create_time = [];
 		if ($start_time && $end_time) {
 			$create_time = array('between',array($start_time,$end_time));
 		}
-
+		
 		//员工IDS
 		$map_user_ids = [];
 		if ($map['user_id']) {
@@ -387,7 +396,7 @@ class Customer extends Common
 			$whereArr['check_status'] = 2;
 			$userList[$k]['contract_money'] = $contract_money = db('crm_contract')->where($whereArr)->sum('money');
 			$userList[$k]['receivables_money'] = $receivables_money = db('crm_receivables')->where($whereArr)->sum('money');
-			$userList[$k]['un_receivables_money'] = $contract_money-$receivables_money >= 0 ? : '0.00';
+			$userList[$k]['un_receivables_money'] = $contract_money-$receivables_money >= 0 ? $contract_money-$receivables_money : '0.00';
 			$userList[$k]['deal_receivables_rate'] = $contract_money ? round(($receivables_money/$contract_money), 2)*100 : 0;
 		}
         return $userList ? : [];

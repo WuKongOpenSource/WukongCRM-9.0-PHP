@@ -49,3 +49,44 @@ export function crmProductStatus(data) {
     data: data
   })
 }
+
+/**
+ * 产品导出
+ * @param {*} data
+ *
+ */
+export function crmProductExcelExport(data) {
+  return request({
+    url: 'crm/product/excelExport',
+    method: 'post',
+    data: data,
+    responseType: 'blob'
+  })
+}
+
+/**
+ * 产品导入
+ * @param {*} data
+ *
+ */
+export function crmProductExcelImport(data) {
+  var param = new FormData()
+  Object.keys(data).forEach(key => {
+    param.append(key, data[key])
+  })
+  return request({
+    url: 'crm/product/excelImport',
+    method: 'post',
+    data: param,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+/**
+ * 产品导入模板下载
+ * @param {*} data
+ *
+ */
+export const crmProductExcelDownloadURL = 'crm/product/excelDownload'

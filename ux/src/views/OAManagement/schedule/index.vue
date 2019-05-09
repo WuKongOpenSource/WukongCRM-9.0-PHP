@@ -39,8 +39,7 @@
 
 <script>
 import $ from 'jquery'
-import 'fullcalendar'
-import 'fullcalendar-scheduler'
+import fullcalendar from "fullcalendar"
 import 'fullcalendar/dist/locale/zh-cn.js'
 import createSchedule from './components/createSchedule'
 import VDetails from './components/details'
@@ -108,7 +107,7 @@ export default {
           _this.showParticulars(val)
         },
         header: {
-          left: 'today,   agendaDay,agendaWeek,month',
+          left: 'today,agendaDay,agendaWeek,month',
           center: 'prevYear,prev, title, next,nextYear',
           right: ''
         },
@@ -216,7 +215,6 @@ export default {
 
 <style>
 @import 'fullcalendar/dist/fullcalendar.css';
-@import 'fullcalendar-scheduler/dist/scheduler.css';
 </style>
 
 <style lang="scss" scoped>

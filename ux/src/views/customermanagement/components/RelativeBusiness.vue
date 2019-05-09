@@ -68,8 +68,17 @@ export default {
   },
   watch: {
     id: function(val) {
-      this.list = []
-      this.getDetail()
+      if (this.crmType !== 'contacts') {
+        this.list = []
+        this.getDetail()
+      }
+    },
+    // 联系人下需要客户ID
+    detail: function(val) {
+      if (this.crmType === 'contacts') {
+        this.list = []
+        this.getDetail()
+      }
     }
   },
   props: {
@@ -94,7 +103,14 @@ export default {
     }
   },
   mounted() {
-    this.getDetail()
+    if (
+      this.crmType !== 'contacts' ||
+      (this.crmType === 'contacts' &&
+        this.detail &&
+        Object.keys(this.detail).length > 0)
+    ) {
+      this.getDetail()
+    }
   },
   activated: function() {},
   deactivated: function() {},
@@ -142,7 +158,8 @@ export default {
       this.loading = true
       crmBusinessIndex({
         pageType: 'all',
-        customer_id: this.id
+        customer_id:
+          this.crmType === 'contacts' ? this.detail.customer_id : this.id
       })
         .then(res => {
           if (this.fieldList.length == 0) {

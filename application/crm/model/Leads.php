@@ -38,10 +38,11 @@ class Leads extends Common
 		$search = $request['search'];
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
+    	$is_excel = $request['is_excel']; //导出
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']); 
-		if ($request['is_excel']) unset($request['is_excel']);	   	
+		unset($request['is_excel']);	   	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -104,7 +105,7 @@ class Leads extends Common
 				->alias('leads')
 				->where($map)
 				->where($authMap)
-        		->page($request['page'], $request['limit'])
+        		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		// ->field('leads_id,'.implode(',',$indexField))
         		->order($order)
         		->select();	
@@ -212,6 +213,7 @@ class Leads extends Common
 		foreach ($arrFieldAtt as $k=>$v) {
 			$param[$v] = arrayToString($param[$v]);
 		}
+		$param['follow'] = '已跟进';
 		if ($this->allowField(true)->save($param, ['leads_id' => $leads_id])) {
 			//修改记录
 			updateActionLog($param['user_id'], 'crm_leads', $leads_id, $dataInfo->data, $param);

@@ -118,7 +118,7 @@ class Contract extends Common
 				->where($map)
 				->where($partMap)
 				->where($authMap)
-        		->page($request['page'], $request['limit'])
+        		->page(($request['page']-1)*$request['limit'], $request['limit'])
         		->field('contract.*,customer.name as customer_name,business.name as business_name,contacts.name as contacts_name')
         		// ->field('contract_id,'.implode(',',$indexField))
         		->order($order)
@@ -220,7 +220,7 @@ class Contract extends Common
             //站内信
             $createUserInfo = $userModel->getDataById($param['create_user_id']);
             $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交了合同【'.$dataInfo['name'].'】,需要您审批';
+            $sendContent = $createUserInfo['realname'].'提交了合同【'.$param['name'].'】,需要您审批';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $this->contract_id, 1);
             }
@@ -276,7 +276,7 @@ class Contract extends Common
 			//站内信
             $createUserInfo = $userModel->getDataById($param['user_id']);
             $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交了合同【'.$dataInfo['name'].'】,需要您审批';
+            $sendContent = $createUserInfo['realname'].'提交了合同【'.$param['name'].'】,需要您审批';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $contract_id, 1);
             }			
@@ -355,5 +355,31 @@ class Contract extends Common
     	} else {
     		return true;
     	}
-    }   		
+    }
+
+	/**
+	 * 根据对象ID 获取该年各个月合同金额
+	 * @return [year] [哪一年]
+	 * @return [owner_user_id] [哪个员工]
+	 * @return [start_time] [开始时间]
+	 * @return [end_time] [结束时间]
+	 */
+	public function getDataByUserId($param)
+	{	
+		if ($param['obj_type']) {
+			if ($param['obj_type'] == 1) { //部门
+				$userModel = new \app\admin\model\User();
+			    $str = $userModel->getSubUserByStr($param['obj_id'], 1) ? : ['-1'];
+				$map['owner_user_id'] = array('in',$str); 
+			} else { //员工
+				$map['owner_user_id'] = $param['obj_id']; 
+			}
+		}
+		//审核状态
+		$start = date('Y-m-d',$param['start_time']);
+		$stop = date('Y-m-d',$param['end_time']);
+		$map['check_status'] = 2;
+		$data = $this->where($map)->where(['order_date' => ['between',[$start, $stop]]])->sum('money');
+		return $data;
+	}     		
 }

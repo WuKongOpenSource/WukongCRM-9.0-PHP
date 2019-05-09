@@ -38,9 +38,11 @@ class Contacts extends Common
     	$search = $request['search'];
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
+    	$is_excel = $request['is_excel']; //导出
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);	    	
+		unset($request['user_id']);
+		unset($request['is_excel']);		    	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -62,8 +64,10 @@ class Contacts extends Common
 		//高级筛选
 		$map = where_arr($map, 'crm', 'contacts', 'index');		
 		//权限
+		$a = 'index';
+		if ($is_excel) $a = 'excelExport';		
 		$authMap = [];
-		$auth_user_ids = $userModel->getUserByPer('crm', 'contacts', 'index');
+		$auth_user_ids = $userModel->getUserByPer('crm', 'contacts', $a);
 		if (isset($map['contacts.owner_user_id'])) {
 			if (!is_array($map['contacts.owner_user_id'][1])) {
 				$map['contacts.owner_user_id'][1] = [$map['contacts.owner_user_id'][1]];
@@ -89,7 +93,6 @@ class Contacts extends Common
 		} else {
 			$order = 'contacts.update_time desc';
 		}	
-		
 		$readAuthIds = $userModel->getUserByPer('crm', 'contacts', 'read');
         $updateAuthIds = $userModel->getUserByPer('crm', 'contacts', 'update');
         $deleteAuthIds = $userModel->getUserByPer('crm', 'contacts', 'delete');		
@@ -98,7 +101,7 @@ class Contacts extends Common
 				->join('__CRM_CUSTOMER__ customer','contacts.customer_id = customer.customer_id','LEFT')
 				->where($map)
 				->where($authMap)
-        		->page($request['page'], $request['limit'])
+        		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		->field('contacts.*,customer.name as customer_name')
         		// ->field('contacts_id,'.implode(',',$indexField)
         		->order($order)
@@ -151,20 +154,17 @@ class Contacts extends Common
 		// 自动验证
 		$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则
 		$validate = new Validate($validateArr['rule'], $validateArr['message']);
-
 		$result = $validate->check($param);
 		if (!$result) {
 			$this->error = $validate->getError();
 			return false;
 		}
-
 		//处理部门、员工、附件、多选类型字段
 		$arrFieldAtt = $fieldModel->getArrayField('crm_contacts');
 		foreach ($arrFieldAtt as $k=>$v) {
 			$param[$v] = arrayToString($param[$v]);
 		}
-
-		if ($this->data($param)->allowField(true)->save()) {
+		if ($this->data($param)->allowField(true)->isUpdate(false)->save()) {
 			$data = [];
 			$data['contacts_id'] = $this->contacts_id;
 			return $data;
@@ -204,7 +204,6 @@ class Contacts extends Common
 		foreach ($unUpdateField as $v) {
 			unset($param[$v]);
 		}
-		
 		$fieldModel = new \app\admin\model\Field();
 		// 自动验证
 		$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则

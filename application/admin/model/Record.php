@@ -62,6 +62,15 @@ class Record extends Common
 						$whereOr['types_id'] = $leads_id;
 					}
 				}
+				//联系人下包含关联的客户的跟进记录
+				if ($map['types'] == 'crm_contacts') {
+					$whereOr = [];
+					$whereOr['contacts_ids'] = array('like','%,'.$map['types_id'].',%');
+				}
+				if ($map['types'] == 'crm_business') {
+					$whereOr = [];
+					$whereOr['business_ids'] = array('like','%,'.$map['types_id'].',%');
+				}							
 				$list = db('admin_record')
 					->page($request['page'], $request['limit'])
 					->order('create_time desc')
@@ -377,9 +386,7 @@ class Record extends Common
 		unset($param['file_id']);
 		if ($this->data($param)->allowField(true)->save()) {
 			//下次联系时间
-			if ($param['next_time']) {
-				$this->updateNexttime($param['types'], $param['types_id'], $param['next_time']);
-			}
+			$this->updateNexttime($param['types'], $param['types_id'], $param['next_time']);
 
 			//处理附件关系
 	        if ($fileArr) {
@@ -407,15 +414,7 @@ class Record extends Common
 	public function getDataById($id = '')
 	{
 		$map['record_id'] = $id;
-		$data_view = $this
-					 ->where($map)
-				     ->alias('record')
-				     ->join('__CRM_BUSINESS__ business', 'business.business_id = record.business_id', 'LEFT')
-				     ->join('__CRM_CONTACTS__ contacts', 'contacts.contacts_id = record.contacts_id', 'LEFT');
-
-		$dataInfo = $data_view
-        		->field('record.*,business.name as business_name,contacts.name as contacts_name')
-        		->find();
+		$dataInfo = db('admin_record')->where($map)->find();
 		if (!$dataInfo) {
 			$this->error = '暂无此数据';
 			return false;
@@ -499,8 +498,9 @@ class Record extends Common
 			default : break;
 		}
 		$data = [];
-		$data['next_time'] = $next_time;
+		if ($next_time) $data['next_time'] = $next_time;
 		$data['update_time'] = time();
+		$data['follow'] = '已跟进';
 		$dbName->where([$dbId => $types_id])->update($data);
 		return true;
 	}

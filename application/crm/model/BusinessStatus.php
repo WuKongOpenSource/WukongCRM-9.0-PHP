@@ -25,9 +25,13 @@ class BusinessStatus extends Common
      * @param  type_id  商机组ID
      * @return 
      */		
-	public function getDataList($type_id)
+	public function getDataList($type_id, $type = 0)
     {  	
-    	$list = db('crm_business_status')->where(['type_id' => $type_id])->order('order_id asc')->select();
+    	if ($type == 1) {
+    		$list = db('crm_business_status')->where(['type_id' => $type_id])->whereOr(['type_id' => 0])->order('order_id asc')->select();
+    	} else {
+    		$list = db('crm_business_status')->where(['type_id' => $type_id])->order('order_id asc')->select();
+    	}
         return $list ? : [];
     }
 

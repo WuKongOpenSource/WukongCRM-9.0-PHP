@@ -382,11 +382,6 @@ class Log extends Common
 			$this->error = '数据不存在或已删除';
 			return false;
 		}
-		//超过3天不能删除
-		if( $dataInfo['create_time'] < time()-3600*24*3 ){
-			$this->error = '超过时效，不可删除';
-			return false;
-		}
 		$flag = Db::name('OaLog')->where($map)->delete();
 		if ($flag) {
 			actionLog($param['log_id'],$dataInfo['send_structure_ids'],$dataInfo['send_structure_ids'],'删除了日志');

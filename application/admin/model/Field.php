@@ -53,7 +53,7 @@ class Field extends Model
 			$this->error = '参数错误';
 			return false;
 		}
-        $map['types'] = $types;
+		$map = $param;
         if ($types == 'oa_examine') {
         	$map['types_id'] = $param['types_id'];
         }
@@ -496,9 +496,9 @@ class Field extends Model
 		if (in_array($param['action'],array('index','view'))) {
 			$map['types'] = array(array('eq',$types),array('eq',''),'or');
 		} else {
-			if ($param['types'] == 'crm_customer' && (in_array($param['action'],array('save','update','excel')))) {
-				$map['field'] = array('not in',['deal_status']);
-			}
+			// if ($param['types'] == 'crm_customer' && (in_array($param['action'],array('save','update','excel')))) {
+			// 	$map['field'] = array('not in',['deal_status']);
+			// }
 			$map['types'] = $types;
 		}
 		if ($param['controller'] == 'customer' && $param['action'] == 'pool') {
@@ -515,7 +515,7 @@ class Field extends Model
 			$field_list = $this->getIndexFieldConfig($types, $param['user_id']); 
 			// $order = new \think\db\Expression('field(field_id,'..')');
 		} else {
-			$field_list = $this->where($map)->field('field,name,form_type,default_value,is_unique,is_null,input_tips,setting')->order($order)->select();
+			$field_list = $this->where($map)->field('field,types,name,form_type,default_value,is_unique,is_null,input_tips,setting')->order($order)->select();
 			//客户
 			if (in_array($param['types'],['crm_customer']) && $param['action'] !== 'excel') {
 				$new_field_list[] = [
@@ -553,6 +553,9 @@ class Field extends Model
 				if (in_array($v['form_type'], ['radio','select','checkbox'])) {
 					$setting = explode(chr(10), $v['setting']);
 					if ($v['form_type'] == 'checkbox') $default_value = $v['default_value'] ? explode(',', $v['default_value']) : [];
+				}
+				if ($v['field'] == 'order_date') {
+					$default_value = date('Y-m-d',time());
 				}
 				//地图类型
 				if ($v['form_type'] == 'map_address') {
@@ -635,7 +638,7 @@ class Field extends Model
 					if ($param['action'] == 'read') {
 						$value = $dataInfo[$v['field']] ? db('crm_business_type')->where(['type_id' => $dataInfo[$v['field']]])->value('name') : '';
 					} else {
-						$value = $dataInfo[$v['field']] ? : '';
+						$value = (int)$dataInfo[$v['field']] ? : '';
 					}
 				} elseif ($v['form_type'] == 'business_status') {
 					//商机阶段
@@ -643,8 +646,8 @@ class Field extends Model
 						$value = $dataInfo[$v['field']] ? db('crm_business_status')->where(['status_id' => $dataInfo[$v['field']]])->value('name') : '';
 					} else {
 						$businessStatusModel = new \app\crm\model\BusinessStatus();
-						$setting = $businessStatusModel->getDataList($dataInfo['type_id']);						
-						$value = $dataInfo[$v['field']] ? : '';
+						$setting = $businessStatusModel->getDataList($dataInfo['type_id']);				
+						$value = (int)$dataInfo[$v['field']] ? : '';
 					}
 				} elseif ($v['form_type'] == 'receivables_plan') {
 					//回款计划期数
@@ -744,7 +747,7 @@ class Field extends Model
 			            ->whereOr('structure_id','')
 			            ->select();	
 			    foreach ($setting as $key=>$val) {
-			        $setting[$key]['statusList'] = $businessStatusModel->getDataList($val['type_id']); 
+			        $setting[$key]['statusList'] = $businessStatusModel->getDataList($val['type_id'], 1); 
 			    }
 			    $setting = $setting ? : [];
 			}
@@ -758,9 +761,10 @@ class Field extends Model
 	 * @author Michael_xu
 	 * @param 
 	 */	
-	public function validateField($types)
+	public function validateField($types, $types_id = 0)
 	{
-		$fieldList = $this->where(['types' => ['in',['',$types]],'is_unique' => 1,'form_type' => ['not in',['checkbox','user','structure','file']]])->field('field,name,form_type,is_unique,is_null,max_length')->select();
+		$unField = ['update_time','create_time','create_user_id','owner_user_id'];
+		$fieldList = $this->where(['types' => ['in',['',$types]],'types_id' => $types_id,'field' => ['not in',$unField],'form_type' => ['not in',['checkbox','user','structure','file']]])->field('field,name,form_type,is_unique,is_null,max_length')->select();
 		$validateArr = [];
 		$rule = [];
 		$message = [];		
@@ -771,35 +775,39 @@ class Field extends Model
 			$max_length = $field['max_length'] ? : '';
 
 			if ($field['is_null']) {
-				$rule_value .= 'require|';
-				$message[$field['field'].'.require'] = $field['name'].'不能为空';
-			}
-			if ($max_length) {
-				$rule_value .= 'max:'.$max_length;
-				$message[$field['field'].'.max'] = $field['name'].'不能超过'.$max_length.'个字符';
-			}
-			if ($field['is_unique']) {
-				$rule_value .= 'unique:'.$types;
-				$message[$field['field'].'.unique'] = $field['name'].'已经存在,不能重复添加';
+				$rule_value .= 'require';
+				$message[$field['field'].'.require'] = $field['name'].'不能为空';				
 			}
 			if ($field['form_type'] == 'number') {
+				if ($rule_value) $rule_value .= '|';
 				$rule_value .= 'number';
 				$message[$field['field'].'.number'] = $field['name'].'必须是数字';
-			}
-			if ($field['form_type'] == 'email') {
+			} elseif ($field['form_type'] == 'email') {
+				if ($rule_value) $rule_value .= '|';
 				$rule_value .= 'email';
 				$message[$field['field'].'.email'] = $field['name'].'格式错误';
-			}
-			if ($field['form_type'] == 'mobile ') {
+			} elseif ($field['form_type'] == 'mobile ') {
+				if ($rule_value) $rule_value .= '|';
 				$rule_value .= 'regex:^1[3456789][0-9]{9}?$';
 				$message[$field['field'].'.regex'] = $field['name'].'格式错误';
 			}
-			if ($field['form_type'] == 'datetime') {
-				$rule_value .= 'date';
-				$message[$field['field'].'.date'] = $field['name'].'格式错误';
-			}			
-
+			if ($field['is_unique']) {
+				if ($rule_value) $rule_value .= '|';
+				$rule_value .= 'unique:'.$types;
+				$message[$field['field'].'.unique'] = $field['name'].'已经存在,不能重复添加';
+			}
+			if ($max_length) {
+				if ($rule_value) $rule_value .= '|';
+				$rule_value .= 'max:'.$max_length;
+				$message[$field['field'].'.max'] = $field['name'].'不能超过'.$max_length.'个字符';
+			}					
+			// if ($field['form_type'] == 'datetime') {
+			// 	$rule_value .= 'date';
+			// 	$message[$field['field'].'.date'] = $field['name'].'格式错误';
+			// }					
+			if ($rule_value == 'require|') $rule_value = 'require';		
 			if (!empty($rule_value)) $rule[$field['field']] = $rule_value;
+
 		}
 		$validateArr['rule'] = $rule ? : [];
 		$validateArr['message'] = $message ? : [];

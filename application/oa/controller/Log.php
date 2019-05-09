@@ -118,7 +118,7 @@ class Log extends ApiCommon
         $param = $this->param;
         $userInfo = $this->userInfo;
         $logModel = model('Log');
-        $data = $logModel->getDataById($param['id']);
+        $data = db('oa_log')->where(['log_id' => $param['id']])->find();
         //权限判断
         $auth_user_ids = getSubUserId();
         if (!in_array($userInfo['id'], $auth_user_ids) && $data['create_user_id'] !== $userInfo['id'] && !in_array($userInfo['id'],stringToArray($data['send_user_ids']))) {
@@ -141,17 +141,28 @@ class Log extends ApiCommon
     {    
         $param = $this->param;
         $userInfo = $this->userInfo;
-        $logModel = model('Log');     
-        $res = $logModel->updateDataById($param, $param['id']);
-        if ($res) {
-            return resultArray(['data' => '编辑成功']);
+        $log_id = $param['id'];
+        $logModel = model('Log'); 
+        if ($log_id) {
+            $dataInfo = db('oa_log')->where(['log_id' => $log_id])->find();
+            //权限判断
+            if ($dataInfo['create_user_id'] !== $userInfo['id']) {
+                header('Content-Type:application/json; charset=utf-8');
+                exit(json_encode(['code'=>102,'error'=>'无权操作']));                
+            }
+            $res = $logModel->updateDataById($param, $param['id']);
+            if ($res) {
+                return resultArray(['data' => '编辑成功']);
+            } else {
+                return resultArray(['error' => $logModel->getError()]);
+            } 
         } else {
-        	return resultArray(['error' => $logModel->getError()]);
-        } 
+            return resultArray(['error'=>'参数错误']);
+        }
     }
 
     /**
-     * 删除日志（逻辑删）
+     * 删除日志 
      * @author Michael_xu
      * @param 
      * @return
@@ -159,15 +170,22 @@ class Log extends ApiCommon
     public function delete()
     {
         $param = $this->param;
+        $userInfo = $this->userInfo;
         $log_id = $param['log_id'];
 		if ($log_id) {
-            $dataInfo = db('oa_log')->where(['log_id' => $log_id])->find();
+            $dataInfo = db('oa_log')->where(['log_id' => $log_id])->find();  
+            $adminTypes = adminGroupTypes($userInfo['id']);         
             //3天内的日志可删
-            if (date('Ymd',$dataInfo['create_time']) < date('Ymd',(strtotime(date('Ymd',time()))-86400*3))) {
+            if (date('Ymd',$dataInfo['create_time']) < date('Ymd',(strtotime(date('Ymd',time()))-86400*3)) && !in_array(1,$adminTypes)) {
                 return resultArray(['error' => '已超3天，不能删除']);
-            }            
-			$data = model('Log')->delDataById($param);
-			if (!$data) {
+            } 
+            //权限判断
+            if ($dataInfo['create_user_id'] !== $userInfo['id'] && !in_array(1,$adminTypes)) {
+                header('Content-Type:application/json; charset=utf-8');
+                exit(json_encode(['code'=>102,'error'=>'无权操作']));                
+            }                       
+			$res = model('Log')->delDataById($param);
+			if (!$res) {
 				return resultArray(['error' => model('Log')->getError()]);
 			}
 			return resultArray(['data' => '删除成功']);

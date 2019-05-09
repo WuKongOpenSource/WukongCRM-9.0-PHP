@@ -147,11 +147,7 @@ class Scene extends Common
 			if (is_array($data)) {
 				foreach ($data as $k=>$v) {
 					if ($v['form_type'] == 'business_type') {
-						$v['value'] = $v['type_id'];
-						if ($v['status_id']) {
-							$v['value'] = $v['status_id'];
-							$data['status_id'] = $v;
-						}
+						$data[$k]['value'] = $v['type_id'];
 					}
 				}	
 			}

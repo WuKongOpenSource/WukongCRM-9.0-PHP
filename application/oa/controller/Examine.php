@@ -24,7 +24,7 @@ class Examine extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','save','read','update','delete','categorylist','check','revokecheck']            
+            'allow'=>['index','save','read','update','delete','categorylist','check','revokecheck','category','categorysave','categoryupdate','categorydelete','categoryenables']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -32,6 +32,14 @@ class Examine extends ApiCommon
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
+		$userInfo = $this->userInfo;
+        //权限判断
+        $unAction = ['index','save','read','update','delete','categorylist','check','revokecheck'];
+        $adminTypes = adminGroupTypes($userInfo['id']);
+        if (!in_array(5,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }        
     }
 
     /**
@@ -88,7 +96,7 @@ class Examine extends ApiCommon
         if (!$check_user_id) {
             return resultArray(['error' => '无可用审批人，请联系管理员']);
         }
-        $param['check_user_id'] = $check_user_id; 
+        $param['check_user_id'] = is_array($check_user_id) ? ','.implode(',',$check_user_id).',' : $check_user_id; 
         //流程审批人
         // $flow_user_id = $examineFlowModel->getUserByFlow($examineFlowData['flow_id'], $userInfo['id']); 
         // $param['flow_user_id'] = $flow_user_id ? arrayToString($flow_user_id) : ''; 
@@ -176,7 +184,7 @@ class Examine extends ApiCommon
         if (!$check_user_id) {
             return resultArray(['error' => '无可用审批人，请联系管理员']);
         }
-        $param['check_user_id'] = $check_user_id; 
+        $param['check_user_id'] = is_array($check_user_id) ? ','.implode(',',$check_user_id).',' : $check_user_id; 
         $param['check_status'] = 0;
         //流程审批人
         // $flow_user_id = $examineFlowModel->getUserByFlow($examineFlowData['flow_id'], $dataInfo['create_user_id']); 
@@ -286,7 +294,8 @@ class Examine extends ApiCommon
             return resultArray(['error' => '数据不存在或已删除']);
         } 
         //将当前审批流标记为已删除，重新创建审批流(目的：保留审批流程记录)
-        $newData = db('admin_examine_flow')->where(['flow_id' => $dataInfo['flow_id']])->find();
+        // $newData = db('admin_examine_flow')->where(['flow_id' => $dataInfo['flow_id']])->find();
+        
         $param['name'] = $param['title'].'流程';
         $param['types'] = 'oa_examine';        
         $param['types_id'] = $category_id;        
@@ -305,15 +314,18 @@ class Examine extends ApiCommon
                     return resultArray(['error' => $examineStepModel->getError()]);
                 }  
             }
-            $upData = [];
-            $upData['is_deleted'] = 1;      
-            $upData['delete_time'] = time();      
-            $upData['delete_user_id'] = $userInfo['id'];      
-            $upData['status'] = 0;
-            $resFlow = db('admin_examine_flow')->where(['flow_id' => $dataInfo['flow_id']])->update($upData);
-            if (!$resFlow) {
-                return resultArray(['error' => '编辑失败']);
-            }
+			if ($dataInfo['flow_id']) {
+				$upData = [];
+	            $upData['is_deleted'] = 1;      
+	            $upData['delete_time'] = time();      
+	            $upData['delete_user_id'] = $userInfo['id'];      
+	            $upData['status'] = 0;
+	            $resFlow = db('admin_examine_flow')->where(['flow_id' => $dataInfo['flow_id']])->update($upData);
+	            if (!$resFlow) {
+	                return resultArray(['error' => '编辑失败']);
+	            }
+	        }            
+            
             $param['flow_id'] = $resUpdate['flow_id'];
             $res = $categoryModel->updateDataById($param, $param['id']);
             if (!$res) {

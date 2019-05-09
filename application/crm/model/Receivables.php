@@ -100,7 +100,7 @@ class Receivables extends Common
 				->join('__CRM_CONTRACT__ contract','receivables.contract_id = contract.contract_id','LEFT')		
 				->where($map)
 				->where($authMap)
-				->page($request['page'], $request['limit'])
+				->limit(($request['page']-1)*$request['limit'], $request['limit'])
 				->field('receivables.*,customer.name as customer_name,contract.name as contract_name,contract.num as contract_num,contract.money as contract_money')
 				->order($order)
 				->select();	
@@ -115,7 +115,7 @@ class Receivables extends Common
         	$list[$k]['customer_id_info']['customer_id'] = $v['customer_id'] ? : '';
         	$list[$k]['customer_id_info']['name'] = $v['customer_name'] ? : '';	
         	$list[$k]['contract_id_info']['contract_id'] = $v['contract_id'] ? : '';
-        	$list[$k]['contract_id_info']['name'] = $v['contract_name'] ? : '';
+        	$list[$k]['contract_id_info']['name'] = $v['contract_num'] ? : '';
         	$list[$k]['contract_id_info']['money'] = $v['contract_money'] ? : '0.00';
         	$list[$k]['contract_money'] = $v['contract_money'] ? : '0.00';  
 			foreach ($userField as $key => $val) {
@@ -185,28 +185,27 @@ class Receivables extends Common
 
 	/**
 	 * 根据对象ID 获取该年各个月回款情况
-	 * @return [year] [哪一年]
-	 * @return [owner_user_id] [哪个员工]
-	 * @return [start_time] [开始时间]
-	 * @return [end_time] [结束时间]
+	 * @param [year] [哪一年]
+	 * @param [owner_user_id] [哪个员工]
+	 * @param [start_time] [开始时间]
+	 * @param [end_time] [结束时间]
 	 */
 	public function getDataByUserId($param)
 	{	
-		if($param['obj_type']){
-			if($param['obj_type']==1){ //部门
-				$structureList = Db::name('AdminUser')->field('id')->where('structure_id = '.$param['obj_id'])->select();
-				$ary =  array_map('array_shift',$structureList);
-				$str = implode(',',$ary);
+		if ($param['obj_type']) {
+			if ($param['obj_type'] == 1) { //部门
+				$userModel = new \app\admin\model\User();
+			    $str = $userModel->getSubUserByStr($param['obj_id'], 1) ? : ['-1'];
 				$map['owner_user_id'] = array('in',$str); 
-			}else{ //员工
-				$map['owner_user_id'] = array('=',$param['obj_id']); 
+			} else { //员工
+				$map['owner_user_id'] = $param['obj_id']; 
 			}
 		}
 		//审核状态
 		$start = date('Y-m-d',$param['start_time']);
 		$stop = date('Y-m-d',$param['end_time']);
 		$map['check_status'] = 2;
-		$data = $this->where($map)->where(' return_time >"'.$start.'" and return_time < "'.$stop.'"' )->sum('money');
+		$data = $this->where($map)->where(['return_time' => ['between',[$start,$stop]]])->sum('money');
 		return $data;
 	}
 
@@ -219,7 +218,7 @@ class Receivables extends Common
 	public function updateDataById($param, $receivables_id = '')
 	{
 		$userModel = new \app\admin\model\User();
-		$dataInfo = $this->getDataById($receivables_id);
+		$dataInfo = db('crm_receivables')->where(['receivables_id' => $receivables_id])->find();
 		if (!$dataInfo) {
 			$this->error = '数据不存在或已删除';
 			return false;

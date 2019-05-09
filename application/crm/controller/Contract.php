@@ -88,7 +88,7 @@ class Contract extends ApiCommon
         if (!$check_user_id) {
             return resultArray(['error' => '无可用审批人，请联系管理员']);
         }
-        $param['check_user_id'] = $check_user_id; 
+        $param['check_user_id'] = is_array($check_user_id) ? ','.implode(',',$check_user_id).',' : $check_user_id;
         //流程审批人
         // $flow_user_id = $examineFlowModel->getUserByFlow($examineFlowData['flow_id'], $param['create_user_id']); 
         // $param['flow_user_id'] = $flow_user_id ? arrayToString($flow_user_id) : '';            
@@ -184,7 +184,7 @@ class Contract extends ApiCommon
         if (!$check_user_id) {
             return resultArray(['error' => '无可用审批人，请联系管理员']);
         }
-        $param['check_user_id'] = $check_user_id;
+        $param['check_user_id'] = is_array($check_user_id) ? ','.implode(',',$check_user_id).',' : $check_user_id;
         $param['check_status'] = 0;
 
         //流程审批人

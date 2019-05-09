@@ -50,7 +50,7 @@ class ReceivablesPlan extends Common
 			$map = where_arr($map, 'crm', 'receivables_plan', 'index'); //高级筛选
 		}		
 
-		$list = db('crm_receivables_plan')->alias('receivables_plan')->where($map)->page($request['page'], $request['limit'])->select();
+		$list = db('crm_receivables_plan')->alias('receivables_plan')->where($map)->limit(($request['page']-1)*$request['limit'], $request['limit'])->select();
 		$dataCount = db('crm_receivables_plan')->alias('receivables_plan')->where($map)->count('plan_id');
         foreach ($list as $k=>$v) {
         	$list[$k]['create_user_id_info'] = $userModel->getUserById($v['create_user_id']);
@@ -70,8 +70,7 @@ class ReceivablesPlan extends Common
 	 * @return                            
 	 */	
 	public function createData($param)
-	{
-		if (!$param['contract_id']) {
+	{		if (!$param['contract_id']) {
 			$this->error = '请先选择合同';
 		}
 		// 自动验证
@@ -84,7 +83,8 @@ class ReceivablesPlan extends Common
 		//期数规则（1,2,3..）
 		$maxNum = db('crm_receivables_plan')->where(['contract_id' => $param['contract_id']])->max('num');
 		$param['num'] = $maxNum ? $maxNum+1 : 1;
-
+		//提醒日期
+		$param['remind_date'] = $param['remind'] ? date('Y-m-d',strtotime($param['return_date'])-86400*$param['remind']) : $param['return_date'];
 		if ($this->data($param)->allowField(true)->save()) {
 			$data = [];
 			$data['plan_id'] = $this->plan_id;
@@ -122,7 +122,8 @@ class ReceivablesPlan extends Common
 			return false;
 		}
 		if ($param['file_ids']) $param['file'] = arrayToString($param['file_ids']); //附件
-
+		//提醒日期
+		$param['remind_date'] = $param['remind'] ? date('Y-m-d',strtotime($param['return_date'])-86400*$param['remind']) : $param['return_date'];		
 		if ($this->allowField(true)->save($param, ['plan_id' => $plan_id])) {
 			$data = [];
 			$data['plan_id'] = $plan_id;
@@ -206,5 +207,5 @@ class ReceivablesPlan extends Common
 			]
 		];
 		return $field_arr;
-	}   	
+	} 	  	
 }

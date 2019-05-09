@@ -299,8 +299,8 @@ class Business extends ApiCommon
             $dataList[$k]['category_id_info'] = $category_name ? : '';
         }
         $list['list'] = $dataList ? : [];
-        $list['total_price'] = $contractInfo['total_price'] ? : '0.00';
-        $list['discount_rate'] = $contractInfo['discount_rate'] ? : '0.00';        
+        $list['total_price'] = $businessInfo['total_price'] ? : '0.00';
+        $list['discount_rate'] = $businessInfo['discount_rate'] ? : '0.00';        
         return resultArray(['data' => $list]);
     }  
 

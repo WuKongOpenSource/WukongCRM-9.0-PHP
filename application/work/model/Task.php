@@ -239,26 +239,26 @@ class Task extends Common
 		if($param['main_user_id']){
 			$param['owner_user_id'] = ','.$param['main_user_id'].',';
 		}
-		$flag = $this->insertGetId($param); //添加任务
+		$task_id = $this->insertGetId($param); //添加任务
 		
-		if ($flag) {
+		if ($task_id) {
 			$rdata['status'] = 1;
 			$rdata['create_time'] = time();
-			$rdata['task_id'] = $flag;
+			$rdata['task_id'] = $task_id;
 			Db::name('TaskRelation')->insert($rdata);
 			
 			if(!$param['pid']){
 				$taskLog = new LogModel();// model('TaskLog'); 
 				$datalog['name'] = $param['name'];
 				$datalog['user_id'] = $param['create_user_id']; 
-				$datalog['task_id'] = $flag;//添加任务ID
+				$datalog['task_id'] = $task_id;//添加任务ID
 				$datalog['work_id'] = $param['work_id']?:'';//添加任务ID
 				
 				$ret = $taskLog->newTaskLog($datalog);
 				//操作日志
-				actionLog($flag,'','','新建了任务');
+				actionLog($task_id,'','','新建了任务');
 			}
-			return $flag;
+			return $task_id;
 		} else {
 			$this->error = '添加失败';
 			return false;

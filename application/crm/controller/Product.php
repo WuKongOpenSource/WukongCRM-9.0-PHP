@@ -22,7 +22,7 @@ class Product extends ApiCommon
     public function _initialize()
     {
         $action = [
-            'permission'=>[''],
+            'permission'=>['exceldownload'],
             'allow'=>['']            
         ];
         Hook::listen('check_auth',$action);
@@ -133,4 +133,74 @@ class Product extends ApiCommon
         }
         return resultArray(['data' => $data['status'].'成功']);
     }
+
+    /**
+     * 产品导入模板
+     * @author Michael_xu
+     * @param 
+     * @return
+     */ 
+    public function excelDownload() 
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $excelModel = new \app\admin\model\Excel();
+
+        // 导出的字段列表
+        $fieldModel = new \app\admin\model\Field();
+        $fieldParam['types'] = 'crm_product'; 
+        $fieldParam['action'] = 'excel'; 
+        $field_list = $fieldModel->field($fieldParam);
+        $res = $excelModel->excelImportDownload($field_list, 'crm_product');
+    }  
+
+    /**
+     * 产品导出
+     * @author Michael_xu
+     * @param 
+     * @return
+     */
+    public function excelExport()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $param['user_id'] = $userInfo['id'];
+        if ($param['product_id']) {
+           $param['product_id'] = ['condition' => 'in','value' => $param['product_id'],'form_type' => 'text','name' => ''];
+        }        
+
+        $excelModel = new \app\admin\model\Excel();
+        // 导出的字段列表
+        $fieldModel = new \app\admin\model\Field();
+        $field_list = $fieldModel->getIndexFieldList('crm_product', $userInfo['id']);
+        // 文件名
+        $file_name = '5kcrm_product_'.date('Ymd');
+        $param['pageType'] = 'all'; 
+        $excelModel->exportCsv($file_name, $field_list, function($page) use ($param){
+            $list = model('Product')->getDataList($param);
+            return $list;
+        });
+    } 
+
+    /**
+     * 产品数据导入
+     * @author Michael_xu
+     * @param 
+     * @return
+     */
+    public function excelImport()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $excelModel = new \app\admin\model\Excel();
+        $param['types'] = 'crm_product';
+        $param['create_user_id'] = $userInfo['id'];
+        $param['owner_user_id'] = $param['owner_user_id'] ? : $userInfo['id'];
+        $file = request()->file('file');
+        $res = $excelModel->importExcel($file, $param);
+        if (!$res) {
+            return resultArray(['error'=>$excelModel->getError()]);
+        }
+        return resultArray(['data'=>'导入成功']);
+    }    
 }

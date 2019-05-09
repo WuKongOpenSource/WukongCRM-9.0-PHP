@@ -220,6 +220,10 @@ class Leads extends ApiCommon
             $data = $leadsInfo ? : [];
             $data['create_user_id'] = $userInfo['id'];
             $data['owner_user_id'] = $userInfo['id'];
+            $data['deal_status'] = '未成交';
+            $data['deal_time'] = time();            
+            $data['create_time'] = time();            
+            $data['update_time'] = time();            
             //权限判断
             if (!$leadsInfo) {
                 $errorMessage[] = 'id:为'.$leads_id.'的线索转化失败，错误原因：数据不存在；';
@@ -377,5 +381,26 @@ class Leads extends ApiCommon
             return resultArray(['error'=>$excelModel->getError()]);
         }
         return resultArray(['data'=>'导入成功']);
-    }          
+    }
+
+    /**
+     * 线索标记为已跟进
+     * @author Michael_xu
+     * @param 
+     * @return
+     */
+    public function setFollow(){
+        $param = $this->param;
+        $leadsIds = $param['id'] ? : [];
+        if (!$leadsIds || !is_array($leadsIds)) {
+            return resultArray(['error'=>'参数错误']);
+        }
+        $data['follow'] = '已跟进';
+        $data['update_time'] = time();
+        $res = db('crm_leads')->where(['leads_id' => ['in',$leadsIds]])->update($data);
+        if (!$res) {
+            return resultArray(['error'=>'操作失败，请重试']);
+        }
+        return resultArray(['data'=>'跟进成功']);        
+    }            
 }

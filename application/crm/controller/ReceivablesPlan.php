@@ -23,7 +23,7 @@ class ReceivablesPlan extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','save','read','update']            
+            'allow'=>['index','save','read','update','delete']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -96,14 +96,66 @@ class ReceivablesPlan extends ApiCommon
     public function update()
     {    
         $receivablesPlanModel = model('ReceivablesPlan');
+        $userModel = new \app\admin\model\User();
         $param = $this->param;
         $userInfo = $this->userInfo;
+        $plan_id = $param['id'];
 
+        $dataInfo = db('crm_receivables_plan')->where(['plan_id' => $plan_id])->find();
+        //根据合同权限判断
+        $contractData = db('crm_contract')->where(['contract_id' => $dataInfo['contract_id']])->find();
+        $auth_user_ids = $userModel->getUserByPer('crm', 'contract', 'update');
+        //读写权限
+        $rwPre = $userModel->rwPre($userInfo['id'], $contractData['ro_user_id'], $contractData['rw_user_id'], 'update');       
+        if (!in_array($contractData['owner_user_id'],$auth_user_ids) && !$rwPre) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }
         $res = $receivablesPlanModel->updateDataById($param, $param['id']);
         if ($res) {
             return resultArray(['data' => '编辑成功']);
         } else {
             return resultArray(['error' => $receivablesPlanModel->getError()]);
         }       
-    }   
+    } 
+
+    /**
+     * 删除回款计划
+     * @author Michael_xu
+     * @param 
+     * @return 
+     */
+    public function delete()
+    {
+        $userModel = new \app\admin\model\User();
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $plan_id = $param['id'];
+        if ($plan_id) {
+            $dataInfo = db('crm_receivables_plan')->where(['plan_id' => $plan_id])->find();
+            if (!$dataInfo) {
+                return resultArray(['error' => '数据不存在或已删除']);
+            }
+            $receivablesInfo = db('crm_receivables')->where(['receivables_id' => $dataInfo['receivables_id']])->find();
+            if ($receivablesInfo) {
+                return resultArray(['error' => '已关联回款《'.$receivablesInfo['number'].'》，不能删除']);
+            }
+            //根据合同权限判断
+            $contractData = db('crm_contract')->where(['contract_id' => $dataInfo['contract_id']])->find();
+            $auth_user_ids = $userModel->getUserByPer('crm', 'contract', 'delete');
+            //读写权限
+            $rwPre = $userModel->rwPre($userInfo['id'], $contractData['ro_user_id'], $contractData['rw_user_id'], 'update');       
+            if (!in_array($contractData['owner_user_id'],$auth_user_ids) && !$rwPre) {
+                header('Content-Type:application/json; charset=utf-8');
+                exit(json_encode(['code'=>102,'error'=>'无权操作']));
+            }
+            $res = model('ReceivablesPlan')->delDataById($plan_id);
+            if (!$res) {
+                return resultArray(['error' => model('ReceivablesPlan')->getError()]);
+            }
+            return resultArray(['data' => '删除成功']);
+        } else {
+            return resultArray(['error'=>'参数错误']);
+        }        
+    }     
 }

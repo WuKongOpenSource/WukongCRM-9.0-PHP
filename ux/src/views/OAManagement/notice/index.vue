@@ -38,10 +38,10 @@
               </div>
               <div class="title"
                    @click="rowFun(item)">{{item.title}}</div>
-              <pre class="item-content"
-                   v-if="item.preShow">{{item.content}}</pre>
-              <pre class="item-content"
-                   v-else>{{item.contentSub}}</pre>
+              <div class="item-content"
+                   v-if="item.preShow">{{item.content}}</div>
+              <div class="item-content"
+                   v-else>{{item.contentSub}}</div>
               <div v-if="item.contentSub.length < item.content.length"
                    class="load-more">
                 <span v-if="!item.loadMore"

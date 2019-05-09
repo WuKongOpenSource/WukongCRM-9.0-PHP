@@ -87,7 +87,7 @@ class Receivables extends ApiCommon
         if (!$check_user_id) {
             return resultArray(['error' => '无可用审批人，请联系管理员']);
         }
-        $param['check_user_id'] = $check_user_id; 
+        $param['check_user_id'] = is_array($check_user_id) ? ','.implode(',',$check_user_id).',' : $check_user_id;
         //流程审批人
         // $flow_user_id = $examineFlowModel->getUserByFlow($examineFlowData['flow_id'], $param['owner_user_id']); 
         // $param['flow_user_id'] = $flow_user_id ? arrayToString($flow_user_id) : '';                
@@ -137,7 +137,7 @@ class Receivables extends ApiCommon
         $userModel = new \app\admin\model\User();
         $param = $this->param;
         $userInfo = $this->userInfo;
-
+        $param['user_id'] = $userInfo['id'];
         //判断权限
         $dataInfo = $receivablesModel->getDataById($param['id']);
         $auth_user_ids = $userModel->getUserByPer('crm', 'receivables', 'update');
@@ -177,7 +177,7 @@ class Receivables extends ApiCommon
         if (!$check_user_id) {
             return resultArray(['error' => '无可用审批人，请联系管理员']);
         }
-        $param['check_user_id'] = $check_user_id;
+        $param['check_user_id'] = is_array($check_user_id) ? ','.implode(',',$check_user_id).',' : $check_user_id;
         $param['check_status'] = 0;   
 
         //流程审批人

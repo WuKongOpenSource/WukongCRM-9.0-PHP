@@ -65,6 +65,14 @@ class Excel extends Common
 		$objActSheet = $objPHPExcel->getActiveSheet();
 		$objActSheet->setTitle('悟空软件导入模板'.date('Y-m-d',time())); //设置sheet的标题	
 
+		//存储Excel数据源到其他工作薄
+		$objPHPExcel->createSheet();
+	    $subObject = $objPHPExcel->getSheet(1);
+	    $subObject->setTitle('data');
+	    //保护数据源
+	    $subObject->getProtection()->setSheet(true);
+	    $subObject->protectCells('A1:C1000',time());		
+
 		$k = 0;
         foreach ($field_list as $field) {
         	$objActSheet->getColumnDimension($this->stringFromColumnIndex($k))->setWidth(20); //设置单元格宽度
@@ -76,23 +84,61 @@ class Excel extends Common
 					$k++;
 				}
 			} else {
-				if($field['form_type'] == 'select' || $field['form_type'] == 'checkbox' || $field['form_type'] == 'radio'){
- 					$setting = $field['setting'] ? : [];
+				if ($field['form_type'] == 'select' || $field['form_type'] == 'checkbox' || $field['form_type'] == 'radio' || $field['form_type'] == 'category') {
+                    //产品类别
+                    if ($field['form_type'] == 'category' && $field['types'] == 'crm_product') {
+                    	$setting = db('crm_product_category')->order('pid asc')->column('name');
+                    } else {
+                    	$setting = $field['setting'] ? : [];
+                    }
                     $select_value = implode(',',$setting);
- 					if ($select_value) {				
-						//数据有效性   start
-						$objValidation = $objActSheet->getCell($this->stringFromColumnIndex($k).'3')->getDataValidation();
-						$objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)  
-				           -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
-				           -> setAllowBlank(false)  
-				           -> setShowInputMessage(true)  
-				           -> setShowErrorMessage(true)  
-				           -> setShowDropDown(true)  
-				           -> setErrorTitle('输入的值有误')  
-				           -> setError('您输入的值不在下拉框列表内.')  
-				           -> setPromptTitle('--请选择--')  
-				           -> setFormula1('"'.$select_value.'"');
-				        //数据有效性  end
+
+					//解决下拉框数据来源字串长度过大：将每个来源字串分解到一个空闲的单元格中
+					$str_len = strlen($select_value);
+					$selectList = array();
+					if ($str_len >= 255) {
+						$str_list_arr = explode(',', $select_value);   
+						if ($str_list_arr) {
+							foreach ($str_list_arr as $i1=>$d) {  
+						        $c = $this->stringFromColumnIndex($k).($i1+1);  
+						        $subObject->setCellValue($c,$d);
+						        $selectList[$d]=$d;
+						    }
+							$endcell = $c;
+						}
+						for ($c=3; $c<=70; $c++) {		
+							//数据有效性   start
+							$objValidation = $objActSheet->getCell($this->stringFromColumnIndex($k).$c)->getDataValidation();
+							$objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)  
+					           -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
+					           -> setAllowBlank(false)  
+					           -> setShowInputMessage(true)  
+					           -> setShowErrorMessage(true)  
+					           -> setShowDropDown(true)  
+					           -> setErrorTitle('输入的值有误')  
+					           -> setError('您输入的值不在下拉框列表内.')  
+					           -> setPromptTitle('--请选择--')  
+					           -> setFormula1('data!$'.$this->stringFromColumnIndex($k).'$1:$'.$this->stringFromColumnIndex($k).'$'.count(explode(',',$select_value)));
+					        //数据有效性  end
+					    }
+					} else {
+						if ($select_value) {
+	 						for ($c=3; $c<=70; $c++) {		
+								//数据有效性   start
+								$objValidation = $objActSheet->getCell($this->stringFromColumnIndex($k).$c)->getDataValidation();
+								$objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)  
+						           -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
+						           -> setAllowBlank(false)  
+						           -> setShowInputMessage(true)  
+						           -> setShowErrorMessage(true)  
+						           -> setShowDropDown(true)  
+						           -> setErrorTitle('输入的值有误')  
+						           -> setError('您输入的值不在下拉框列表内.')  
+						           -> setPromptTitle('--请选择--')  
+						           -> setFormula1('"'.$select_value.'"');
+						        //数据有效性  end
+						    }
+						}
 					}
 				}
 				//检查该字段若必填，加上"*"
@@ -114,9 +160,9 @@ class Excel extends Common
 		$objActSheet->getStyle('A1')->getFont()->getColor()->setARGB('FFFF0000');
         $objActSheet->getStyle('A1')->getAlignment()->setWrapText(true);
         //设置单元格格式范围的字体、字体大小、加粗
-        $objActSheet->getStyle('A1:'.$mark_row.'1')->getFont()->setName("微软雅黑")->setSize(13)->getColor()->setARGB('#00000000');
+        $objActSheet->getStyle('A1:'.$max_row.'1')->getFont()->setName("微软雅黑")->setSize(13)->getColor()->setARGB('#00000000');
         //给单元格填充背景色
-        $objActSheet->getStyle('A1:'.$mark_row.'1')->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('#ff9900');		
+        $objActSheet->getStyle('A1:'.$max_row.'1')->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('#ff9900');		
 
 		switch ($types) {
 			case 'crm_leads' : $types_name = '线索信息'; break;
@@ -233,7 +279,7 @@ class Excel extends Common
 
 	        if ($ext =='xlsx') {
 	        	$objWriter = new \PHPExcel_Writer_Excel2007($objPHPExcel);
-			    $objRender = \PHPExcel_IOFactory::createReader('excel2007');
+			    $objRender = \PHPExcel_IOFactory::createReader('Excel2007');
 			    $ExcelObj = $objRender->load($savePath);
 			} else if ($ext =='xls') {
 				$objWriter = new \PHPExcel_Writer_Excel5($objPHPExcel);
@@ -259,18 +305,32 @@ class Excel extends Common
 	        //取出文件的内容描述信息，循环取出数据，写入数据库
 			switch ($types) {
 				case 'crm_leads' : $dataModel = new \app\crm\model\Leads(); $db = 'crm_leads'; $db_id = 'leads_id'; break;
-				case 'crm_customer' : $dataModel = new \app\crm\model\Customer(); $db = 'crm_customer'; $db_id = 'customer_id'; break;
+				case 'crm_customer' : $dataModel = new \app\crm\model\Customer(); $db = 'crm_customer'; $db_id = 'customer_id'; $fieldParam['form_type'] = array('not in',['file','form','user','structure']); break;
 				case 'crm_contacts' : $dataModel = new \app\crm\model\Contacts(); $db = 'crm_contacts'; $db_id = 'contacts_id'; break;
-			}	        
+				case 'crm_product' : $dataModel = new \app\crm\model\Product(); $db = 'crm_product'; $db_id = 'product_id'; break;
+			}
+			$contactsModel = new \app\crm\model\Contacts();        
 
 	        //自定义字段
  			$fieldModel = new \app\admin\model\Field();
         	$fieldParam['types'] = $types; 
         	$field_list = $fieldModel->getDataList($fieldParam);
         	$fieldArr = [];
+        	$uniqueField = []; //验重字段
         	foreach ($field_list as $k=>$v) {
         		$fieldArr[$v['name']]['field'] = $v['field'];
         		$fieldArr[$v['name']]['form_type'] = $v['form_type'];
+        		if ($v['is_unique'] == 1) $uniqueField[] = $v['field'];
+        	}
+        	$field_num = count($field_list);
+        	//客户导入联系人
+        	if ($types == 'crm_customer') {
+				$contacts_field_list = $fieldModel->getDataList(['types' => 'crm_contacts','field' => array('neq','customer_id')]);
+	        	$contactsFieldArr = [];
+	        	foreach ($contacts_field_list as $k=>$v) {
+	        		$contactsFieldArr[$v['name']]['field'] = $v['field'];
+	        		$contactsFieldArr[$v['name']]['form_type'] = $v['form_type'];
+	        	}      		
         	}
 	        $defaultData = []; //默认数据
 	        $defaultData['create_user_id'] = $param['create_user_id'];
@@ -279,102 +339,119 @@ class Excel extends Common
 	        $defaultData['update_time'] = time();
 	        if ($types == 'crm_customer') {
 	        	$defaultData['deal_time'] = time();
+	        }	        
+	        //产品类别
+	        if ($types == 'crm_product') {
+	        	$productCategory = db('crm_product_category')->select();
+	        	$productCategoryArr = [];
+	        	foreach ($productCategory as $v) {
+	        		$productCategoryArr[$v['name']] = $v['category_id'];
+	        	}
 	        }
-	       	$key = 2;
+
+	       	$keys = 2;
 	       	$errorMessage = [];
-	        foreach ($sheetContent as $val){
+	        foreach ($sheetContent as $kk => $val){
 	        	$data = '';
+	        	$contactsData = '';
 	        	$k = 0;        	
+	        	$contacts_k = $field_num;        	
 	        	$resNameIds = '';
-	        	$key++;
+	        	$keys++;
 	        	$name = ''; //客户、线索、联系人等名称
+	        	$contactsName = '';
 	            $data = $defaultData; //导入数据
+	            $contacts_data = $defaultData; //导入数据
+	            $resWhere = ''; //验重条件
+	            $resContacts = false; //联系人是否有数据
+	            $resInfo = false; //Excel列是否有数据
 				foreach ($excelHeader as $aa => $header) {
 					if (empty($header)) break; 					
 					$fieldName = trim(str_replace('*','',$header));
 					$info = '';
 					$info = $val[$k];
-					if (empty($fieldArr[$fieldName]['field'])) break; 
-					if ($fieldArr[$fieldName]['field'] == 'name') $name = $info;
-					if ($info) {
-						if ($fieldArr[$fieldName]['form_type'] == 'address') {
-							$address = array();
-							for ($i=0; $i<4; $i++) {
-								$address[] = $val[$k];
-								$k++;
-							}
-							$data[$fieldArr[$fieldName]['field']] =  implode(chr(10), $address);
-
-							// 地址信息转地理坐标（仅处理系统初始的地址字段）
-							if ($fieldArr[$fieldName]['field'] == 'address') {
-								$address_arr = $address;
-								if ($address_arr['3']) {
-									$address_str = implode('', $address_arr);
-									$ret = get_lng_lat($address_str);
-									$data['lng'] = $ret['lng'] ?: 0;
-									$data['lat'] = $ret['lat'] ?: 0;
-								}
-							}
-						} elseif ($fieldArr[$fieldName]['form_type'] == 'date') {
-							$data[$fieldArr[$fieldName]['field']] = $info ? date('Y-m-d',strtotime($info)) : '';
-							$k++;
-						} elseif ($fieldArr[$fieldName]['form_type'] == 'datetime') {
-							$data[$fieldArr[$fieldName]['field']] = $info ? strtotime($info) : '';
-							$k++;
-						} elseif ($fieldArr[$fieldName]['form_type'] == 'customer') {
-							$data[$fieldArr[$fieldName]['field']] = db('crm_customer')->where(['name' => $info])->value('customer_id') ? : '';
-							$k++;
-						} elseif ($fieldArr[$fieldName]['form_type'] == 'contacts') {
-							$data[$fieldArr[$fieldName]['field']] = db('crm_contacts')->where(['name' => $info])->value('contacts_id') ? : '';
-							$k++;
-						} elseif ($fieldArr[$fieldName]['form_type'] == 'business') {
-							$data[$fieldArr[$fieldName]['field']] = db('crm_business')->where(['name' => $info])->value('business_id') ? : '';
-							$k++;
-						} elseif ($fieldArr[$fieldName]['form_type'] == 'category') {
-							$data[$fieldArr[$fieldName]['field']] = db('crm_product_category')->where(['name' => $info])->value('category_id') ? : '';
-							$k++;	
-						} elseif ($fieldArr[$fieldName]['form_type'] == 'business_type') {
-							$data[$fieldArr[$fieldName]['field']] = db('crm_business_type')->where(['name' => $info])->value('type_id') ? : '';
-							$k++;	
-						} elseif ($fieldArr[$fieldName]['form_type'] == 'business_status') {
-							$data[$fieldArr[$fieldName]['field']] = db('crm_business_status')->where(['name' => $info])->value('status_id') ? : '';
-							$k++;		
-						} else {				
-							$data[$fieldArr[$fieldName]['field']] = $info ? : '';
-							$k++;
-						}						
-					} else {
-						$data[$fieldArr[$fieldName]['field']] = '';
-						$k++;	
+					if ($info) $resInfo = true;
+					if ($types == 'crm_product' && $fieldName == '产品类别') {
+						$data['category_id'] = $productCategoryArr[$info] ? : 0;
+						$data['category_str'] = $dataModel->getPidStr($productCategoryArr[$info], '', 1);
 					}
-				}
-				if ($name) $resNameIds = db($db)->where(['name' => $name,'owner_user_id' => $param['owner_user_id']])->column($db_id);
-				if ($resNameIds) {
-					if ($config == 1) {
-						//覆盖数据（以名称为查重规则，如存在则覆盖原数据）	
-						if ($resNameIds) {
-							foreach ($resNameIds as $nid) {
-								$upRes = $dataModel->updateDataById($data, $nid);
-								if (!$upRes) {
-									$errorMessage[] = '第'.$key.'行导入错误,失败原因：数据更新失败';
-									continue;	
-								}
+					//联系人
+			        if ($types == 'crm_contacts' && $fieldName == '客户名称') {
+			        	if (!$info) {
+							$errorMessage[] = '第'.$keys.'行导入错误,失败原因：客户名称必填';
+							continue;			        		
+			        	}
+			        	$customer_id = '';
+			        	$customer_id = db('crm_customer')->where(['name' => $info])->value('customer_id');
+			        	if (!$customer_id) {
+							$errorMessage[] = '第'.$keys.'行导入错误,失败原因：客户名称不存在';
+							continue;
+			        	}
+			        	$data['customer_id'] = $customer_id;
+			        }					
+					if ($aa < $field_num) {
+						if (empty($fieldArr[$fieldName]['field'])) continue; 
+						// if ($fieldArr[$fieldName]['field'] == 'name') $name = $info;
+						if (in_array($fieldArr[$fieldName]['field'], $uniqueField) && $info) $resWhere .= " `".$fieldArr[$fieldName]['field']."` =  '".$info."' OR";
+
+						$resList = [];
+						$resList = $this->sheetData($k, $fieldArr, $fieldName, $info);
+						$resData[] = $resList['data'];
+						$k = $resList['k'];
+					} else {
+						//联系人
+						if ($types == 'crm_customer' && $aa == (int)$contacts_k) {
+							$contactsInfo = '';
+							$contactsInfo = $val[$contacts_k];
+							if ($contactsInfo) {
+								$resContacts = true;
 							}
-						}	
+							// if ($contactsFieldArr[$fieldName]['field'] == 'name') $contactsName = $contactsInfo;	
+							$resContactsList = [];
+							$resContactsList = $this->sheetData($contacts_k, $contactsFieldArr, $fieldName, $contactsInfo);
+							$resContactsData[] = $resContactsList['data'];
+							$contacts_k = $resContactsList['k'];	
+						}
+					}					
+				}
+				$result = $this->changeArr($resData); //二维数组转一维数组
+				$data = $result ? array_merge($data,$result) : [];
+				if ($types == 'crm_customer' && $result) {
+					$resultContacts = $this->changeArr($resContactsData);
+					$contactsData = $resultContacts ? array_merge($contacts_data,$resultContacts) : []; //联系人
+				}
+				$resWhere = $resWhere ? substr($resWhere,0,-2) : '';
+				$ownerWhere['owner_user_id'] = $param['owner_user_id'];
+				if ($uniqueField && $resWhere) $resNameIds = db($db)->where($resWhere)->where($ownerWhere)->column($db_id);
+				if ($resInfo == false) {
+					continue;
+				}
+				if ($resNameIds && $data) {
+					if ($config == 1 && $resNameIds) {
+						$data['user_id'] = $param['create_user_id'];
+						//覆盖数据（以名称为查重规则，如存在则覆盖原数据）	
+						foreach ($resNameIds as $nid) {
+							$upRes = $dataModel->updateDataById($data, $nid);
+							if (!$upRes) {
+								$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$dataModel->getError();
+								continue;	
+							}
+						}
 					}					
 				} else {
 					if (!$resData = $dataModel->createData($data)) {
-						$errorMessage[] = '第'.$key.'行导入错误,失败原因：'.$dataModel->getError();
+						$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$dataModel->getError();
 						continue;
 					}
-					// if ($types == 'crm_customer') {
-					// 	$contactsModel = new \app\crm\model\Contacts();
-					// 	$contactsData = $data;
-					// 	$contactsData['customer_id'] = $resData['customer_id'];
-					// 	$resData = $contactsModel->createData($contactsData);
-					// }						
+					if ($types == 'crm_customer' && $resContacts !== false) {
+						$contactsData['customer_id'] = $resData['customer_id'];
+						if (!$resData = $contactsModel->createData($contactsData)) {
+							$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$contactsModel->getError();
+							continue;
+						}						
+					}						
 				}		
-	        }
+	        }	       
 	        if ($errorMessage) {
 	        	$this->error = $errorMessage;
 	        	return false;
@@ -384,6 +461,84 @@ class Excel extends Common
 			$this->error = '请选择导入文件';
             return false;        	
         }
+	}
+
+	/**
+	 * excel数据处理
+	 * @param $k 需处理数据开始下标
+	 * @author Michael_xu
+	 * @return 
+	 */	
+	public function sheetData($k = 0, $fieldArr, $fieldName, $info)
+	{
+		if ($info) {
+			if ($fieldArr[$fieldName]['form_type'] == 'address') {
+				$address = array();
+				for ($i=0; $i<4; $i++) {
+					$address[] = $val[$k];
+					$k++;
+				}
+				$data[$fieldArr[$fieldName]['field']] =  implode(chr(10), $address);
+
+				// 地址信息转地理坐标（仅处理系统初始的地址字段）
+				if ($fieldArr[$fieldName]['field'] == 'address') {
+					$address_arr = $address;
+					if ($address_arr['3']) {
+						$address_str = implode('', $address_arr);
+						$ret = get_lng_lat($address_str);
+						$data['lng'] = $ret['lng'] ?: 0;
+						$data['lat'] = $ret['lat'] ?: 0;
+					}
+				}
+			} elseif ($fieldArr[$fieldName]['form_type'] == 'date') {
+				$data[$fieldArr[$fieldName]['field']] = $info ? date('Y-m-d',strtotime($info)) : '';
+				$k++;
+			} elseif ($fieldArr[$fieldName]['form_type'] == 'datetime') {
+				$data[$fieldArr[$fieldName]['field']] = $info ? strtotime($info) : '';
+				$k++;
+			} elseif ($fieldArr[$fieldName]['form_type'] == 'customer') {
+				$data[$fieldArr[$fieldName]['field']] = db('crm_customer')->where(['name' => $info])->value('customer_id') ? : '';
+				$k++;
+			} elseif ($fieldArr[$fieldName]['form_type'] == 'contacts') {
+				$data[$fieldArr[$fieldName]['field']] = db('crm_contacts')->where(['name' => $info])->value('contacts_id') ? : '';
+				$k++;
+			} elseif ($fieldArr[$fieldName]['form_type'] == 'business') {
+				$data[$fieldArr[$fieldName]['field']] = db('crm_business')->where(['name' => $info])->value('business_id') ? : '';
+				$k++;
+			} elseif ($fieldArr[$fieldName]['form_type'] == 'category') {
+				$data[$fieldArr[$fieldName]['field']] = db('crm_product_category')->where(['name' => $info])->value('category_id') ? : '';
+				$k++;	
+			} elseif ($fieldArr[$fieldName]['form_type'] == 'business_type') {
+				$data[$fieldArr[$fieldName]['field']] = db('crm_business_type')->where(['name' => $info])->value('type_id') ? : '';
+				$k++;	
+			} elseif ($fieldArr[$fieldName]['form_type'] == 'business_status') {
+				$data[$fieldArr[$fieldName]['field']] = db('crm_business_status')->where(['name' => $info])->value('status_id') ? : '';
+				$k++;		
+			} else {				
+				$data[$fieldArr[$fieldName]['field']] = $info ? : '';
+				$k++;
+			}						
+		} else {
+			$data[$fieldArr[$fieldName]['field']] = '';
+			$k++;	
+		}
+		$res['data'] = $data;
+		$res['k'] = $k;
+		return $res;
+	}
+
+	//二维数组转一维数组
+	public function changeArr($arr)
+	{
+		$newArr = [];
+		foreach ($arr as $v) {
+			if ($v && is_array($v)) {
+				$newArr = array_merge($newArr,$v);
+			} else {
+				continue;
+			}
+		}
+		return $newArr;
 	}
 
 	/**

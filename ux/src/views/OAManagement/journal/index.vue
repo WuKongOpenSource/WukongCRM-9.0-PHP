@@ -102,25 +102,6 @@ export default {
   watch: {
     $route(to, from) {
       this.$router.go(0)
-    },
-    journalData: function(newData, oldVal) {
-      for (let item of newData) {
-        item.allData = {}
-        item.allData.business = item.businessList
-        item.allData.contacts = item.contactsList
-        item.allData.contract = item.contractList
-        item.allData.customer = item.customerList
-        if (
-          item.businessList.length != 0 ||
-          item.contactsList.length != 0 ||
-          item.contractList.length != 0 ||
-          item.customerList.length != 0
-        ) {
-          item.allDataShow = true
-        } else {
-          item.allDataShow = false
-        }
-      }
     }
   },
   beforeRouteUpdate(to, from, next) {
@@ -344,7 +325,6 @@ export default {
           })
           .catch(err => {
             this.newLoading = false
-            this.$message.error('编辑失败')
           })
       }
     },

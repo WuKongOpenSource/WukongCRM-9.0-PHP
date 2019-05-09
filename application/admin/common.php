@@ -47,11 +47,18 @@ function decrypt($str, $key = 'kls8in1e')
 
 /**
  * 部门树形数组
- * @param 
+ * @param type 0 下属数组， 1包含自己
  */
-function getSubObj($id, $objList, $separate) {
-    $array = array();
-    foreach ($objList AS $value) {
+function getSubObj($id, $objList, $separate, $is_first = 0) {
+    $array = array(); 
+    foreach ($objList as $key => $value) {
+        if ($key == 0 && $is_first == 1) {
+            if ($value['id'] == 1) {
+                $id = 0;
+            } else {
+                $id = $value['pid'];
+            }
+        }
         if ($id == $value['pid']) {
             $array[] = array('id' => $value['id'], 'name' => $separate.$value['name']);
             $array = array_merge($array, getSubObj($value['id'], $objList, $separate.'--'));

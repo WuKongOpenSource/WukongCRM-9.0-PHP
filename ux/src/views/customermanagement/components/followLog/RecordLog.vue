@@ -5,7 +5,9 @@
         <follow-record-cell v-for="(item, index) in list"
                             :item="item"
                             :crmType="crmType"
-                            :key="index"></follow-record-cell>
+                            :index="index"
+                            :key="index"
+                            @on-handle="cellHandle"></follow-record-cell>
         <div class="load">
           <el-button type="text"
                      :loading="loadMoreLoading">{{loadMoreLoading ? '加载更多' : '没有更多了'}}</el-button>
@@ -112,6 +114,14 @@ export default {
       this.page = 1
       this.list = []
       this.getList()
+    },
+    /**
+     * 行布局删除
+     */
+    cellHandle(data) {
+      if (data.type == 'delete') {
+        this.list.splice(data.data.index, 1)
+      }
     }
   },
 

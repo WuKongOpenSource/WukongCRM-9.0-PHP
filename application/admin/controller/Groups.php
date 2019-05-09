@@ -33,7 +33,7 @@ class Groups extends ApiCommon
         $userInfo = $this->userInfo;
         //权限判断
         $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(3,$adminTypes) && !in_array(1,$adminTypes)) {
+        if (!in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array(3,$adminTypes)) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
         }                
@@ -174,6 +174,8 @@ class Groups extends ApiCommon
         }
         $dataInfo = json_decode($dataInfo, true);
         unset($dataInfo['id']);
+        $titleCount = db('admin_group')->where(['title' => $dataInfo['title']])->count();
+        $dataInfo['title'] = $dataInfo['title'].'('.$titleCount.')';
         $data = $groupModel->createData($dataInfo);
         if (!$data) {
             return resultArray(['error' => $groupModel->getError()]);

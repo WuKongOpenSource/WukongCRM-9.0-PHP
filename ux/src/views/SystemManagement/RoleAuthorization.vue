@@ -105,8 +105,8 @@
                              label="操作"
                              show-overflow-tooltip>
               <template slot-scope="scope">
-                <span class="el-icon-edit content-table-span"
-                      @click="editBtn(scope.row)"></span>
+                <!-- <span class="el-icon-edit content-table-span"
+                      @click="editBtn(scope.row)"></span> -->
                 <span class="el-icon-delete content-table-span"
                       @click="delectBtn(scope.row)"></span>
               </template>
@@ -721,7 +721,7 @@ export default {
 }
 .content-box .content-table-span {
   color: #3e84e9;
-  padding-right: 20px;
+  margin-left: 5px;
   cursor: pointer;
 }
 

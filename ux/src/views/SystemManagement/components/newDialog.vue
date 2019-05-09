@@ -7,25 +7,9 @@
                :before-close="handleClose">
       <div class="label-input">
         <label class="label-title">选择员工</label>
-        <el-popover placement="bottom-end"
-                    width="400"
-                    trigger="click">
-          <xh-user ref="xhuser"
-                   :radio="false"
-                   :selectedData="selectUsers"
-                   @changeCheckout="changeCheckout"></xh-user>
-          <div class="select-box"
-               slot="reference">
-            <span v-for="(item, index) in selectUsers"
-                  :key="index"
-                  class="select-box-span">
-              {{item.realname}}
-              <span class="el-icon-close"
-                    @click.stop="selectDelect(item, index)"></span>
-            </span>
-            <span class="el-icon-plus"></span>
-          </div>
-        </el-popover>
+        <xh-user-cell :radio="false"
+                      :selectedData="selectUsers"
+                      @value-change="changeCheckout"></xh-user-cell>
       </div>
       <label class="label-title">员工角色配置</label>
       <div class="role-allocation">
@@ -54,10 +38,10 @@
 
 <script>
 import { usersEdit } from '@/api/systemManagement/RoleAuthorization'
-import XhUser from '@/components/CreateCom/XhUser'
+import { XhUserCell } from '@/components/CreateCom'
 export default {
   components: {
-    XhUser
+    XhUserCell
   },
   watch: {
     selectRoleList: function(value) {
@@ -115,7 +99,7 @@ export default {
     },
     /** 员工选择操作 */
     changeCheckout(data) {
-      this.selectUsers = data.data
+      this.selectUsers = data.value
     },
     // 删除选择员工
     selectDelect(value, index) {

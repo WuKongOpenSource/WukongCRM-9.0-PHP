@@ -66,31 +66,38 @@ export default {
         types: 'crm_' + this.crmType
       })
         .then(res => {
-          let defaultScene = res.data.list.filter(function(item, index) {
+          let defaultScenes = res.data.list.filter(function(item, index) {
             return item.is_default === 1
           })
 
-          if (defaultScene && defaultScene.length > 0) {
-            this.scene_id = defaultScene[0].scene_id
-            this.scene_name = defaultScene[0].name
-            this.sceneSelectId = this.scene_id
-            this.$emit('scene', { id: this.scene_id, name: this.scene_name })
+          if (defaultScenes && defaultScenes.length > 0) {
+            let defaultScene = defaultScenes[0]
+            this.sceneSelectId = defaultScene.scene_id
+            this.$emit('scene', {
+              id: defaultScene.scene_id,
+              name: defaultScene.name,
+              bydata: defaultScene.bydata || ''
+            })
           } else {
             this.sceneSelectId = ''
-            this.$emit('scene', { id: '', name: '' })
+            this.$emit('scene', { id: '', name: '', bydata: '' })
           }
 
           this.sceneList = res.data.list
         })
         .catch(() => {
-          this.$emit('scene', { id: '', name: '' })
+          this.$emit('scene', { id: '', name: '', bydata: '' })
         })
     },
 
     // 选择场景、
     selectScene(item, index) {
       this.sceneSelectId = item.scene_id
-      this.$emit('scene', { id: item.scene_id, name: item.name })
+      this.$emit('scene', {
+        id: item.scene_id,
+        name: item.name,
+        bydata: item.bydata
+      })
       this.$emit('hidden-scene')
     },
     // 添加场景

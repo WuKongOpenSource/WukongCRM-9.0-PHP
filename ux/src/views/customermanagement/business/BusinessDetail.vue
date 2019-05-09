@@ -274,8 +274,7 @@ export default {
       this.$emit('hide-view')
     },
     //** tab标签点击 */
-    handleClick(tab, event) {
-    },
+    handleClick(tab, event) {},
     /** 处理商机状态数据 */
     handleBusinessStatus(data) {
       this.status = []
@@ -286,7 +285,7 @@ export default {
         var isdoingIndex = 0
         for (let index = 0; index < statusList.length; index++) {
           const item = statusList[index]
-          if (status_id === 0) {
+          if (status_id == 0) {
             // 没有阶段一般不会有
             if (data.is_end != 0) {
               // 状态已完成 展示灰色效果
@@ -299,7 +298,7 @@ export default {
             } else {
               item['class'] = 'state-undo'
             }
-          } else if (item.status_id === status_id) {
+          } else if (item.status_id == status_id) {
             item['class'] = 'state-suc'
             item['isdoing'] = true
             isdoing = true

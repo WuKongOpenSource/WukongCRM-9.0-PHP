@@ -48,11 +48,11 @@ class Announcement extends Common
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];		
 
-		$time = time();
+		$time = strtotime(date('Y-m-d',time()));
 		$map = array();
-		if($requestMap['type'] && $requestMap['type'] == 1) {
+		if ($requestMap['type'] && $requestMap['type'] == 1) {
 			$time = 'end_time >= '.$time.' AND start_time <= '.$time.' AND ';
-		} else if($requestMap['type'] && $requestMap['type']==2) {
+		} elseif ($requestMap['type'] && $requestMap['type'] == 2) {
 			$time = 'end_time < '.$time.' AND ';
 		} else {
 			$time = '';
@@ -69,13 +69,13 @@ class Announcement extends Common
 				->order('announcement.create_time desc')
         		->select();
         $adminTypes = adminGroupTypes($user_id);
-		foreach($list as $k=>$v){
+		foreach ($list as $k=>$v) {
 			$list[$k]['thumb_img'] = $v['thumb_img']?getFullPath($v['thumb_img']):'';
 			$list[$k]['structureList'] = $structureModel->getDataByStr($v['structure_ids']) ? : array();
 			$list[$k]['ownerList'] = $userModel->getDataByStr($v['owner_user_ids']) ? : array();
 			$is_update = 0;
 			$is_delete = 0;
-			if(in_array(8,$adminTypes) || in_array(1,$adminTypes)){
+			if (in_array(8,$adminTypes) || in_array(1,$adminTypes)) {
 		        $is_update = 1;
 		        $is_delete = 1;
 			}

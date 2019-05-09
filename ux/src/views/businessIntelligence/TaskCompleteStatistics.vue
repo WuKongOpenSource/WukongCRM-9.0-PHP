@@ -1,8 +1,6 @@
 <template>
-  <flexbox v-loading="loading"
-           class="main-container"
-           direction="column"
-           align="stretch">
+  <div v-loading="loading"
+       class="main-container">
     <div class="handle-bar">
       <el-date-picker v-model="dateSelect"
                       type="year"
@@ -40,15 +38,15 @@
       <el-button @click.native="handleClick('search')"
                  type="primary">搜索</el-button>
     </div>
-    <div class="scoller-content">
+    <div class="content">
       <div class="axis-content">
-        <div id="axismain"
-             style="width: 850px;height:400px;"></div>
+        <div id="axismain"></div>
       </div>
-      <div class="content">
+      <div class="table-content">
         <el-table :data="list"
-                  :height="tableHeight"
                   stripe
+                  border
+                  max-height="400"
                   highlight-current-row>
           <el-table-column v-for="(item, index) in fieldList"
                            :key="index"
@@ -61,8 +59,7 @@
         </el-table>
       </div>
     </div>
-
-  </flexbox>
+  </div>
 </template>
 
 <script>
@@ -83,7 +80,6 @@ export default {
         }
       },
       loading: false,
-      tableHeight: 300,
 
       dateSelect: '', // 选择的date
       typeSelect: 1, // 类型选择 1销售（目标）2回款（目标）
@@ -102,7 +98,7 @@ export default {
       list: [],
       fieldList: [
         { field: 'month', name: '时间' },
-        { field: 'receivables', name: '回款金额(元)' },
+        { field: 'receivables', name: '合同金额(元)' },
         { field: 'achiement', name: '目标(元)' },
         { field: 'rate', name: '完成率(%)' }
       ],
@@ -125,7 +121,11 @@ export default {
      */
     getDeptList() {
       this.loading = true
-      adminStructuresSubIndex()
+      adminStructuresSubIndex({
+        m: 'bi',
+        c: 'achievement',
+        a: 'read'
+      })
         .then(res => {
           this.deptList = res.data
           this.loading = false
@@ -147,7 +147,7 @@ export default {
     },
     /** 部门下员工 */
     getUserList() {
-      var params = {}
+      let params = {}
       params.structure_id = this.structuresSelectValue
       getSubUserByStructrue(params)
         .then(res => {
@@ -165,10 +165,10 @@ export default {
         user_id: this.userSelectValue
       })
         .then(res => {
-          var self = this
-          var receivabless = []
-          var achiements = []
-          var rates = []
+          this.list = []
+          let receivabless = []
+          let achiements = []
+          let rates = []
           for (let index = 1; index < 13; index++) {
             const element = res.data[index]
             receivabless.push(element.receivables)
@@ -190,14 +190,26 @@ export default {
     /** 顶部操作 */
     handleClick(type) {
       if (type === 'search') {
+        this.refreshTableHeadAndChartInfo() 
         this.getAhievementDatalist()
       }
     },
+    /**
+     * 刷新表头和图标关键字
+     */
+    refreshTableHeadAndChartInfo() {
+      this.fieldList[1].name =
+        this.typeSelect == 1 ? '合同金额(元)' : '回款金额(元)'
+      this.axisOption.legend.data[0] =
+        this.typeSelect == 1 ? '合同金额' : '回款金额'
+      this.axisOption.series[0].name =
+        this.typeSelect == 1 ? '合同金额' : '回款金额'
+    },
     /** 柱状图 */
     initAxis() {
-      var axisChart = echarts.init(document.getElementById('axismain'))
+      let axisChart = echarts.init(document.getElementById('axismain'))
 
-      var option = {
+      let option = {
         color: ['#6ca2ff', '#6ac9d7', '#ff7474'],
         tooltip: {
           trigger: 'axis',
@@ -207,7 +219,7 @@ export default {
           }
         },
         legend: {
-          data: ['回款金额', '目标', '完成率'],
+          data: ['合同金额', '目标', '完成率'],
           bottom: '0px',
           itemWidth: 14
         },
@@ -295,7 +307,7 @@ export default {
         ],
         series: [
           {
-            name: '回款金额',
+            name: '合同金额',
             type: 'bar',
             yAxisIndex: 0,
             data: []
@@ -304,12 +316,14 @@ export default {
             name: '目标',
             type: 'bar',
             yAxisIndex: 0,
+            barWidth: 15,
             data: []
           },
           {
             name: '完成率',
             type: 'line',
             yAxisIndex: 1,
+            barWidth: 15,
             data: []
           }
         ]
@@ -325,8 +339,8 @@ export default {
 
 <style rel="stylesheet/scss" lang="scss" scoped>
 @import './styles/detail.scss';
-
 .handle-bar {
+  background-color: white;
   padding: 15px 20px 5px 20px;
   .el-date-editor {
     width: 130px;
@@ -340,22 +354,6 @@ export default {
     width: 120px;
     margin-right: 15px;
   }
-}
-.axis-content {
-  padding-left: 50px;
-  margin: 40px 0;
-}
-.content {
-  padding: 10px 0 10px 80px;
-  width: 600px;
-}
-.content /deep/ .el-table {
-  border: 1px solid #e6e6e6;
-}
-
-.scoller-content {
-  flex: 1;
-  overflow-y: auto;
 }
 </style>
 

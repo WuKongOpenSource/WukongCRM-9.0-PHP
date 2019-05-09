@@ -76,7 +76,7 @@ class Index extends ApiCommon
         $ruleMap = [];
         $adminTypes = adminGroupTypes($u_id);
         if (in_array(1,$adminTypes)) {
-            $map['status'] = 1;
+            $ruleMap['status'] = 1;
         } else {
             $userModel = new \app\admin\model\User();
             $groups = $userModel->get($u_id)->groups;
@@ -92,7 +92,7 @@ class Index extends ApiCommon
         }
         $newRuleIds = [];
         // 重新设置ruleIds，除去部分已删除或禁用的权限。
-        $rules = Db::name('admin_rule')->where($ruleMap)->select();
+        $rules = Db::name('admin_rule')->where($ruleMap)->order('types asc')->select();
         foreach ($rules as $k => $v) {
             $newRuleIds[] = $v['id'];
             $rules[$k]['name'] = strtolower($v['name']);

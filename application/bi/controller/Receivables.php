@@ -97,5 +97,5 @@ class Receivables extends ApiCommon
         $chartParam['userIds'] = $userIds ? : [];
         $chartList = $receivablesModel->getStatistics($chartParam); //柱状图
         return resultArray(['data' => $chartList]);
-    }   
+    }
 }

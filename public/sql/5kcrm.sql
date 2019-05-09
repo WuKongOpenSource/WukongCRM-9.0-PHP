@@ -4,6 +4,8 @@ CREATE TABLE `5kcrm_admin_access` (
   `group_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+INSERT INTO `5kcrm_admin_access` VALUES ('1', '1');
+
 DROP TABLE IF EXISTS `5kcrm_admin_action_log`;
 CREATE TABLE `5kcrm_admin_action_log` (
   `log_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -237,6 +239,7 @@ INSERT INTO `5kcrm_admin_field` VALUES ('95', 'crm_receivables_plan', '0', 'retu
 INSERT INTO `5kcrm_admin_field` VALUES ('96', 'crm_receivables_plan', '0', 'remind', '提前几日提醒', 'number', '', '0', '0', '0', '', '', '0', '3', '1553788800', '1553788800', '0');
 INSERT INTO `5kcrm_admin_field` VALUES ('97', 'crm_receivables_plan', '0', 'remark', '备注', 'textarea', '', '0', '0', '0', '', '', '0', '1', '1553788800', '1553788800', '0');
 INSERT INTO `5kcrm_admin_field` VALUES ('98', 'crm_receivables_plan', '0', 'file', '附件', 'file', '', '0', '0', '0', '', '', '0', '1', '1553788800', '1553788800', '0');
+INSERT INTO `5kcrm_admin_field` VALUES ('99', 'crm_customer', '0', 'mobile', '手机', 'mobile', '', '0', '1', '0', '', '', '7', '1', '1553788800', '1553788800', '0');
 
 DROP TABLE IF EXISTS `5kcrm_admin_file`;
 CREATE TABLE `5kcrm_admin_file` (
@@ -416,11 +419,11 @@ INSERT INTO `5kcrm_admin_rule` VALUES ('61', '2', '上架/下架', 'status', '3'
 INSERT INTO `5kcrm_admin_rule` VALUES ('62', '6', '商业智能', 'bi', '1', '0', '1');
 INSERT INTO `5kcrm_admin_rule` VALUES ('63', '6', '员工客户分析', 'customer', '2', '62', '1');
 INSERT INTO `5kcrm_admin_rule` VALUES ('64', '6', '查看', 'read', '3', '63', '1');
-INSERT INTO `5kcrm_admin_rule` VALUES ('65', '6', '销售漏斗', 'business', '2', '62', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('65', '6', '销售漏斗分析', 'business', '2', '62', '1');
 INSERT INTO `5kcrm_admin_rule` VALUES ('66', '6', '查看', 'read', '3', '65', '1');
-INSERT INTO `5kcrm_admin_rule` VALUES ('67', '6', '回款统计', 'receivables', '2', '62', '1');
-INSERT INTO `5kcrm_admin_rule` VALUES ('68', '6', '查看', 'read', '3', '67', '1');
-INSERT INTO `5kcrm_admin_rule` VALUES ('69', '6', '产品销量统计', 'product', '2', '62', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('67', '6', '回款统计', 'receivables', '2', '62', '0');
+INSERT INTO `5kcrm_admin_rule` VALUES ('68', '6', '查看', 'read', '3', '67', '0');
+INSERT INTO `5kcrm_admin_rule` VALUES ('69', '6', '产品分析', 'product', '2', '62', '1');
 INSERT INTO `5kcrm_admin_rule` VALUES ('70', '6', '查看', 'read', '3', '69', '1');
 INSERT INTO `5kcrm_admin_rule` VALUES ('71', '6', '业绩目标完成情况', 'achievement', '2', '62', '1');
 INSERT INTO `5kcrm_admin_rule` VALUES ('72', '6', '查看', 'read', '3', '71', '1');
@@ -625,9 +628,9 @@ CREATE TABLE `5kcrm_crm_business_status` (
   PRIMARY KEY (`status_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COMMENT='商机状态';
 
-INSERT INTO `5kcrm_crm_business_status` VALUES ('1', '0', '赢单', '100%', '99');
-INSERT INTO `5kcrm_crm_business_status` VALUES ('2', '0', '输单', '0%', '100');
-INSERT INTO `5kcrm_crm_business_status` VALUES ('3', '0', '无效', '0%', '101');
+INSERT INTO `5kcrm_crm_business_status` VALUES ('1', '0', '赢单', '100', '99');
+INSERT INTO `5kcrm_crm_business_status` VALUES ('2', '0', '输单', '0', '100');
+INSERT INTO `5kcrm_crm_business_status` VALUES ('3', '0', '无效', '0', '101');
 INSERT INTO `5kcrm_crm_business_status` VALUES ('4', '1', '验证客户', '20', '1');
 INSERT INTO `5kcrm_crm_business_status` VALUES ('5', '1', '需求分析', '15', '2');
 INSERT INTO `5kcrm_crm_business_status` VALUES ('6', '1', '方案/报价', '30', '3');
@@ -755,6 +758,7 @@ CREATE TABLE `5kcrm_crm_customer` (
   `industry` varchar(500) NOT NULL DEFAULT '' COMMENT '客户行业',
   `source` varchar(500) NOT NULL DEFAULT '' COMMENT '客户来源',
   `telephone` varchar(50) NOT NULL DEFAULT '' COMMENT '电话',
+  `mobile` varchar(50) NOT NULL DEFAULT '' COMMENT '手机',
   `website` varchar(255) NOT NULL DEFAULT '' COMMENT '网址',
   `remark` text COMMENT '备注',
   `create_user_id` int(11) NOT NULL COMMENT '创建人ID',
@@ -1026,7 +1030,7 @@ CREATE TABLE `5kcrm_oa_examine_data` (
   `data_id` int(11) NOT NULL AUTO_INCREMENT,
   `examine_id` int(11) NOT NULL COMMENT '审批ID',
   `field` varchar(30) NOT NULL COMMENT '字段名',
-  `value` varchar(1000) NOT NULL COMMENT '值',
+  `value` varchar(1000) NULL DEFAULT NULL COMMENT '值',
   PRIMARY KEY (`data_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='审批数据扩展表';
 
@@ -1230,3 +1234,23 @@ CREATE TABLE `5kcrm_work_task_log` (
   `work_id` int(11) DEFAULT '0' COMMENT '项目ID',
   PRIMARY KEY (`log_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='任务日志表';
+
+ALTER TABLE `5kcrm_crm_leads` ADD `follow` VARCHAR(20) NULL DEFAULT NULL COMMENT '跟进' AFTER `next_time`;
+
+ALTER TABLE `5kcrm_crm_customer` ADD `follow` VARCHAR(20) NULL DEFAULT NULL COMMENT '跟进' AFTER `next_time`;
+
+INSERT INTO `5kcrm_crm_config` (`id`, `name`, `value`, `description`) VALUES (NULL, 'contract_day', '30', '合同到期提醒天数');
+
+UPDATE `5kcrm_admin_rule` SET `status` = '0' WHERE `5kcrm_admin_rule`.`id` = 67;
+UPDATE `5kcrm_admin_rule` SET `status` = '0' WHERE `5kcrm_admin_rule`.`id` = 68;
+UPDATE `5kcrm_admin_rule` SET `title` = '产品分析' WHERE `5kcrm_admin_rule`.`id` = 69;
+INSERT INTO `5kcrm_admin_rule` VALUES ('75', '6', '员工业绩分析', 'contract', '2', '62', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('76', '6', '查看', 'read', '3', '75', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('77', '6', '客户画像分析', 'portrait', '2', '62', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('78', '6', '查看', 'read', '3', '77', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('79', '6', '排行榜', 'ranking', '2', '62', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('80', '6', '查看', 'read', '3', '79', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('81', '2', '导入', 'excelImport', '3', '22', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('82', '2', '导出', 'excelExport', '3', '22', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('83', '2', '导入', 'excelImport', '3', '56', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('84', '2', '导出', 'excelExport', '3', '56', '1');

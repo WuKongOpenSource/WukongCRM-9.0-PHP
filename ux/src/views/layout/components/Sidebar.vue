@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="create-button-container"
-         :style="{ 'padding-top': createButtonTitle != '' ? '40px' : '25px' }">
+         :style="{ 'padding-top': createButtonTitle != '' ? '40px' : '25px', 'background-color':backgroundColor }">
       <el-popover v-if="createButtonTitle != ''"
                   placement="right"
                   :offset="addOffset"
@@ -21,11 +21,10 @@
         </div>
       </el-popover>
     </div>
-    <!-- <slot name="oaAddDialog"></slot> -->
     <el-menu :default-active="activeIndex"
              @select="menuSelect"
-             :style="{'border-right-color': backgroundColor}"
-             class="el-menu-vertical-demo"
+             :style="{'border-right-color': backgroundColor, 'padding-top': createButtonTitle != '' ? '90px' : '40px'}"
+             class="el-menu-vertical"
              :text-color="textColor"
              :background-color="backgroundColor"
              :active-text-color="activeTextColor"
@@ -172,9 +171,25 @@ export default {
   height: 100%;
 }
 
-.el-menu-vertical-demo:not(.el-menu--collapse) {
+.el-menu-vertical:not(.el-menu--collapse) {
   width: 200px;
   min-height: 400px;
+}
+
+.el-menu-vertical {
+  height: 100%;
+  overflow: auto;
+  padding-bottom: 48px;
+  .el-submenu.is-active {
+    .el-submenu__title {
+      .wukong {
+        color: white;
+      }
+      span {
+        color: white;
+      }
+    }
+  }
 }
 
 .menu-item-icon-container {
@@ -201,21 +216,16 @@ export default {
   background-color: #454e57 !important;
 }
 
-.menu-item-workbench-select {
-  border-left: 2px solid #3e84e9;
-  background-color: #454e57 !important;
-}
-
-.menu-item-workbench:hover {
-  background-color: #454e57 !important;
-}
-
 .create-button-container {
   padding: 15px 12px 15px 12px;
   color: white;
   font-size: 14px;
   cursor: pointer;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
 
   .create-button {
     display: flex;

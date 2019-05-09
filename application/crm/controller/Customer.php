@@ -80,9 +80,6 @@ class Customer extends ApiCommon
         $userInfo = $this->userInfo;
         $param['create_user_id'] = $userInfo['id'];
         $param['owner_user_id'] = $userInfo['id'];
-        $param['deal_status'] = '未成交';
-        $param['deal_time'] = time();
-
         if ($res = $customerModel->createData($param)) {
             return resultArray(['data' => $res]);
         } else {
@@ -128,7 +125,7 @@ class Customer extends ApiCommon
      * @return
      */
     public function update()
-    {    
+    {
         $customerModel = model('Customer');
         $param = $this->param;
         $userInfo = $this->userInfo;
@@ -598,9 +595,9 @@ class Customer extends ApiCommon
         $fieldParam['action'] = 'excel'; 
         $customer_field_list = $fieldModel->field($fieldParam);
         $contactsParam['types'] = 'crm_contacts'; 
-        // $contacts_field_list = $fieldModel->getDataList($contactsParam);       
-        $contacts_field_list = [];
-
+        $contactsParam['field'] = array('neq','customer_id'); 
+        $contacts_field_list = $fieldModel->getDataList($contactsParam);       
+        // $contacts_field_list = [];
         //实例化主文件
         vendor("phpexcel.PHPExcel");
         vendor("phpexcel.PHPExcel.Writer.Excel5");
@@ -622,7 +619,7 @@ class Customer extends ApiCommon
         $objProps->setCategory("5kcrm");
         $objPHPExcel->setActiveSheetIndex(0);
         $objActSheet = $objPHPExcel->getActiveSheet();
-        $objActSheet->setTitle('悟空软件导入模板'.date('Y-m-d',time()));
+        $objActSheet->setTitle('悟空软件客户导入模板'.date('Y-m-d',time()));
 
         //填充边框
         $styleArray = [
@@ -651,19 +648,21 @@ class Customer extends ApiCommon
                     $setting = $field['setting'] ? : [];
                     $select_value = implode(',',$setting);
                     if ($select_value) {
-                        //数据有效性 start
-                        $objValidation = $objActSheet->getCell($excelModel->stringFromColumnIndex($k).'3')->getDataValidation(); //这一句为要设置数据有效性的单元格
-                        $objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)  
-                           -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
-                           -> setAllowBlank(false)  
-                           -> setShowInputMessage(true)  
-                           -> setShowErrorMessage(true)  
-                           -> setShowDropDown(true)  
-                           -> setErrorTitle('输入的值有误')  
-                           -> setError('您输入的值不在下拉框列表内.')  
-                           -> setPromptTitle('--请选择--')  
-                           -> setFormula1('"'.$select_value.'"');
-                        //数据有效性  end            
+                        for ($c=3; $c<=70; $c++) {
+                            //数据有效性 start
+                            $objValidation = $objActSheet->getCell($excelModel->stringFromColumnIndex($k).$c)->getDataValidation(); //这一句为要设置数据有效性的单元格
+                            $objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)  
+                               -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
+                               -> setAllowBlank(false)  
+                               -> setShowInputMessage(true)  
+                               -> setShowErrorMessage(true)  
+                               -> setShowDropDown(true)  
+                               -> setErrorTitle('输入的值有误')  
+                               -> setError('您输入的值不在下拉框列表内.')  
+                               -> setPromptTitle('--请选择--')  
+                               -> setFormula1('"'.$select_value.'"');
+                            //数据有效性  end            
+                        }
                     }
                 }
                 //检查该字段若必填，加上"*"
@@ -692,19 +691,23 @@ class Customer extends ApiCommon
                     if ($field['form_type'] == 'select' || $field['form_type'] == 'checkbox' || $field['form_type'] == 'radio') {
                         $setting = $field['setting'] ? : [];
                         $select_value = implode(',',$setting);
-                        //数据有效性 start
-                        $objValidation = $objActSheet->getCell($excelModel->stringFromColumnIndex($k).'3')->getDataValidation(); //这一句为要设置数据有效性的单元格
-                        $objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)  
-                           -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
-                           -> setAllowBlank(false)  
-                           -> setShowInputMessage(true)  
-                           -> setShowErrorMessage(true)  
-                           -> setShowDropDown(true)  
-                           -> setErrorTitle('输入的值有误')  
-                           -> setError('您输入的值不在下拉框列表内.')  
-                           -> setPromptTitle('--请选择--')  
-                           -> setFormula1('"'.$select_value.'"');
-                        //数据有效性  end
+                        if ($select_value) {
+                            for ($c=3; $c<=70; $c++) {                  
+                                //数据有效性 start
+                                $objValidation = $objActSheet->getCell($excelModel->stringFromColumnIndex($k).'3')->getDataValidation(); //这一句为要设置数据有效性的单元格
+                                $objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)  
+                                   -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
+                                   -> setAllowBlank(false)  
+                                   -> setShowInputMessage(true)  
+                                   -> setShowErrorMessage(true)  
+                                   -> setShowDropDown(true)  
+                                   -> setErrorTitle('输入的值有误')  
+                                   -> setError('您输入的值不在下拉框列表内.')  
+                                   -> setPromptTitle('--请选择--')  
+                                   -> setFormula1('"'.$select_value.'"');
+                                //数据有效性  end
+                            }
+                        }
                     }                
                      //检查该字段若必填，加上"*"
                     $field['name'] = sign_required($field['is_null'], $field['name']);
@@ -718,24 +721,27 @@ class Customer extends ApiCommon
         $mark_contacts = $excelModel->stringFromColumnIndex($k-1);
 
         $objActSheet->mergeCells('A1:'.$max_customer_column.'1');
-        // $objActSheet->mergeCells($mark_customer.'1:'.$mark_contacts.'1');
+        $objActSheet->mergeCells($mark_customer.'1:'.$mark_contacts.'1');
         $objActSheet->getStyle('A1:'.$mark_customer.'1')->getAlignment()->setHorizontal(\PHPExcel_Style_Alignment::HORIZONTAL_CENTER); //水平居中
         $objActSheet->getStyle('A1:'.$mark_customer.'1')->getAlignment()->setVertical(\PHPExcel_Style_Alignment::VERTICAL_CENTER); //垂直居中
         $objActSheet->getRowDimension(1)->setRowHeight(28); //设置行高
         $objActSheet->getStyle('A1')->getFont()->getColor()->setARGB('FFFF0000');
         $objActSheet->getStyle('A1')->getAlignment()->setWrapText(true);
         //设置单元格格式范围的字体、字体大小、加粗
-        $objActSheet->getStyle('A1:'.$mark_contacts.'1')->getFont()->setName("微软雅黑")->setSize(13)->getColor()->setARGB('#00000000');
+        $objActSheet->getStyle('A1:'.$mark_contacts.'1')->getFont()->setName("微软雅黑")->setSize(13)->getColor()->setARGB('#000000');
         //给单元格填充背景色
-        $objActSheet->getStyle('A1:'.$mark_contacts.'1')->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('#ff9900');
+        $objActSheet->getStyle('A1:'.$max_customer_column.'1')->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('#ff9900');
+        $objActSheet->getStyle($mark_customer.'1:'.$mark_contacts.'1')->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('#FFEBCD');
         $objActSheet->getStyle($contacts_start_mark)->getAlignment()->setWrapText(true);
         $content = '客户信息（*代表必填项）';
         $objActSheet->setCellValue('A1', $content);
-        // $objActSheet->setCellValue($mark_customer.'1', '联系人信息（*代表必填项）');
+        $objActSheet->getStyle('A1:'.$max_customer_column.'1')->getBorders()->getAllBorders()->setBorderStyle(\PHPExcel_Style_Border::BORDER_THIN);         
+        $objActSheet->getStyle('A1')->getBorders()->getRight()->getColor()->setARGB('#000000');        
+        $objActSheet->setCellValue($mark_customer.'1', '联系人信息（*代表必填项）');
         $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
         ob_end_clean();
         header("Content-Type: application/vnd.ms-excel;");
-        header("Content-Disposition:attachment;filename=5kcrm_customer.xls");
+        header("Content-Disposition:attachment;filename=客户信息导入模板".date('Y-m-d',time()).".xls");
         header("Pragma:no-cache");
         header("Expires:0");
         $objWriter->save('php://output');
@@ -754,8 +760,8 @@ class Customer extends ApiCommon
         $excelModel = new \app\admin\model\Excel();
         $param['create_user_id'] = $userInfo['id'];
         $param['owner_user_id'] = $param['owner_user_id'] ? : 0;
-        $param['deal_time'] = time();
-        $param['deal_status'] = '未成交';
+        // $param['deal_time'] = time();
+        // $param['deal_status'] = '未成交';
         $param['types'] = 'crm_customer';
         $file = request()->file('file');
         $res = $excelModel->importExcel($file, $param);
@@ -763,5 +769,26 @@ class Customer extends ApiCommon
             return resultArray(['error'=>$excelModel->getError()]);
         }
         return resultArray(['data'=>'导入成功']);
-    }   
+    }
+
+    /**
+     * 客户标记为已跟进
+     * @author Michael_xu
+     * @param 
+     * @return
+     */
+    public function setFollow(){
+        $param = $this->param;
+        $customerIds = $param['id'] ? : [];
+        if (!$customerIds || !is_array($customerIds)) {
+            return resultArray(['error'=>'参数错误']);
+        }
+        $data['follow'] = '已跟进';
+        $data['update_time'] = time();
+        $res = db('crm_customer')->where(['customer_id' => ['in',$customerIds]])->update($data);
+        if (!$res) {
+            return resultArray(['error'=>'操作失败，请重试']);
+        }
+        return resultArray(['data'=>'跟进成功']);        
+    }        
 }

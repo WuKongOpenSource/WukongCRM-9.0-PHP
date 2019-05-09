@@ -22,7 +22,7 @@ class Contacts extends ApiCommon
     public function _initialize()
     {
         $action = [
-            'permission'=>[''],
+            'permission'=>['exceldownload'],
             'allow'=>['']            
         ];
         Hook::listen('check_auth',$action);
@@ -122,7 +122,7 @@ class Contacts extends ApiCommon
     }
 
     /**
-     * 删除联系人（逻辑删）
+     * 删除联系人
      * @author Michael_xu
      * @param 
      * @return 
@@ -229,5 +229,76 @@ class Contacts extends ApiCommon
         } else {
             return resultArray(['error' => $errorMessage]);
         }
-    }    
+    }
+
+    /**
+     * 联系人导入模板
+     * @author Michael_xu
+     * @param 
+     * @return
+     */ 
+    public function excelDownload() 
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $excelModel = new \app\admin\model\Excel();
+
+        // 导出的字段列表
+        $fieldModel = new \app\admin\model\Field();
+        $fieldParam['types'] = 'crm_contacts'; 
+        $fieldParam['action'] = 'excel'; 
+        $field_list = $fieldModel->field($fieldParam);
+        $res = $excelModel->excelImportDownload($field_list, 'crm_contacts');
+    }  
+
+    /**
+     * 联系人导出
+     * @author Michael_xu
+     * @param 
+     * @return
+     */
+    public function excelExport()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $param['user_id'] = $userInfo['id'];
+        if ($param['contacts_id']) {
+           $param['contacts_id'] = ['condition' => 'in','value' => $param['contacts_id'],'form_type' => 'text','name' => ''];
+           $param['is_excel'] = 1;
+        }        
+
+        $excelModel = new \app\admin\model\Excel();
+        // 导出的字段列表
+        $fieldModel = new \app\admin\model\Field();
+        $field_list = $fieldModel->getIndexFieldList('crm_contacts', $userInfo['id']);
+        // 文件名
+        $file_name = '5kcrm_contacts_'.date('Ymd');
+        $param['pageType'] = 'all'; 
+        $excelModel->exportCsv($file_name, $field_list, function($page) use ($param){
+            $list = model('Contacts')->getDataList($param);
+            return $list;
+        });
+    } 
+
+    /**
+     * 联系人数据导入
+     * @author Michael_xu
+     * @param 
+     * @return
+     */
+    public function excelImport()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $excelModel = new \app\admin\model\Excel();
+        $param['types'] = 'crm_contacts';
+        $param['create_user_id'] = $userInfo['id'];
+        $param['owner_user_id'] = $param['owner_user_id'] ? : $userInfo['id'];
+        $file = request()->file('file');
+        $res = $excelModel->importExcel($file, $param);
+        if (!$res) {
+            return resultArray(['error'=>$excelModel->getError()]);
+        }
+        return resultArray(['data'=>'导入成功']);
+    }          
 }

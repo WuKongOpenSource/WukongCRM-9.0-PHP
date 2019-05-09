@@ -189,6 +189,9 @@ function where_arr($array = [], $m = '', $c = '', $a = '')
                 } elseif (!empty($v['value'])) {
                     if (in_array($k, $check_field_arr)) {
                         $where[$c.$k] = field($v['value'], 'contains');
+                    } elseif (($c == 'business' || $c == 'business.') && $k == 'type_id') {
+                        $where[$c.'type_id'] = field($v['type_id'], 'eq');
+                        $where[$c.'status_id'] = field($v['status_id'], 'eq');
                     } else {
                         $where[$c.$k] = field($v['value'], $v['condition']);
                     }
@@ -586,10 +589,12 @@ function updateActionLog($user_id, $types, $action_id, $oldData = [], $newData =
         $structureModel = new \app\admin\model\Structure();
         $field_arr = $fieldModel->getField(['types' => $types,'unFormType' => ['file','form']]); //获取字段属性
         $newFieldArr = array();
+        $unField = ['update_time','create_time']; //定义过滤字段
         foreach ($field_arr as $k=>$v) {
-            $newFieldArr[$v['field']] = $v;
+            if (!in_array($v['field'],$unField)) {
+                $newFieldArr[$v['field']] = $v;
+            }
         }
-        $unField = ['update_time']; //定义过滤字段
         $message = [];
         $un_form_type = ['file','form'];
         foreach ($differentData as $k=>$v) {

@@ -41,7 +41,7 @@ class Examine extends Common
         $contractModel = new \app\crm\model\Contract();
         $customerModel = new \app\crm\model\Customer();    	
 
-    	$by = $request['by'] ? : 'my'; //my我发起的,examine我审批的
+    	$by = $request['by'] ? : 'my'; //my我发起的,examine我审批的,all全部(下属发起的)
     	$user_id = $request['user_id'];
     	$check_status = $request['check_status'];
     	unset($request['by']);
@@ -68,6 +68,7 @@ class Examine extends Common
 				break;
 			case 'already_examine' : $map['flow_user_id'] = [['like','%,'.$user_id.',%'],['eq',$user_id],'or']; break; //已审
 			case 'stay_examine' : $map['check_user_id'] = [['like','%,'.$user_id.',%'],['eq',$user_id],'or']; break; //待审
+			case 'all' : $auth_user_ids = getSubUserId(); $map['examine.create_user_id'] = array('in',$auth_user_ids); break; //全部
 			default : $map['examine.create_user_id'] = $user_id; break;
 		}
 		$order = 'examine.update_time desc,examine.create_time asc';
@@ -185,18 +186,19 @@ class Examine extends Common
 		$userModel = new \app\admin\model\User();
 		$examineCategoryModel = new \app\oa\model\ExamineCategory();
 		$examineDataModel = new \app\oa\model\ExamineData();
+		if (!$param['category_id']) {
+			$this->error = '参数错误';
+			return false;
+		}		
 		// 自动验证
-		$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则
+		$validateArr = $fieldModel->validateField($this->name,$param['category_id']); //获取自定义字段验证规则
 		$validate = new Validate($validateArr['rule'], $validateArr['message']);			
 		$result = $validate->check($param);
 		if (!$result) {
 			$this->error = $validate->getError();
 			return false;
 		}
-		if (!$param['category_id']) {
-			$this->error = '参数错误';
-			return false;
-		}
+		
 		$categoryInfo = $examineCategoryModel->getDataById($param['category_id']);
 
 		$fileArr = $param['file_id']; //接收表单附件
@@ -277,10 +279,10 @@ class Examine extends Common
 		foreach ($unUpdateField as $v) {
 			unset($param[$v]);
 		}
-		$categoryInfo = $examineCategoryModel->getDataById($param['category_id']);
+		$categoryInfo = $examineCategoryModel->getDataById($dataInfo['category_id']);
 		
 		//验证
-		$validate = validate($this->name);
+		$validate = validate($this->name, $dataInfo['category_id']);
 		if (!$validate->check($param)) {
 			$this->error = $validate->getError();
 			return false;

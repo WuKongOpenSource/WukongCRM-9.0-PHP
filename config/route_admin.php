@@ -156,6 +156,8 @@ return [
 	'admin/field/columnWidth' => ['admin/field/columnWidth', ['method' => 'POST']],		
 	// 【自定义字段】列表排序数据
 	'admin/field/configIndex' => ['admin/field/configIndex', ['method' => 'POST']],	
+	// 【自定义字段】自定义验重字段
+	'admin/field/uniqueField' => ['admin/field/uniqueField', ['method' => 'POST']],	
 
 	// 【站内信】列表
 	'admin/message/index' => ['admin/message/index', ['method' => 'POST']],	
@@ -164,6 +166,8 @@ return [
 	'admin/record/index' => ['admin/record/index', ['method' => 'POST']],
 	// 【跟进记录】创建
 	'admin/record/save' => ['admin/record/save', ['method' => 'POST']],	
+	// 【跟进记录】删除
+	'admin/record/delete' => ['admin/record/delete', ['method' => 'POST']],	
 
 	// 【审批流程】列表
 	'admin/examine_flow/index' => ['admin/examine_flow/index', ['method' => 'POST']],	

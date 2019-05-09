@@ -23,7 +23,7 @@ class Product extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['statistics']            
+            'allow'=>['statistics','productcategory']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -49,5 +49,21 @@ class Product extends ApiCommon
         $param = $this->param;
         $list = $productModel->getStatistics($param);
         return resultArray(['data' => $list]);
-    }  
+    } 
+     
+    /**
+     * 产品分类销量分析
+     * @return [type] [description]
+     */
+    public function productCategory()
+    {
+        if (!checkPerByAction('bi', 'product' , 'read')) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }        
+        $productModel = new \app\bi\model\Product();
+        $param = $this->param;
+        $list = $productModel->getStatistics($param);
+        return resultArray(['data' => $list]);
+    } 
 }

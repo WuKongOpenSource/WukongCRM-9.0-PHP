@@ -97,10 +97,10 @@
         </div>
       </div>
       <!-- 关联业务 -->
-      <related-business v-if="data.allDataShow"
+      <related-business v-if="allDataShow"
                         :marginLeft="'0'"
                         :alterable="false"
-                        :allData="data.allData"
+                        :allData="allData"
                         @checkRelatedDetail="checkRelatedDetail">
       </related-business>
       <!-- 评论 -->
@@ -243,7 +243,31 @@ export default {
   },
   mixins: [],
   computed: {
-    ...mapGetters(['userInfo'])
+    ...mapGetters(['userInfo']),
+    allData() {
+      let allData = {}
+      allData.business = this.data.businessList
+      allData.contacts = this.data.contactsList
+      allData.contract = this.data.contractList
+      allData.customer = this.data.customerList
+      return allData
+    },
+    allDataShow() {
+      // 工作台不展示
+      if (this.showWorkbench) {
+        return false
+      }
+      if (
+        this.data.businessList.length != 0 ||
+        this.data.contactsList.length != 0 ||
+        this.data.contractList.length != 0 ||
+        this.data.customerList.length != 0
+      ) {
+        return true
+      } else {
+        return false
+      }
+    }
   },
   watch: {},
   data() {
@@ -438,7 +462,9 @@ export default {
             val.showComment = false
             val.replyList.push({
               comment_id: res.data,
-              type_id: this.showWorkbench ? this.data.action_id : this.data.log_id,
+              type_id: this.showWorkbench
+                ? this.data.action_id
+                : this.data.log_id,
               userInfo: this.userInfo,
               create_time: parseInt(new Date().getTime() / 1000),
               content: this.commentsTextarea,

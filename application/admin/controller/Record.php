@@ -102,18 +102,22 @@ class Record extends ApiCommon
      * @param
      * @return
      */
-    public function delete($id)
+    public function delete()
     {
         $recordModel = model('Record');
         $param = $this->param;
+        $userInfo = $this->userInfo;
         //权限判断
         $dataInfo = $recordModel->getDataById($param['id']);
         if (!$dataInfo) {
             return resultArray(['error' => '数据不存在或已删除']);
         }
-
-        // $resData = $recordModel->delDataById($param['id']);
-        $resData = $recordModel->signDelById($param['id']); //逻辑删
+        //自己(24小时)或者管理员
+        $adminTypes = adminGroupTypes($userInfo['id']);
+        if (!in_array(1,$adminTypes) && ($dataInfo['create_user_id'] !== $userInfo['id'] && ((time()-$dataInfo['create_time']) > 86400))) {
+            return resultArray(['error' => '超过24小时，不能删除']);
+        }
+        $resData = $recordModel->delDataById($param['id']);
         if (!$resData) {
             return resultArray(['error' => $recordModel->getError()]);
         }

@@ -23,7 +23,7 @@ class Setting extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['config','configdata','team','teamsave']            
+            'allow'=>['config','configdata','team','teamsave','contractday']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -213,5 +213,23 @@ class Setting extends ApiCommon
         } else {
             return resultArray(['data' => '保存成功']);
         }
+    } 
+
+    /**
+     * 合同到期提醒天数
+     * @author Michael_xu
+     * @param 
+     * @return 
+     */
+    public function contractDay()
+    {
+        $param = $this->param;
+        $contract_day = $param['contract_day'] ? int($param['contract_day']) : 0; 
+        $res = db('crm_config')->where(['name' => 'contract_day'])->update(['value' => $contract_day]);
+        if ($res) {
+            return resultArray(['data' => '设置成功']);
+        } else {
+            return resultArray(['error' => '设置失败，请重试！']);
+        }          
     }     
 }

@@ -34,6 +34,9 @@ class Rule extends Common
 				$data[$k]['check'] = false;
 				if ($types && !in_array((int)$v['types'], $types)) {
 					unset($data[$k]);
+				}
+				if (empty($v['status'])) {
+					unset($data[$k]);
 				}		
 			}
 			$data = array_merge($data);

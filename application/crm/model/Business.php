@@ -72,7 +72,6 @@ class Business extends Common
 		} else {
 			$map = $requestMap ? array_merge($sceneMap, $requestMap) : $sceneMap;
 		}
-
 		//高级筛选
 		$map = where_arr($map, 'crm', 'business', 'index');	
 		$authMap = [];
@@ -121,7 +120,7 @@ class Business extends Common
 				->where($map)
 				->where($partMap)
 				->where($authMap)
-        		->page($request['page'], $request['limit'])
+        		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		->field('business.*,customer.name as customer_name')
         		// ->field('business_id,'.implode(',',$indexField))
         		->order($order)
@@ -332,8 +331,14 @@ class Business extends Common
     	$userModel = new \app\admin\model\User();
 		$where = [];
 		//时间段
-		$start_time = $request['start_time'];
-		$end_time = $request['end_time'] ;
+		if(!empty($request['type'])){
+            $between_time = getTimeByType($request['type']);
+            $start_time = $between_time[0];
+            $end_time = $between_time[1];
+        }else{
+        	$start_time = strtotime($request['start_time']);
+			$end_time = strtotime($request['end_time']);
+        }
 		$create_time = [];
 		if ($start_time && $end_time) {
 			$where['create_time'] = array('between',array($start_time,$end_time));
@@ -355,7 +360,6 @@ class Business extends Common
 		//赢单 
 		$map['create_time'] = $where['create_time'];
 		$map['owner_user_id'] = ['in',$request['userIds']];
-		
 		$sum_ying = Db::name('CrmBusiness')->where($map)->where('status_id=1')->sum('money');
 		//输单
 		$sum_shu = Db::name('CrmBusiness')->where($map)->where('status_id=2')->sum('money');

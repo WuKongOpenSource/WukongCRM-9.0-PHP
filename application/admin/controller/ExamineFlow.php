@@ -35,7 +35,7 @@ class ExamineFlow extends ApiCommon
         //权限判断
         $unAction = ['steplist','userlist','recordlist'];
         $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(4,$adminTypes) && !in_array(1,$adminTypes) && !in_array($a, $unAction)) {
+        if (!in_array(4,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
         }        

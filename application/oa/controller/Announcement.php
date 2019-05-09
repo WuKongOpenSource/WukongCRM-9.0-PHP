@@ -57,8 +57,7 @@ class Announcement extends ApiCommon
 		$adminTypes = adminGroupTypes($userInfo['id']);
 		
 		$param['user_id'] = $userInfo['id'];
-        $data = $announcementModel->getDataList($param);   
-		//var_dump($adminTypes);
+        $data = $announcementModel->getDataList($param);
 		if( !in_array(8,$adminTypes) && !in_array(1,$adminTypes) ){
 			$data['is_create'] = 0;
 		} else {
@@ -79,8 +78,7 @@ class Announcement extends ApiCommon
         if (!in_array(8,$adminTypes) && !in_array(1,$adminTypes)) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }         
-
+        }
         $res = $announcementModel->createData($param);
         if ($res) {
 			$res['realname'] = $userInfo['realname'];

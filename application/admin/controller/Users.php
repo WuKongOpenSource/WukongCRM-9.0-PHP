@@ -103,9 +103,10 @@ class Users extends ApiCommon
         $userModel = model('User');
         $param = $this->param;
         $userInfo = $this->userInfo;
+        $userData = db('admin_user')->where(['id' => $param['id']])->find();
         if (!$param['id']) {
             //修改个人信息
-            $param['user_id'] = $userInfo['id'];
+            $param['user_id'] = $userData['id'];
         } else {
             //权限判断
             $adminTypes = adminGroupTypes($userInfo['id']);
@@ -114,12 +115,13 @@ class Users extends ApiCommon
                 exit(json_encode(['code'=>102,'error'=>'无权操作']));
             }            
         }
+        unset($param['username']);
         $data = $userModel->updateDataById($param, $param['id']);
         if (!$data) {
             return resultArray(['error' => $userModel->getError()]);
         }
 
-        $param['userInfo'] = $userInfo;
+        $param['userInfo'] = $userData;
         $resSync = model('Sync')->syncData($param);        
 
         return resultArray(['data' => '编辑成功']);
@@ -157,9 +159,9 @@ class Users extends ApiCommon
             $ids = $param['id'];
         }
         //顶级管理员不能修改
-        foreach ($ids as $v) {
-            if ($v == 1) {
-                unset($ids[$v]);
+        foreach ($ids as $k=>$v) {
+            if ((int)$v == 1 && $param['status'] == '0') {
+                unset($ids[$k]);
             }
         }
         $data = $userModel->enableDatas($ids, $param['status']);  
@@ -178,26 +180,26 @@ class Users extends ApiCommon
     {
         $userModel = model('User');
         $param = $this->param;
-        $by = $param['by'];
+        $by = $param['by'] ? : '';
         if ($param['m'] && $param['c'] && $param['a']) {
             if ($param['m'] == 'oa' && $param['c'] == 'task') {
                $belowIds = getSubUserId(true, 1); 
             }
             $belowIds = $userModel->getUserByPer($param['m'], $param['c'], $param['a']); 
         } else {
-            // if ($by == 'all') {
-            //     $belowIds = getSubUserId(true, 1);
-            // } else {
-            //     $userInfo = $this->userInfo;
-            //     $adminIds = $userModel->getAdminId();
-            //     if (in_array($userInfo['id'],$adminIds)) {
-            //         $belowIds = getSubUserId(true, 1);
-            //     } else {
-            //         //下属id
-            //         $belowIds = getSubUserId();
-            //     }                
-            // }
-            $belowIds = getSubUserId(true, 1);
+            if ($by == 'sub') {
+                $userInfo = $this->userInfo;
+                $adminIds = $userModel->getAdminId();
+                if (in_array($userInfo['id'],$adminIds)) {
+                    $belowIds = getSubUserId(true, 1);
+                } else {
+                    //下属id
+                    $belowIds = getSubUserId();
+                } 
+            } else {
+                $belowIds = getSubUserId(true, 1);        
+            }
+            // $belowIds = getSubUserId(true, 1);
         }
         $userList = db('admin_user')
                     ->where(['user.id' => ['in',$belowIds]])
@@ -321,9 +323,9 @@ class Users extends ApiCommon
                 $resData = false;
             }            
         }
-        if ($resData == false) {
-            return resultArray(['error' => '操作失败，请重试']);      
-        }
+        // if ($resData == false) {
+        //     return resultArray(['error' => '操作失败，请重试']);      
+        // }
         return resultArray(['data' => '创建成功']);       
     }
 
@@ -356,7 +358,7 @@ class Users extends ApiCommon
     public function structureUserList()
     {
         $structure_list = db('admin_structure')->select();
-        $structureList = getSubObj(0, $structure_list, '');
+        $structureList = getSubObj(0, $structure_list, '', 1);
         foreach ($structureList as $k=>$v) {
             $userList = [];
             $userList = db('admin_user')->where(['structure_id' => $v['id'],'status' => array('in',['1','3'])])->field('id,realname')->select();

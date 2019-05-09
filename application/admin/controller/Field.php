@@ -23,7 +23,7 @@ class Field extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','getfield','update','read','config','validates','configindex','columnwidth']
+            'allow'=>['index','getfield','update','read','config','validates','configindex','columnwidth','uniquefield']
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -35,7 +35,7 @@ class Field extends ApiCommon
         //权限判断
         $unAction = ['getfield','read','config','validates','configindex','columnwidth'];
         $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(6,$adminTypes) && !in_array(1,$adminTypes) && !in_array($a, $unAction)) {
+        if (!in_array(6,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
         }         
@@ -345,5 +345,18 @@ class Field extends ApiCommon
             return resultArray(['error' => $userFieldModel->getError()]);
         }
         return resultArray(['data' => $res]);
-    }   
+    }
+
+    /**
+     * 自定义验重字段
+     * @param types 分类
+     * @param
+     */
+    public function uniqueField()
+    {
+        $param = $this->param;
+        $list = db('admin_field')->where(['types' => $param['types'],'is_unique' => 1])->column('name');
+        $list = $list ? implode(',',$list) : '无';
+        return resultArray(['data' => $list]);
+    }       
 }

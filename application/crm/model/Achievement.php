@@ -96,7 +96,7 @@ class Achievement extends Common
 			$ret['name'] = $userinfo['realname'];
 			$data[] = $ret;
 			return $data;
-        } else if($request['structure_id']) {
+        } elseif ($request['structure_id']) {
 			$map['type'] = 3;
 			$result = array();
 			$userlist = Db::name('AdminUser')->field('id,realname as name')->where('structure_id = '.$request['structure_id'].'')->select();
@@ -118,10 +118,10 @@ class Achievement extends Common
 			$map['type'] = 3;
 			$result = array();
 			$userlist = Db::name('AdminUser')->field('id,realname as name')->select();
-			foreach($userlist as $k=>$v){
+			foreach ($userlist as $k=>$v) {
 				$map['obj_id'] = $v['id'];
 				$ret = Db::name('CrmAchievement')->where($map)->find();
-				if(!$ret){
+				if (!$ret) {
 					Db::name('CrmAchievement')->insert($map);
 					$ret = Db::name('CrmAchievement')->where($map)->find();
 				}
@@ -139,14 +139,15 @@ class Achievement extends Common
     public function getList($param)
     {
     	$monthList = getMonthStart($param['year']);
-    	$receivablesmodel = new \app\crm\model\Receivables();
+    	$receivablesModel = new \app\crm\model\Receivables();
+    	$contractModel = new \app\crm\model\Contract();
     	$user_ids = [];
     	//业绩目标
-		if($param['user_id']){
-			$dataList = Db::name('CrmAchievement')->where('type=1 and obj_id ='.$param['user_id'].' and year ='.$param['year'].'')->find();
+		if ($param['user_id']) {
+			$dataList = Db::name('CrmAchievement')->where(['type' => 1,'obj_id' => $param['user_id'],'year' => $param['year'],'status' => $param['status']])->find();
 		} else {
-			if($param['structure_id']) {
-				$dataList = Db::name('CrmAchievement')->where('type=2 and obj_id ='.$param['structure_id'].' and year ='.$param['year'].'')->find();
+			if ($param['structure_id']) {
+				$dataList = Db::name('CrmAchievement')->where(['type' => 2,'obj_id' => $param['structure_id'],'year' => $param['year'],'status' => $param['status']])->find();
 			}
 		}
 		$map = [];
@@ -202,15 +203,12 @@ class Achievement extends Common
     	];
 		
     	//员工统计
-    	if($param['user_id']) {
+    	if ($param['user_id']) {
 	    	$user_ids[] = $param['user_id'];
 			$map['obj_id'] = $param['user_id'];
 			$map['obj_type'] = 2;
-    	} else if ($param['structure_id']) {
+    	} elseif ($param['structure_id']) {
     		//部门统计
-    		//$userModel = new \app\admin\model\User();
-    		//$userList = $userModel->getSubUserByStr($param['structure_id'],1); //根据部门获取员工列表
-    		//$user_ids = $userList ? : [];
 			$map['obj_id'] = $param['structure_id'];
 			$map['obj_type'] = 1;
     	}
@@ -220,10 +218,14 @@ class Achievement extends Common
 	    	$map['start_time'] = $monthList[$i];
 	    	$map['end_time'] = $monthList[$i+1];
 	    	$ret[$i]['month'] = $achiementList[$i]['month'];
-	    	$ret[$i]['receivables'] = $receivablesmodel->getDataByUserId($map); //user_id, year 回款
-	    	$ret[$i]['achiement'] = (float)  $achiementList[$i]['data']?:'0';  //目标
+	    	if ($param['status'] == 1) {
+	    		$ret[$i]['receivables'] = $contractModel->getDataByUserId($map);//合同
+	    	} else {
+	    		$ret[$i]['receivables'] = $receivablesModel->getDataByUserId($map); //回款
+	    	}
+	    	$ret[$i]['achiement'] = (float)$achiementList[$i]['data']?:'0';  //目标
 	    	$rate = 0.00;
-			if($ret[$i]['achiement']){
+			if ($ret[$i]['achiement']) {
 				$rate = round(($ret[$i]['receivables']/$ret[$i]['achiement']),4)*100;
 			}
 	    	$ret[$i]['rate'] = $rate;

@@ -318,7 +318,7 @@ INFO;
             'php'     => ['PHP版本', '5.6', '5.6.x', PHP_VERSION, 'ok'],
         ];
 		session('install_error','');
-        if ($items['php'][3] < $items['php'][1]) {
+        if (substr($items['php'][3],0,3) < $items['php'][1]) {
             $items['php'][4] = 'no';
             session('install_error', true);
         }

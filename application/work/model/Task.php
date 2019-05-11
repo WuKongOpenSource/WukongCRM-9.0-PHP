@@ -445,17 +445,17 @@ class Task extends Common
 	//删除任务
 	public function delTaskById($param)
 	{	
-		$taskInfo = $this->get($param['task_id']);// $this->get($param['task_id']);
-		if(!$taskInfo){
-			$this->error = '任务已经删除过了';
+		$taskInfo = $this->get($param['task_id']);
+		if (!$taskInfo) {
+			$this->error = '数据不存在或已删除';
 			return false;
 		}
-		if ( $param['task_id'] ) {
+		if ($param['task_id']) {
 			$map['task_id'] = $param['task_id'];
 			$temp['ishidden'] = 1;
 			$temp['hidden_time'] = time();
 			$flag = $this->where($map)->update($temp);
-			if ( $flag ) {
+			if ($flag) {
 				if(!$taskInfo['pid']){
 					// 添加删除日志
 					/* $logModel = new LogModel();
@@ -464,7 +464,7 @@ class Task extends Common
 					$data['create_user_id'] = $param['create_user_id'];
 					$data['task_id'] = $param['task_id'];
 					$a = $logModel->workLogAdd($data); */
-					actionLog( $taskInfo['task_id'],$taskInfo['owner_user_id'],$taskInfo['structure_ids'],'删除了任务'); //
+					actionLog( $taskInfo['task_id'],$taskInfo['owner_user_id'],$taskInfo['structure_ids'],'删除了任务');
 				}
 				return true;
 			} else {

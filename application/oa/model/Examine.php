@@ -282,11 +282,15 @@ class Examine extends Common
 		$categoryInfo = $examineCategoryModel->getDataById($dataInfo['category_id']);
 		
 		//验证
-		$validate = validate($this->name, $dataInfo['category_id']);
-		if (!$validate->check($param)) {
+		$fieldModel = new \app\admin\model\Field();
+		$validateArr = $fieldModel->validateField($this->name, $dataInfo['category_id']); //获取自定义字段验证规则
+		$validate = new Validate($validateArr['rule'], $validateArr['message']);
+		$result = $validate->check($param);
+		if (!$result) {
 			$this->error = $validate->getError();
 			return false;
 		}
+		
 		$fileArr = $param['file']; //接收表单附件
 		unset($param['file']);
 

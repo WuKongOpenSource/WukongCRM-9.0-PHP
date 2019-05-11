@@ -48,14 +48,14 @@
           </el-tooltip>
         </div>
         <div class="rt-setting"
-             v-if="!showWorkbench">
+             v-if="!showWorkbench && (data.permission && (data.permission.is_update || data.permission.is_delete))">
           <el-dropdown @command="handleCommand"
                        trigger="click">
             <i style="color:#CDCDCD; cursor: pointer;"
                class="el-icon-arrow-down el-icon-more"></i>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="edit">编辑</el-dropdown-item>
-              <el-dropdown-item command="delete">删除</el-dropdown-item>
+              <el-dropdown-item v-if="data.permission.is_update" command="edit">编辑</el-dropdown-item>
+              <el-dropdown-item v-if="data.permission.is_delete" command="delete">删除</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </div>

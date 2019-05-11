@@ -752,6 +752,7 @@ export default {
   display: flex;
   flex: 1;
   flex-direction: column;
+  overflow: hidden;
 }
 .jurisdiction-title {
   border-bottom: 1px dashed #e6e6e6;

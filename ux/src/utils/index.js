@@ -1,4 +1,3 @@
-
 /** 获取file大小的名称 */
 export function fileSize(size) {
   var size_int = size
@@ -28,7 +27,11 @@ export function getMaxIndex() {
 export function objDeepCopy(source) {
   var sourceCopy = source instanceof Array ? [] : {}
   for (var item in source) {
-    sourceCopy[item] = typeof source[item] === 'object' ? objDeepCopy(source[item]) : source[item]
+    if (!source[item]) {
+      sourceCopy[item] = source[item]
+    } else {
+      sourceCopy[item] = typeof source[item] === 'object' ? objDeepCopy(source[item]) : source[item]
+    }
   }
   return sourceCopy
 }

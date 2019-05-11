@@ -8,7 +8,7 @@
       <div class="label-input">
         <label class="label-title">选择员工</label>
         <xh-user-cell :radio="false"
-                      :selectedData="selectUsers"
+                      :value="selectUsers"
                       @value-change="changeCheckout"></xh-user-cell>
       </div>
       <label class="label-title">员工角色配置</label>
@@ -84,18 +84,18 @@ export default {
       if (this.selectUsers.length == 0) {
         this.$message.error('请选择员工')
       } else {
-      }
-      usersEdit({
-        users: this.selectUsers.map(function(data) {
-          return data.id
-        }),
-        groups: this.selectRoles
-      })
-        .then(res => {
-          this.$message.success(res.data)
-          this.$emit('save')
+        usersEdit({
+          users: this.selectUsers.map(function(data) {
+            return data.id
+          }),
+          groups: this.selectRoles
         })
-        .catch(err => {})
+          .then(res => {
+            this.$message.success(res.data)
+            this.$emit('save')
+          })
+          .catch(err => {})
+      }
     },
     /** 员工选择操作 */
     changeCheckout(data) {

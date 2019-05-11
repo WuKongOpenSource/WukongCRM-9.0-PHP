@@ -289,6 +289,8 @@ export default {
         return [
           { name: '姓名', field: 'name', form_type: 'contacts' },
           { name: '手机', field: 'mobile', form_type: 'mobile' },
+          { name: '电话', field: 'telephone', form_type: 'text' },
+          { name: '是否关键决策人', field: 'decision', form_type: 'text' },
           { name: '职务', field: 'post', form_type: 'text' }
         ]
       } else if (this.crmType === 'business') {

@@ -48,12 +48,13 @@ class Task extends ApiCommon
         }
     }
 	
-	//判断任务(需创建人才能编辑删除)
+	//判断任务(需创建人和负责人才能编辑删除)
 	public function checkSub($task_id)
 	{
 		$userInfo = $this->userInfo;
 		$taskDet = Db::name('Task')->where('task_id = '.$task_id)->find();
-		if($taskDet['create_user_id'] == $userInfo['id']){
+		$main_user_ids = stringToArray($taskDet['main_user_id']);
+		if ($taskDet['create_user_id'] == $userInfo['id'] || in_array($userInfo['id'],$main_user_ids)) {
 			return true;
 		} else {
 			return false;
@@ -377,7 +378,7 @@ class Task extends ApiCommon
         if(isset($param['main_user_id'])){
         	$rett = $this->checkSub($param['task_id']); //判断编辑权限
 	        if(!$rett){
-				return resultArray(['error'=>'没有编辑权限']);
+				return resultArray(['error'=>'没有权限']);
 			}
         }
         $ret = $model->createDetTask($param);
@@ -706,7 +707,7 @@ class Task extends ApiCommon
 		
 		$rett = $this->checkSub($param['task_id']); //判断编辑权限
         if(!$rett){
-			return resultArray(['error'=>'没有编辑权限']);
+			return resultArray(['error'=>'没有权限']);
 		}
 		
         $ret = $model->createDetTask($param);
@@ -866,7 +867,7 @@ class Task extends ApiCommon
         if ($param['task_id']) {
 			$rett = $this->checkSub($param['task_id']); //判断编辑权限
 			if(!$rett){
-				return resultArray(['error'=>'没有编辑权限']);
+				return resultArray(['error'=>'没有权限']);
 			}
             $userInfo                = $this->userInfo;
             $param['create_user_id'] = $userInfo['id']; 
@@ -922,7 +923,7 @@ class Task extends ApiCommon
         if ($param['task_id']) {
 			$rett = $this->checkSub($param['task_id']); //判断编辑权限
 			if(!$rett){
-				return resultArray(['error'=>'没有编辑权限']);
+				return resultArray(['error'=>'没有权限']);
 			}
             $userInfo   			 = $this->userInfo;
 			$param['create_user_id'] = $userInfo['id']; 

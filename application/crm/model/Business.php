@@ -305,7 +305,7 @@ class Business extends Common
 		$dataInfo['type_id_info'] = db('crm_business_type')->where(['type_id' => $dataInfo['type_id']])->value('name');
 		$dataInfo['status_id_info'] = db('crm_business_status')->where(['status_id' => $dataInfo['status_id']])->value('name');
 		$dataInfo['customer_id_info'] = db('crm_customer')->where(['customer_id' => $dataInfo['customer_id']])->field('customer_id,name')->find();
-		$dataInfo['remark'] = db('crm_business_log')->where(['business_id' => $id,'is_end' => ['gt',0]])->order('create_time desc')->value('remark'); //商机状态推进结束备注
+		// $dataInfo['remark'] = db('crm_business_log')->where(['business_id' => $id,'is_end' => ['gt',0]])->order('create_time desc')->value('remark'); //商机状态推进结束备注
 		return $dataInfo;
    	}
 	

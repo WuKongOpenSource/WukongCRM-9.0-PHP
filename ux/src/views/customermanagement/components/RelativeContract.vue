@@ -127,10 +127,9 @@ export default {
     },
     getDetail() {
       this.loading = true
-      crmContractIndex({
-        pageType: 'all',
-        customer_id: this.id
-      })
+      let params = { pageType: 'all' }
+      params[this.crmType + '_id'] = this.id
+      crmContractIndex(params)
         .then(res => {
           if (this.fieldList.length == 0) {
             this.getFieldList()

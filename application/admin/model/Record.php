@@ -500,7 +500,7 @@ class Record extends Common
 		$data = [];
 		if ($next_time) $data['next_time'] = $next_time;
 		$data['update_time'] = time();
-		$data['follow'] = '已跟进';
+		if (in_array($types,['crm_customer','crm_leads'])) $data['follow'] = '已跟进';
 		$dbName->where([$dbId => $types_id])->update($data);
 		return true;
 	}

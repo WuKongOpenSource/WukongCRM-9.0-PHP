@@ -106,7 +106,7 @@ class Users extends ApiCommon
         $userData = db('admin_user')->where(['id' => $param['id']])->find();
         if (!$param['id']) {
             //修改个人信息
-            $param['user_id'] = $userData['id'];
+            $param['user_id'] = $userInfo['id'];
         } else {
             //权限判断
             $adminTypes = adminGroupTypes($userInfo['id']);

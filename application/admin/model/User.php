@@ -287,14 +287,14 @@ class User extends Common
 			//修改个人信息
 			$data['email'] = $param['email'];
 			$data['sex'] = $param['sex'];
-			$data['mobile'] = $param['username'];
+			// $data['mobile'] = $param['username'];
 			if (db('admin_user')->where(['username' => $param['username'],'id' => ['neq',$param['user_id']]])->find()) {
 				$this->error = '手机号已存在';
 				return false;				
 			}
 			Db::name('HrmUserDet')->where(['user_id' => $param['user_id']])->update($data);
 			$data['realname'] = $param['realname'];
-			$data['username'] = $param['username'];
+			// $data['username'] = $param['username'];
 			$flag = $this->where(['id' => $param['user_id']])->update($data);
 			if ($flag) {
 				return true;
@@ -326,7 +326,7 @@ class User extends Common
 				$this->error = '手机号已存在';
 				return false;			
 			}
-
+			
 			$this->startTrans();
 			try {
 				$accessModel = model('Access');
@@ -341,8 +341,7 @@ class User extends Common
 				$this->allowField(true)->save($param, ['id' => $id]);
 				$this->commit();
 				
-				$data['user_id'] = $id;	
-				$data['mobile'] = $param['username'];	 	
+				// $data['mobile'] = $param['username'];	 	
 				$data['email'] = $param['email'];	
 				$data['sex'] = $param['sex'];				
 				$data['update_time'] = time();

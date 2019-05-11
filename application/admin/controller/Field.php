@@ -33,7 +33,7 @@ class Field extends ApiCommon
         }
         $userInfo = $this->userInfo;
         //权限判断
-        $unAction = ['getfield','read','config','validates','configindex','columnwidth'];
+        $unAction = ['getfield','read','config','validates','configindex','columnwidth','uniquefield'];
         $adminTypes = adminGroupTypes($userInfo['id']);
         if (!in_array(6,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
             header('Content-Type:application/json; charset=utf-8');

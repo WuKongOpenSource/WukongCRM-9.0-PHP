@@ -139,10 +139,12 @@ class Product extends Common
 
 		//产品分类
 		$category_id = $param['category_id'];
-		$param['category_id'] = $productCategoryModel->getIdByStr($category_id);
-		$param['category_str'] = arrayToString($category_id);
+		if (is_array($category_id)) {
+			$param['category_id'] = $productCategoryModel->getIdByStr($category_id);
+			$param['category_str'] = arrayToString($category_id);
+		}
 
-		if ($this->data($param)->allowField(true)->save()) {
+		if ($this->data($param)->allowField(true)->isUpdate(false)->save()) {
 			$data = [];
 			$data['product_id'] = $this->product_id;
 			return $data;
@@ -192,8 +194,10 @@ class Product extends Common
 
 		//产品分类
 		$category_id = $param['category_id'];
-		$param['category_id'] = $productCategoryModel->getIdByStr($category_id);
-		$param['category_str'] = arrayToString($category_id);	
+		if (is_array($category_id)) {
+			$param['category_id'] = $productCategoryModel->getIdByStr($category_id);
+			$param['category_str'] = arrayToString($category_id);
+		}	
 
 		if ($this->allowField(true)->save($param, ['product_id' => $product_id])) {
 			//修改记录

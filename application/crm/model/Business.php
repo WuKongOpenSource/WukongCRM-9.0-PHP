@@ -73,7 +73,7 @@ class Business extends Common
 			$map = $requestMap ? array_merge($sceneMap, $requestMap) : $sceneMap;
 		}
 		//高级筛选
-		$map = where_arr($map, 'crm', 'business', 'index');	
+		$map = where_arr($map, 'crm', 'business', 'index');
 		$authMap = [];
 		if (!$partMap) {
 			$auth_user_ids = $userModel->getUserByPer('crm', 'business', 'index');

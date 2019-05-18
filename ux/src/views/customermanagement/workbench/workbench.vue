@@ -21,14 +21,21 @@
           <time-type-select @change="timeTypeChange"></time-type-select>
         </flexbox>
       </div>
+      <el-button class="check"
+                 type="primary"
+                 icon="wukong wukong-check"
+                 @click="showDuplicateCheck = true">数据查重</el-button>
     </flexbox>
     <customer-dash :data="dashData"></customer-dash>
+    <duplicate-check v-if="showDuplicateCheck"
+                     @hiden-view="showDuplicateCheck=false"></duplicate-check>
   </div>
 </template>
 
 <script>
 import timeTypeSelect from '@/components/timeTypeSelect'
 import CustomerDash from './components/CustomerDash'
+import DuplicateCheck from './components/duplicateCheck'
 import membersDep from '@/components/selectEmployee/membersDep'
 import { mapGetters } from 'vuex'
 import { usersList } from '@/api/common'
@@ -38,6 +45,7 @@ export default {
   name: 'customerWorkbench',
   components: {
     CustomerDash,
+    DuplicateCheck,
     membersDep, // 员工部门
     timeTypeSelect
   },
@@ -51,7 +59,9 @@ export default {
       dashData: { users: [], strucs: [], timeTypeValue: {} },
       filtersInfo: { realname: '', thumb_img: '' },
       // 时间值
-      timeTypeValue: { label: '本季度', value: 'quarter' }
+      timeTypeValue: { label: '本季度', value: 'quarter' },
+      // 展示查重
+      showDuplicateCheck: false
     }
   },
   computed: {
@@ -138,6 +148,7 @@ export default {
 <style lang="scss" scoped>
 .user-container {
   margin-bottom: 20px;
+  position: relative;
   .user-img {
     display: block !important;
     width: 40px;
@@ -166,6 +177,20 @@ export default {
     margin-top: 5px;
     font-size: 12px;
     color: #999999;
+  }
+
+  .check {
+    position: absolute;
+    top: 3px;
+    right: 0;
+    color: white;
+    font-size: 13px;
+    border-radius: 3px;
+
+    /deep/ .wukong-check {
+      margin-right: 4px;
+      font-size: 17px;
+    }
   }
 }
 </style>

@@ -12,7 +12,7 @@
       </div>
       <div class="table-content">
         <el-table :data="list"
-                  max-height="400"
+                  height="400"
                   stripe
                   border
                   highlight-current-row>

@@ -10,6 +10,7 @@ namespace app\oa\controller;
 use app\admin\controller\ApiCommon;
 use think\Hook;
 use think\Request;
+use think\Db;
 
 class Announcement extends ApiCommon
 {
@@ -66,7 +67,11 @@ class Announcement extends ApiCommon
         return resultArray(['data' => $data]);
     }
 	
-    //添加公告
+    /**
+     * 添加公告
+     * @author Michael_xu
+     * @return 
+     */
     public function save()
     {
         $announcementModel = model('Announcement');
@@ -88,28 +93,41 @@ class Announcement extends ApiCommon
         }
     }
 
-    //公告详情
+    /**
+     * 公告详情
+     * @author Michael_xu
+     * @return 
+     */
     public function read()
     {
         $announcementModel = model('Announcement');
         $param = $this->param;
         $userInfo = $this->userInfo;
+        $user_id = $userInfo['id'];
 		if(!$param['announcement_id']) {
 			return resultArray(['error'=>'参数错误']);
 		}      
         $data = $announcementModel->getDataById($param['announcement_id']);
+        $adminTypes = adminGroupTypes($user_id);
         //判断权限
-        if (!in_array($userInfo['id'], stringToArray($data['owner_user_ids'])) && !in_arrray($userInfo['structure_id'], stringToArray($data['structure_ids']))) {
+        if (!in_array($user_id, stringToArray($data['owner_user_ids'])) && !in_array($userInfo['structure_id'], stringToArray($data['structure_ids'])) && !in_array(1,$adminTypes)) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'没有权限']));
         }        
         if (!$data) {
             return resultArray(['error' => $announcementModel->getError()]);
         }
+        //标记已读
+        $read_user_ids = stringToArray($data['read_user_ids']) ? array_merge(stringToArray($data['read_user_ids']),array($user_id)) : array($user_id);
+        $res = Db::name('OaAnnouncement')->where(['announcement_id' => $param['announcement_id']])->update(['read_user_ids' => arrayToString($read_user_ids)]);    
         return resultArray(['data' => $data]);
     }
 
-    // 编辑公告
+    /**
+     * 编辑公告
+     * @author Michael_xu
+     * @return 
+     */
     public function update()
     {
         $announcementModel = model('Announcement');
@@ -125,7 +143,11 @@ class Announcement extends ApiCommon
         } 
     }
 
-    // 删除公告
+    /**
+     * 删除公告
+     * @author Michael_xu
+     * @return 
+     */ 
     public function delete()
     {
         $announcementModel = model('Announcement');

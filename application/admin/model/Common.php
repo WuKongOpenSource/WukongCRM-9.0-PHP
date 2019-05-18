@@ -39,7 +39,7 @@ class Common extends Model
     protected function fmtRequest( $request = [] )
     {
         $pageType = $request['pageType'] ? 'all' : ''; //all全部（不分页）
-        $page = 0;
+        $page = 1;
         if (isset($request['page']) && is_numeric($request['page']) ) {
             $page = $request['page'];
             unset($request['page']);

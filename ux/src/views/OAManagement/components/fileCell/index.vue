@@ -5,7 +5,7 @@
          alt="">
     <div class="cell-body"
          :class="{'cursor-pointer' :cursorPointer}">
-      <span>{{data.name}}</span>
+      <span>{{data.name.length > 20 ? data.name.substring(0, 20) + '...' : data.name}}</span>
       <span class="size">({{data.size}})</span>
     </div>
     <div class="cell-foot">

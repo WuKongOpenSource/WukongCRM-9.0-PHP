@@ -263,10 +263,10 @@ class Task extends ApiCommon
 			} elseif ($param['type'] == 'myown'){ //我参与的
 				$type = 't.owner_user_id like "%,'.$userInfo['id'].',%"';
 			} else {
-				$type = 't.main_user_id ='.$userInfo['id'].' or  ( t.is_open = 1 and t.owner_user_id like "%,'.$str.',%")';
+				$type = 't.main_user_id ='.$userInfo['id'].' or  ( t.is_open = 1 and t.owner_user_id like "%'.$str.'%")';
 			}
 		} else {
-			$type = 't.main_user_id ='.$userInfo['id'].' or t.create_user_id ='.$userInfo['id'].' or  ( t.is_open = 1 and t.owner_user_id like "%,'.$str.',%")';
+			$type = 't.main_user_id ='.$userInfo['id'].' or t.create_user_id ='.$userInfo['id'].' or  ( t.is_open = 1 and t.owner_user_id like "%'.$str.'%")';
 		}
 		if ($param['stop_type']) {
 			switch ($param['stop_type']) {

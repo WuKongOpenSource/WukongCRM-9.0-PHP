@@ -275,17 +275,30 @@ class Excel extends Common
             
             //实例化主文件
 			vendor("phpexcel.PHPExcel");
+
+			// set_time_limit(300);
+   			// ini_set("memory_limit","1024M");
+
+			// $cacheMethod = \PHPExcel_CachedObjectStorageFactory::cache_to_wincache;  
+			// $cacheSettings = array( 'memcacheServer'  => 'localhost',  
+			//     'memcachePort'    => 11211,  
+			//     'cacheTime'       => 600  
+			// );  
+			// \PHPExcel_Settings::setCacheStorageMethod($cacheMethod, $cacheSettings);
+
         	$objPHPExcel = new \phpexcel();
 
 	        if ($ext =='xlsx') {
 	        	$objWriter = new \PHPExcel_Writer_Excel2007($objPHPExcel);
 			    $objRender = \PHPExcel_IOFactory::createReader('Excel2007');
+			    // $objRender->setReadDataOnly(true);
 			    $ExcelObj = $objRender->load($savePath);
-			} else if ($ext =='xls') {
+			} elseif ($ext =='xls') {
 				$objWriter = new \PHPExcel_Writer_Excel5($objPHPExcel);
 			    $objRender = \PHPExcel_IOFactory::createReader('Excel5');
+			    // $objRender->setReadDataOnly(true);
 			    $ExcelObj = $objRender->load($savePath);
-			} else if ($ext=='csv') {
+			} elseif ($ext=='csv') {
 				$objWriter = new \PHPExcel_Reader_CSV($objPHPExcel);
 			    //默认输入字符集
 			    $objWriter->setInputEncoding('UTF-8');

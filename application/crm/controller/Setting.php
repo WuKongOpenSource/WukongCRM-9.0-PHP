@@ -231,5 +231,41 @@ class Setting extends ApiCommon
         } else {
             return resultArray(['error' => '设置失败，请重试！']);
         }          
-    }     
+    }
+    /**
+     * 记录类型编辑
+     * @author zhi
+     * @return [type] [description]
+     * INSERT INTO  `5kcrm_crm_config` (`id` ,`name` ,`value` ,`description`)VALUES (NULL ,  'record_type',  '1 2 3 4',  '记录类型');
+     */
+    public function recordEdit()
+    {
+        $param = $this->param;
+        if($param['value']){
+            $array = setting($param['value']);
+            $res = db('crm_config')->where(['name' => 'record_type'])->update(['value' => $array]);
+            if ($res) {
+                return resultArray(['data' => '设置成功']);
+            } else {
+                return resultArray(['error' => '设置失败，请重试！']);
+            }
+        }else{
+            $record_type = db('crm_config')->where(['name' => 'record_type'])->find();
+            eval('$arr='.$record_type['value'].';');
+            $record_type['value'] = implode(' ',$arr);
+            return resultArray(['data' => $record_type]);
+        }
+    }
+   
+    /**
+     * 跟进记录 记录方式展示
+     * @author zhi
+     * @return [type] [description]
+     */
+    public function recordInfo()
+    {
+        $record_type = db('crm_config')->where(['name' => 'record_type'])->find();
+        eval('$arr='.$record_type['value'].';');
+        return resultArray(['data' => $arr]);
+    }
 }

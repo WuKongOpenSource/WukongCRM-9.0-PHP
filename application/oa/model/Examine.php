@@ -73,9 +73,9 @@ class Examine extends Common
 		}
 		$order = 'examine.update_time desc,examine.create_time asc';
 		//发起时间
-		if ($map['between_time'][0] && $map['between_time'][1]) {
-			$start_time = strtotime($map['between_time'][0]);
-			$end_time = strtotime($map['between_time'][1]);
+		if ($map['examine.between_time'][0] && $map['examine.between_time'][1]) {
+			$start_time = $map['examine.between_time'][0];
+			$end_time = $map['examine.between_time'][1];
 			$map['examine.create_time'] = array('between',array($start_time,$end_time));
 		}
 		unset($map['examine.between_time']);

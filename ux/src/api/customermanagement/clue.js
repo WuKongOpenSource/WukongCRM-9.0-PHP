@@ -114,3 +114,16 @@ export function crmLeadsExcelImport(data) {
  *
  */
 export const crmLeadsExcelDownloadURL = 'crm/leads/excelDownload'
+
+/**
+ * 线索标记跟进
+ * @param {*} data
+ * id 客户IDs
+ */
+export function crmLeadsSetFollowAPI(data) {
+  return request({
+    url: 'crm/leads/setFollow',
+    method: 'post',
+    data: data
+  })
+}

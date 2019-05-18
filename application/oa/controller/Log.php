@@ -58,6 +58,7 @@ class Log extends ApiCommon
 		$param['type'] = $this->type;
         $userInfo = $this->userInfo;
         $param['read_user_id'] = $userInfo['id'];
+        $param['structure_id'] = $userInfo['structure_id'];
         $data = model('Log')->getDataList($param); 
         return resultArray(['data' => $data]);
     }
@@ -118,7 +119,7 @@ class Log extends ApiCommon
         $param = $this->param;
         $userInfo = $this->userInfo;
         $logModel = model('Log');
-        $data = db('oa_log')->where(['log_id' => $param['id']])->find();
+        $data = $logModel->getDataById($param['id']);
         //权限判断
         $auth_user_ids = getSubUserId();
         if (!in_array($userInfo['id'], $auth_user_ids) && $data['create_user_id'] !== $userInfo['id'] && !in_array($userInfo['id'],stringToArray($data['send_user_ids']))) {

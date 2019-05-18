@@ -166,3 +166,16 @@ export function crmCustomerReceive(data) {
     data: data
   })
 }
+
+/**
+ * 客户标记跟进
+ * @param {*} data
+ * id 客户IDs
+ */
+export function crmCustomerSetFollowAPI(data) {
+  return request({
+    url: 'crm/customer/setFollow',
+    method: 'post',
+    data: data
+  })
+}

@@ -4,7 +4,6 @@
 // +----------------------------------------------------------------------
 // | Author:  	yykun
 // +----------------------------------------------------------------------
-
 namespace app\oa\controller;
 
 use think\Request;
@@ -12,7 +11,6 @@ use think\Session;
 use think\Hook;
 use think\Db;
 use app\admin\controller\ApiCommon;
-
 
 class Tasklable extends ApiCommon
 {
@@ -26,7 +24,7 @@ class Tasklable extends ApiCommon
     {
         $action = [
             'permission'=>[''],  //不登录可访问
-            'allow'=>['index','getWokList','groupList','update','delete']  //需要登录才能访问          
+            'allow'=>['index','getwoklist','grouplist','update','delete','save']  //需要登录才能访问          
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -42,10 +40,9 @@ class Tasklable extends ApiCommon
     public function save()
     {
         $param = $this->param;
-    
         $lableModel = new \app\work\model\WorkLable();
         if ($param) {
-            $userInfo   			 = $this->userInfo;
+            $userInfo = $this->userInfo;
 			$param['create_user_id'] = $userInfo['id']; 
             $flag = $lableModel->createData($param);
             if ($flag) {

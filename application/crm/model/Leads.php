@@ -55,9 +55,15 @@ class Leads extends Common
 			//默认场景
 			$sceneMap = $sceneModel->getDefaultData('leads', $user_id) ? : [];
 		}
+		$searchMap = [];
 		if ($search) {
 			//普通筛选
-			$sceneMap['name'] = ['condition' => 'contains','value' => $search,'form_type' => 'text','name' => '线索名称'];
+			$searchMap = function($query) use ($search){
+			        $query->where('leads.name',array('like','%'.$search.'%'))
+			        	->whereOr('leads.mobile',array('like','%'.$search.'%'))
+			        	->whereOr('leads.telephone',array('like','%'.$search.'%'));
+			};			
+			// $sceneMap['name'] = ['condition' => 'contains','value' => $search,'form_type' => 'text','name' => '线索名称'];
 		}
 		//优先级：普通筛选>高级筛选>场景
 		$map = $requestMap ? array_merge($sceneMap, $requestMap) : $sceneMap;
@@ -104,12 +110,13 @@ class Leads extends Common
 		$list = db('crm_leads')
 				->alias('leads')
 				->where($map)
+				->where($searchMap)
 				->where($authMap)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		// ->field('leads_id,'.implode(',',$indexField))
         		->order($order)
         		->select();	
-        $dataCount = db('crm_leads')->alias('leads')->where($map)->where($authMap)->count('leads_id');
+        $dataCount = db('crm_leads')->alias('leads')->where($map)->where($searchMap)->where($authMap)->count('leads_id');
         foreach ($list as $k=>$v) {
         	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
         	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];

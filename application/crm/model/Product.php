@@ -65,6 +65,9 @@ class Product extends Common
 			$map['product_category.name'] = $map['product.category_id'];
 			unset($map['product.category_id']);
 		}
+		if (!$map['product.status']) {
+			$map['product.status'] = '上架';
+		}
 		//列表展示字段
 		// $indexField = $fieldModel->getIndexField('crm_product', $user_id) ? : ['name'];
 		$userField = $fieldModel->getFieldByFormType('crm_product', 'user'); //人员类型
@@ -363,7 +366,7 @@ class Product extends Common
      * @param 
      * @return                   
      */		
-	public function getPidStr($category_id, $idArr, $first)
+	public function getPidStr($category_id, $idArr, $first = '')
 	{
 		if ($first == 1) $idArr = [];
 		$idArr[] = $category_id;

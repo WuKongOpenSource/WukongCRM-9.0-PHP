@@ -140,6 +140,9 @@ return [
 	'oa/examine/check'=>['oa/examine/check', ['method' => 'POST']],	
 	// 【审批】撤销审核
 	'oa/examine/revokeCheck'=>['oa/examine/revokeCheck', ['method' => 'POST']],	
+
+	// 【代办事项】办公
+	'oa/message/num'=>['oa/message/num', ['method' => 'POST']],		
 	
 	// MISS路由
 	'__miss__'  => 'admin/base/miss',

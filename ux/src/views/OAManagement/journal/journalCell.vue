@@ -54,8 +54,10 @@
             <i style="color:#CDCDCD; cursor: pointer;"
                class="el-icon-arrow-down el-icon-more"></i>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item v-if="data.permission.is_update" command="edit">编辑</el-dropdown-item>
-              <el-dropdown-item v-if="data.permission.is_delete" command="delete">删除</el-dropdown-item>
+              <el-dropdown-item v-if="data.permission.is_update"
+                                command="edit">编辑</el-dropdown-item>
+              <el-dropdown-item v-if="data.permission.is_delete"
+                                command="delete">删除</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </div>
@@ -63,19 +65,13 @@
       <div class="text">
         <p class="row"
            v-if="data.content">
-          <span class="title">{{data.category_id == 1 ? "今日工作内容" : data.category_id == 2 ? "本周工作内容" : "本月工作内容"}}：</span>
-          {{data.content}}
-        </p>
+          <span class="title">{{data.category_id == 1 ? "今日工作内容" : data.category_id == 2 ? "本周工作内容" : "本月工作内容"}}：</span>{{data.content}}</p>
         <p class="row"
            v-if="data.tomorrow">
-          <span class="title">{{data.category_id == 1 ? "明日工作内容" : data.category_id == 2 ? "下周工作内容" : "下月工作内容"}}：</span>
-          {{data.tomorrow}}
-        </p>
+          <span class="title">{{data.category_id == 1 ? "明日工作内容" : data.category_id == 2 ? "下周工作内容" : "下月工作内容"}}：</span>{{data.tomorrow}}</p>
         <p class="row"
            v-if="data.question">
-          <span class="title">遇到的问题：</span>
-          {{data.question}}
-        </p>
+          <span class="title">遇到的问题：</span>{{data.question}}</p>
       </div>
       <div class="accessory">
         <div class="upload-img-box"
@@ -116,13 +112,13 @@
                class="div-photo head-img header-circle"></div>
           <span class="name">{{discussItem.userInfo.realname}}</span>
           <span class="time">{{discussItem.create_time | moment("YYYY-MM-DD HH:mm")}}</span>
-          <div class="rt">
-            <span @click="discussDelete(discussItem, data.replyList, k)">删除</span>
-            <span @click="discussBtn(discussItem, -1)">回复</span>
-          </div>
 
           <p class="reply-title">
             <span v-html="emoji(discussItem.content)"></span>
+            <i @click="discussBtn(discussItem, -1)"
+               class="wukong wukong-log-reply log-handle"></i>
+            <i @click="discussDelete(discussItem, data.replyList, k)"
+               class="wukong wukong-log-delete log-handle"></i>
           </p>
 
           <p class="discuss-content"
@@ -139,16 +135,16 @@
                    class="div-photo head-img header-circle"></div>
               <span class="name">{{childDiscussItem.userInfo.realname}}</span>
               <span class="time">{{childDiscussItem.create_time | moment("YYYY-MM-DD HH:mm")}}</span>
-              <div class="rt">
-                <span @click="discussDelete(childDiscussItem, discussItem.replyList, k)">删除</span>
-                <span @click="discussBtn(discussItem, k)">回复</span>
-              </div>
               <p class="reply-title">
                 <template>
                   <span>回复</span>
                   <span class="reply">@{{childDiscussItem.replyuserInfo.realname}}：</span>
                 </template>
                 <span v-html="emoji(childDiscussItem.content)"></span>
+                <i class="wukong wukong-log-reply log-handle"
+                   @click="discussBtn(discussItem, k)"></i>
+                <i class="wukong wukong-log-delete log-handle"
+                   @click="discussDelete(childDiscussItem, discussItem.replyList, k)"></i>
               </p>
             </div>
           </div>
@@ -186,9 +182,8 @@
       </div>
     </div>
     <div class="footer">
-      <span @click="commentBtn(data)"
-            class="comment">回复</span>
-      <!-- <img @click="commentBtn(item)" class="comment" src="@/assets/img/journal_comment.png"> -->
+      <i class="wukong wukong-log-reply log-handle"
+         @click="commentBtn(data)"></i>
     </div>
     <!-- 底部评论 -->
     <div class="comment-box"
@@ -303,26 +298,38 @@ export default {
   mounted() {
     if (this.data.is_read == 0 && !this.showWorkbench) {
       this.$bus.on('journal-list-box-scroll', target => {
-        if (this.data.is_read == 0) {
-          if (target) {
-            this.parentTarget = target
-          }
-          let ispreview = this.whetherPreview()
-          if (!this.awaitMoment && ispreview) {
-            this.awaitMoment = true
-            setTimeout(() => {
-              this.awaitMoment = false
-              let ispreview = this.whetherPreview()
-              if (ispreview) {
-                this.submiteIsRead()
-              }
-            }, 3000)
-          }
-        }
+        this.observePreview(target)
       })
+      this.observePreview(
+        document.getElementById('journal-cell' + this.logIndex).parentNode
+      )
     }
   },
   methods: {
+    /**
+     * 观察预览
+     */
+    observePreview(target) {
+      if (this.data.is_read == 0) {
+        if (target) {
+          this.parentTarget = target
+        }
+        let ispreview = this.whetherPreview()
+        if (!this.awaitMoment && ispreview) {
+          this.awaitMoment = true
+          setTimeout(() => {
+            this.awaitMoment = false
+            let ispreview = this.whetherPreview()
+            if (ispreview) {
+              this.submiteIsRead()
+            }
+          }, 3000)
+        }
+      }
+    },
+    /**
+     * 是否预览
+     */
     whetherPreview() {
       let dom = this.parentTarget.children[this.logIndex]
       if (this.parentTarget.getBoundingClientRect()) {
@@ -349,6 +356,7 @@ export default {
       })
         .then(res => {
           this.data.is_read = 1
+          this.$store.dispatch('GetOAMessageNum', 'log')
         })
         .catch(err => {})
     },
@@ -596,6 +604,8 @@ export default {
         margin-bottom: 7px;
         line-height: 22px;
         font-size: 13px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
         .title {
           width: 95px;
           text-align: left;
@@ -656,29 +666,39 @@ export default {
         .reply-title {
           color: #333;
           font-size: 13px;
-          margin: 10px 0 10px 40px;
+          padding: 10px 10px 10px 40px;
+          white-space: pre-wrap;
+          word-wrap: break-word;
+          span {
+            letter-spacing: 0.5px;
+            line-height: 18px;
+          }
           .reply {
             color: #3e84e9;
           }
         }
-        .reply-title /deep/ img {
-          vertical-align: text-bottom;
-          margin: 0 2px;
+
+        .reply-title:hover {
+          .log-handle {
+            display: inline;
+          }
         }
 
         .children-reply {
           margin: 10px 0 10px 40px;
         }
 
-        .rt {
-          margin-top: 4px;
+        .log-handle {
+          display: none;
           color: #999;
-          margin-right: 0;
-          span {
-            margin-left: 10px;
-            cursor: pointer;
-          }
+          font-size: 13px;
+          margin-left: 5px;
         }
+
+        .log-handle:hover {
+          color: $xr-color-primary;
+        }
+
         .discuss-content {
           background: #f5f7fa;
           color: #777;
@@ -714,15 +734,15 @@ export default {
     color: #ccc;
     text-align: right;
     padding-right: 20px;
-    img {
-      @include v-align;
-      @include cursor;
+
+    .log-handle {
+      color: #999;
+      font-size: 15px;
+      margin-right: 20px;
     }
-    .comment {
-      margin-right: 15px;
-      color: #6c7a95;
-      font-size: 13px;
-      cursor: pointer;
+
+    .log-handle:hover {
+      color: $xr-color-primary;
     }
   }
   .comment-box {
@@ -743,5 +763,9 @@ export default {
       border: 0;
     }
   }
+}
+
+.wukong {
+  cursor: pointer;
 }
 </style>

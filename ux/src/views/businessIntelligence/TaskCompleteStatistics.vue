@@ -46,7 +46,7 @@
         <el-table :data="list"
                   stripe
                   border
-                  max-height="400"
+                  height="400"
                   highlight-current-row>
           <el-table-column v-for="(item, index) in fieldList"
                            :key="index"

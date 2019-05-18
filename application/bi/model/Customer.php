@@ -470,7 +470,7 @@ class Customer extends Common
      */
     function getSortByCount($whereArr)
     {
-        $count = db('crm_customer')->group('owner_user_id')->field('owner_user_id,count(customer_id) as count')->where($whereArr)->select();
+        $count = db('crm_customer')->group('owner_user_id')->field('owner_user_id,count(customer_id) as count')->order('count desc')->where($whereArr)->select();
         return $count;
     }
     /**

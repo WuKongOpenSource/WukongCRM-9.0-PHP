@@ -91,7 +91,7 @@ class Record extends Common
      */
     function getSortByCount($whereArr)
     {
-        $count = db('admin_record')->group('create_user_id')->field('create_user_id,count(record_id) as count')->where($whereArr)->select();
+        $count = db('admin_record')->group('create_user_id')->field('create_user_id,count(record_id) as count')->order('count desc')->where($whereArr)->select();
         return $count;
     }
     /**
@@ -105,7 +105,7 @@ class Record extends Common
         foreach ($list as $key => $value) {
             $where = array();
             $where['create_user_id'] = array('eq',$value['create_user_id']);
-            $list[$key]['count'] = count(db('admin_record')->group('types_id')->field('count(types_id) as count')->where($where)->select());
+            $list[$key]['count'] = count(db('admin_record')->group('types_id')->field('count(types_id) as count')->order('count desc')->where($where)->select());
         }
         return $list;
     }

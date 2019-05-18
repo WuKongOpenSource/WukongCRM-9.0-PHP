@@ -36,7 +36,7 @@ class Contract extends Common
     	$userModel = new \app\admin\model\User();
     	$structureModel = new \app\admin\model\Structure();
     	$fieldModel = new \app\admin\model\Field();
-    	$receivablesModel = model('Receivables');
+    	$receivablesModel = new \app\crm\model\Receivables();
 		$search = $request['search'];
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
@@ -73,8 +73,7 @@ class Contract extends Common
 		}
 		//高级筛选
 		$map = where_arr($map, 'crm', 'contract', 'index');
-		$order = ['contract.update_time desc'];
-
+		$order = ['contract.update_time desc'];	
 		$authMap = [];
 		if (!$partMap) {
 			$auth_user_ids = $userModel->getUserByPer('crm', 'contract', 'index');
@@ -115,11 +114,12 @@ class Contract extends Common
 				->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')		
 				->join('__CRM_BUSINESS__ business','contract.business_id = business.business_id','LEFT')	
 				->join('__CRM_CONTACTS__ contacts','contract.contacts_id = contacts.contacts_id','LEFT')	
+				->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')	
 				->where($map)
 				->where($partMap)
 				->where($authMap)
-        		->page(($request['page']-1)*$request['limit'], $request['limit'])
-        		->field('contract.*,customer.name as customer_name,business.name as business_name,contacts.name as contacts_name')
+        		->limit(($request['page']-1)*$request['limit'], $request['limit'])
+        		->field('contract.*,customer.name as customer_name,business.name as business_name,contacts.name as contacts_name,plan.receivables_id,plan.remind_date,plan.return_date')
         		// ->field('contract_id,'.implode(',',$indexField))
         		->order($order)
         		->select();	
@@ -127,8 +127,30 @@ class Contract extends Common
         			->alias('contract')
 					->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')		
 					->join('__CRM_BUSINESS__ business','contract.business_id = business.business_id','LEFT')
-					->join('__CRM_CONTACTS__ contacts','contract.contacts_id = contacts.contacts_id','LEFT')		
-        			->where($map)->where($partMap)->where($authMap)->count('contract_id');
+					->join('__CRM_CONTACTS__ contacts','contract.contacts_id = contacts.contacts_id','LEFT')
+					->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')		
+        			->where($map)->where($partMap)->where($authMap)->count('contract.contract_id');
+
+        $map['contract.check_status'] = array('eq',2);
+        $sumMoney = db('crm_contract')
+					->alias('contract')
+					->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')
+					->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')	
+					->where($map)
+					->where($partMap)
+					->where($authMap)
+					->sum('contract.money'); //合同总金额\
+		unset($map['contract.check_status']);
+		$map['receivables.check_status'] = array('eq',2);
+		$unReceivablesMoney = db('crm_contract')
+					->alias('contract')
+					->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')	
+					->join('__CRM_RECEIVABLES__ receivables','contract.contract_id = receivables.contract_id','LEFT')
+					->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')	
+					->where($map)
+					->where($partMap)
+					->where($authMap)
+					->sum('receivables.money'); //合同总金额
         foreach ($list as $k=>$v) {
         	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
         	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];
@@ -145,7 +167,8 @@ class Contract extends Common
 			$list[$k]['contacts_id_info']['contacts_id'] = $v['contacts_id'];
         	$list[$k]['contacts_id_info']['name'] = $v['contacts_name'];        	
         	$moneyInfo = [];
-        	// $moneyInfo = $receivablesModel->getMoneyByContractId($v['contract_id']);
+        	$moneyInfo = $receivablesModel->getMoneyByContractId($v['contract_id']);
+        	$list[$k]['unMoney'] = $moneyInfo['unMoney'] ? : 0.00;
         	$list[$k]['check_status_info'] = $this->statusArr[$v['check_status']]; 
 
 			//权限
@@ -166,7 +189,8 @@ class Contract extends Common
         $data = [];
         $data['list'] = $list;
         $data['dataCount'] = $dataCount ? : 0;
-
+        $data['data']['sumMoney'] = $sumMoney ? : 0.00;
+        $data['data']['unReceivablesMoney'] = $unReceivablesMoney ? : 0.00;
         return $data;
     }
 

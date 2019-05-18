@@ -481,9 +481,9 @@ class Receivables extends Common
 	{
 		$doneMoney = $this->where(['contract_id' => $contract_id,'check_status' => 2])->sum('money');
 		$contractMoney = db('crm_contract')->where(['contract_id' => $contract_id])->value('money');
-		$subMoney = $contractMoney-$doneMoney;
+		$unMoney = $contractMoney-$doneMoney;
 		$data['doneMoney'] = $doneMoney ? : '0.00';
-		$data['subMoney'] = $subMoney ? : '0.00';
+		$data['unMoney'] = $unMoney ? : '0.00';
 		$data['contractMoney'] = $contractMoney ? : '0.00';
 		return $data;
 	}

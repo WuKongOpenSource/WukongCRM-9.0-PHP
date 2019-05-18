@@ -122,8 +122,8 @@ class User extends Common
 			$list[$k]['status_name'] = $v['status'] ? $this->statusArr[$v['status']] : '停用';
 			//角色
 			$groupsArr = $this->get($v['id'])->groups;
-			$groups = '';
-			$groupids = '';
+			$groups = [];
+			$groupids = [];
 			foreach ($groupsArr as $key=>$val) {
 				$groups[] = $val['title'];
 				$groupids[] = $val['id'];

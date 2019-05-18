@@ -1,7 +1,7 @@
 <template>
   <div>
     <c-r-m-list-head title="客户管理"
-                     placeholder="请输入客户名称"
+                     placeholder="请输入客户名称/手机/电话"
                      @on-handle="listHeadHandle"
                      @on-search="crmSearch"
                      main-title="新建客户"

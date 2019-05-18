@@ -32,7 +32,7 @@ class Receivables extends Common
      */     
     function getSortByMoney($whereArr)
     {
-        $money = db('crm_receivables')->group('owner_user_id')->field('owner_user_id,sum(money) as money')->where($whereArr)->select();
+        $money = db('crm_receivables')->group('owner_user_id')->field('owner_user_id,sum(money) as money')->order('money desc')->where($whereArr)->select();
         return $money;
     }
     /**

@@ -38,9 +38,11 @@ class Group extends Common
 					$biRules = [];
 					$rules = stringToArray($val['rules']) ? : [];
 					foreach ($rules as $k1=>$v1) {
-						if ($v1 < 62) {
+						$ruleInfo = [];
+						$ruleInfo = db('admin_rule')->where(['id' => $v1])->find();
+						if ($ruleInfo['types'] == 2) {
 							$crmRules[] = $v1;
-						} else {
+						} elseif ($ruleInfo['types'] == 6) {
 							$biRules[] = $v1;
 						}
 					}

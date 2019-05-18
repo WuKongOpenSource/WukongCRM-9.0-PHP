@@ -116,9 +116,9 @@ export function regexIsCRMMoneyNumber(nubmer) {
   return true
 }
 
-/** 判断输入的是电话*/
+/** 判断输入长度为 6~11 的数字电话*/
 export function regexIsCRMMobile(mobile) {
-  var regex = /^1[3-9]\d{9}$/
+  var regex = /^\d{6,11}$/
   if (!regex.test(mobile)) {
     return false
   }

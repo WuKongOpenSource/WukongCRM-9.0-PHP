@@ -422,6 +422,7 @@ export default {
     },
     // 审批操作
     examineHandle(data) {
+      this.$store.dispatch('GetOAMessageNum', 'examine')
       this.$emit('on-examine-handle', data)
     }
   }

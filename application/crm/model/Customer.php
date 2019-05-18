@@ -59,9 +59,15 @@ class Customer extends Common
 			//默认场景
 			$sceneMap = $sceneModel->getDefaultData('customer', $user_id) ? : [];
 		}
+		$searchMap = [];
 		if ($search) {
 			//普通筛选
-			$sceneMap['name'] = ['condition' => 'contains','value' => $search,'form_type' => 'text','name' => '客户名称'];
+			$searchMap = function($query) use ($search){
+			        $query->where('customer.name',array('like','%'.$search.'%'))
+			        	->whereOr('customer.mobile',array('like','%'.$search.'%'))
+			        	->whereOr('customer.telephone',array('like','%'.$search.'%'));
+			};
+			// $sceneMap['name'] = ['condition' => 'contains','value' => $search,'form_type' => 'text','name' => '客户名称'];
 		}
 		$partMap = [];
 		//优先级：普通筛选>高级筛选>场景
@@ -137,18 +143,25 @@ class Customer extends Common
 		} else {
 			$order = 'customer.update_time desc';
 		}
+		$tops = Db::name('crm_top')->where(['module' => ['eq','customer'],'create_role_id' => ['eq',$user_id],'set_top' => ['eq',1]])->order('top_time asc')->column('module_id');
+		$top_ids = implode(",", $tops);
+		if ($tops) {
+			$order_t = DB::raw("field(customer_id, $top_ids) desc");
+		}
 		$list = db('crm_customer')
 				->alias('customer')
 				->where($map)
+				->where($searchMap)
 				->where($customerMap)
 				->where($authMap)
 				->where($partMap)
 				->where($poolMap)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		// ->field('customer_id,'.implode(',',$indexField))
+        		->order($order_t) /*置顶  自定义排序置顶*/
         		->order($order)
         		->select();
-        $dataCount = db('crm_customer')->alias('customer')->where($map)->where($customerMap)->where($authMap)->where($partMap)->where($poolMap)->count('customer_id');
+        $dataCount = db('crm_customer')->alias('customer')->where($map)->where($searchMap)->where($customerMap)->where($authMap)->where($partMap)->where($poolMap)->count('customer_id');
 
         //保护规则
 		$configModel = new \app\crm\model\ConfigData();

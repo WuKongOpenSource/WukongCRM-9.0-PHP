@@ -9,7 +9,7 @@
     <div class="content">
       <el-table id="crm-table"
                 :data="newList"
-                :max-height="tableHeight"
+                :height="tableHeight"
                 :span-method="objectSpanMethod"
                 border
                 :cell-style="cellStyle"

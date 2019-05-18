@@ -39,7 +39,7 @@
 
 <script>
 import $ from 'jquery'
-import fullcalendar from "fullcalendar"
+import fullcalendar from 'fullcalendar'
 import 'fullcalendar/dist/locale/zh-cn.js'
 import createSchedule from './components/createSchedule'
 import VDetails from './components/details'
@@ -133,8 +133,8 @@ export default {
         },
         events: function(start, end, timezone, callback) {
           _this.loading = true
-          let start_date = parseInt(start._i / 1000)
-          let end_date = parseInt(end._i / 1000)
+          let start_date = moment(start).valueOf() / 1000
+          let end_date = moment(end).valueOf() / 1000
           scheduleList({
             start_time: start_date,
             end_time: end_date

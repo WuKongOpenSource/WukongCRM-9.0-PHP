@@ -13,6 +13,10 @@
 
 QQ群交流群⑩群：[486745026](https:////shang.qq.com/wpa/qunwpa?idkey=f4687b809bf63f08f707aa1c56dee8dbcb9526237c429c4532222021d65bf83c)
 
+微信交流群（一二群已满，请加三五群）
+
+
+<img src="https://gitee.com/uploads/images/2019/0424/145109_b9d476e1_345098.png" width="400">
 
 悟空CRM采用全新的前后端分离模式，本仓库代码中已集成前端vue打包后文件，可免去打包操作
 
@@ -85,20 +89,8 @@ PHP >= 5.6.0 （暂不支持PHP7及以上版本）
 
 以下为悟空CRM9.0 部分功能系统截图
 
-
-
-![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g1.png)
-![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g2.png)
-![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g3.png)
-![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g4.png)
-![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g5.png)
-![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g6.png)
-![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g7.png)
-![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g8.png)
-![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g9.png)
-![](https://github.com/72crm/72crm/blob/master/ux/intro_img/g10.png)
-
-
-
+![](https://gitee.com/uploads/images/2019/0404/203155_47f691bc_345098.png "g3.png")
+![](https://gitee.com/uploads/images/2019/0404/203205_b8545907_345098.png "g4.png")
+![](https://gitee.com/uploads/images/2019/0404/203229_81b5c962_345098.png "g6.png")
 
 

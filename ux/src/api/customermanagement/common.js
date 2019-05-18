@@ -243,3 +243,16 @@ export function adminFieldUniqueFieldAPI(data) {
     data: data
   })
 }
+
+/**
+ * 查重
+ * @param {*} data
+ * types crm_leads crm_customer 
+ */
+export function crmIndexSearchAPI(data) {
+  return request({
+    url: 'crm/index/search',
+    method: 'post',
+    data: data
+  })
+}

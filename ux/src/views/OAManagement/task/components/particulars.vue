@@ -182,9 +182,7 @@
             <div class="add-description">
               <div v-show="!addDescriptionShow">
                 <div v-if="taskData.description"
-                     @click="addDescriptionShow = true; addDescriptionTextarea = taskData.description">
-                  {{taskData.description}}
-                </div>
+                     @click="addDescriptionShow = true; addDescriptionTextarea = taskData.description">{{taskData.description}}</div>
                 <div v-else
                      class="no-description">
                   <span class="color-label">暂无描述</span>
@@ -750,6 +748,7 @@ export default {
             value: val,
             index: this.detailIndex
           })
+          this.$store.dispatch('GetOAMessageNum', 'task')
         })
         .catch(err => {
           this.$emit('on-handle', {
@@ -1754,7 +1753,10 @@ export default {
       }
       .add-description /deep/ {
         margin-bottom: 20px;
+        position: relative;
         cursor: pointer;
+        white-space: pre-wrap;
+        word-wrap: break-word;
         .no-description {
           color: #3e84e9;
           .color-label {

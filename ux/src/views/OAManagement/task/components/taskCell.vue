@@ -16,15 +16,15 @@
         <div slot="content">
           <span>{{data.task_name}}</span>
         </div>
-        <span
-              ref="itemSpan"
+        <span ref="itemSpan"
               :class="data.checked ? 'item-name-active' : 'item-name'">
           {{data.task_name}}
         </span>
       </el-tooltip>
     </div>
     <div class="list-right">
-      <div class="tag-box" v-if="data.lableList">
+      <div class="tag-box"
+           v-if="data.lableList">
         <template v-if="data.lableList.length <= 2">
           <div v-for="(k, j) in data.lableList"
                :key="j"
@@ -84,7 +84,6 @@
         <div class="img-box"
              v-if="data.stop_time">
           <i class="wukong wukong-time-task"
-          
              :style="{'color': data.is_end == 1 && !data.checked ? 'red': '#999'}"></i>
           <span :style="{'color': data.is_end == 1 && !data.checked ? 'red': '#999'}">{{data.stop_time | moment("MM-DD")}} 截止</span>
         </div>
@@ -131,14 +130,19 @@ export default {
         task_id: val.task_id,
         type: val.checked ? 1 : 2
       })
-        .then(res => {})
+        .then(res => {
+          this.$store.dispatch('GetOAMessageNum', 'task')
+        })
         .catch(err => {
           val.checked = false
         })
     },
     // 点击显示详情
     rowFun(val) {
-      this.$emit('on-handle', { type: 'view', data: { item: this.data, index: this.dataIndex } })
+      this.$emit('on-handle', {
+        type: 'view',
+        data: { item: this.data, index: this.dataIndex }
+      })
     },
     onmouseoverFun(item) {
       if (

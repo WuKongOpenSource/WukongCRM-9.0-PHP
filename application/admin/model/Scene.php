@@ -134,7 +134,7 @@ class Scene extends Common
 	{
 		$where = [];
 		$where['scene_id'] = $id;
-		$where['user_id'] = [['=',$user_id],['=',0],'or'];
+		// $where['user_id'] = [['=',$user_id],['=',0],'or'];
 		$data = db('admin_scene')->where($where)->find();
 		if (!$types) {
 			$types = $data['types'] ? : '';

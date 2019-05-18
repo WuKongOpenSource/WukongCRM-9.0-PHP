@@ -26,7 +26,7 @@ class Leads extends ApiCommon
     public function _initialize()
     {
         $action = [
-            'permission'=>['exceldownload'],
+            'permission'=>['exceldownload','setfollow'],
             'allow'=>['']            
         ];
         Hook::listen('check_auth',$action);
@@ -282,6 +282,7 @@ class Leads extends ApiCommon
         $data = [];
         $data['owner_user_id'] = $param['owner_user_id'];
         $data['update_time'] = time();
+        $data['follow'] = '待跟进';
 
         $ownerUserName = $userModel->getUserNameById($param['owner_user_id']);
         $errorMessage = [];
@@ -391,7 +392,7 @@ class Leads extends ApiCommon
      */
     public function setFollow(){
         $param = $this->param;
-        $leadsIds = $param['id'] ? : [];
+        $leadsIds = input('post.id/a') ? : [];
         if (!$leadsIds || !is_array($leadsIds)) {
             return resultArray(['error'=>'参数错误']);
         }

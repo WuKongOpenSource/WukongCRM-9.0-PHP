@@ -35,7 +35,11 @@
 import CreateView from '@/components/CreateView'
 import VEdit from './edit'
 // API
-import { noticeDelete, noticeEdit } from '@/api/oamanagement/notice'
+import {
+  noticeDelete,
+  noticeEdit,
+  oaAnnouncementReadAPI
+} from '@/api/oamanagement/notice'
 export default {
   components: {
     CreateView,
@@ -55,7 +59,24 @@ export default {
       default: true
     }
   },
+
+  created() {
+    this.getDetail()
+  },
+
   methods: {
+    /**
+     * 获取详情
+     */
+    getDetail() {
+      oaAnnouncementReadAPI({
+        announcement_id: this.titleList.announcement_id
+      })
+        .then(res => {
+          this.$store.dispatch('GetOAMessageNum', 'announcement')
+        })
+        .catch(() => {})
+    },
     onEdit() {
       this.showEdit = true
       this.formData = Object.assign({}, this.titleList)

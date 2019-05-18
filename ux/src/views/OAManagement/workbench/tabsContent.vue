@@ -82,7 +82,6 @@ import particulars from '../task/components/particulars'
 import {
   detailsTask,
   readLoglist,
-  taskOver,
   deleteTask
 } from '@/api/oamanagement/task'
 import { crmFileIndex } from '@/api/common'
@@ -242,6 +241,10 @@ export default {
       .title {
         margin: 20px 0 0;
         color: #3e84e9;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        letter-spacing: 0.5px;
+        line-height: 18px;
         span {
           cursor: pointer;
         }

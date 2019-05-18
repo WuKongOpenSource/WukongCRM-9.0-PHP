@@ -41,6 +41,9 @@
              :class="'wukong-' + item.meta.icon"
              :style="{ 'color': activeIndex == item.path ? activeTextColor : textColor}"></i>
           <span slot="title">{{item.meta.title}}</span>
+          <el-badge v-if="item.meta.num && item.meta.num > 0"
+                    :max="99"
+                    :value="item.meta.num"></el-badge>
         </el-menu-item>
         <el-submenu v-else
                     :key="index"
@@ -285,5 +288,15 @@ export default {
 
 .wukong {
   margin-right: 8px;
+}
+
+// 消息数
+.el-badge {
+  position: absolute;
+  right: 15px;
+  top: 5px;
+  /deep/ .el-badge__content {
+    border-width: 0;
+  }
 }
 </style>

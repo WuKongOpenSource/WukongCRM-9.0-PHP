@@ -10,6 +10,7 @@ namespace app\crm\controller;
 use app\admin\controller\ApiCommon;
 use think\Hook;
 use think\Request;
+use think\Db;
 
 class Contacts extends ApiCommon
 {
@@ -62,7 +63,18 @@ class Contacts extends ApiCommon
         $param['create_user_id'] = $userInfo['id'];
         $param['owner_user_id'] = $userInfo['id'];
         
-        if ($contactsModel->createData($param)) {
+        if ($data = $contactsModel->createData($param)) {
+            //关联 联系人与商机  客户添加与商机添加联系人可共用此接口
+            $business_id = $param['business_id']?$param['business_id']:0;
+            if($business_id != 0){
+                $data['cancel_or_relation'] = 1;// 1:关联 0取消
+                $data['business_id'] = $business_id;
+                if ($res =  Db::name('crm_contacts_business')->data($data)->insert()) {
+                    return resultArray(['data' => '添加成功']);
+                } else {
+                    return resultArray(['error' => Db::name('crm_contacts_business')->getError()]);
+                }
+            }
             return resultArray(['data' => '添加成功']);
         } else {
             return resultArray(['error' => $contactsModel->getError()]);
@@ -300,5 +312,59 @@ class Contacts extends ApiCommon
             return resultArray(['error'=>$excelModel->getError()]);
         }
         return resultArray(['data'=>'导入成功']);
-    }          
+    }     
+    /**
+     * 联系人  关联/取消关联  商机
+     * @return [type] [description]
+     */
+    public function relation()
+    {
+        $param = $this->param;
+        // $param['cancel_or_relation'] = 1;// 1:关联 0取消
+        // $param['contacts_id'] = 1;
+        // $param['business_id'] = 7;
+        $id = Db::name('crm_contacts_business')->where(['contacts_id' => ['eq',$param['contacts_id']],'business_id' => ['eq',$param['business_id']]])->column('id');
+        if($id){
+            if ($res = Db::name('crm_contacts_business')->where('id',$id[0])->update($param)) {
+                return resultArray(['data' => $res]);
+            } else {
+                return resultArray(['error' => Db::name('crm_contacts_business')->getError()]);
+            }
+        }else{
+            if ($res =  Db::name('crm_contacts_business')->data($param)->insert()) {
+                return resultArray(['data' => $res]);
+            } else {
+                return resultArray(['error' => Db::name('crm_contacts_business')->getError()]);
+            }
+        }
+    } 
+    /**
+     * 关联展示   联系人模块展示商机    商机模块展示联系人
+     * @return [type] [description]
+     */
+    public function relationInfo()
+    {
+        $param = $this->param;
+        if(empty($param['contacts_id']) && empty($param['business_id'])){
+            $errorMessage[] = '参数错误！';
+            return resultArray(['error' => $errorMessage]);
+        }else{
+            if($param['contacts_id']){
+                $businessModel = model('Business');
+                $list = Db::name('crm_contacts_business')->field('business_id')->where(['cancel_or_relation' => ['eq',1],'contacts_id' => ['eq',$param['contacts_id']]])->select();
+                foreach ($list as $key => $value) {
+                    $data = $businessModel->getDataById($value['business_id']);
+                    $list[$key][] = $data;
+                }
+            }else{
+                $contactsModel = model('Contacts');
+                $list = Db::name('crm_contacts_business')->field('business_id')->where(['cancel_or_relation' => ['eq',1],'business_id' => ['eq',$param['business_id']]])->select();
+                foreach ($list as $key => $value) {
+                    $data = $contactsModel->getDataById($value['business_id']);
+                    $list[$key][] = $data;
+                }
+            }
+            return resultArray(['data' => $list]);
+        }
+    }
 }

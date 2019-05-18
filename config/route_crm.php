@@ -238,7 +238,21 @@ return [
 	// 【工作台】销售趋势
 	'crm/index/saletrend' => ['crm/index/saletrend', ['method' => 'POST']],	
 	// 【工作台】查重
-	'crm/index/search' => ['crm/index/search', ['method' => 'POST']],				
+	'crm/index/search' => ['crm/index/search', ['method' => 'POST']],	
+
+	// 【代办事项】今日需联系
+	'crm/message/todayCustomer' => ['crm/message/todayCustomer', ['method' => 'POST']],				
+	'crm/message/num' => ['crm/message/num', ['method' => 'POST']],		
+	'crm/message/followleads' => ['crm/message/followleads', ['method' => 'POST']],				
+	'crm/message/followcustomer' => ['crm/message/followcustomer', ['method' => 'POST']],				
+	'crm/message/checkcontract' => ['crm/message/checkcontract', ['method' => 'POST']],				
+	'crm/message/checkreceivables' => ['crm/message/checkreceivables', ['method' => 'POST']],				
+	'crm/message/remindreceivablesplan' => ['crm/message/remindreceivablesplan', ['method' => 'POST']],				
+	'crm/message/endContract' => ['crm/message/endContract', ['method' => 'POST']],
+
+	// 【客户】标记跟进
+	'crm/customer/setFollow' => ['crm/customer/setFollow', ['method' => 'POST']],					
+	'crm/leads/setFollow' => ['crm/leads/setFollow', ['method' => 'POST']],					
 
 	// MISS路由
 	'__miss__'  => 'admin/base/miss',

@@ -507,7 +507,10 @@ class Field extends Model
 		}
 		if ($param['action'] == 'excel') {
 			$map['form_type'] = array('not in',['file','form','user','structure']);
-		}		
+		}
+		if ($param['action'] == 'index') {
+			$map['form_type'] = array('not in',['file','form']);
+		}				
 
 		$map['types_id'] = $types_id;
 		$order = 'order_id asc, field_id asc';
@@ -716,6 +719,17 @@ class Field extends Model
 						->field('field,name,form_type,setting')
 						->order('order_id asc, field_id asc, update_time desc')
 						->select();
+		if (in_array($types,['crm_contract','crm_receivables'])) {
+			$field_arr = [
+				'0' => [
+					'field' => 'check_status',
+					'name' => '审核状态',
+					'form_type' => 'select',
+					'setting' => '待审核'.chr(10).'审核中'.chr(10).'审核通过'.chr(10).'审核失败'.chr(10).'已撤回'
+				]
+			];
+			$field_list = array_merge($field_list, $field_arr);
+		}
 		foreach ($field_list as $k=>$v) {
 			//处理setting内容
 			$setting = [];

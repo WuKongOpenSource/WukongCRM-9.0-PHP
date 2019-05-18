@@ -33,7 +33,7 @@ class Examine extends Common
      */		
 	public function getSortByExamine($whereArr)
 	{
-		$count = db('oa_examine')->group('create_user_id')->field('create_user_id,count(examine_id) as count')->where($whereArr)->select();
+		$count = db('oa_examine')->group('create_user_id')->field('create_user_id,count(examine_id) as count')->order('count desc')->where($whereArr)->select();
         return $count;
 	}
 }

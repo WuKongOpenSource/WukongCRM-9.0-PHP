@@ -55,9 +55,15 @@ class Contacts extends Common
 			//默认场景
 			$sceneMap = $sceneModel->getDefaultData('contacts', $user_id) ? : [];
 		}
+		$searchMap = [];
 		if ($search) {
 			//普通筛选
-			$sceneMap['name'] = ['condition' => 'contains','value' => $search,'form_type' => 'text','name' => '联系人姓名'];
+			$searchMap = function($query) use ($search){
+			        $query->where('contacts.name',array('like','%'.$search.'%'))
+			        	->whereOr('contacts.mobile',array('like','%'.$search.'%'))
+			        	->whereOr('contacts.telephone',array('like','%'.$search.'%'));
+			};			
+			// $sceneMap['name'] = ['condition' => 'contains','value' => $search,'form_type' => 'text','name' => '联系人姓名'];
 		}
 		//优先级：普通筛选>高级筛选>场景
 		$map = $requestMap ? array_merge($sceneMap, $requestMap) : $sceneMap;
@@ -100,6 +106,7 @@ class Contacts extends Common
 				->alias('contacts')
 				->join('__CRM_CUSTOMER__ customer','contacts.customer_id = customer.customer_id','LEFT')
 				->where($map)
+				->where($searchMap)
 				->where($authMap)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		->field('contacts.*,customer.name as customer_name')
@@ -109,7 +116,7 @@ class Contacts extends Common
         $dataCount = db('crm_contacts')
         			->alias('contacts')
         			->join('__CRM_CUSTOMER__ customer','contacts.customer_id = customer.customer_id','LEFT')
-        			->where($map)->where($authMap)->count('contacts_id');
+        			->where($map)->where($searchMap)->where($authMap)->count('contacts_id');
         foreach ($list as $k=>$v) {
         	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
         	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];

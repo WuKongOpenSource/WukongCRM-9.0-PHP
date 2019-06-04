@@ -16,16 +16,14 @@
         }
     ],
     "require": {
-        "php": ">=5.4.0",
-        "topthink/framework": "^5.0",
-        "topthink/think-mongo": "^1.0",
+        "php": ">=5.6.0",
+        "topthink/framework": "~v5.0.24",
         "topthink/think-image": "^1.0",
-        "topthink/think-testing": "^1.0",
-        "topthink/think-sae": "^1.0",
-        "topthink/think-queue": "^1.0",
-        "topthink/think-migration": "^1.0",
         "topthink/think-helper": "^1.0",
         "phpoffice/phpexcel": "^1.8"
+    },
+    "require-dev": {
+        "phpcompatibility/php-compatibility": "*"
     },
     "extra": {
         "think-path": "thinkphp"
@@ -39,5 +37,9 @@
             "type": "composer",
             "url": "https://packagist.phpcomposer.com"
         }
+    },
+    "scripts": {
+        "post-install-cmd": "\"vendor/bin/phpcs\" --config-set installed_paths vendor/phpcompatibility/php-compatibility",
+        "post-update-cmd" : "\"vendor/bin/phpcs\" --config-set installed_paths vendor/phpcompatibility/php-compatibility"
     }
 }

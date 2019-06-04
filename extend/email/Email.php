@@ -1,5 +1,5 @@
 <?php
-namespace data\extend\email;
+namespace extend\email;
 /**
 * 邮件发送类
 * 支持发送纯文本邮件和HTML格式的邮件，可以多收件人，多抄送，多秘密抄送，带附件的邮件
@@ -242,7 +242,7 @@ class Email {
         }
 
         //其实这里也没必要关闭，smtp命令：QUIT发出之后，服务器就关闭了连接，本地的socket资源会自动释放
-        $this->close(); 
+        $this->close();
        // //echo 'Mail OK!';
         return true;
     }

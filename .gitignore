@@ -1,4 +1,5 @@
 .idea/*
 /runtime/*
 /vendor/*
+/thinkphp/*
 composer.lock

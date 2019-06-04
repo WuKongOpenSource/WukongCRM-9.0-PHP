@@ -1,56 +1,54 @@
 <?php
 //权限控制
-\think\Hook::add('check_auth','app\\common\\behavior\\AuthenticateBehavior');
+\think\Hook::add('check_auth', 'app\\common\\behavior\\AuthenticateBehavior');
+
 use think\Db;
 
-function structureList($structid,$str){
-    $str .= $structid.',';
-    if(Db::name('AdminStructure')->where('pid ='.$structid)->find() ){
-        $list = Db::name('AdminStructure')->field('id,name,pid')->where('pid ='.$structid)->select();
-        foreach($list as $value){
-            $str = structureList($value['id'],$str);
+function structureList($structid, $str)
+{
+    $str .= $structid . ',';
+    if (Db::name('AdminStructure')->where('pid =' . $structid)->find()) {
+        $list = Db::name('AdminStructure')->field('id,name,pid')->where('pid =' . $structid)->select();
+        foreach ($list as $value) {
+            $str = structureList($value['id'], $str);
         }
     }
     return $str;
 }
 
+
 /**
  * cookies加密函数
- * @param string 加密后字符串
+ * @param $string
+ * @return string
  */
-function encrypt($data, $key = 'kls8in1e') 
-{ 
-    $prep_code = serialize($data); 
-    $block = mcrypt_get_block_size('des', 'ecb'); 
-    if (($pad = $block - (strlen($prep_code) % $block)) < $block) { 
-        $prep_code .= str_repeat(chr($pad), $pad); 
-    } 
-    $encrypt = mcrypt_encrypt(MCRYPT_DES, $key, $prep_code, MCRYPT_MODE_ECB); 
-    return base64_encode($encrypt); 
-} 
+function encrypt($string)
+{
+    $key = 'g87y65ki6e4p36av2zjdrtfdrtgdwetd';
+    // openssl_encrypt 加密不同Mcrypt，对秘钥长度要求，超出16加密结果不变
+    $data = openssl_encrypt($string, 'AES-128-ECB', $key, OPENSSL_RAW_DATA);
+    $data = strtolower(bin2hex($data));
+    return $data;
+}
 
 /**
  * cookies 解密密函数
  * @param array 解密后数组
  */
-function decrypt($str, $key = 'kls8in1e') 
-{ 
-    $str = base64_decode($str); 
-    $str = mcrypt_decrypt(MCRYPT_DES, $key, $str, MCRYPT_MODE_ECB); 
-    $block = mcrypt_get_block_size('des', 'ecb'); 
-    $pad = ord($str[($len = strlen($str)) - 1]); 
-    if ($pad && $pad < $block && preg_match('/' . chr($pad) . '{' . $pad . '}$/', $str)) { 
-        $str = substr($str, 0, strlen($str) - $pad); 
-    } 
-    return unserialize($str); 
+function decrypt($string)
+{
+    $key = 'g87y65ki6e4p36av2zjdrtfdrtgdwetd';
+    $decrypted = openssl_decrypt(hex2bin($string), 'AES-128-ECB', $key, OPENSSL_RAW_DATA);
+    return $decrypted;
 }
 
 /**
  * 部门树形数组
  * @param type 0 下属数组， 1包含自己
  */
-function getSubObj($id, $objList, $separate, $is_first = 0) {
-    $array = array(); 
+function getSubObj($id, $objList, $separate, $is_first = 0)
+{
+    $array = array();
     foreach ($objList as $key => $value) {
         if ($key == 0 && $is_first == 1) {
             if ($value['id'] == 1) {
@@ -60,8 +58,8 @@ function getSubObj($id, $objList, $separate, $is_first = 0) {
             }
         }
         if ($id == $value['pid']) {
-            $array[] = array('id' => $value['id'], 'name' => $separate.$value['name']);
-            $array = array_merge($array, getSubObj($value['id'], $objList, $separate.'--'));
+            $array[] = array('id' => $value['id'], 'name' => $separate . $value['name']);
+            $array = array_merge($array, getSubObj($value['id'], $objList, $separate . '--'));
         }
     }
     return $array;
@@ -70,18 +68,19 @@ function getSubObj($id, $objList, $separate, $is_first = 0) {
 /**
  * 解析sql语句
  * @param  string $content sql内容
- * @param  int $limit  如果为1，则只返回一条sql语句，默认返回所有
+ * @param  int $limit 如果为1，则只返回一条sql语句，默认返回所有
  * @param  array $prefix 替换表前缀
  * @return array|string 除去注释之后的sql语句数组或一条语句
  */
-function parse_sql($sql = '', $limit = 0, $prefix = []) {
+function parse_sql($sql = '', $limit = 0, $prefix = [])
+{
     // 被替换的前缀
     $from = '';
     // 要替换的前缀
     $to = '';
     // 替换表前缀
     if (!empty($prefix)) {
-        $to   = current($prefix);
+        $to = current($prefix);
         $from = current(array_flip($prefix));
     }
     if ($sql != '') {
@@ -122,9 +121,9 @@ function parse_sql($sql = '', $limit = 0, $prefix = []) {
             }
             // 替换表前缀
             if ($from != '') {
-                $line = str_replace('`'.$from, '`'.$to, $line);
+                $line = str_replace('`' . $from, '`' . $to, $line);
             }
-            if ($line == 'BEGIN;' || $line =='COMMIT;') {
+            if ($line == 'BEGIN;' || $line == 'COMMIT;') {
                 continue;
             }
             // sql语句
@@ -143,7 +142,8 @@ function parse_sql($sql = '', $limit = 0, $prefix = []) {
     }
 }
 
-function sendRequest($url, $params = array() , $headers = array()) {
+function sendRequest($url, $params = array(), $headers = array())
+{
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     if (!empty($params)) {

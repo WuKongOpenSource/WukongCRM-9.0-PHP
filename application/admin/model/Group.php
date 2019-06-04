@@ -2,14 +2,14 @@
 // +----------------------------------------------------------------------
 // | Description: 用户组
 // +----------------------------------------------------------------------
-// | Author:  
+// | Author:
 // +----------------------------------------------------------------------
 
 namespace app\admin\model;
 
 use app\admin\model\Common;
 
-class Group extends Common 
+class Group extends Common
 {
     /**
      * 为了数据库的整洁，同时又不影响Model和Controller的名称
@@ -20,7 +20,7 @@ class Group extends Common
 	/**
 	 * [getDataList 获取列表]
 	 * @param  tree 1 二维数组
-	 * @return    [array]            
+	 * @return    [array]
 	 */
 	public function getDataList($param)
 	{
@@ -50,7 +50,7 @@ class Group extends Common
 					$groupList[$key]['rules']['crm'] = $crmRules ? : [];
 					$groupList[$key]['rules']['bi'] = $biRules ? : [];
 				}
-				$list[$k]['list'] = $groupList ? : [];				
+				$list[$k]['list'] = $groupList ? : [];
 			}
 		} else {
 			$list = db('admin_group')->where($map)->select();
@@ -66,11 +66,11 @@ class Group extends Common
 						$list[$key]['rules'] = $temp;
 					}
 				}
-			}			
+			}
 		}
 		return $list ? : [];
 	}
-	
+
 	//新建角色
 	public function createData($param)
 	{
@@ -83,7 +83,7 @@ class Group extends Common
 			return false;
 		}
 	}
-	
+
 	//编辑角色
 	public function updateDataById($param,$group_id)
 	{
@@ -101,9 +101,15 @@ class Group extends Common
 			return false;
 		}
 	}
-	
-	//删除角色
-	public function delDataById($group_id)
+
+    /**
+     * 删除角色
+     * @param string $group_id
+     * @param bool $delSon
+     * @return bool
+     * @throws \think\exception\DbException
+     */
+	public function delDataById($group_id = '', $delSon = false)
 	{
 		$dataInfo = $this->get($group_id);
 		if(!$dataInfo){
@@ -112,7 +118,7 @@ class Group extends Common
 		}
 		if ($dataInfo['types']) {
 			$this->error = '系统角色不能删除';
-			return false;			
+			return false;
 		}
 		$flag = $this->where('id = '.$group_id)->delete();
 		if ($flag) {

@@ -103,6 +103,11 @@ class Customer extends Common
 				$a = 'index';
 				if ($is_excel) $a = 'excelExport';
 				$auth_user_ids = $userModel->getUserByPer('crm', 'customer', $a);
+
+                if(!empty($auth_user_ids)){
+                    $auth_user_ids = [];
+                }
+
 			    //过滤权限
 			    if (isset($map['customer.owner_user_id'])) {
 			    	if (!is_array($map['customer.owner_user_id'][1])) {
@@ -111,7 +116,7 @@ class Customer extends Common
 					if ($map['customer.owner_user_id'][0] == 'neq') {
 						$auth_user_ids = array_diff($auth_user_ids, $map['customer.owner_user_id'][1]) ? : [];	//取差集
 					} else {
-						$auth_user_ids = array_intersect($map['customer.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集
+					    $auth_user_ids = array_intersect($map['customer.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集
 					}
 			        unset($map['customer.owner_user_id']);
 					$auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];

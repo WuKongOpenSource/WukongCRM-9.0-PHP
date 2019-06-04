@@ -3,4 +3,5 @@
 /vendor/*
 /thinkphp/*
 /tests/*
+/public/uploads/*
 composer.lock

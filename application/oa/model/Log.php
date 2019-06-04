@@ -77,14 +77,14 @@ class Log extends Common
 			case 'notRead' :
 				$map['log.read_user_ids'] = ['not like','%,'.$user_id.',%'];
 				$logMap = function($query) use ($dataWhere){
-	                    $query->where('log.create_user_id',array('in',implode(',', $dataWhere['auth_user_ids'])))
+	                    $query->where('log.create_user_id',array('in',join(',', $dataWhere['auth_user_ids'])))
 	                    	->whereOr('log.send_user_ids',array('like','%,'.$dataWhere['user_id'].',%'))
 	                        ->whereOr('log.send_structure_ids',array('like','%,'.$dataWhere['structure_id'].',%'));
 	            };
 				break;
 			default :
 				$logMap = function($query) use ($dataWhere){
-	                    $query->where('log.create_user_id',array('in',implode(',', $dataWhere['auth_user_ids'])))
+	                    $query->where('log.create_user_id',array('in',join(',', $dataWhere['auth_user_ids'])))
 	                    	->whereOr('log.send_user_ids',array('like','%,'.$dataWhere['user_id'].',%'))
 	                        ->whereOr('log.send_structure_ids',array('like','%,'.$dataWhere['structure_id'].',%'));
 	            };

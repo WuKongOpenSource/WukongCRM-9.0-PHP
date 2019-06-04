@@ -16,26 +16,26 @@ class File extends ApiCommon
      * @permission 无限制
      * @allow 登录用户可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','save','delete','update','read']            
+            'allow'=>['index','save','delete','update','read']
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
-        $a = strtolower($request->action());        
+        $a = strtolower($request->action());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
-        }         
+        }
     }
 
     /**
      * 附件列表
      * @author Michael_xu
-     * @param 
-     * @return                            
+     * @param
+     * @return
      */
     public function index()
     {
@@ -48,50 +48,53 @@ class File extends ApiCommon
 	/**
      * 附件上传
      * @author Michael_xu
-     * @return                            
+     * @return
      */
     public function save()
     {
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Methods: POST');
-        header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept"); 
+        header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
         $files = request()->file('file');
         $i = 0;
         $newFiles = array();
 		if($files){
 			 foreach ($files as $v) {
-				$newFiles[$i]['obj'] = $v;  
+				$newFiles[$i]['obj'] = $v;
 				$newFiles[$i]['types'] = 'file';
 				$i++;
 			}
 		}
-       
+
         $imgs = request()->file('img');
         if ($imgs) {
             foreach ($imgs as $v) {
-                $newFiles[$i]['obj'] = $v;  
+                $newFiles[$i]['obj'] = $v;
                 $newFiles[$i]['types'] = 'img';
                 $i++;
-            }            
-        }      
+            }
+        }
         $fileModel = model('File');
         $param = $this->param;
         $param['create_user_id'] = $this->userInfo['id'];
-        $res = $fileModel->createData($newFiles, $param);
+        $param['files'] = $newFiles;
+        $param['x'] = '150';
+        $param['y'] = '150';
+        $res = $fileModel->createData($param);
 		if($res){
 			return resultArray(['data' => $res]);
 		} else {
 			return resultArray(['error' => $fileModel->getError()]);
 		}
-        
+
     }
 
 	/**
      * 附件删除
      * @author Michael_xu
      * @param 通过 save_name 作为条件 来删除附件
-     * @return                            
-     */ 
+     * @return
+     */
     public function delete()
     {
         $fileModel = model('File');
@@ -100,7 +103,7 @@ class File extends ApiCommon
         if (!$res) {
             return resultArray(['error' => $fileModel->getError()]);
         }
-        return resultArray(['data' => '删除成功']);        
+        return resultArray(['data' => '删除成功']);
     }
 
     /**
@@ -116,7 +119,7 @@ class File extends ApiCommon
                 return resultArray(['data'=>'操作成功']);
             } else {
                 return resultArray(['error'=>'操作失败']);
-            } 
+            }
         } else {
             return resultArray(['error'=>'参数错误']);
         }
@@ -125,8 +128,8 @@ class File extends ApiCommon
 	/**
      * 附件查看（下载）
      * @author Michael_xu
-     * @return                            
-     */  
+     * @return
+     */
     public function read()
     {
         $fileModel = model('File');
@@ -135,6 +138,6 @@ class File extends ApiCommon
         if (!$data) {
             return resultArray(['error' => $this->getError()]);
         }
-        return resultArray(['data' => $data]);        
-    }     	
+        return resultArray(['data' => $data]);
+    }
 }

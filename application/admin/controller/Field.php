@@ -121,7 +121,9 @@ class Field extends ApiCommon
         $errorMessage = [];
         //新增
         if ($saveParam) {
-            if (!$data = $fieldModel->createData($types, $saveParam)) {
+            $addParam['type'] = $types;
+            $addParam['data'] = $saveParam;
+            if (!$data = $fieldModel->createData($addParam)) {
                 $errorMessage[] = $fieldModel->getError();
             }
         }

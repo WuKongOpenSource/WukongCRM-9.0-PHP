@@ -32,9 +32,9 @@ class Scene extends Common
 	 * @param
 	 * @return
 	 */
-	public function createData($param, $types = '')
+	public function createData($param)
 	{
-		if (empty($types)) {
+		if (empty($param['types'])) {
 			$this->error = '参数错误';
 			return false;
 		}
@@ -43,11 +43,11 @@ class Scene extends Common
 			return false;
 		}
 		$user_id = $param['user_id'];
-		if ($this->where(['types'=>$types,'user_id'=>$user_id,'name'=>$param['name']])->find()) {
+		if ($this->where(['types'=>$param['types'],'user_id'=>$user_id,'name'=>$param['name']])->find()) {
 			$this->error = '场景名称已存在';
 			return false;
 		}
-		$max_order_id = $this->getMaxOrderid($types, $user_id);
+		$max_order_id = $this->getMaxOrderid($param['types'], $user_id);
 		$param['order_id'] = $max_order_id ? $max_order_id+1 : 0;
 		$param['update_time'] = time();
 		$param['type'] = 0;
@@ -57,7 +57,7 @@ class Scene extends Common
 			//设置默认
 			if ($param['is_default']) {
 				$defaultData = [];
-				$defaultData['types'] = $types;
+				$defaultData['types'] = $param['types'];
 				$defaultData['user_id'] = $user_id;
 				$this->defaultDataById($defaultData, $this->scene_id);
 			}

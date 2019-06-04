@@ -111,7 +111,7 @@ class ExamineCategory extends Common
 			$fieldData[1]['operating'] = '1';
 			$fieldData[1]['create_time'] = time();
 			$fieldData[1]['update_time'] = time();
-			if (!$fieldModel->createData('oa_examine', $fieldData)) {
+			if (!$fieldModel->createData(['type'=>'oa_examine', 'data'=>$fieldData])) {
 				db('oa_examine_category')->where(['category_id' => $this->category_id])->delete();
 				$this->error = '程序出错，请重试';
 		        return false;

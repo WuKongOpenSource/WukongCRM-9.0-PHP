@@ -17,5 +17,8 @@ define('APP_PATH', __DIR__.'/application/');
 define('CONF_PATH', __DIR__.'/config/');
 // 定义缓存目录
 define('RUNTIME_PATH', __DIR__.'/runtime/');
+
+defined('UPLOAD_DIR') or define('UPLOAD_DIR', dirname(realpath(APP_PATH)) . '/');
+
 // 加载框架引导文件
 require './thinkphp/start.php';

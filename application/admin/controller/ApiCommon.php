@@ -32,6 +32,7 @@ class ApiCommon extends Common
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>101, 'error'=>'登录已失效']));
         }
+
         //登录有效时间
         $cacheConfig = config('cache');
         $loginExpire = $cacheConfig['expire'] ? : '86400*7';
@@ -53,6 +54,7 @@ class ApiCommon extends Common
 
         // 更新缓存
         cache('Auth_'.$authKey, $cache, $loginExpire);
+
         // $GLOBALS['userInfo'] = $userInfo;
     }
 }

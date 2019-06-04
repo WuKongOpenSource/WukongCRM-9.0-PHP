@@ -26,8 +26,9 @@ class ExamineData extends Common
 	 * @param
 	 * @return
 	 */
-	public function createData($param, $examine_id)
+	public function createData($param)
 	{
+        $examine_id = $param['examine_id'];
 		if (!$examine_id) {
 			$this->error = '参数错误';
 			return false;

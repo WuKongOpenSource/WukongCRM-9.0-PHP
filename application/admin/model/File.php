@@ -29,8 +29,11 @@ class File extends Common
 	 * @param     $x 裁剪图的长 ,$y 裁剪图的宽
 	 * @return    [array]
 	 */
-	public function createData($files, $param=[], $x = '150', $y = '150')
+	public function createData($param)
 	{
+        $files = $param['files'];
+        $x =  $param['x'];
+        $y =  $param['y'];
         if (empty($files)) {
 			$this->error = '请选择上传文件';
 			return false;
@@ -39,7 +42,7 @@ class File extends Common
         $get_filesize_byte = get_upload_max_filesize_byte();
         foreach ($files as $k=>$v) {
         	$info = '';
-			$info = $v['obj']->validate(['size'=>$get_filesize_byte,'ext'=>'jpg,jpeg,png,gif,zip,rar,doc,docx,xls,xlsx,ppt,pptx,txt,pdf'])->move(FILE_PATH . 'public' . DS . 'uploads'); //验证规则
+			$info = $v['obj']->validate(['size'=>$get_filesize_byte,'ext'=>'jpg,jpeg,png,gif,zip,rar,doc,docx,xls,xlsx,ppt,pptx,txt,pdf'])->move(UPLOAD_DIR . 'public' . DS . 'uploads'); //验证规则
 			// getimagesize($file["tmp_name"]
 			if (!$info) {
 				$this->error = $v['obj']->getError();
@@ -59,9 +62,9 @@ class File extends Common
 	            $fileName = $info->getFilename();
 	            if (in_array($ext, ['jpg','png','jpeg']) && $fileInfo['size'] < 8388608) {
 	                // $image = \think\Image::open($v['obj']);
-	                $image = \think\Image::open(UPLOAD_PATH . str_replace(DS, '/', $saveName));
+	                $image = \think\Image::open(UPLOAD_DIR . 'public' . DS . 'uploads'. DS.str_replace(DS, '/', $saveName));
 	                $thumbSaveName = str_replace(DS, DS.'thumb_', $saveName);
-	                $image->thumb($x, $y,\think\Image::THUMB_FILLED)->save(FILE_PATH . 'public'. DS .'uploads'. DS .$thumbSaveName); //THUMB_SCALING 或 THUMB_FILLED
+	                $image->thumb($x, $y,\think\Image::THUMB_FILLED)->save(UPLOAD_DIR . 'public'. DS .'uploads'. DS .$thumbSaveName); //THUMB_SCALING 或 THUMB_FILLED
 	            }
 	            if ($ext == 'gif') {
 	            	$thumbSaveName = $saveName;
@@ -72,8 +75,8 @@ class File extends Common
 	            $saveData['size'] = $fileInfo['size'];
 	            $saveData['create_user_id'] = $param['create_user_id'];
 	            $saveData['create_time'] = time();
-	            $saveData['file_path'] = UPLOAD_PATH . str_replace(DS, '/', $saveName);
-	            $saveData['file_path_thumb'] = $thumbSaveName ? UPLOAD_PATH . str_replace(DS, '/', $thumbSaveName) : '';
+	            $saveData['file_path'] = UPLOAD_DIR . str_replace(DS, '/', $saveName);
+	            $saveData['file_path_thumb'] = $thumbSaveName ? UPLOAD_DIR . str_replace(DS, '/', $thumbSaveName) : '';
 	            $saveData['save_name'] = str_replace(DS, '/', $saveName);
 	            $saveData['types'] = $v['types'] ? : 'file';
 	            if ($k > 0) {
@@ -116,7 +119,7 @@ class File extends Common
 		            }
 	            }
 	            if ($rSuccess !== false) {
-	            	$path = getFullPath(UPLOAD_PATH.$saveName);
+	            	$path = getFullPath(UPLOAD_DIR.$saveName);
 					$resData[$k] = ['key' => $k,'name' => $fileInfo['name'],'status' => 1,'path' => $path, 'save_name' => str_replace(DS, '/', $saveName), 'size' => format_bytes($fileInfo['size']), 'file_id' => $file_id];
 	            } else {
 	            	$resData[$k] = ['key' => $k,'name' => $fileInfo['name'],'status' => 0,'error' => '上传出错'];
@@ -297,7 +300,7 @@ class File extends Common
 			return false;
 		}
 
-		$info = $file->move(FILE_PATH . 'public' . DS . 'uploads'); //验证规则
+		$info = $file->move(UPLOAD_DIR . 'public' . DS . 'uploads'); //验证规则
 		$fileInfo = $info->getInfo(); //附件数据
 		$saveName = '';
 		$thumbSaveName = '';
@@ -312,12 +315,12 @@ class File extends Common
 
             if ($thumb_field) {
             	// $image = \think\Image::open($file);
-            	$image = \think\Image::open(UPLOAD_PATH . str_replace(DS, '/', $saveName));
+            	$image = \think\Image::open(UPLOAD_DIR . str_replace(DS, '/', $saveName));
             	$thumbSaveName = str_replace(DS, DS.'thumb_', $saveName);
-            	$image->thumb($x, $y,\think\Image::THUMB_FILLED)->save(FILE_PATH . 'public'. DS .'uploads'. DS .$thumbSaveName); //THUMB_SCALING 或 THUMB_FILLED
-            	$saveData[$thumb_field] = $thumbSaveName ? UPLOAD_PATH . str_replace(DS, '/', $thumbSaveName) : '';
+            	$image->thumb($x, $y,\think\Image::THUMB_FILLED)->save(UPLOAD_DIR . 'public'. DS .'uploads'. DS .$thumbSaveName); //THUMB_SCALING 或 THUMB_FILLED
+            	$saveData[$thumb_field] = $thumbSaveName ? UPLOAD_DIR . str_replace(DS, '/', $thumbSaveName) : '';
             }
-            $saveData[$field] = UPLOAD_PATH . str_replace(DS, '/', $saveName);
+            $saveData[$field] = UPLOAD_DIR . str_replace(DS, '/', $saveName);
             switch ($module) {
             	case 'crm_customer' : $moduleModel = new \app\crm\model\Customer(); break;
 				case 'crm_contacts' : $moduleModel = new \app\crm\model\Contacts(); break;

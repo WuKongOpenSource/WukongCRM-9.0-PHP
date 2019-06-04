@@ -228,10 +228,10 @@ class Task extends Common
 		$param['update_time'] = time();
 		$param['status'] = 1;
 
-		$rdata['customer_ids'] = count($param['customer_ids']) ? ','.implode(',',$param['customer_ids']).',' : '';
-		$rdata['contacts_ids'] = count($param['contacts_ids']) ? ','.implode(',',$param['contacts_ids']).',' : '';
-		$rdata['business_ids'] = count($param['business_ids']) ? ','.implode(',',$param['business_ids']).',' : '';
-		$rdata['contract_ids'] = count($param['contract_ids']) ? ','.implode(',',$param['contract_ids']).',' : '';
+		$rdata['customer_ids'] = !empty($param['customer_ids']) ? ','.implode(',',$param['customer_ids']).',' : '';
+		$rdata['contacts_ids'] = !empty($param['contacts_ids']) ? ','.implode(',',$param['contacts_ids']).',' : '';
+		$rdata['business_ids'] = !empty($param['business_ids']) ? ','.implode(',',$param['business_ids']).',' : '';
+		$rdata['contract_ids'] = !empty($param['contract_ids']) ? ','.implode(',',$param['contract_ids']).',' : '';
 		$arr = ['customer_ids','contacts_ids','business_ids','contract_ids'];
 		foreach($arr as $value){
 			unset($param[$value]);

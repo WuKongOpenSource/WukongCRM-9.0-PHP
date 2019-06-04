@@ -79,19 +79,21 @@ class Field extends Model
 	 * @param setting 单选、下拉、多选类型的选项值
 	 * @return    [array]
 	 */
-	public function createData($types, $param)
+	public function createData($param)
 	{
-		if (!$types || !in_array($types, $this->types_arr) || !is_array($param)) {
+		if (!$param['type'] || !in_array($param['type'], $this->types_arr) || !is_array($param)) {
 			$this->error = '参数错误';
 			return false;
 		}
 
+
+
 		$error_message = [];
 		$i = 0;
-		foreach ($param as $k=>$data) {
+		foreach ($param['data'] as $k=>$data) {
 			$i++;
-			$data['types'] = $types;
-			if ($types == 'oa_examine' && !$data['types_id']) {
+			$data['types'] = $param['type'];
+			if ($param['type'] == 'oa_examine' && !$data['types_id']) {
 				$error_message[] = $data['name'].'参数错误';
 			}
 			$data['types_id'] = $data['types_id'] ? : 0;
@@ -99,7 +101,7 @@ class Field extends Model
 				$error_message[] = $data['name'].',字段类型错误';
 			}
 			//生成字段名
-			if (!$data['field']) $data['field'] = $this->createField($types);
+			if (!$data['field']) $data['field'] = $this->createField($param['type']);
 
 			$rule = [
 				'field'  		=> ['regex'=>'/^[a-z]([a-z]|_)+[a-z]$/i'],
@@ -129,7 +131,7 @@ class Field extends Model
 				if ($data['form_type'] == 'form' && $data['form_value']) {
 					$new_form_value = [];
 					foreach ($data['form_value'] as $form => $fromVal) {
-						$fromVal['field'] = 'form_'.$this->createField($types);
+						$fromVal['field'] = 'form_'.$this->createField($param['type']);
 						if (in_array($fromVal['form_type'], ['radio','select','checkbox']) && $fromVal['setting']) {
 							$fromVal = $this->settingValue($fromVal);
 						}
@@ -145,10 +147,10 @@ class Field extends Model
 				} else {
 					$resField = $this->data($data)->allowField(true)->save();
 				}
-				if ($types !== 'oa_examine') {
+				if ($param['type'] !== 'oa_examine') {
 					if ($resField) {
 						actionLog($this->field_id,'','',''); //操作日志
-						$this->tableName = $types;
+						$this->tableName = $param['type'];
 						$maxlength = '255';
 						$defaultvalue = $data['default_value'] ? "DEFAULT '".$data['default_value']."'" : "DEFAULT NULL";
 						//根据字段类型，创建字段
@@ -684,7 +686,8 @@ class Field extends Model
 				$field_list[$k]['setting'] = $setting;
 				$field_list[$k]['default_value'] = $default_value;
 				$field_list[$k]['value'] = $value;
-				$field_list[$k]['width'] = $resIndexField[$v['field']]['width'] ? : '';
+				//$field_list[$k]['width'] = $resIndexField[$v['field']]['width'] ? : '';
+                $field_list[$k]['width'] = '';
 			}
 		}
 		return $field_list ? : [];

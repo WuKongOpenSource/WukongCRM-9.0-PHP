@@ -61,7 +61,7 @@ class Scene extends ApiCommon
         $param = $this->param;
         $userInfo = $this->userInfo;
         $param['user_id'] = $userInfo['id'];
-        $data = $sceneModel->createData($param, $param['types']);
+        $data = $sceneModel->createData($param);
         if (!$data) {
             return resultArray(['error' => $sceneModel->getError()]);
         }

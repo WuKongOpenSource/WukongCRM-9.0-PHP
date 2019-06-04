@@ -205,7 +205,8 @@ class Examine extends Common
 		unset($param['file_id']);
 		if ($this->data($param)->allowField(true)->save()) {
 			//处理自定义字段数据
-			$resData = $examineDataModel->createData($param, $this->examine_id);
+            $param['examine_id'] =  $this->examine_id;
+			$resData = $examineDataModel->createData($param);
 			if ($resData) {
 				//处理附件关系
 		        if ($fileArr) {

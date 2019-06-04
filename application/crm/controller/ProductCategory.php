@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 产品类别
 // +----------------------------------------------------------------------
-// | Author: Michael_xu | gengxiaoxu@5kcrm.com 
+// | Author: Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\crm\controller;
@@ -18,19 +18,19 @@ class ProductCategory extends ApiCommon
      * @permission 无限制
      * @allow 登录用户可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','save','update','delete']            
+            'allow'=>['index','save','update','delete']
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
-        $a = strtolower($request->action());        
+        $a = strtolower($request->action());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
-        } 
+        }
 
         $userInfo = $this->userInfo;
         //权限判断
@@ -39,8 +39,8 @@ class ProductCategory extends ApiCommon
         if (!in_array(6,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
-    } 
+        }
+    }
 
     /**
      * 产品分类列表
@@ -51,7 +51,7 @@ class ProductCategory extends ApiCommon
     {
         $categoryModel = model('ProductCategory');
         $param = $this->param;
-        $data = $categoryModel->getDataList($param['type']);       
+        $data = $categoryModel->getDataList($param['type']);
         return resultArray(['data' => $data]);
     }
 
@@ -79,37 +79,37 @@ class ProductCategory extends ApiCommon
     /**
      * 编辑产品分类
      * @author Michael_xu
-     * @param 
+     * @param
      * @return \think\Response
      */
     public function update()
-    {    
+    {
         $categoryModel = model('ProductCategory');
         $param = $this->param;
         $userInfo = $this->userInfo;
 
-        $res = $categoryModel->updateDataById($param, $param['id']); 
+        $res = $categoryModel->updateDataById($param, $param['id']);
         if ($res) {
             return resultArray(['data' => '编辑成功']);
         } else {
             return resultArray(['error' => $productDataModel->getError()]);
-        }       
+        }
     }
 
     /**
      * 删除产品分类
      * @author Michael_xu
-     * @param 
+     * @param
      * @return \think\Response
      */
     public function delete()
     {
         $categoryModel = model('ProductCategory');
         $param = $this->param;
-        $data = $categoryModel->delDataById($param['id'], true);       
+        $data = $categoryModel->delDataById($param, true);
         if (!$data) {
             return resultArray(['error' => $categoryModel->getError()]);
-        } 
-        return resultArray(['data' => '删除成功']);    
-    }   
+        }
+        return resultArray(['data' => '删除成功']);
+    }
 }

@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 自定义字段
 // +----------------------------------------------------------------------
-// | Author: Michael_xu | gengxiaoxu@5kcrm.com 
+// | Author: Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\admin\model;
@@ -30,10 +30,10 @@ class Field extends Model
 
 	private $types_arr = ['crm_leads','crm_customer','crm_contacts','crm_product','crm_business','crm_contract','oa_examine','hrm_parroll','admin_user','crm_receivables','crm_receivables_plan']; //支持自定义字段的表，不包含表前缀
 	private $formtype_arr = ['text','textarea','mobile','email','number','floatnumber','radio','select','checkbox','date','datetime','address','user','file','structure'];
- 
+
 	protected $type = [
         'form_value'    =>  'array',
-    ]; 	
+    ];
 
 	protected  function initialize()
     {
@@ -41,10 +41,10 @@ class Field extends Model
     }
 
 	/**
-	 * [getDataList 获取列表] 
+	 * [getDataList 获取列表]
 	 * @author Michael_xu
 	 * @param types  分类
-	 * @return    [array]                         
+	 * @return    [array]
 	 */
 	public function getDataList($param)
 	{
@@ -68,7 +68,7 @@ class Field extends Model
 	}
 
 	/**
-	 * [createData 创建自定义字段] 
+	 * [createData 创建自定义字段]
 	 * @author Michael_xu
 	 * @param types 分类
 	 * @param field 字段名
@@ -77,23 +77,23 @@ class Field extends Model
 	 * @param max_length 字段最大长度
 	 * @param default_value 默认值
 	 * @param setting 单选、下拉、多选类型的选项值
-	 * @return    [array]                         
-	 */	
+	 * @return    [array]
+	 */
 	public function createData($types, $param)
 	{
 		if (!$types || !in_array($types, $this->types_arr) || !is_array($param)) {
 			$this->error = '参数错误';
 			return false;
 		}
-		
+
 		$error_message = [];
 		$i = 0;
 		foreach ($param as $k=>$data) {
 			$i++;
 			$data['types'] = $types;
-			if ($types == 'oa_examine' && !$data['types_id']) {		
-				$error_message[] = $data['name'].'参数错误';	
-			}			
+			if ($types == 'oa_examine' && !$data['types_id']) {
+				$error_message[] = $data['name'].'参数错误';
+			}
 			$data['types_id'] = $data['types_id'] ? : 0;
 			if (!in_array($data['form_type'], $this->formtype_arr)) {
 				$error_message[] = $data['name'].',字段类型错误';
@@ -112,17 +112,17 @@ class Field extends Model
 				'name.require'    	=> '字段标识必须填写',
 				'types.require'    	=> '分类必须填写',
 				'form_type.require'    	=> '字段类型必须填写',
-			];	
+			];
 			// 验证
-			// $validate = validate($this->name);			
-			$validate = new Validate($rule, $msg);	
-			
+			// $validate = validate($this->name);
+			$validate = new Validate($rule, $msg);
+
 			if (!$validate->check($data)) {
 				$error_message[] = $validate->getError();
 			} else {
 				//单选、下拉、多选类型(使用回车符隔开)
 				if (in_array($data['form_type'], ['radio','select','checkbox']) && $data['setting']) {
-					$data = $this->settingValue($data);	
+					$data = $this->settingValue($data);
 				}
 
 				//表格类型
@@ -131,7 +131,7 @@ class Field extends Model
 					foreach ($data['form_value'] as $form => $fromVal) {
 						$fromVal['field'] = 'form_'.$this->createField($types);
 						if (in_array($fromVal['form_type'], ['radio','select','checkbox']) && $fromVal['setting']) {
-							$fromVal = $this->settingValue($fromVal);	
+							$fromVal = $this->settingValue($fromVal);
 						}
 					}
 					$new_form_value = $fromVal;
@@ -144,7 +144,7 @@ class Field extends Model
 					$resField = $this->data($data)->allowField(true)->isUpdate(false)->save();
 				} else {
 					$resField = $this->data($data)->allowField(true)->save();
-				}	
+				}
 				if ($types !== 'oa_examine') {
 					if ($resField) {
 						actionLog($this->field_id,'','',''); //操作日志
@@ -188,35 +188,35 @@ class Field extends Model
 			                	break;
 			                case 'form' :
 			                	$this->queryStr = "ALTER TABLE `" . $this->__db_prefix . $this->tableName . "` ADD `".$data['field']."` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci COMMENT '".$data['name']."'";
-			                	break;              
+			                	break;
 			                default :
 								$maxlength = 255;
-			                    $this->queryStr = "ALTER TABLE `" . $this->__db_prefix . $this->tableName . "` ADD `".$data['field']."` VARCHAR( ".$maxlength." ) CHARACTER SET utf8 COLLATE utf8_general_ci ".$defaultvalue." COMMENT '".$data['name']."'"; 
+			                    $this->queryStr = "ALTER TABLE `" . $this->__db_prefix . $this->tableName . "` ADD `".$data['field']."` VARCHAR( ".$maxlength." ) CHARACTER SET utf8 COLLATE utf8_general_ci ".$defaultvalue." COMMENT '".$data['name']."'";
 			                    break;
 						}
 						$resData = Db::execute($this->queryStr);
 						if ($resData === false) {
 							$this->where(['field_id' => $this->field_id])->delete();
 							$error_message[] = $data['name'].',添加失败';
-						}	
+						}
 					} else {
 						$error_message[] = $data['name'].',添加失败';
-					}						
-				}			
-			}			
+					}
+				}
+			}
 		}
 		if ($error_message) {
 			$this->error = implode(';',$error_message);
-			return false;			
+			return false;
 		}
 		return true;
 	}
 
 	/**
-	 * [settingValue 单选、下拉、多选值] 
+	 * [settingValue 单选、下拉、多选值]
 	 * @author Michael_xu
-	 * @return    [array]                         
-	 */		
+	 * @return    [array]
+	 */
 	public function settingValue($data)
 	{
 		//将英文逗号转换为中文逗号
@@ -231,13 +231,13 @@ class Field extends Model
 			foreach ($data['default_value'] as $k => $v) {
 				$new_default_value[] = str_replace(',', '，', $v);
 			}
-			$data['default_value'] = implode(',', $new_default_value);							
+			$data['default_value'] = implode(',', $new_default_value);
 		}
-		return $data;		
+		return $data;
 	}
 
 	/**
-	 * [updateDataById 編輯自定义字段] 
+	 * [updateDataById 編輯自定义字段]
 	 * @author Michael_xu
 	 * @param types 分类
 	 * @param field 字段名
@@ -245,9 +245,9 @@ class Field extends Model
 	 * @param form_type 字段类型
 	 * @param max_length 字段最大长度
 	 * @param default_value 默认值
-	 * @return    [array]                         
-	 */	
-	public function updateDataById($param)
+	 * @return    [array]
+	 */
+	public function updateDataById($param, $id = 0)
 	{
 		$error_message = [];
 		if (!is_array($param)) {
@@ -266,7 +266,7 @@ class Field extends Model
 				$error_message[] = $data['name'].'参数错误';
 			}
 			// $error_message[] = $data['name'].',该字段不能编辑';
-			$data['types'] = $dataInfo['types'];			
+			$data['types'] = $dataInfo['types'];
 			//单选、下拉、多选类型(使用回车符隔开)
 			if (in_array($data['form_type'], ['radio','select','checkbox']) && $data['setting']) {
 				//将英文逗号转换为中文逗号
@@ -297,7 +297,7 @@ class Field extends Model
 				$box_form_type = array('checkbox','select','radio');
 				if ((in_array($dataInfo['form_type'], $box_form_type) && !in_array($data['form_type'], $box_form_type)) || !in_array($dataInfo['form_type'], $box_form_type)) {
 					unset($data['form_type']);
-				}	
+				}
 				// $resField = $this->allowField(true)->save($data, ['field_id' => $field_id]);
 				unset($data['showSetting']);
 				unset($data['componentName']);
@@ -338,17 +338,17 @@ class Field extends Model
 			                    break;
 							case 'date' :
 								$this->queryStr = "ALTER TABLE `" . $this->__db_prefix . $this->tableName . "` CHANGE `".$dataInfo['field']."` `".$data['field']."` DATE ".$defaultvalue." COMMENT '".$data['name']."'";
-			                	break;	
+			                	break;
 			                case 'datetime' :
 			               		$defaultvalue = $data['default_value'] ? "DEFAULT '".strtotime($data['default_value'])."'" : '';
 			                	$this->queryStr = "ALTER TABLE `" . $this->__db_prefix . $this->tableName . "` CHANGE `".$dataInfo['field']."` `".$data['field']."` int (11) ".$defaultvalue." COMMENT '".$data['name']."'";
 			                	break;
 							case 'file' :
 			                	$this->queryStr = "ALTER TABLE `" . $this->__db_prefix . $this->tableName . "` CHANGE `".$dataInfo['field']."` `".$data['field']."` VARCHAR ( ".$maxlength." ) CHARACTER SET utf8 COLLATE utf8_general_ci COMMENT '".$data['name']."' ";
-			                	break;                
+			                	break;
 			                default :
 								$maxlength = 255;
-			                    $this->queryStr = "ALTER TABLE `" . $this->__db_prefix . $this->tableName . "` CHANGE `".$dataInfo['field']."` `".$data['field']."` VARCHAR( ".$maxlength." ) CHARACTER SET utf8 COLLATE utf8_general_ci ".$defaultvalue." COMMENT '".$data['name']."'"; 
+			                    $this->queryStr = "ALTER TABLE `" . $this->__db_prefix . $this->tableName . "` CHANGE `".$dataInfo['field']."` `".$data['field']."` VARCHAR( ".$maxlength." ) CHARACTER SET utf8 COLLATE utf8_general_ci ".$defaultvalue." COMMENT '".$data['name']."'";
 			                    break;
 						}
 						$resData = Db::execute($this->queryStr);
@@ -357,9 +357,9 @@ class Field extends Model
 						}
 					} else {
 						$error_message[] = $data['name'].',修改失败';
-					}						
-				}	
-			}	
+					}
+				}
+			}
 		}
 		if ($error_message) {
 			$this->error = implode(';', $error_message);
@@ -373,21 +373,17 @@ class Field extends Model
 	 * @author Michael_xu
 	 * @param $id [array] 字段ID
 	 * @param $types 分类
-	 */	
-	public function delDataById($ids)
+	 */
+	public function delDataById($ids =[], $delSon = false)
 	{
-		if (!is_array($ids)) {
-			$ids[] = $ids;
-		}
 		$delMessage = [];
 		foreach ($ids as $id) {
-			$dataInfo = [];
-			$dataInfo = $this->get($id);				
+			$dataInfo = $this->get($id);
 
 			if ($dataInfo) {
 				//operating ： 0改删，1改，2删，3无
 				if (in_array($dataInfo['operating'], ['1','3'])) {
-					$delMessage[] = $dataInfo['name'].',系统字段，不能删除';	
+					$delMessage[] = $dataInfo['name'].',系统字段，不能删除';
 				} else {
 					$resDel = $this->where(['field_id' => $id])->delete(); //删除自定义字段信息
 					if ($resDel && $dataInfo['types'] !== 'oa_examine') {
@@ -432,19 +428,19 @@ class Field extends Model
 								$sceneModel = new \app\admin\model\Scene();
 								$resScene = $sceneModel->updateData($data, $val['scene_id']);
 							}
-						}				
+						}
 					} else {
 						$delMessage[] = $dataInfo['name'].',删除失败';
-					}					
+					}
 				}
-			}		
+			}
 		}
 		return $delMessage ? implode(';', $delMessage) : '';
 	}
 
 	/**
 	 * [createField 随机生成自定义字段名]
-	 * @author Michael_xu 
+	 * @author Michael_xu
 	 * @param $field_str 字段名前缀
 	 * @param $types 分类
 	 */
@@ -457,7 +453,7 @@ class Field extends Model
 		if ($this->where(['types' => $types,'field' => $field_str])->find()) {
 			$this->createField($types);
 		}
-		return $field_str;		
+		return $field_str;
 	}
 
 	/**
@@ -466,14 +462,14 @@ class Field extends Model
 	 * @param $types 分类
 	 * @param $dataInfo 数据展示
 	 * @param $map  查询条件
-	 * @param form_type  字段类型 （’text’,’textarea’,’mobile’,’email’等） 
+	 * @param form_type  字段类型 （’text’,’textarea’,’mobile’,’email’等）
 	 * @param default_value  默认值
 	 * @param max_length  输入最大长度
 	 * @param is_unique  1时，唯一性验证
 	 * @param is_null  1时，必填
 	 * @param input_tips  输入框提示内容
 	 * @param setting  设置 （单选、下拉、多选的选项值，使用回车分隔）
-	 */	
+	 */
 	public function field($param, $dataInfo = [])
 	{
 		$userModel = new \app\admin\model\User();
@@ -490,7 +486,7 @@ class Field extends Model
 		}
 		if ($types == 'oa_examine' && !$types_id) {
 			$this->error = '参数错误';
-			return false;			
+			return false;
 		}
 
 		if (in_array($param['action'],array('index','view'))) {
@@ -510,12 +506,12 @@ class Field extends Model
 		}
 		if ($param['action'] == 'index') {
 			$map['form_type'] = array('not in',['file','form']);
-		}				
+		}
 
 		$map['types_id'] = $types_id;
 		$order = 'order_id asc, field_id asc';
 		if ($param['action'] == 'index' || $param['action'] == 'pool') {
-			$field_list = $this->getIndexFieldConfig($types, $param['user_id']); 
+			$field_list = $this->getIndexFieldConfig($types, $param['user_id']);
 			// $order = new \think\db\Expression('field(field_id,'..')');
 		} else {
 			$field_list = $this->where($map)->field('field,types,name,form_type,default_value,is_unique,is_null,input_tips,setting')->order($order)->select();
@@ -545,7 +541,7 @@ class Field extends Model
 		            'input_tips' => '',
 		            'setting' => [],
 		            'value' => []
-				];				
+				];
 			}
 			if ($new_field_list) $field_list = array_merge(collection($field_list)->toArray(), $new_field_list);
 			foreach ($field_list as $k=>$v) {
@@ -572,11 +568,11 @@ class Field extends Model
 				} elseif ($v['form_type'] == 'product') {
 					//相关产品类型
 					switch ($param['types']) {
-						case 'crm_business' : 
+						case 'crm_business' :
 							$rProduct = db('crm_business_product');
 							$r_id = 'business_id';
 							break;
-						case 'crm_contract' : 
+						case 'crm_contract' :
 							$rProduct = db('crm_contract_product');
 							$r_id = 'contract_id';
 							break;
@@ -609,19 +605,19 @@ class Field extends Model
 					$whereFile['module_id'] = 1;
 					$whereFile['file_id'] = ['in',$fileIds];
 					$fileList = $fileModel->getDataList($whereFile, 'all');
-					$value = $fileList['list'] ? : [];					
+					$value = $fileList['list'] ? : [];
 				} elseif ($v['form_type'] == 'customer') {
-					$value = $dataInfo[$v['field']] ? db('crm_customer')->where(['customer_id' => $dataInfo[$v['field']]])->field('customer_id,name')->select() : [];	
+					$value = $dataInfo[$v['field']] ? db('crm_customer')->where(['customer_id' => $dataInfo[$v['field']]])->field('customer_id,name')->select() : [];
 				} elseif ($v['form_type'] == 'business') {
 					$value = $dataInfo[$v['field']] ? db('crm_business')->where(['business_id' => $dataInfo[$v['field']]])->field('business_id,name')->select() : [];
 				} elseif ($v['form_type'] == 'contacts') {
 					$value = $dataInfo[$v['field']] ? db('crm_contacts')->where(['contacts_id' => $dataInfo[$v['field']]])->field('contacts_id,name')->select() : [];
 				} elseif ($v['form_type'] == 'contract') {
-					$value = $dataInfo[$v['field']] ? db('crm_contract')->where(['contract_id' => $dataInfo[$v['field']]])->field('contract_id,num')->select() : [];				
+					$value = $dataInfo[$v['field']] ? db('crm_contract')->where(['contract_id' => $dataInfo[$v['field']]])->field('contract_id,num')->select() : [];
 				} elseif ($v['form_type'] == 'category') {
 					//产品类别
 					if ($param['action'] == 'read') {
-						$category_name = db('crm_product_category')->where(['category_id' => $dataInfo['category_id']])->value('name');	
+						$category_name = db('crm_product_category')->where(['category_id' => $dataInfo['category_id']])->value('name');
 						$value = $category_name ? : '';
 					} else {
 						$value = $dataInfo['category_str'] ? stringToArray($dataInfo['category_str']) : [];
@@ -633,11 +629,11 @@ class Field extends Model
 				    $setting = db('crm_business_type')
 				            ->where(['structure_id' => ['like','%,'.$userInfo['structure_id'].',%'],'status' => 1])
 				            ->whereOr('structure_id','')
-				            ->select();	
+				            ->select();
 				    foreach ($setting as $key=>$val) {
-				        $setting[$key]['statusList'] = $businessStatusModel->getDataList($val['type_id']); 
+				        $setting[$key]['statusList'] = $businessStatusModel->getDataList($val['type_id']);
 				    }
-				    $setting = $setting ? : [];					
+				    $setting = $setting ? : [];
 					if ($param['action'] == 'read') {
 						$value = $dataInfo[$v['field']] ? db('crm_business_type')->where(['type_id' => $dataInfo[$v['field']]])->value('name') : '';
 					} else {
@@ -649,7 +645,7 @@ class Field extends Model
 						$value = $dataInfo[$v['field']] ? db('crm_business_status')->where(['status_id' => $dataInfo[$v['field']]])->value('name') : '';
 					} else {
 						$businessStatusModel = new \app\crm\model\BusinessStatus();
-						$setting = $businessStatusModel->getDataList($dataInfo['type_id']);				
+						$setting = $businessStatusModel->getDataList($dataInfo['type_id']);
 						$value = (int)$dataInfo[$v['field']] ? : '';
 					}
 				} elseif ($v['form_type'] == 'receivables_plan') {
@@ -662,7 +658,7 @@ class Field extends Model
 					foreach ($travelList as $key=>$val) {
 						$where = [];
 						$where['module'] = 'oa_examine_travel';
-						$where['module_id'] = $val['travel_id'];			
+						$where['module_id'] = $val['travel_id'];
 						$newFileList = [];
 						$newFileList = $fileModel->getDataList($where, 'all');
 						if ($newFileList['list']) {
@@ -672,12 +668,12 @@ class Field extends Model
 								} else {
 									$imgList[] = $val1;
 								}
-							}					
-						}				
+							}
+						}
 						$travelList[$key]['fileList'] = $fileList ? : [];
-						$travelList[$key]['imgList'] = $imgList ? : [];				
+						$travelList[$key]['imgList'] = $imgList ? : [];
 					}
-					$value = $travelList ? : [];	
+					$value = $travelList ? : [];
 				} elseif ($v['form_type'] == 'checkbox') {
 					$value = isset($dataInfo[$v['field']]) ? stringToArray($dataInfo[$v['field']]) : [];
 				} elseif ($v['form_type'] == 'date') {
@@ -699,9 +695,9 @@ class Field extends Model
 	 * @author Michael_xu
 	 * @param $types 分类
 	 * @param $map  查询条件
-	 * @param form_type  字段类型 （’text’,’textarea’,’mobile’,’email’等） 
+	 * @param form_type  字段类型 （’text’,’textarea’,’mobile’,’email’等）
 	 * @param setting  设置 （单选、下拉、多选的选项值，使用回车分隔）
-	 */	
+	 */
 	public function fieldSearch($param)
 	{
 		$types = $param['types'];
@@ -739,7 +735,7 @@ class Field extends Model
 			$field_list[$k]['setting'] = $setting;
 			if ($v['field'] == 'customer_id') {
 				$field_list[$k]['form_type'] = 'module'; $field_list[$k]['field'] = 'customer_name';
-			} 
+			}
 			if ($v['field'] == 'business_id') {
 				$field_list[$k]['form_type'] = 'module'; $field_list[$k]['field'] = 'business_name';
 			}
@@ -748,10 +744,10 @@ class Field extends Model
 			}
 			if ($v['field'] == 'contacts_id') {
 				$field_list[$k]['form_type'] = 'module'; $field_list[$k]['field'] = 'contacts_name';
-			}			
+			}
 
 			if ($v['form_type'] == 'category') {
-				
+
 			} elseif ($v['form_type'] == 'business_type') {
 				//商机状态组
 				$businessStatusModel = new \app\crm\model\BusinessStatus();
@@ -759,38 +755,38 @@ class Field extends Model
 			    $setting = db('crm_business_type')
 			            ->where(['structure_id' => $userInfo['structure_id'],'status' => 1])
 			            ->whereOr('structure_id','')
-			            ->select();	
+			            ->select();
 			    foreach ($setting as $key=>$val) {
-			        $setting[$key]['statusList'] = $businessStatusModel->getDataList($val['type_id'], 1); 
+			        $setting[$key]['statusList'] = $businessStatusModel->getDataList($val['type_id'], 1);
 			    }
 			    $setting = $setting ? : [];
 			}
-			$field_list[$k]['setting'] = $setting;		
+			$field_list[$k]['setting'] = $setting;
 		}
-		return $field_list ? : [];		
+		return $field_list ? : [];
 	}
 
 	/**
-	 * [validateField 自定义字段验证规则] 
+	 * [validateField 自定义字段验证规则]
 	 * @author Michael_xu
-	 * @param 
-	 */	
+	 * @param
+	 */
 	public function validateField($types, $types_id = 0)
 	{
 		$unField = ['update_time','create_time','create_user_id','owner_user_id'];
 		$fieldList = $this->where(['types' => ['in',['',$types]],'types_id' => $types_id,'field' => ['not in',$unField],'form_type' => ['not in',['checkbox','user','structure','file']]])->field('field,name,form_type,is_unique,is_null,max_length')->select();
 		$validateArr = [];
 		$rule = [];
-		$message = [];		
+		$message = [];
 		foreach ($fieldList as $field) {
 			$rule_value = '';
 			$scene_value = '';
-			
+
 			$max_length = $field['max_length'] ? : '';
 
 			if ($field['is_null']) {
 				$rule_value .= 'require';
-				$message[$field['field'].'.require'] = $field['name'].'不能为空';				
+				$message[$field['field'].'.require'] = $field['name'].'不能为空';
 			}
 			if ($field['form_type'] == 'number') {
 				if ($rule_value) $rule_value .= '|';
@@ -814,27 +810,27 @@ class Field extends Model
 				if ($rule_value) $rule_value .= '|';
 				$rule_value .= 'max:'.$max_length;
 				$message[$field['field'].'.max'] = $field['name'].'不能超过'.$max_length.'个字符';
-			}					
+			}
 			// if ($field['form_type'] == 'datetime') {
 			// 	$rule_value .= 'date';
 			// 	$message[$field['field'].'.date'] = $field['name'].'格式错误';
-			// }					
-			if ($rule_value == 'require|') $rule_value = 'require';		
+			// }
+			if ($rule_value == 'require|') $rule_value = 'require';
 			if (!empty($rule_value)) $rule[$field['field']] = $rule_value;
 
 		}
 		$validateArr['rule'] = $rule ? : [];
 		$validateArr['message'] = $message ? : [];
-		return $validateArr;		
+		return $validateArr;
 	}
 
 	/**
 	 * [getIndexField 列表展示字段]
-	 * @author Michael_xu 
-	 * @param types 分类	
+	 * @author Michael_xu
+	 * @param types 分类
 	 */
 	public function getIndexFieldConfig($types, $user_id)
-	{	
+	{
 		$userFieldModel = new \app\admin\model\UserField();
 		$userFieldData = $userFieldModel->getConfig($types, $user_id);
 		$userFieldData = $userFieldData ? json_decode($userFieldData, true) : [];
@@ -853,7 +849,7 @@ class Field extends Model
         	$field_list[$v['field']]['form_type'] = $v['form_type'];
         	$fieldList[$k]['width'] = '';
         }
-		
+
 		$where = [];
 		if ($userFieldData) {
 			$fieldArr = [];
@@ -869,18 +865,18 @@ class Field extends Model
 			}
 			$dataList = $fieldArr;
 		} else {
-			$dataList = $fieldList;			
+			$dataList = $fieldList;
 		}
 		return $dataList ? : [];
 	}
 
 	/**
 	 * [getIndexField 列表展示字段]
-	 * @author Michael_xu 
-	 * @param types 分类	
+	 * @author Michael_xu
+	 * @param types 分类
 	 */
 	public function getIndexField($types, $user_id)
-	{	
+	{
 		$userFieldModel = new \app\admin\model\UserField();
 		$userFieldData = $userFieldModel->getConfig($types, $user_id);
 		$userFieldData = $userFieldData ? json_decode($userFieldData, true) : [];
@@ -894,16 +890,16 @@ class Field extends Model
 			}
 		} else {
 			$where['types'] = ['in',['',$types]];
-			$dataList = $this->where($where)->column('field');		
+			$dataList = $this->where($where)->column('field');
 		}
 		return $dataList ? : [];
-	}	
+	}
 
 	/**
 	 * [checkFieldPer 判断权限]
-	 * @author Michael_xu 
-	 * @param types 分类	
-	 */	
+	 * @author Michael_xu
+	 * @param types 分类
+	 */
 	public function checkFieldPer($module, $controller, $action, $user_id = '')
 	{
 		$userModel = new \app\admin\model\User();
@@ -914,9 +910,9 @@ class Field extends Model
 
 	/**
 	 * [getField 获取字段属性]
-	 * @author Michael_xu 
-	 * @param types 分类	
-	 */	
+	 * @author Michael_xu
+	 * @param types 分类
+	 */
 	public function getField($param)
 	{
 		$types = $param['types'];
@@ -927,8 +923,8 @@ class Field extends Model
         $field_arr = [];
         //模拟自定义字段返回
         switch ($types) {
-            case 'admin_user' : $field_arr = \app\hrm\model\Userdet::getField(); break; 
-            default : 
+            case 'admin_user' : $field_arr = \app\hrm\model\Userdet::getField(); break;
+            default :
                 $data = [];
                 $data['types'] = $types;
                 $data['user_id'] = $param['user_id'];
@@ -936,14 +932,14 @@ class Field extends Model
                 $field_arr = $this->fieldSearch($data);
                 break;
         }
-        return $field_arr;	
+        return $field_arr;
 	}
-	
+
 	/**
 	 * 自定义字段验重
 	 * @param $field 字段名, $val 值, $id 排除当前数据验重, $types 需要查询的模块名
-	 * @author 
-	 * @return 
+	 * @author
+	 * @return
 	 */
 	public function getValidate($field, $val, $id, $types) {
 		$val = trim($val);
@@ -992,9 +988,9 @@ class Field extends Model
 
 	/**
 	 * [getFieldByFormType 根据字段类型获取字段数组]
-	 * @author Michael_xu 
-	 * @param types 分类	
-	 */	
+	 * @author Michael_xu
+	 * @param types 分类
+	 */
 	public function getFieldByFormType($types, $form_type)
 	{
 		$fieldArr = $this->where(['types' => $types,'form_type' => $form_type])->column('field');
@@ -1003,10 +999,10 @@ class Field extends Model
 
 	/**
 	 * [getFormValueByField 格式化表格字段类型值]
-	 * @author Michael_xu 
+	 * @author Michael_xu
 	 * @param $field 字段名
 	 * @param $value 字段值
-	 */	
+	 */
 	public function getFormValueByField($field, $value)
 	{
 		$formValue = db('admin_field')->where(['field' => $field])->value('form_value');
@@ -1049,8 +1045,8 @@ class Field extends Model
 
 	/**
 	 * [getIndexFieldList 列表展示字段]
-	 * @author Michael_xu 
-	 * @param types 分类	
+	 * @author Michael_xu
+	 * @param types 分类
 	 */
 	public function getIndexFieldList($types, $user_id)
 	{
@@ -1061,12 +1057,12 @@ class Field extends Model
 
 	/**
 	 * [getArrayField 数组类型字段]
-	 * @author Michael_xu 
-	 * @param types 分类	
-	 */	
+	 * @author Michael_xu
+	 * @param types 分类
+	 */
 	public function getArrayField($types){
 		$arrayFormType = ['structure','user','checkbox','file'];
 		$arrFieldAtt = db('admin_field')->where(['types' => $types,'form_type' => ['in',$arrayFormType]])->column('field');
-		return $arrFieldAtt ? : [];		
+		return $arrFieldAtt ? : [];
 	}
 }

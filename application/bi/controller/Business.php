@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 商业智能-商机分析
 // +----------------------------------------------------------------------
-// | Author: Michael_xu | gengxiaoxu@5kcrm.com 
+// | Author: Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\bi\controller;
@@ -18,25 +18,25 @@ class Business extends ApiCommon
      * @permission 无限制
      * @allow 登录用户可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['funnel','businesstrend','trendlist','win']            
+            'allow'=>['funnel','businesstrend','trendlist','win']
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
-        $a = strtolower($request->action());        
+        $a = strtolower($request->action());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
-    } 
-  
+    }
+
     /**
      * 销售漏斗
      * @author Michael_xu
-     * @param 
+     * @param
      * @return
      */
     public function funnel()
@@ -61,10 +61,10 @@ class Business extends ApiCommon
         $perUserIds = $userModel->getUserByPer('bi', 'business', 'read'); //权限范围内userIds
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
         $param['userIds'] = $userIds ? : [];
-		
+
         $list = $businessModel->getFunnel($param);
         return resultArray(['data' => $list]);
-    }  
+    }
 
     /**
      * 新增商机数与金额趋势分析
@@ -80,7 +80,7 @@ class Business extends ApiCommon
         $userModel = new \app\admin\model\User();
         $biCustomerModel = new \app\bi\model\Customer();
         $param = $this->param;
-        
+
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
         }
@@ -93,11 +93,14 @@ class Business extends ApiCommon
             }
         }
         $perUserIds = $userModel->getUserByPer('bi', 'business', 'read'); //权限范围内userIds
+        if(!isset($perUserIds)){
+            $perUserIds = [];
+        }
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
 
         $company = $biCustomerModel->getParamByCompany($param);
         $datas = array();
-        for ($i=1; $i <= $company['j']; $i++) { 
+        for ($i=1; $i <= $company['j']; $i++) {
             $whereArr = [];
             $whereArr['create_user_id'] = array('in',$userIds);
             $item = array();
@@ -141,7 +144,7 @@ class Business extends ApiCommon
             $timeArr = getTimeByType($param['type']);
             $param['start_time'] = $timeArr[0];
             $param['end_time'] = $timeArr[1];
-        }        
+        }
         $dataList = $businessModel->getDataList($param);
         foreach ($dataList as $k => $v) {
             $business_info = $crmBusinessModel->getDataById($v['business_id']);
@@ -153,17 +156,17 @@ class Business extends ApiCommon
             $create_user_id_info = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
             $dataList[$k]['create_user_name'] = $create_user_id_info['realname'];
             $owner_user_id_info = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];
-            $dataList[$k]['owner_user_name'] = $owner_user_id_info['realname'];  
+            $dataList[$k]['owner_user_name'] = $owner_user_id_info['realname'];
             $dataList[$k]['status_id_info'] = db('crm_business_status')->where('status_id',$v['status_id'])->value('name');//销售阶段
-            $dataList[$k]['type_id_info'] = db('crm_business_type')->where('type_id',$v['type_id'])->value('name');//商机状态组 
+            $dataList[$k]['type_id_info'] = db('crm_business_type')->where('type_id',$v['type_id'])->value('name');//商机状态组
         }
         return resultArray(['data' => $dataList]);
     }
-    
+
      /**
      * 赢单机会转化率趋势分析
      * @author Michael_xu
-     * @param 
+     * @param
      * @return
      */
     public function win()
@@ -176,7 +179,7 @@ class Business extends ApiCommon
         $userModel = new \app\admin\model\User();
         $biCustomerModel = new \app\bi\model\Customer();
         $param = $this->param;
-        
+
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
         }
@@ -193,7 +196,7 @@ class Business extends ApiCommon
 
         $company = $biCustomerModel->getParamByCompany($param);
         $datas = array();
-        for ($i=1; $i <= $company['j']; $i++) { 
+        for ($i=1; $i <= $company['j']; $i++) {
             $whereArr = [];
             $whereArr['create_user_id'] = array('in',$userIds);
             $item = array();

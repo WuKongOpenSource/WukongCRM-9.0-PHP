@@ -9,9 +9,9 @@ namespace app\admin\model;
 
 use app\admin\model\Common;
 use think\Db;
-use think\Request; 
+use think\Request;
 
-class File extends Common 
+class File extends Common
 {
 
     /**
@@ -20,17 +20,17 @@ class File extends Common
      */
 	protected $name = 'admin_file';
 	protected $module_arr = ['other','crm_leads','crm_customer','crm_contacts','crm_business','crm_product','crm_contract','oa_log','oa_examine','oa_examine_travel','work_task','admin_record','oa_travel','hrm_pact','hrm_file'];
-	
+
 	/**
 	 * [createData 添加附件]
 	 * @author Michael_xu
-	 * @param     $files 附件数组 
+	 * @param     $files 附件数组
 	 * @param     $param [module : 模块, module_id : 模块ID]
 	 * @param     $x 裁剪图的长 ,$y 裁剪图的宽
-	 * @return    [array]                         
+	 * @return    [array]
 	 */
-	public function createData($files, $param, $x = '150', $y = '150')
-	{	
+	public function createData($files, $param=[], $x = '150', $y = '150')
+	{
         if (empty($files)) {
 			$this->error = '请选择上传文件';
 			return false;
@@ -54,7 +54,7 @@ class File extends Common
 			$thumbSaveName = '';
 			if ($info) {
 				//如果是图片类型，生成缩略图
-	            $ext = $info->getExtension();	           
+	            $ext = $info->getExtension();
 	            $saveName = $info->getSaveName();
 	            $fileName = $info->getFilename();
 	            if (in_array($ext, ['jpg','png','jpeg']) && $fileInfo['size'] < 8388608) {
@@ -62,10 +62,10 @@ class File extends Common
 	                $image = \think\Image::open(UPLOAD_PATH . str_replace(DS, '/', $saveName));
 	                $thumbSaveName = str_replace(DS, DS.'thumb_', $saveName);
 	                $image->thumb($x, $y,\think\Image::THUMB_FILLED)->save(FILE_PATH . 'public'. DS .'uploads'. DS .$thumbSaveName); //THUMB_SCALING 或 THUMB_FILLED
-	            } 
+	            }
 	            if ($ext == 'gif') {
 	            	$thumbSaveName = $saveName;
-	            } 
+	            }
 	            //附件信息存储
 	            $saveData = [];
 	            $saveData['name'] = $fileInfo['name'];
@@ -81,7 +81,7 @@ class File extends Common
 	            } else {
 					$this->data($saveData)->allowField(true)->save();
 	            }
-	            
+
 	            $file_id = $this->file_id;
 	            if ($file_id) {
 	            	$rSuccess = true;
@@ -111,7 +111,7 @@ class File extends Common
 		            		$rSuccess = false;
 							//删除文件
 			            	@unlink($saveData['file_path']);
-			            	@unlink($saveData['file_path_thumb']);		            		
+			            	@unlink($saveData['file_path_thumb']);
 		            	}
 		            }
 	            }
@@ -125,7 +125,7 @@ class File extends Common
 				$resData[$k] = ['key' => $k,'name' => $fileInfo['name'],'status' => 0,'error' => $v['obj']->getError()];
 			}
         }
-        return $resData;		
+        return $resData;
 	}
 
 	/**
@@ -148,15 +148,15 @@ class File extends Common
 	/**
 	 * [delFileById 删除附件]
 	 * @author Michael_xu
-	 * @param     $save_name 附件保存名称 
+	 * @param     $save_name 附件保存名称
 	 * @param     $param [module : 模块, module_id : 模块ID]
-	 * @return    [array]                         
-	 */	
+	 * @return    [array]
+	 */
 	public function delFileBySaveName($save_name, $param = [])
 	{
 		if (!$save_name) {
 			$this->error = '请选择需要删除的附件';
-			return false;    
+			return false;
 		}
 		$fileInfo = $this->where(['save_name' => trim($save_name)])->find();
 		if (!$fileInfo) {
@@ -199,7 +199,7 @@ class File extends Common
 	 * 根据主键获取详情
 	 * @author Michael_xu
 	 * @param  array   $param  [description]
-	 */ 
+	 */
 	public function getDataBySaveName($save_name = '')
 	{
 		if (!$save_name) {
@@ -213,7 +213,7 @@ class File extends Common
 			$this->error = '数据不存在或已删除';
 			return false;
 		}
-		return $data;		
+		return $data;
 	}
 
 	/**
@@ -222,9 +222,9 @@ class File extends Common
 	 * @param  string   module  [类型]
 	 * @param  string   by = all 全部（不分页）
 	 * @param  int   module_id  [类型ID]
-	 */	 
+	 */
 	public function getDataList($request, $by = '')
-	{   
+	{
 		if (!in_array($request['module'], $this->module_arr) || !$request['module_id']) {
 			$this->error = '参数错误';
 			return false;
@@ -249,7 +249,7 @@ class File extends Common
 		}
 		if ($r) {
 			$fileIds = $r->where([$module->getPk() => intval ($request['module_id'])])->column('file_id');
-			$request['file_id'] = ['in', $fileIds];			
+			$request['file_id'] = ['in', $fileIds];
 		}
 		unset($request['module']);
 		unset($request['module_id']);
@@ -263,7 +263,7 @@ class File extends Common
         if ($by == 'all') {
         	$list = Db::name('AdminFile')->where($map)->order($order)->select();
         } else {
-        	$list = Db::name('AdminFile')->where($map)->page($request['page'], $request['limit'])->order($order)->select();	
+        	$list = Db::name('AdminFile')->where($map)->page($request['page'], $request['limit'])->order($order)->select();
         }
         foreach ($list as $k=>$v) {
         	$list[$k]['size'] = format_bytes($v['size']); //字节转换
@@ -276,9 +276,9 @@ class File extends Common
         $data = [];
         $data['list'] = $list ? : [];
         $data['dataCount'] = $dataCount ? : 0;
-        return $data;		
+        return $data;
 	}
-	
+
 	/**
 	 * 根据表、字段更新上传图片
 	 * @author Michael_xu
@@ -289,21 +289,21 @@ class File extends Common
 	 * @param  $thumb_field 缩略图字段
 	 * @param  $x 裁剪宽度
 	 * @param  $y 裁剪高度
-	 */	
+	 */
 	public function updateByField($file, $module, $module_id, $field, $thumb_field = '', $x = '150', $y = '150')
 	{
 		if (empty($module) || empty($module_id) || empty($field)) {
 			$this->error = '参数错误';
 			return false;
 		}
-		
+
 		$info = $file->move(FILE_PATH . 'public' . DS . 'uploads'); //验证规则
 		$fileInfo = $info->getInfo(); //附件数据
 		$saveName = '';
 		$thumbSaveName = '';
 		if ($info) {
 			//如果是图片类型，生成缩略图
-            $ext = $info->getExtension();	           
+            $ext = $info->getExtension();
             $saveName = $info->getSaveName();
             $fileName = $info->getFilename();
             $thumbSaveName = str_replace(DS, DS.'thumb_', $saveName);
@@ -317,23 +317,23 @@ class File extends Common
             	$image->thumb($x, $y,\think\Image::THUMB_FILLED)->save(FILE_PATH . 'public'. DS .'uploads'. DS .$thumbSaveName); //THUMB_SCALING 或 THUMB_FILLED
             	$saveData[$thumb_field] = $thumbSaveName ? UPLOAD_PATH . str_replace(DS, '/', $thumbSaveName) : '';
             }
-            $saveData[$field] = UPLOAD_PATH . str_replace(DS, '/', $saveName);  
+            $saveData[$field] = UPLOAD_PATH . str_replace(DS, '/', $saveName);
             switch ($module) {
             	case 'crm_customer' : $moduleModel = new \app\crm\model\Customer(); break;
 				case 'crm_contacts' : $moduleModel = new \app\crm\model\Contacts(); break;
 				case 'crm_business' : $moduleModel = new \app\crm\model\Business(); break;
 				case 'crm_product' : $moduleModel = new \app\crm\model\Product(); break;
-				case 'crm_contract' : $moduleModel = new \app\crm\model\Contract(); break;		
+				case 'crm_contract' : $moduleModel = new \app\crm\model\Contract(); break;
 				case 'User' : $moduleModel = new \app\admin\model\User(); break;
 				case 'admin_system': $moduleModel = new \app\admin\model\System(); break;
             }
             $resFile = $moduleModel->allowField([$field,$thumb_field])->save($saveData, [$moduleModel->getPk() => $module_id]);
             if (!$resFile) {
 				$this->error = '上传失败';
-            	return false;            	
+            	return false;
             }
             return true;
-        }		
+        }
 	}
 
 	/**
@@ -342,9 +342,9 @@ class File extends Common
 	 * @param  $ids 附件ID数组
 	 * @param  $module 表名
 	 * @param  $module_id 模块ID
-	 */	
+	 */
 	public function createDataById($ids, $module, $module_id)
-	{		
+	{
 		if (!$ids || !in_array($module, $this->module_arr) || !$module_id) {
 			$this->error = '参数错误';
 			return false;

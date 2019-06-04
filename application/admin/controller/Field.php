@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 自定义字段
 // +----------------------------------------------------------------------
-// | Author:  Michael_xu | gengxiaoxu@5kcrm.com 
+// | Author:  Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\admin\controller;
@@ -18,7 +18,7 @@ class Field extends ApiCommon
      * @permission 无限制
      * @allow 登录用户可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         $action = [
@@ -27,7 +27,7 @@ class Field extends ApiCommon
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
-        $a = strtolower($request->action());        
+        $a = strtolower($request->action());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
@@ -38,14 +38,14 @@ class Field extends ApiCommon
         if (!in_array(6,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }         
+        }
     }
-    
+
     /**
      * 自定义字段列表
      */
     public function index()
-    {       
+    {
         $param = $this->param;
         $types_arr = [
             '0' => ['types' => 'crm_leads','name' => '线索管理'],
@@ -56,7 +56,7 @@ class Field extends ApiCommon
             '5' => ['types' => 'crm_contract','name' => '合同管理'],
             '6' => ['types' => 'crm_receivables','name' => '回款管理'],
         ];
-        $examine_types_arr = [];    
+        $examine_types_arr = [];
         switch ($param['type']) {
             case 'crm' : $typesArr = $types_arr; break;
             case 'examine' : $typesArr = $examine_types_arr; break;
@@ -65,21 +65,21 @@ class Field extends ApiCommon
 
         foreach ($typesArr as $k=>$v) {
             $typesArr[$k]['update_time'] = db('admin_field')->where(['types' => $v['types']])->max('update_time');
-        }  
+        }
         return resultArray(['data' => $typesArr]);
-    }    
+    }
 
     /**
      * 自定义字段数据
      */
     public function read()
-    {        
+    {
         $fieldModel = model('Field');
         $param = $this->param;
-        $data = $fieldModel->getDataList($param);    
+        $data = $fieldModel->getDataList($param);
         if ($data === false) {
             return resultArray(['error' => $fieldModel->getError()]);
-        }  
+        }
         return resultArray(['data' => $data]);
     }
 
@@ -110,7 +110,7 @@ class Field extends ApiCommon
                 } else {
                     //编辑
                     $updateParam[$k] = $v;
-                    $updateParam[$k]['order_id'] = $i;                    
+                    $updateParam[$k]['order_id'] = $i;
                 }
             } else {
                 $saveParam[$k] = $v;
@@ -123,7 +123,7 @@ class Field extends ApiCommon
         if ($saveParam) {
             if (!$data = $fieldModel->createData($types, $saveParam)) {
                 $errorMessage[] = $fieldModel->getError();
-            }            
+            }
         }
         //编辑
         if ($updateParam) {
@@ -133,11 +133,17 @@ class Field extends ApiCommon
         }
         //删除
         if ($delParam) {
-            if (!$data = $fieldModel->delDataById($delParam)) {
+            $ids = [];
+            if (!is_array($delParam)) {
+                $ids[] = $delParam;
+            }else{
+                $ids = $delParam;
+            }
+            if (!$data = $fieldModel->delDataById($ids)) {
                 $errorMessage[] = $fieldModel->getError();
             }
         }
-        
+
         if ($errorMessage) {
             return resultArray(['error' => $errorMessage]);
         } else {
@@ -151,7 +157,7 @@ class Field extends ApiCommon
      * @param controller 控制器
      * @param action 操作
      * @param action_id  操作ID
-     */ 
+     */
     public function getField()
     {
         $fieldModel = model('Field');
@@ -159,8 +165,8 @@ class Field extends ApiCommon
         $param = $this->param;
         $module = trim($param['module']);
         $controller = trim($param['controller']);
-        $action = trim($param['action']);        
-        
+        $action = trim($param['action']);
+
         if (!$module || !$controller || !$action) {
             return resultArray(['error' => '参数错误']);
         }
@@ -174,7 +180,7 @@ class Field extends ApiCommon
             //获取详情数据
             if (($param['action'] == 'update' || $param['action'] == 'read') && $param['action_id']) {
                 switch ($param['types']) {
-                    case 'crm_customer' : 
+                    case 'crm_customer' :
                         $customerModel = new \app\crm\model\Customer();
                         $dataInfo = $customerModel->getDataById(intval($param['action_id']));
                         //判断权限
@@ -190,7 +196,7 @@ class Field extends ApiCommon
                             exit(json_encode(['code'=>102,'error'=>'无权操作']));
                         }
                         break;
-                    case 'crm_leads' : 
+                    case 'crm_leads' :
                         $leadsModel = new \app\crm\model\Leads();
                         $dataInfo = $leadsModel->getDataById(intval($param['action_id']));
                         //判断权限
@@ -198,9 +204,9 @@ class Field extends ApiCommon
                         if (!in_array($dataInfo['owner_user_id'],$auth_user_ids)) {
                             header('Content-Type:application/json; charset=utf-8');
                             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-                        }                        
-                        break;  
-                    case 'crm_contacts' : 
+                        }
+                        break;
+                    case 'crm_contacts' :
                         $contactsModel = new \app\crm\model\Contacts();
                         $dataInfo = $contactsModel->getDataById(intval($param['action_id']));
                         //判断权限
@@ -208,9 +214,9 @@ class Field extends ApiCommon
                         if (!in_array($dataInfo['owner_user_id'],$auth_user_ids)) {
                             header('Content-Type:application/json; charset=utf-8');
                             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-                        }                          
+                        }
                         break;
-                    case 'crm_business' : 
+                    case 'crm_business' :
                         $businessModel = new \app\crm\model\Business();
                         $dataInfo = $businessModel->getDataById(intval($param['action_id']));
                         //判断权限
@@ -221,9 +227,9 @@ class Field extends ApiCommon
                         if (!in_array($dataInfo['owner_user_id'],$auth_user_ids) && !$roPre && !$rwPre) {
                             header('Content-Type:application/json; charset=utf-8');
                             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-                        }                          
+                        }
                         break;
-                    case 'crm_contract' : 
+                    case 'crm_contract' :
                         $contractModel = new \app\crm\model\Contract();
                         $dataInfo = $contractModel->getDataById(intval($param['action_id']));
                         //判断权限
@@ -234,13 +240,13 @@ class Field extends ApiCommon
                         if (!in_array($dataInfo['owner_user_id'],$auth_user_ids) && !$roPre && !$rwPre) {
                             header('Content-Type:application/json; charset=utf-8');
                             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-                        }                         
+                        }
                         break;
-                    case 'crm_product' : 
+                    case 'crm_product' :
                         $productModel = new \app\crm\model\Product();
                         $dataInfo = $productModel->getDataById(intval($param['action_id']));
                         break;
-                    case 'crm_receivables' : 
+                    case 'crm_receivables' :
                         $receivablesModel = new \app\crm\model\Receivables();
                         $dataInfo = $receivablesModel->getDataById(intval($param['action_id']));
                         //判断权限
@@ -248,36 +254,36 @@ class Field extends ApiCommon
                         if (!in_array($dataInfo['owner_user_id'],$auth_user_ids)) {
                             header('Content-Type:application/json; charset=utf-8');
                             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-                        }                         
+                        }
                         break;
-                    case 'crm_receivables_plan' : 
+                    case 'crm_receivables_plan' :
                         $receivablesPlanModel = new \app\crm\model\ReceivablesPlan();
                         $dataInfo = $receivablesPlanModel->getDataById(intval($param['action_id']));
-                        break; 
+                        break;
                     case 'oa_examine' :
-                        $examineModel = new \app\oa\model\Examine();  
-                        $examineFlowModel = new \app\admin\model\ExamineFlow();  
+                        $examineModel = new \app\oa\model\Examine();
+                        $examineFlowModel = new \app\admin\model\ExamineFlow();
                         $dataInfo = $examineModel->getDataById(intval($param['action_id']));
                         $adminIds = $userModel->getAdminId(); //管理员
                         $checkUserIds = $examineFlowModel->getUserByFlow($dataInfo['flow_id'], $dataInfo['create_user_id'], $dataInfo['check_user_id']);
                         if (((int)$dataInfo['create_user_id'] != $user_id && !in_array($user_id,$adminIds) && !in_array($user_id,$checkUserIds))) {
                             header('Content-Type:application/json; charset=utf-8');
                             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-                        }                        
+                        }
                         break;
-                } 
+                }
             }
         }
         $param['user_id'] = $user_id;
         $action_id = $param['action_id'] ? : '';
         $data = $fieldModel->field($param, $dataInfo) ? : [];
-        return resultArray(['data' => $data]);   
+        return resultArray(['data' => $data]);
     }
 
     /**
      * 自定义字段数据验重
-     * @param 
-     */ 
+     * @param
+     */
     public function validates()
     {
         $param = $this->param;
@@ -309,7 +315,7 @@ class Field extends ApiCommon
             return resultArray(['error' => $userFieldModel->getError()]);
         }
         return resultArray(['data' => '设置成功']);
-    } 
+    }
 
     /**
      * 自定义字段列宽度设置
@@ -358,5 +364,5 @@ class Field extends ApiCommon
         $list = db('admin_field')->where(['types' => $param['types'],'is_unique' => 1])->column('name');
         $list = $list ? implode(',',$list) : '无';
         return resultArray(['data' => $list]);
-    }       
+    }
 }

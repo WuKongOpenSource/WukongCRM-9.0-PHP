@@ -35,7 +35,7 @@ class Event extends Common
      * @author Michael_xu
      * @param     [by]                       $by [查询时间段类型]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getDataList($param)
     {
 		$userModel = new \app\admin\model\User();
@@ -53,8 +53,8 @@ class Event extends Common
 			$end_time = mktime(23,59,59,date('m'),date('t'),date('Y'));
 		}
 		$where = '( ( start_time BETWEEN '.$start_time.' AND '.$end_time.' ) AND ( create_user_id = '.$user_id.' or owner_user_ids like "%,'.$user_id.',%" ) ) OR ( ( end_time BETWEEN '.$start_time.' AND '.$end_time.' ) AND  ( create_user_id = '.$user_id.' or owner_user_ids like "%,'.$user_id.',%" ) ) OR ( start_time < '.$start_time.' AND end_time > '.$end_time.' AND ( create_user_id = '.$user_id.' or owner_user_ids like "%,'.$user_id.',%" ) )';
-		$event_date = Db::name('OaEvent')->where($where)->select();  
-	
+		$event_date = Db::name('OaEvent')->where($where)->select();
+
 		foreach ($event_date as $k=>$v) {
 			$event_date[$k]['create_user_info'] = $userModel->getDataById($v['create_user_id']);
 			$event_date[$k]['ownerList'] = $userModel->getDataByStr($v['owner_user_ids']) ? : [];
@@ -83,7 +83,7 @@ class Event extends Common
 			if ($user_id == $v['create_user_id']) {
 				$is_update = 1;
 				$is_delete = 1;
-			}        
+			}
 	        $permission['is_update'] = $is_update;
 	        $permission['is_delete'] = $is_delete;
 	        $event_date[$k]['permission']	= $permission;
@@ -98,26 +98,26 @@ class Event extends Common
 	/**
 	 * 创建日程信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
-	{	
+	{
 		$today_time = Time::today();
 		$param['start_time'] = $param['start_time'] ? : $today_time[0];
 		$param['end_time'] = $param['end_time'] ?$param['end_time'] : $today_time[1];
 		$param['create_time'] = time();
-		if (count($param['owner_user_ids'])) {
+		if (!empty($param['owner_user_ids'])) {
 			$param['owner_user_ids'] = ','.implode(',',$param['owner_user_ids']).','; //参与人
 		} else {
 			$param['owner_user_ids'] = '';
 		}
-		
-		$rdata['customer_ids'] = count($param['customer_ids']) ? arrayToString($param['customer_ids']) : ''; 
-		$rdata['contacts_ids'] = count($param['contacts_ids']) ? arrayToString($param['contacts_ids']) : ''; 
-		$rdata['business_ids'] = count($param['business_ids']) ? arrayToString($param['business_ids']) : ''; 
-		$rdata['contract_ids'] = count($param['contract_ids']) ? arrayToString($param['contract_ids']) : '';  
-		
+
+		$rdata['customer_ids'] = !empty($param['customer_ids']) ? arrayToString($param['customer_ids']) : '';
+		$rdata['contacts_ids'] = !empty($param['contacts_ids']) ? arrayToString($param['contacts_ids']) : '';
+		$rdata['business_ids'] = !empty($param['business_ids']) ? arrayToString($param['business_ids']) : '';
+		$rdata['contract_ids'] = !empty($param['contract_ids']) ? arrayToString($param['contract_ids']) : '';
+
 		//重复设置
 		$repeatData['noticetype'] = $param['noticetype']; //日程类型
 		$repeatData['start_time'] = $param['start_time']; // 开始时间
@@ -135,15 +135,15 @@ class Event extends Common
 			Db::name('OaEventRelation')->insert($rdata);
 			//重复设置
 			if($param['is_repeat']){
-				$repeatData['event_id'] = $event_id; 
+				$repeatData['event_id'] = $event_id;
 				if( $repeatData['noticetype'] == '1' ){ //天
 					$repeatData['repeated'] = date("H:i:s",$param['start_time']);
 				} else if ( $repeatData['noticetype'] == '2' ) { //周
 					$repeatData['repeated'] = $repeat;  //周几
 				} else if ( $repeatData['noticetype'] == '3' ) { //月
-					$repeatData['repeated'] = date("d H:i:s",$param['start_time']); 
+					$repeatData['repeated'] = date("d H:i:s",$param['start_time']);
 				} else if ( $repeatData['noticetype'] == '4' ) { //年
-					$repeatData['repeated'] = date("m-d H:i:s",$param['start_time']); 
+					$repeatData['repeated'] = date("m-d H:i:s",$param['start_time']);
 				}
 				Db::name('OaEventNotice')->insert($repeatData);
 			}
@@ -154,35 +154,35 @@ class Event extends Common
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 编辑日程信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $event_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $event_id = 0)
 	{
 		$dataInfo = $this->getDataById($event_id, $param);
 		if (!$dataInfo) {
 			$this->error = '数据不存在或已删除';
 			return false;
 		}
-		
+
 		if(  $dataInfo['create_user_id'] != $param['user_id'] ) {
 			$this->error = '没有编辑权限';
 			return false;
 		}
-		
-		$rdata['customer_ids'] = count($param['customer_ids']) ? arrayToString($param['customer_ids']) : ''; 
-		$rdata['contacts_ids'] = count($param['contacts_ids']) ? arrayToString($param['contacts_ids']) : ''; 
-		$rdata['business_ids'] = count($param['business_ids']) ? arrayToString($param['business_ids']) : ''; 
-		$rdata['contract_ids'] = count($param['contract_ids']) ? arrayToString($param['contract_ids']) : '';  
+
+		$rdata['customer_ids'] = count($param['customer_ids']) ? arrayToString($param['customer_ids']) : '';
+		$rdata['contacts_ids'] = count($param['contacts_ids']) ? arrayToString($param['contacts_ids']) : '';
+		$rdata['business_ids'] = count($param['business_ids']) ? arrayToString($param['business_ids']) : '';
+		$rdata['contract_ids'] = count($param['contract_ids']) ? arrayToString($param['contract_ids']) : '';
 
 		$rdata['event_id'] = $event_id;
-		
+
 		//重复设置
 		$repeatData['noticetype'] = $param['noticetype']; //日程类型
 		$repeatData['start_time'] = $param['start_time']; // 开始时间
@@ -192,7 +192,7 @@ class Event extends Common
 		foreach ($arr as $value) { 	//过滤不能修改的字段
 			unset($param[$value]);
 		}
-	
+
 		$today_time = Time::today();
 		$param['start_time'] = $param['start_time'] ? : $today_time[0];
 		$param['end_time'] = $param['end_time'] ?$param['end_time']: $today_time[1];
@@ -211,9 +211,9 @@ class Event extends Common
 				} else if ( $repeatData['noticetype'] == '2' ) { //周
 					$repeatData['repeated'] = $repeat;  //周几
 				} else if ( $repeatData['noticetype'] == '3' ) { //月
-					$repeatData['repeated'] = date("d H:i:s",$param['start_time']); 
+					$repeatData['repeated'] = date("d H:i:s",$param['start_time']);
 				} else if ( $repeatData['noticetype'] == '4' ) { //年
-					$repeatData['repeated'] = date("m-d H:i:s",$param['start_time']); 
+					$repeatData['repeated'] = date("m-d H:i:s",$param['start_time']);
 				}
 				Db::name('OaEventNotice')->where('event_id ='.$event_id)->update($repeatData);
 			} else {
@@ -226,16 +226,20 @@ class Event extends Common
 		} else {
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
-	/**
+    /**
      * 日程数据
-     * @param  $id 日程ID
-     * @return 
-     */	
-   	public function getDataById($id = '', $param)
-   	{   		
+     * @param  string $id 日程ID
+     * @param array $param
+     * @return Common|array|bool|false|\PDOStatement|string|\think\Model|null
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+   	public function getDataById($id = '', $param = [])
+   	{
    		$map['event_id'] = $id;
    		$map['create_user_id'] = $param['user_id'];
 		$dataInfo = $this->where($map)->find();
@@ -243,15 +247,14 @@ class Event extends Common
 			$this->error = '暂无此数据';
 			return false;
 		}
-		$userModel = new \app\admin\model\User(); 
+		$userModel = new \app\admin\model\User();
 		$BusinessModel = new \app\crm\model\Business();
 		$ContactsModel = new \app\crm\model\Contacts();
 		$ContractModel = new \app\crm\model\Contract();
 		$CustomerModel = new \app\crm\model\Customer();
 
-		$ownerlist = $userModel->getDataByStr($dataInfo['owner_user_ids']);
-	    $dataInfo['ownerList'] = $ownerList;
-		
+        $dataInfo['ownerList'] = $userModel->getDataByStr($dataInfo['owner_user_ids']);
+
 		$relation = Db::name('OaEventRelation')->where('event_id ='.$id)->find();
 		$dataInfo['businessList'] = $relation['business_ids']?$BusinessModel->getDataByStr($relation['business_ids']):''; //商机
 		$dataInfo['contactsList'] = $relation['contacts_ids']?$ContactsModel->getDataByStr($relation['contacts_ids']):''; //联系人
@@ -260,21 +263,27 @@ class Event extends Common
 		$dataInfo['event_id'] = $id;
 		return $dataInfo;
    	}
-	
-	//根据ID 删除日程
-	public function delDataById($param)
+
+    /**
+     * 根据ID 删除日程
+     * @param array $param
+     * @param bool $delSon
+     * @return bool
+     * @throws \think\exception\DbException
+     */
+	public function delDataById($param=[], $delSon = false)
 	{
 		$dataInfo = $this->get($param['event_id']);
 		if(!$dataInfo){
 			$this->error = '数据不存在或已删除';
 			return false;
 		}
-		
+
 		if( $dataInfo['create_user_id'] != $param['user_id'] ){
 			$this->error = '没有编辑权限';
 			return false;
 		}
-		
+
 		$map['event_id'] = $param['event_id'];
 		$map['create_user_id'] = $param['user_id'];
 		$flag = $this->where($map)->delete();

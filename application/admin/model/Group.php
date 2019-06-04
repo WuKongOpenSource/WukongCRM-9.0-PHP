@@ -85,7 +85,7 @@ class Group extends Common
 	}
 
 	//编辑角色
-	public function updateDataById($param,$group_id)
+	public function updateDataById($param,$group_id = 0)
 	{
 		$dataInfo = $this->get($group_id);
 		if(!$dataInfo){
@@ -104,14 +104,14 @@ class Group extends Common
 
     /**
      * 删除角色
-     * @param string $group_id
+     * @param array $param
      * @param bool $delSon
      * @return bool
      * @throws \think\exception\DbException
      */
-	public function delDataById($group_id = '', $delSon = false)
+	public function delDataById($param = [], $delSon = false)
 	{
-		$dataInfo = $this->get($group_id);
+		$dataInfo = $this->get($param['id']);
 		if(!$dataInfo){
 			$this->error = '该角色不存在或已删除';
 			return false;
@@ -120,7 +120,7 @@ class Group extends Common
 			$this->error = '系统角色不能删除';
 			return false;
 		}
-		$flag = $this->where('id = '.$group_id)->delete();
+		$flag = $this->where('id = '.$param['id'])->delete();
 		if ($flag) {
 			return true;
 		} else {

@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 办公消息模块
 // +----------------------------------------------------------------------
-// | Author: Michael_xu | gengxiaoxu@5kcrm.com 
+// | Author: Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\oa\controller;
@@ -19,25 +19,25 @@ class Message extends ApiCommon
      * @permission 无限制
      * @allow 登录用户可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['num']            
+            'allow'=>['num']
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
-        $a = strtolower($request->action());        
+        $a = strtolower($request->action());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
-    } 
+    }
 
     /**
      * 消息数
      * @author Michael_xu
-     * @return 
+     * @return
      */
     public function num()
     {
@@ -64,7 +64,7 @@ class Message extends ApiCommon
         }
         //任务（我负责的和我参与的未完成的任务提醒）
         if ($type == 'task' || $type == 'all') {
-            $taskWhere = '';
+            $taskWhere = [];
             $str = ','.$userInfo['id'].',';
             $task = 'main_user_id ='.$userInfo['id'].' or create_user_id ='.$user_id.' or ( is_open = 1 and owner_user_id like "%'.$str.'%")';
             $taskWhere['pid'] = 0;
@@ -72,7 +72,7 @@ class Message extends ApiCommon
             $taskNum = db('task')->where(' ishidden=0 and ( '.$task.' )')->where($taskWhere)->count();
             $data['taskNum'] = $taskNum ? : 0;
         }
-        //公告（未读公告）      
+        //公告（未读公告）
         if ($type == 'announcement' || $type == 'all') {
             $time = strtotime(date('Y-m-d',time()));
             $announcementWhere['start_time'] = array('elt',$time);
@@ -89,10 +89,10 @@ class Message extends ApiCommon
                     $query->where('send_user_ids',array('like','%,'.$dataWhere['user_id'].',%'))
                         ->whereOr('send_structure_ids',array('like','%,'.$dataWhere['structure_id'].',%'));
             };
-            $logWhere['read_user_ids'] = ['not like','%,'.$user_id.',%']; 
+            $logWhere['read_user_ids'] = ['not like','%,'.$user_id.',%'];
             $logNum = db('oa_log')->where($logWhere)->where($logMap)->count();
             $data['logNum'] = $logNum ? : 0;
-        }    
+        }
         //审批
         if ($type == 'examine' || $type == 'all') {
             // $examineWhere['check_status'] = array('not in',array('2','3'));
@@ -100,6 +100,6 @@ class Message extends ApiCommon
             $examineNum = db('oa_examine')->where($map_str)->where($examineWhere)->count();
             $data['examineNum'] = $examineNum ? : 0;
         }
-        return resultArray(['data'=>$data]);	
-    }          
+        return resultArray(['data'=>$data]);
+    }
 }

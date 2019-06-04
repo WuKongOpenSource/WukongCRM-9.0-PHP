@@ -29,9 +29,9 @@ class Log extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getDataList($request)
-    {  	
+    {
     	$userModel = new \app\admin\model\User();
 		$structureModel = new \app\admin\model\Structure();
 		$fileModel = new \app\admin\model\File();
@@ -42,9 +42,9 @@ class Log extends Common
 		$CustomerModel = new \app\crm\model\Customer();
 		$read_user_id = $request['read_user_id'];
 
-    	$user_id = $request['user_id'] ? : $read_user_id; 
-    	$by = $request['by'] ? : ''; 
-    	
+    	$user_id = $request['user_id'] ? : $read_user_id;
+    	$by = $request['by'] ? : '';
+
 		$unfieldAry = ['by','search','user_id','read_user_id'];
 		foreach($unfieldAry as $value){
 			unset($request[$value]);
@@ -60,40 +60,40 @@ class Log extends Common
 		//获取权限范围内的员工
         $auth_user_ids = getSubUserId();
 		$dataWhere['user_id'] = $user_id;
-        $dataWhere['structure_id'] = $request['structure_id']; 
-        $dataWhere['auth_user_ids'] = $auth_user_ids; 
-        $logMap = '';    
+        $dataWhere['structure_id'] = $request['structure_id'];
+        $dataWhere['auth_user_ids'] = $auth_user_ids;
+        $logMap = '';
 		switch ($by) {
-			case 'me' : 
+			case 'me' :
 				$map['log.create_user_id'] = $user_id;
 				break;
 			case 'other':
 				$logMap = function($query) use ($dataWhere){
 	                    $query->where('log.send_user_ids',array('like','%,'.$dataWhere['user_id'].',%'))
 	                        ->whereOr('log.send_structure_ids',array('like','%,'.$dataWhere['structure_id'].',%'));
-	            };				
-				// $map['log.send_user_ids'] = ['like','%,'.$user_id.',%']; 
+	            };
+				// $map['log.send_user_ids'] = ['like','%,'.$user_id.',%'];
 				break;
-			case 'notRead' : 
-				$map['log.read_user_ids'] = ['not like','%,'.$user_id.',%']; 
+			case 'notRead' :
+				$map['log.read_user_ids'] = ['not like','%,'.$user_id.',%'];
 				$logMap = function($query) use ($dataWhere){
 	                    $query->where('log.create_user_id',array('in',implode(',', $dataWhere['auth_user_ids'])))
 	                    	->whereOr('log.send_user_ids',array('like','%,'.$dataWhere['user_id'].',%'))
 	                        ->whereOr('log.send_structure_ids',array('like','%,'.$dataWhere['structure_id'].',%'));
-	            };				
+	            };
 				break;
-			default : 
+			default :
 				$logMap = function($query) use ($dataWhere){
 	                    $query->where('log.create_user_id',array('in',implode(',', $dataWhere['auth_user_ids'])))
 	                    	->whereOr('log.send_user_ids',array('like','%,'.$dataWhere['user_id'].',%'))
 	                        ->whereOr('log.send_structure_ids',array('like','%,'.$dataWhere['structure_id'].',%'));
-	            };					
+	            };
 				break;
 		}
 		if ($request['send_user_id']) { //写日志人
 			$map['log.create_user_id'] = $request['send_user_id'];
-		}		
-		
+		}
+
 		$list = Db::name('OaLog')
 				->where($map)
 				->where($logMap)
@@ -114,7 +114,7 @@ class Log extends Common
 			$imgList = [];
 			$where = [];
 			$where['module'] = 'oa_log';
-			$where['module_id'] = $v['log_id'];			
+			$where['module_id'] = $v['log_id'];
 			$newFileList = [];
 			$newFileList = $fileModel->getDataList($where);
 			foreach ($newFileList['list'] as $val) {
@@ -125,7 +125,7 @@ class Log extends Common
 				}
 			}
 			$list[$k]['fileList'] = $fileList ? : [];
-			$list[$k]['imgList'] = $imgList ? : [];	
+			$list[$k]['imgList'] = $imgList ? : [];
 			$list[$k]['sendUserList'] = $userModel->getDataByStr($v['send_user_ids']) ? : [];
 			$list[$k]['sendStructList'] = $structureModel->getDataByStr($v['send_structure_ids']) ? : [];
 			$param['type_id'] = $v['log_id'];
@@ -142,7 +142,7 @@ class Log extends Common
 			//3天内的日志可删,可修改
 			if (($v['create_user_id'] == $read_user_id) && date('Ymd',$v['create_time']) > date('Ymd',(strtotime(date('Ymd',time()))-86400*3))) {
 				$is_update = 1;
-				$is_delete = 1;			
+				$is_delete = 1;
 			}
 			if (in_array($v['create_user_id'],$auth_user_ids)) {
 				$is_delete = 1;
@@ -180,7 +180,7 @@ class Log extends Common
 		}
 
 		if($param['send_structure_ids']){
-			$temp_send_structure_id = $param['send_structure_ids'] =  arrayToString($param['send_structure_ids']); 
+			$temp_send_structure_id = $param['send_structure_ids'] =  arrayToString($param['send_structure_ids']);
 		}
 		$rdata = [];
 		//关联业务
@@ -192,7 +192,7 @@ class Log extends Common
 		foreach ($arr as $value) {
 			unset($param[$value]);
 		}
-		
+
 		if ($this->data($param)->allowField(true)->save()) {
 			$log_id = $this->log_id;
 			//操作记录
@@ -214,8 +214,8 @@ class Log extends Common
 			$data = [];
 			$data['log_id'] = $log_id;
 			$data = $param;
-			
-			if (count($fileArr)) {
+
+			if (!empty($fileArr)) {
 				$fileStr = implode(',',$fileArr);
 				$fileList = Db::name('AdminFile')->where('file_id in ('.$fileStr.')')->select();
 				foreach($fileList as $k4=>$v4) {
@@ -234,13 +234,13 @@ class Log extends Common
 			}
 			$data['sendStructureList'] = $sendStructureList ? : array();
 			$data['log_id'] = $log_id;
-			
+
 			$rdata['log_id'] = $log_id;
 			$rdata['status'] = 1;
 			$rdata['create_time'] = time();
 			//关联业务
 			Db::name('OaLogRelation')->insert($rdata);
-			
+
 			$relation = Db::name('OaLogRelation')->where(['log_id' => $log_id])->find();
 			$BusinessModel = new \app\crm\model\Business();
 			$data['businessList'] = $relation['business_ids'] ? $BusinessModel->getDataByStr($relation['business_ids']) : []; //商机
@@ -250,21 +250,21 @@ class Log extends Common
 			$data['contractList'] = $relation['contract_ids'] ? $ContractModel->getDataByStr($relation['contract_ids']) : []; //合同
 			$CustomerModel = new \app\crm\model\Customer();
 			$data['customerList'] = $relation['customer_ids'] ? $CustomerModel->getDataByStr($relation['customer_ids']) : []; //客户
-			
+
 			return $data;
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}		
+		}
 	}
 
 	/**
 	 * 编辑日志信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $log_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $log_id = 0)
 	{
 		$dataInfo = $this->getDataById($log_id);
 		if (!$dataInfo) {
@@ -280,7 +280,7 @@ class Log extends Common
 		$rdata['contacts_ids'] = $param['contacts_ids'] ? arrayToString($param['contacts_ids']) : '';
 		$rdata['business_ids'] = $param['business_ids'] ? arrayToString($param['business_ids']) : '';
 		$rdata['contract_ids'] = $param['contract_ids'] ? arrayToString($param['contract_ids']) : '';
-	
+
 		$arr = ['customer_ids','contacts_ids','business_ids','contract_ids'];
 		foreach ($arr as $value) {
 			unset($param[$value]);
@@ -302,7 +302,7 @@ class Log extends Common
 		} else {
 			$param['send_structure_ids'] = '';
 		}
-	
+
 		if ($this->allowField(true)->save($param, ['log_id' => $log_id])) {
 			//操作日志
 			actionLog($log_id, $dataInfo['send_user_ids'], $dataInfo['send_structure_ids'],'修改了日志');
@@ -314,28 +314,28 @@ class Log extends Common
 		        	$this->error = '附件上传失败';
 		        	return false;
 		        }
-	        }			
+	        }
 			$data = [];
 			$data['log_id'] = $log_id;
 			Db::name('OaLogRelation')->where('log_id = '.$log_id)->update($rdata);
-		
+
 			return $data;
 		} else {
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
 	/**
      * 日志数据
      * @param  $id 日志ID
-     * @return 
-     */	
-   	public function getDataById($id = '')
-   	{   
+     * @return
+     */
+   	public function getDataById($id = '', $param = [])
+   	{
 		$fileModel = new \app\admin\model\File();
 		$userModel = new \app\admin\model\User();
-		$structureModel = new \app\admin\model\Structure();	
+		$structureModel = new \app\admin\model\Structure();
 		$commonModel = new \app\admin\model\Comment();
 
    		$map['log.log_id'] = $id;
@@ -348,7 +348,7 @@ class Log extends Common
 			$this->error = '暂无此数据';
 			return false;
 		}
-		
+
 		$relation = Db::name('OaLogRelation')->where('log_id ='.$id)->find();
 		$BusinessModel = new \app\crm\model\Business();
 		$dataInfo['businessList'] = $relation['business_ids'] ? $BusinessModel->getDataByStr($relation['business_ids']) : []; //商机
@@ -374,7 +374,7 @@ class Log extends Common
 			}
 		}
 		$dataInfo['fileList'] = $fileList ? : [];
-		$dataInfo['imgList'] = $imgList ? : [];	
+		$dataInfo['imgList'] = $imgList ? : [];
 		$dataInfo['sendUserList'] = $userModel->getDataByStr($dataInfo['send_user_ids']) ? : [];
 		$dataInfo['sendStructList'] = $structureModel->getDataByStr($dataInfo['send_structure_ids']) ? : [];
 		$param['type_id'] = $id;
@@ -383,13 +383,13 @@ class Log extends Common
 
 		return $dataInfo;
    	}
-	
+
 	/**
      * 日志删除
      * @param  log_id 日志ID
-     * @return 
+     * @return
      */
-	public function delDataById($param)
+	public function delDataById($param = [], $delSon = false )
 	{
 		$map['log_id'] = $param['log_id'];
 		$dataInfo = $this->get($map['log_id']);

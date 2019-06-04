@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 回款计划
 // +----------------------------------------------------------------------
-// | Author: Michael_xu | gengxiaoxu@5kcrm.com 
+// | Author: Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\crm\controller;
@@ -18,25 +18,25 @@ class ReceivablesPlan extends ApiCommon
      * @permission 无限制
      * @allow 登录用户可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','save','read','update','delete']            
+            'allow'=>['index','save','read','update','delete']
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
-        $a = strtolower($request->action());        
+        $a = strtolower($request->action());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
-    } 
+    }
 
     /**
      * 回款计划列表
      * @author Michael_xu
-     * @return 
+     * @return
      */
     public function index()
     {
@@ -44,15 +44,15 @@ class ReceivablesPlan extends ApiCommon
         $param = $this->param;
         $userInfo = $this->userInfo;
         $param['user_id'] = $userInfo['id'];
-        $data = $receivablesPlanModel->getDataList($param);       
+        $data = $receivablesPlanModel->getDataList($param);
         return resultArray(['data' => $data]);
     }
 
     /**
      * 添加回款计划
      * @author Michael_xu
-     * @param 
-     * @return 
+     * @param
+     * @return
      */
     public function save()
     {
@@ -73,8 +73,8 @@ class ReceivablesPlan extends ApiCommon
     /**
      * 回款计划详情
      * @author Michael_xu
-     * @param  
-     * @return 
+     * @param
+     * @return
      */
     public function read()
     {
@@ -90,11 +90,11 @@ class ReceivablesPlan extends ApiCommon
     /**
      * 编辑回款计划
      * @author Michael_xu
-     * @param 
-     * @return 
+     * @param
+     * @return
      */
     public function update()
-    {    
+    {
         $receivablesPlanModel = model('ReceivablesPlan');
         $userModel = new \app\admin\model\User();
         $param = $this->param;
@@ -106,7 +106,7 @@ class ReceivablesPlan extends ApiCommon
         $contractData = db('crm_contract')->where(['contract_id' => $dataInfo['contract_id']])->find();
         $auth_user_ids = $userModel->getUserByPer('crm', 'contract', 'update');
         //读写权限
-        $rwPre = $userModel->rwPre($userInfo['id'], $contractData['ro_user_id'], $contractData['rw_user_id'], 'update');       
+        $rwPre = $userModel->rwPre($userInfo['id'], $contractData['ro_user_id'], $contractData['rw_user_id'], 'update');
         if (!in_array($contractData['owner_user_id'],$auth_user_ids) && !$rwPre) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
@@ -116,14 +116,14 @@ class ReceivablesPlan extends ApiCommon
             return resultArray(['data' => '编辑成功']);
         } else {
             return resultArray(['error' => $receivablesPlanModel->getError()]);
-        }       
-    } 
+        }
+    }
 
     /**
      * 删除回款计划
      * @author Michael_xu
-     * @param 
-     * @return 
+     * @param
+     * @return
      */
     public function delete()
     {
@@ -144,18 +144,18 @@ class ReceivablesPlan extends ApiCommon
             $contractData = db('crm_contract')->where(['contract_id' => $dataInfo['contract_id']])->find();
             $auth_user_ids = $userModel->getUserByPer('crm', 'contract', 'delete');
             //读写权限
-            $rwPre = $userModel->rwPre($userInfo['id'], $contractData['ro_user_id'], $contractData['rw_user_id'], 'update');       
+            $rwPre = $userModel->rwPre($userInfo['id'], $contractData['ro_user_id'], $contractData['rw_user_id'], 'update');
             if (!in_array($contractData['owner_user_id'],$auth_user_ids) && !$rwPre) {
                 header('Content-Type:application/json; charset=utf-8');
                 exit(json_encode(['code'=>102,'error'=>'无权操作']));
             }
-            $res = model('ReceivablesPlan')->delDataById($plan_id);
+            $res = model('ReceivablesPlan')->delDataById(['id'=>$plan_id]);
             if (!$res) {
                 return resultArray(['error' => model('ReceivablesPlan')->getError()]);
             }
             return resultArray(['data' => '删除成功']);
         } else {
             return resultArray(['error'=>'参数错误']);
-        }        
-    }     
+        }
+    }
 }

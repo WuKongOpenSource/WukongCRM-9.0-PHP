@@ -30,16 +30,16 @@ class Examine extends Common
      * @param     [string]                   $map [查询条件]
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
-     * @return 
-     */		
+     * @return
+     */
 	public function getDataList($request)
-    {  	
+    {
     	$userModel = new \app\admin\model\User();
     	$fileModel = new \app\admin\model\File();
 		$businessModel = new \app\crm\model\Business();
         $contactsModel = new \app\crm\model\Contacts();
         $contractModel = new \app\crm\model\Contract();
-        $customerModel = new \app\crm\model\Customer();    	
+        $customerModel = new \app\crm\model\Customer();
 
     	$by = $request['by'] ? : 'my'; //my我发起的,examine我审批的,all全部(下属发起的)
     	$user_id = $request['user_id'];
@@ -63,7 +63,7 @@ class Examine extends Common
 		$map_str = '';
 		switch ($by) {
 			case 'my' : $map['examine.create_user_id'] = $user_id; break;
-			case 'examine' : 
+			case 'examine' :
 				$map_str = "(( `check_user_id` LIKE '%,".$user_id.",%' OR `check_user_id` = ".$user_id." ) OR ( `flow_user_id` LIKE '%,".$user_id.",%'  OR `flow_user_id` = ".$user_id." ) )";
 				break;
 			case 'already_examine' : $map['flow_user_id'] = [['like','%,'.$user_id.',%'],['eq',$user_id],'or']; break; //已审
@@ -128,7 +128,7 @@ class Examine extends Common
 			$imgList = [];
 			$where = [];
 			$where['module'] = 'oa_examine';
-			$where['module_id'] = $v['examine_id'];			
+			$where['module_id'] = $v['examine_id'];
 			$newFileList = [];
 			$newFileList = $fileModel->getDataList($where);
 			foreach ($newFileList['list'] as $val) {
@@ -157,17 +157,17 @@ class Examine extends Common
 		        $is_update = 1;
 				$is_delete = 1;
 		    }
-		    $permission['is_recheck'] = $is_recheck;	        
+		    $permission['is_recheck'] = $is_recheck;
 	        $permission['is_update'] = $is_update;
 	        $permission['is_delete'] = $is_delete;
 	        $list[$k]['permission']	= $permission;
-	        $list[$k]['check_status_info'] = $this->statusArr[$v['check_status']];   		
+	        $list[$k]['check_status_info'] = $this->statusArr[$v['check_status']];
        	}
         $dataCount = $this->alias('examine')
 					 ->where($map_str)
 					 ->where($map)
 				     ->join($join)
-				     ->count('examine_id');  
+				     ->count('examine_id');
         $data = [];
         $data['list'] = $list;
         $data['dataCount'] = $dataCount ? : 0;
@@ -177,9 +177,9 @@ class Examine extends Common
 	/**
 	 * 创建审批信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		$fieldModel = new \app\admin\model\Field();
@@ -189,16 +189,16 @@ class Examine extends Common
 		if (!$param['category_id']) {
 			$this->error = '参数错误';
 			return false;
-		}		
+		}
 		// 自动验证
 		$validateArr = $fieldModel->validateField($this->name,$param['category_id']); //获取自定义字段验证规则
-		$validate = new Validate($validateArr['rule'], $validateArr['message']);			
+		$validate = new Validate($validateArr['rule'], $validateArr['message']);
 		$result = $validate->check($param);
 		if (!$result) {
 			$this->error = $validate->getError();
 			return false;
 		}
-		
+
 		$categoryInfo = $examineCategoryModel->getDataById($param['category_id']);
 
 		$fileArr = $param['file_id']; //接收表单附件
@@ -224,8 +224,8 @@ class Examine extends Common
 				$rdata['contract_ids'] = $param['contract_ids'] ? arrayToString($param['contract_ids']) : '';
 				$rdata['examine_id'] = $this->examine_id;
 				$rdata['status'] = 1;
-				$rdata['create_time'] = time();				
-				Db::name('OaExamineRelation')->insert($rdata);						        
+				$rdata['create_time'] = time();
+				Db::name('OaExamineRelation')->insert($rdata);
 
 		        //处理差旅相关
 	            $resTravel = true;
@@ -242,28 +242,28 @@ class Examine extends Common
 	            $sendContent = $createUserInfo['realname'].'提交的【'.$categoryInfo['title'].'】,需要您审批';
 	            if ($send_user_id) {
 	            	sendMessage($send_user_id, $sendContent, $this->examine_id, 1);
-	            }            
+	            }
 
 				$data = [];
 				$data['examine_id'] = $this->examine_id;
-				return $data;				
+				return $data;
 			} else {
 				$this->error = $examineDataModel->getError();
-				return false;				
+				return false;
 			}
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 编辑审批信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $examine_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $examine_id = 0)
 	{
 		$examine_id = intval($examine_id);
 		$userModel = new \app\admin\model\User();
@@ -280,7 +280,7 @@ class Examine extends Common
 			unset($param[$v]);
 		}
 		$categoryInfo = $examineCategoryModel->getDataById($dataInfo['category_id']);
-		
+
 		//验证
 		$fieldModel = new \app\admin\model\Field();
 		$validateArr = $fieldModel->validateField($this->name, $dataInfo['category_id']); //获取自定义字段验证规则
@@ -290,7 +290,7 @@ class Examine extends Common
 			$this->error = $validate->getError();
 			return false;
 		}
-		
+
 		$fileArr = $param['file']; //接收表单附件
 		unset($param['file']);
 
@@ -308,8 +308,8 @@ class Examine extends Common
 			$rdata['customer_ids'] = $param['customer_ids'] ? arrayToString($param['customer_ids']) : [];
 			$rdata['contacts_ids'] = $param['contacts_ids'] ? arrayToString($param['contacts_ids']) : [];
 			$rdata['business_ids'] = $param['business_ids'] ? arrayToString($param['business_ids']) : [];
-			$rdata['contract_ids'] = $param['contract_ids'] ? arrayToString($param['contract_ids']) : [];		
-			Db::name('OaExamineRelation')->where('examine_id = '.$examine_id)->update($rdata);  
+			$rdata['contract_ids'] = $param['contract_ids'] ? arrayToString($param['contract_ids']) : [];
+			Db::name('OaExamineRelation')->where('examine_id = '.$examine_id)->update($rdata);
 
 			//处理差旅相关
             $resTravel = true;
@@ -326,7 +326,7 @@ class Examine extends Common
             $sendContent = $createUserInfo['realname'].'提交的【'.$categoryInfo['title'].'】,需要您审批';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $examine_id, 1);
-            }             		       		
+            }
 
 			$data = [];
 			$data['examine_id'] = $examine_id;
@@ -334,19 +334,19 @@ class Examine extends Common
 		} else {
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
 	/**
      * 审批数据
      * @param  $id 审批ID
-     * @return 
-     */	
-   	public function getDataById($id = '')
-   	{   
+     * @return
+     */
+   	public function getDataById($id = '', $param = [])
+   	{
    		$examineData = new \app\oa\model\ExamineData();
-   		$fieldModel = new \app\admin\model\Field();		
-   		$fileModel = new \app\admin\model\File();		
+   		$fieldModel = new \app\admin\model\Field();
+   		$fileModel = new \app\admin\model\File();
    		$map['examine.examine_id'] = $id;
 		$data_view = db('oa_examine')
 					 ->where($map)
@@ -378,7 +378,7 @@ class Examine extends Common
 		$dataInfo['businessList'] = $relation['business_ids'] ? $businessModel->getDataByStr($relation['business_ids']) : []; //商机
 		$dataInfo['contactsList'] = $relation['contacts_ids'] ? $contactsModel->getDataByStr($relation['contacts_ids']) : []; //联系人
 		$dataInfo['contractList'] = $relation['contract_ids'] ? $contractModel->getDataByStr($relation['contract_ids']) : []; //合同
-		$dataInfo['customerList'] = $relation['customer_ids'] ? $customerModel->getDataByStr($relation['customer_ids']) : []; //客户  
+		$dataInfo['customerList'] = $relation['customer_ids'] ? $customerModel->getDataByStr($relation['customer_ids']) : []; //客户
 
 		$travelList = [];
 		if (in_array($dataInfo['category_id'],['3','5'])) {
@@ -392,7 +392,7 @@ class Examine extends Common
 				$imgList = [];
 				$where = [];
 				$where['module'] = 'oa_examine_travel';
-				$where['module_id'] = $v['travel_id'];			
+				$where['module_id'] = $v['travel_id'];
 				$newFileList = [];
 				$newFileList = $fileModel->getDataList($where, 'all');
 				if ($newFileList['list']) {
@@ -402,11 +402,11 @@ class Examine extends Common
 						} else {
 							$imgList[] = $val;
 						}
-					}					
-				}				
+					}
+				}
 				$travelList[$k]['fileList'] = $fileList ? : [];
-				$travelList[$k]['imgList'] = $imgList ? : [];				
-			}			
+				$travelList[$k]['imgList'] = $imgList ? : [];
+			}
    		}
    		$dataInfo['travelList'] = $travelList;
 
@@ -415,7 +415,7 @@ class Examine extends Common
 		$imgList = [];
 		$where = [];
 		$where['module'] = 'oa_examine';
-		$where['module_id'] = $id;			
+		$where['module_id'] = $id;
 		$newFileList = [];
 		$newFileList = $fileModel->getDataList($where, 'all');
 		foreach ($newFileList['list'] as $val) {
@@ -426,7 +426,7 @@ class Examine extends Common
 			}
 		}
 		$dataInfo['fileList'] = $fileList ? : [];
-		$dataInfo['imgList'] = $imgList ? : [];				   
+		$dataInfo['imgList'] = $imgList ? : [];
 
 		$userModel = new \app\admin\model\User();
 		$dataInfo['create_user_info'] = $userModel->getUserById($dataInfo['create_user_id']);
@@ -437,7 +437,7 @@ class Examine extends Common
 	/**
      * 审批差旅数据保存
      * @param  examine_id 审批ID
-     * @return 
+     * @return
      */
     public function createTravelById($data = [], $examine_id)
     {
@@ -455,7 +455,7 @@ class Examine extends Common
 			$fileArr = $v['file_id']; //接收表单附件
 			unset($newData['file_id']);
 			unset($newData['fileList']);
-			unset($newData['fileList']);			
+			unset($newData['fileList']);
 			if ($travel_id = db('oa_examine_travel')->insertGetId($newData)) {
 				//处理附件关系
 		        if ($fileArr) {
@@ -469,19 +469,19 @@ class Examine extends Common
 			} else {
 				$successRes = false;
 				return false;
-			}				
+			}
 		}
 		if (!$successRes) {
 			$this->error = '审批事项创建失败';
 			return false;
 		}
-		return true;		    	
-    } 
+		return true;
+    }
 
 	/**
      * 审批差旅数据编辑
      * @param  examine_id 审批ID
-     * @return 
+     * @return
      */
     public function updateTravelById($data = [], $examine_id)
     {
@@ -517,7 +517,7 @@ class Examine extends Common
 			} else {
 				$successRes = false;
 				return false;
-			}				
+			}
 		}
 		if (!$successRes) {
 			$this->error = '审批事项创建失败';
@@ -525,7 +525,7 @@ class Examine extends Common
 		}
 		//删除旧数据
 		if ($oldTravelIds) db('oa_examine_travel')->where(['travel_id' => ['in',$oldTravelIds]])->delete();
-		if ($oldTravelFileIds) db('oa_examine_travel_file')->where(['r_id' => ['in',$oldTravelFileIds]])->delete();		
-		return true;		    	
-    }    
+		if ($oldTravelFileIds) db('oa_examine_travel_file')->where(['r_id' => ['in',$oldTravelFileIds]])->delete();
+		return true;
+    }
 }

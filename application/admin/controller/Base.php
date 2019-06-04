@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 基础类，无需验证权限。
 // +----------------------------------------------------------------------
-// | Author:  
+// | Author:
 // +----------------------------------------------------------------------
 
 namespace app\admin\controller;
@@ -22,15 +22,18 @@ class Base extends Common
         $password = $param['password'];
         $verifyCode = !empty($param['verifyCode'])? $param['verifyCode']: '';
         $isRemember = !empty($param['isRemember'])? $param['isRemember']: '';
+        $type = '';
+        $authKey = '';
         $is_mobile = $param['is_mobile'] ? : '';
+
         $data = $userModel->login($username, $password, $verifyCode, $isRemember, $type, $authKey, $is_mobile);
-        
+
         Session::set('user_id', $data['userInfo']['id']);
         if (!$data) {
             return resultArray(['error' => $userModel->getError()]);
         }
         return resultArray(['data' => $data]);
-    }     
+    }
 
     //退出登录
     public function logout()
@@ -57,12 +60,12 @@ class Base extends Common
 
 	//网站信息
     public function index()
-    {   
+    {
         $systemModel = model('System');
         $data = $systemModel->getDataList();
         return  resultArray(['data' => $data]);
-    }    
-	
+    }
+
     // miss 路由：处理没有匹配到的路由规则
     public function miss()
     {
@@ -73,4 +76,3 @@ class Base extends Common
         }
     }
 }
- 

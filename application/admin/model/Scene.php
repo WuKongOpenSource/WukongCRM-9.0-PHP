@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 场景
 // +----------------------------------------------------------------------
-// | Author:  Michael_xu | gengxiaoxu@5kcrm.com  
+// | Author:  Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\admin\model;
@@ -10,7 +10,7 @@ namespace app\admin\model;
 use think\Db;
 use app\admin\model\Common;
 
-class Scene extends Common 
+class Scene extends Common
 {
     /**
      * 为了数据库的整洁，同时又不影响Model和Controller的名称
@@ -29,9 +29,9 @@ class Scene extends Common
 
 	/**
 	 * 创建场景
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param, $types = '')
 	{
 		if (empty($types)) {
@@ -60,12 +60,12 @@ class Scene extends Common
 				$defaultData['types'] = $types;
 				$defaultData['user_id'] = $user_id;
 				$this->defaultDataById($defaultData, $this->scene_id);
-			}			
+			}
 			return true;
 		} else {
 			$this->error = '添加失败';
-			return false;			
-		}			
+			return false;
+		}
 	}
 
 	/**
@@ -73,14 +73,14 @@ class Scene extends Common
      * @param  types 分类
      * @author Michael_xu
      * @return    [array]
-     */		
+     */
 	public function getDataList($types, $user_id)
     {
     	$fieldModel = new \app\admin\model\Field();
     	$userModel = new \app\admin\model\User();
     	if (!in_array($types, $this->types_arr)) {
 			$this->error = '参数错误';
-			return false;    		
+			return false;
     	}
         $map['user_id'] = $user_id;
         $map['is_hide'] = 0;
@@ -96,7 +96,7 @@ class Scene extends Common
         $newFieldList = [];
         foreach ($fieldList as $k=>$v) {
         	$field = $v['field'];
-        	if ($v['field'] == 'customer_id') $field = 'customer_name'; 
+        	if ($v['field'] == 'customer_id') $field = 'customer_name';
         	$newFieldList[$field] = $v;
         }
         foreach ($list as $k=>$v) {
@@ -112,8 +112,8 @@ class Scene extends Common
 	    				$userInfo = $userModel->getDataById($val['value']);
 	    				$data[$key]['setting']['realname'] = $userInfo['realname'];
 	    				$data[$key]['setting']['id'] = $userInfo['id'];
-	    			} 
-	    		}        		
+	    			}
+	    		}
         	}
     		$list[$k]['data'] = $data ? : [];
         }
@@ -129,19 +129,19 @@ class Scene extends Common
 	 * 根据主键获取详情
 	 * @param  array   $param  [description]
 	 * @author Michael_xu
-	 */ 
-	public function getDataById($id = '', $user_id, $types = '')
+	 */
+	public function getDataById($id = '', $param = [])
 	{
 		$where = [];
 		$where['scene_id'] = $id;
 		// $where['user_id'] = [['=',$user_id],['=',0],'or'];
 		$data = db('admin_scene')->where($where)->find();
-		if (!$types) {
+		if (!$param['type']) {
 			$types = $data['types'] ? : '';
 		}
 		//处理data
 		if ($data['bydata'] && $types) {
-			$data = $this->getByData($types, $data['bydata'], $user_id);
+			$data = $this->getByData($types, $data['bydata'], $param['user_id']);
 		} else {
 			$data = json_decode($data['data'],true);
 			if (is_array($data)) {
@@ -149,18 +149,18 @@ class Scene extends Common
 					if ($v['form_type'] == 'business_type') {
 						$data[$k]['value'] = $v['type_id'];
 					}
-				}	
+				}
 			}
 		}
-		return $data ? : [];		
-	}   
+		return $data ? : [];
+	}
 
 	/**
 	 * 根据主键修改
 	 * @param  array   $param  [description]
 	 * @author Michael_xu
-	 */	
-	public function updateDataById($param, $id)
+	 */
+	public function updateDataById($param, $id = 0)
 	{
 		$checkData = $this->get($id);
 		$sceneInfo = $checkData->data;
@@ -172,7 +172,7 @@ class Scene extends Common
 		//权限（只能编辑自己的）
 		if ($sceneInfo['user_id'] !== $user_id) {
 			$this->error = '参数错误';
-			return false;			
+			return false;
 		}
 		if (empty($param['name'])) {
 			$this->error = '场景名称必填';
@@ -182,7 +182,7 @@ class Scene extends Common
 			$this->error = '场景名称已存在';
 			return false;
 		}
-		$param['update_time'] = time();		
+		$param['update_time'] = time();
 		// $scene_data = $this->dataChangeString($param);
 		//处理data数据
 		$res = $this->allowField(true)->save($param, ['scene_id' => $id]);
@@ -190,7 +190,7 @@ class Scene extends Common
 			return true;
 		} else {
 			$this->error = '修改失败';
-			return false;	
+			return false;
 		}
 	}
 
@@ -200,8 +200,8 @@ class Scene extends Common
 	 * @param user_id 人员ID
 	 * @param id 场景ID
 	 * @author Michael_xu
-	 */	
-	public function defaultDataById($param, $id)	
+	 */
+	public function defaultDataById($param, $id)
 	{
 		if (!$param['types'] || !$id) {
 			$this->error = '参数错误';
@@ -226,9 +226,9 @@ class Scene extends Common
 
 	/**
 	 * 场景数据转换(字符串形式存储)
-	 * @param  
+	 * @param
 	 * @author Michael_xu
-	 * @return                            
+	 * @return
 	 */
 	public function dataChangeString($param = [])
 	{
@@ -250,15 +250,15 @@ class Scene extends Common
 					switch ($k1) {
 						case 'condition' : $scene_data .= "condition=>".$v1.","; break;
 						case 'value' : $scene_data .= "value=>".$v1.","; break;
-						case 'state' : 
-						case 'city' : 
-						case 'area' : 
+						case 'state' :
+						case 'city' :
+						case 'area' :
 							//处理地址类型数据
 							$scene_data .= $k1."=>".$v1.","; break;
-						case 'start' :	$scene_data .= "start=>".$v1.","; break;				
-						case 'end' :	$scene_data .= "end=>".$v1.","; break;			
-						case 'start_date' :	$scene_data .= "start_date=>".$v1.","; break;			
-						case 'end_date' :	$scene_data .= "end_date=>".$v1.","; break;			
+						case 'start' :	$scene_data .= "start=>".$v1.","; break;
+						case 'end' :	$scene_data .= "end=>".$v1.","; break;
+						case 'start_date' :	$scene_data .= "start_date=>".$v1.","; break;
+						case 'end_date' :	$scene_data .= "end_date=>".$v1.","; break;
 					}
 				}
 				$form_type = '';
@@ -279,10 +279,10 @@ class Scene extends Common
 
 	/**
 	 * 场景排序最大值
-	 * @param  
+	 * @param
 	 * @author Michael_xu
-	 * @return                            
-	 */	
+	 * @return
+	 */
 	public function getMaxOrderid($types, $user_id)
 	{
 		$maxOrderid = $this->where(['types' => $types, 'user_id' => $user_id])->max('order_id');
@@ -291,10 +291,10 @@ class Scene extends Common
 
 	/**
 	 * 场景数据（转数组格式），用于where条件
-	 * @param  
+	 * @param
 	 * @author Michael_xu
-	 * @return                            
-	 */		
+	 * @return
+	 */
 	public function dataChangeArray($string)
 	{
 		$data_arr = [];
@@ -328,14 +328,14 @@ class Scene extends Common
 		}
 		return $where ? : [];
 	}
-	
+
 	/**
 	 * 场景排序
 	 * @param  ids 场景id数组
 	 * @param  hide_ids 隐藏场景id数组
 	 * @author Michael_xu
-	 * @return                            
-	 */		  
+	 * @return
+	 */
 	public function listOrder($param, $user_id)
 	{
 		$res = true;
@@ -355,7 +355,7 @@ class Scene extends Common
 		if ($res == false || $resHide == false) {
 			$this->error = '设置出错，请重试';
 			return false;
-		}	
+		}
 		return true;
 	}
 
@@ -364,7 +364,7 @@ class Scene extends Common
      * @param  types 分类
      * @author Michael_xu
      * @return    [array]
-     */		
+     */
 	public function getDefaultData($types, $user_id)
 	{
 		$where = [];
@@ -380,9 +380,9 @@ class Scene extends Common
 			$data = $this->getByData($types, $resData['bydata'], $user_id);
 		} else {
 			//处理data
-			$data = $resData ? json_decode($resData,true) : [];			
-		}		
-		return $data;				
+			$data = $resData ? json_decode($resData,true) : [];
+		}
+		return $data;
 	}
 
 	/**
@@ -390,7 +390,7 @@ class Scene extends Common
      * @param  types 分类
      * @author Michael_xu
      * @return    [array]
-     */	
+     */
     public function getByData($types, $bydata, $user_id)
     {
 		$userModel = new \app\admin\model\User();
@@ -398,10 +398,10 @@ class Scene extends Common
     	$auth_user_ids = [];
     	$part_user_ids = [];
     	switch ($bydata) {
-    		case 'me' : $auth_user_ids[] = $user_id; break; //我负责的 
-    		case 'mePart' : $part_user_ids = $user_id; break; //我参与的（即相关团队） 
-    		case 'sub' : $auth_user_ids = getSubUserId(false) ? : ['-1']; break; //下属负责的 
-    		// case 'subPart' : $part_user_ids = getSubUserId('false'); break; //下属参与的 
+    		case 'me' : $auth_user_ids[] = $user_id; break; //我负责的
+    		case 'mePart' : $part_user_ids = $user_id; break; //我参与的（即相关团队）
+    		case 'sub' : $auth_user_ids = getSubUserId(false) ? : ['-1']; break; //下属负责的
+    		// case 'subPart' : $part_user_ids = getSubUserId('false'); break; //下属参与的
     		case 'all' : $auth_user_ids = ''; break; //全部
     		case 'is_transform' : $map['is_transform'] = ['condition' => 'eq','value' => 1,'form_type' => 'text','name' => '']; break; //已转化线索
     		// default : $auth_user_ids = $userModel->getUserByPer('crm', $types, 'index'); break;
@@ -423,7 +423,7 @@ class Scene extends Common
      * @param  types 分类
      * @author Michael_xu
      * @return    [array]
-     */	
+     */
     public function updateData($data, $scene_id)
     {
     	$param['data'] = is_array($data) ? $data : '';
@@ -433,7 +433,7 @@ class Scene extends Common
 			return true;
 		} else {
 			$this->error = '修改失败';
-			return false;	
+			return false;
 		}
     }
 }

@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 商机组设置
 // +----------------------------------------------------------------------
-// | Author: Michael_xu | gengxiaoxu@5kcrm.com 
+// | Author: Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\crm\controller;
@@ -18,19 +18,19 @@ class BusinessStatus extends ApiCommon
      * @permission 无限制
      * @allow 登录用户可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['type','save','update','read','enables','delete']            
+            'allow'=>['type','save','update','read','enables','delete']
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
-        $a = strtolower($request->action());        
+        $a = strtolower($request->action());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
-        } 
+        }
 
         $userInfo = $this->userInfo;
         //权限判断
@@ -39,27 +39,27 @@ class BusinessStatus extends ApiCommon
         if (!in_array(6,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
-    } 
+        }
+    }
 
     /**
      * 商机组列表
      * @author Michael_xu
-     * @return 
+     * @return
      */
     public function type()
-    {	
+    {
         $businessStatusModel = model('BusinessStatus');
         $param = $this->param;
-        $data = $businessStatusModel->getTypeList($param);       
+        $data = $businessStatusModel->getTypeList($param);
         return resultArray(['data' => $data]);
     }
 
     /**
      * 添加商机组
      * @author Michael_xu
-     * @param 
-     * @return 
+     * @param
+     * @return
      */
     public function save()
     {
@@ -67,7 +67,7 @@ class BusinessStatus extends ApiCommon
         $param = $this->param;
         $userInfo = $this->userInfo;
         $param['create_user_id'] = $userInfo['id'];
-        
+
         $res = $businessStatusModel->createData($param);
         if ($res) {
             return resultArray(['data' => '添加成功']);
@@ -79,8 +79,8 @@ class BusinessStatus extends ApiCommon
     /**
      * 商机组详情
      * @author Michael_xu
-     * @param  
-     * @return 
+     * @param
+     * @return
      */
     public function read()
     {
@@ -96,11 +96,11 @@ class BusinessStatus extends ApiCommon
     /**
      * 编辑商机组
      * @author Michael_xu
-     * @param 
-     * @return 
+     * @param
+     * @return
      */
     public function update()
-    {    
+    {
         $businessStatusModel = model('BusinessStatus');
         $param = $this->param;
         $userInfo = $this->userInfo;
@@ -110,44 +110,44 @@ class BusinessStatus extends ApiCommon
             return resultArray(['data' => '编辑成功']);
         } else {
             return resultArray(['error' => $businessStatusModel->getError()]);
-        }       
+        }
     }
 
     /**
      * 商机组（停用）
      * @author Michael_xu
      * @param status 1启用, 0停用
-     * @return 
+     * @return
      */
     public function enables()
     {
         $businessStatusModel = model('BusinessStatus');
         $param = $this->param;
         if ($param['id'] == 1) {
-           return resultArray(['error' => '系统数据，不能操作']); 
+           return resultArray(['error' => '系统数据，不能操作']);
         }
         $status = $param['status'] ? : '0';
         if (db('crm_business_type')->where(['type_id' => $param['id']])->setField('status', $status)) {
             return resultArray(['data' => '操作成功']);
         } else {
             return resultArray(['error' => $businessStatusModel->getError()]);
-        }       
+        }
     }
 
     /**
      * 删除商机组
      * @author Michael_xu
      * @param status 1启用, 0停用
-     * @return 
+     * @return
      */
     public function delete()
     {
         $businessStatusModel = model('BusinessStatus');
         $param = $this->param;
-        $data = $businessStatusModel->delDataById($param['id'], true);       
+        $data = $businessStatusModel->delDataById($param, true);
         if (!$data) {
             return resultArray(['error' => $businessStatusModel->getError()]);
-        } 
-        return resultArray(['data' => '删除成功']);        
-    }   
+        }
+        return resultArray(['data' => '删除成功']);
+    }
 }

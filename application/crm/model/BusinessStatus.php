@@ -23,10 +23,10 @@ class BusinessStatus extends Common
      * [getDataList 商机状态list]
      * @author Michael_xu
      * @param  type_id  商机组ID
-     * @return 
-     */		
+     * @return
+     */
 	public function getDataList($type_id, $type = 0)
-    {  	
+    {
     	if ($type == 1) {
     		$list = db('crm_business_status')->where(['type_id' => $type_id])->whereOr(['type_id' => 0])->order('order_id asc')->select();
     	} else {
@@ -42,10 +42,10 @@ class BusinessStatus extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getTypeList($request)
-    {  	
-			
+    {
+
     	$userModel = new \app\admin\model\User();
     	$structureModel = new \app\admin\model\Structure();
         $request = $this->fmtRequest( $request );
@@ -62,22 +62,22 @@ class BusinessStatus extends Common
 
         $dataCount = db('crm_business_type')->where($map)->count('type_id');
         foreach ($list as $k=>$v) {
-        	$list[$k]['create_user_id_info'] = $userModel->getUserById($v['create_user_id']); 
+        	$list[$k]['create_user_id_info'] = $userModel->getUserById($v['create_user_id']);
         	$list[$k]['structure_id_info'] = $structureModel->getListByStr($v['structure_id']) ? : [];
-        }    
+        }
         $data = [];
         $data['list'] = $list;
         $data['dataCount'] = $dataCount ? : 0;
 
         return $data;
-    }    
+    }
 
 	/**
 	 * 创建商机组
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		if (!$param['name']) {
@@ -86,7 +86,7 @@ class BusinessStatus extends Common
 		}
 		if (!$param['status']) {
 			$this->error = '请至少配置一个商机阶段';
-			return false;			
+			return false;
 		}
 		$data = [];
 		$data['name'] = $param['name'];
@@ -114,16 +114,16 @@ class BusinessStatus extends Common
 		} else {
 			$this->error = '添加失败';
 			return false;
-		} 			
+		}
 	}
 
 	/**
 	 * 编辑商机组信息
 	 * @author Michael_xu
 	 * @param  type_id 商机组类型ID
-	 * @return                            
-	 */	
-	public function updateDataById($param, $type_id = '')
+	 * @return
+	 */
+	public function updateDataById($param, $type_id = 0)
 	{
 		$dataInfo = db('crm_business_type')->where(['type_id' => $type_id])->find();
 		if (!$dataInfo) {
@@ -135,14 +135,14 @@ class BusinessStatus extends Common
 		foreach ($unUpdateField as $v) {
 			unset($param[$v]);
 		}
-		
+
 		if (!$param['name']) {
 			$this->error = '请填写商机组名称';
 			return false;
 		}
 		if (!$param['status']) {
 			$this->error = '请至少配置一个商机阶段';
-			return false;			
+			return false;
 		}
 
 		$data = [];
@@ -186,22 +186,22 @@ class BusinessStatus extends Common
 			//新增
 			db('crm_business_status')->insertAll($statusData);
 			// 提交事务
-    		Db::commit();								
+    		Db::commit();
 			return true;
 		} catch (\Exception $e) {
 			$this->error = '编辑失败';
 			// 回滚事务
-		    Db::rollback();					
-    		return false;   				    
-		}				
+		    Db::rollback();
+    		return false;
+		}
 	}
 
 	/**
      * 商机组数据
      * @param  $status_id 商机组ID
-     * @return 
-     */	
-   	public function getDataById($type_id = '')
+     * @return
+     */
+   	public function getDataById($type_id = '', $param = [])
    	{
 		if (!$data = db('crm_business_type')->where(['type_id' => $type_id])->find()) {
 			$this->error = '数据不存在或已删除';
@@ -214,35 +214,34 @@ class BusinessStatus extends Common
 
 	/**
 	 * [delDataById 根据id删除数据]
-	 * @param     string                   $id     [主键]
+	 * @param     array                   $param     [主键]
 	 * @param     boolean                  $delSon [是否删除子孙数据]
 	 * @return    [type]                           [description]
 	 */
-	public function delDataById($id = '', $delSon = false)
+	public function delDataById($param = [], $delSon = false)
 	{
-		if (!$id) {
+		if (!$param['id']) {
 			$this->error = '删除失败';
 			return false;
 		}
 		//状态组已被使用，则不能删除
-		$resDel = true;
-		if (db('crm_business')->where(['type_id' => $id])->find()) {
+		if (db('crm_business')->where(['type_id' => $param['id']])->find()) {
 			$this->error = '状态组已被使用，不能删除';
-			return false;			
+			return false;
 		}
 		//启动事务
 		Db::startTrans();
 		try {
-			db('crm_business_type')->where(['type_id' => $id])->delete();
-			db('crm_business_status')->where(['type_id' => $id])->delete();
+			db('crm_business_type')->where(['type_id' => $param['id']])->delete();
+			db('crm_business_status')->where(['type_id' => $param['id']])->delete();
 			// 提交事务
     		Db::commit();
-			return true;					
+			return true;
 		} catch(\Exception $e) {
 			$this->error = '删除失败';
 			// 回滚事务
-			Db::rollback();	
+			Db::rollback();
 			return false;
-		}		
-	}	   	
+		}
+	}
 }

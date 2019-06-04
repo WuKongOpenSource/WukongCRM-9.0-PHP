@@ -9,7 +9,7 @@ namespace app\admin\model;
 
 use app\admin\model\Common;
 use think\Db;
-class Configset extends Common 
+class Configset extends Common
 {
     /**
      * 为了数据库的整洁，同时又不影响Model和Controller的名称
@@ -19,7 +19,7 @@ class Configset extends Common
 
 	/**
 	 * [getDataList 获取列表]
-	 * @return    [array]            
+	 * @return    [array]
 	 */
 	public function getDataList()
 	{
@@ -27,14 +27,14 @@ class Configset extends Common
 		$list = Db::name('AdminConfig')->order('type asc')->select();
 		$dataary = array();
 		foreach ($list as $key=>$value) {
-			$dataary[$value['type']]['type_name'] = $array[$value['type']-1];  
-			$dataary[$value['type']]['typestatus'] = $value['typestatus'];  
+			$dataary[$value['type']]['type_name'] = $array[$value['type']-1];
+			$dataary[$value['type']]['typestatus'] = $value['typestatus'];
 			$value['status'] = $value['typestatus']?$value['status']:'0';
-			$dataary[$value['type']]['sublist'][] = $value; 
+			$dataary[$value['type']]['sublist'][] = $value;
 		}
 		return $dataary;
 	}
-	
+
 	//获取模块列表
 	public function typelist()
 	{
@@ -48,14 +48,14 @@ class Configset extends Common
 		}
 		return $dataary?:array();
 	}
-	
+
 	//获取某个模块下列表
 	public function getDataBytype($param)
 	{
 		$list = Db::name('AdminConfig')->where(' typestatus = 1 and type = '.$param['type'].'')->select();
 		return $list?:array();
 	}
-	
+
 	//新建
 	public function createData($param)
 	{
@@ -68,9 +68,9 @@ class Configset extends Common
 			return false;
 		}
 	}
-	
+
 	//编辑
-	public function updateDataById($param,$id)
+	public function updateDataById($param,$id =0)
 	{
 		$temp['status'] = $param['status'];
 		$flag = $this->where('id = '.$id.'')->update($temp);
@@ -81,7 +81,7 @@ class Configset extends Common
 			return false;
 		}
 	}
-	
+
 	//类型编辑
 	public function updateDatas($param,$type)
 	{

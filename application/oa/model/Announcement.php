@@ -34,7 +34,7 @@ class Announcement extends Common
      * @author Michael_xu
      * @param     [by]                       $by [查询时间段类型]
      * @return
-     */		
+     */
 	public function getDataList($request)
     {
     	$userModel = new \app\admin\model\User();
@@ -43,10 +43,10 @@ class Announcement extends Common
 		$search = $request['search'];
     	$user_id = $request['user_id'];
 		unset($request['search']);
-		unset($request['user_id']);	
+		unset($request['user_id']);
 
         $request = $this->fmtRequest( $request );
-        $requestMap = $request['map'] ? : [];		
+        $requestMap = $request['map'] ? : [];
 
 		$time = strtotime(date('Y-m-d',time()));
 		$map = array();
@@ -58,7 +58,7 @@ class Announcement extends Common
 			$time = '';
 		}
 		$userDet = $userModel->getDataById($user_id);
-			
+
 		$list = Db::name('OaAnnouncement')
 				->alias('announcement')
 				->where($time.' ( owner_user_ids LIKE "%,'.$userDet['id'].',%" OR structure_ids LIKE "%,'.$userDet['structure_id'].',%" OR create_user_id = '.$user_id.' OR (owner_user_ids = "" AND structure_ids = ""))')
@@ -83,10 +83,10 @@ class Announcement extends Common
 			$permission['is_delete'] = $is_delete;
 			$list[$k]['permission']  = $permission;
 		}
-		
+
         $dataCount = Db::name('OaAnnouncement')->alias('announcement')
 			->where(''.$time.' ( owner_user_ids LIKE "%,'.$userDet['id'].',%" OR structure_ids LIKE "%,'.$userDet['structure_id'].',%" OR create_user_id = '.$user_id.')')
-			->count();  
+			->count();
         $data = [];
         $data['list'] = $list;
         $data['dataCount'] = $dataCount ? : 0;
@@ -96,16 +96,16 @@ class Announcement extends Common
 	/**
 	 * 创建公告信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
-	{	
+	{
 		//不选择通知人，则默认为全部
 		$param['structure_ids'] = arrayToString($param['owner_structure_ids']) ? : '';
 		unset($param['owner_structure_ids']);
 		$param['owner_user_ids'] = arrayToString($param['owner_user_ids']) ? : '';
-		
+
 		if ($this->allowField(true)->save($param)) {
 			$data = $param;
 			$data['announcement_id'] = $this->announcement_id;
@@ -126,27 +126,27 @@ class Announcement extends Common
 			} elseif ($send_user_ids) {
 				$send_user_id = $send_user_ids;
 			} else {
-				$send_user_id = getSubUserId(true, 1); 
+				$send_user_id = getSubUserId(true, 1);
 			}
             $createUserInfo = $userModel->getDataById($param['create_user_id']);
             $sendContent = $createUserInfo['realname'].'创建了公告【'.$param['title'].'】,请及时查看';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $this->announcement_id, 1);
-            }		
+            }
 			return $data;
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 编辑公告信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $announcement_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $announcement_id = 0)
 	{
 		$dataInfo = $this->getDataById($announcement_id);
 		if (!$dataInfo) {
@@ -156,11 +156,11 @@ class Announcement extends Common
 		//不选择通知人，则默认为全部
 		$param['structure_ids'] = arrayToString($param['owner_structure_ids']) ? : '';
 		unset($param['owner_structure_ids']);
-		$param['owner_user_ids'] = arrayToString($param['owner_user_ids']) ? : '';		
+		$param['owner_user_ids'] = arrayToString($param['owner_user_ids']) ? : '';
 		$param['update_time'] = time();
 		if ($this->allowField(true)->save($param, ['announcement_id' => $announcement_id])) {
 			$userModel = new \app\admin\model\User();
-			$structureModel = new \app\admin\model\Structure();			
+			$structureModel = new \app\admin\model\Structure();
 			actionLog($announcement_id, $param['owner_user_ids'], $param['structure_ids'], '编辑了公告');
 			//发送站内信
 			$send_user_id = [];
@@ -173,29 +173,29 @@ class Announcement extends Common
 			} elseif ($send_user_ids) {
 				$send_user_id = $send_user_ids;
 			} else {
-				$send_user_id = getSubUserId(true, 1); 
+				$send_user_id = getSubUserId(true, 1);
 			}
             $createUserInfo = $userModel->getDataById($param['create_user_id']);
             $sendContent = $createUserInfo['realname'].'修改了公告【'.$param['title'].'】,请及时查看';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $announcement_id, 1);
-            }			
+            }
 			$data = [];
 			$data['announcement_id'] = $announcement_id;
 			return $data;
 		} else {
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
 	/**
      * 公告数据
      * @param  $id 公告ID
-     * @return 
-     */	
-   	public function getDataById($announcement_id = '')
-   	{   		
+     * @return
+     */
+   	public function getDataById($announcement_id = '', $param = [])
+   	{
    		$map['announcement_id'] = $announcement_id;
 		$dataInfo = Db::name('OaAnnouncement')->where($map)->find();
 
@@ -210,9 +210,9 @@ class Announcement extends Common
 		$dataInfo['announcement_id'] = $announcement_id;
 		return $dataInfo;
    	}
-	
+
 	//删除公告
-	public function delDataById($param)
+	public function delDataById($param=[], $delSon = false)
 	{
 		$dataInfo = $this->getDataById($param['announcement_id']);
 		if (!$dataInfo) {
@@ -222,7 +222,7 @@ class Announcement extends Common
 		$map['announcement_id'] = $param['announcement_id'];
 		$flag = $this->where($map)->delete();
 		if ($flag) {
-			actionLog($param['announcement_id'],$dataInfo['owner_user_ids'],$dataInfo['structure_ids'],'删除了公告'); 
+			actionLog($param['announcement_id'],$dataInfo['owner_user_ids'],$dataInfo['structure_ids'],'删除了公告');
 			return true;
 		} else {
 			$this->error = '删除失败';

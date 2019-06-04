@@ -18,16 +18,16 @@ class Record extends ApiCommon
      * @permission 无限制
      * @allow 登录用户可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','save','update','delete']            
+            'allow'=>['index','save','update','delete']
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
-        $a = strtolower($request->action());        
+        $a = strtolower($request->action());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
@@ -75,15 +75,15 @@ class Record extends ApiCommon
             $data['create_user_id'] = $userInfo['id'];
             if ($param['types'] == 'crm_customer') $data['customer_ids'] = $param['types_id'];
             $data['business_ids'] = $param['business_ids'];
-            $data['contacts_ids'] = $param['contacts_ids'];            
-            $resEvent = $eventModel->createData($data);          
+            $data['contacts_ids'] = $param['contacts_ids'];
+            $resEvent = $eventModel->createData($data);
         }
         return resultArray(['data' => '添加成功']);
     }
 
     /**
      * 跟进记录编辑
-     * @param 
+     * @param
      * @return
      */
     public function update()
@@ -93,8 +93,8 @@ class Record extends ApiCommon
         $data = $recordModel->updateDataById($param, $param['id']);
         if (!$data) {
             return resultArray(['error' => $recordModel->getError()]);
-        } 
-        return resultArray(['data' => '编辑成功']);        
+        }
+        return resultArray(['data' => '编辑成功']);
     }
 
     /**
@@ -117,10 +117,10 @@ class Record extends ApiCommon
         if (!in_array(1,$adminTypes) && ($dataInfo['create_user_id'] !== $userInfo['id'] && ((time()-$dataInfo['create_time']) > 86400))) {
             return resultArray(['error' => '超过24小时，不能删除']);
         }
-        $resData = $recordModel->delDataById($param['id']);
+        $resData = $recordModel->delDataById($param);
         if (!$resData) {
             return resultArray(['error' => $recordModel->getError()]);
         }
         return resultArray(['data' => '删除成功']);
-    }   
+    }
 }

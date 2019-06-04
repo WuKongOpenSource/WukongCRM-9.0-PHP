@@ -29,9 +29,9 @@ class Business extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getDataList($request)
-    {  	
+    {
     	$userModel = new \app\admin\model\User();
     	$structureModel = new \app\admin\model\Structure();
     	$fieldModel = new \app\admin\model\Field();
@@ -40,7 +40,7 @@ class Business extends Common
     	$scene_id = (int)$request['scene_id'];
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);    	
+		unset($request['user_id']);
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -80,15 +80,15 @@ class Business extends Common
 			if (isset($map['business.owner_user_id'])) {
 				if (!is_array($map['business.owner_user_id'][1])) {
 					$map['business.owner_user_id'][1] = [$map['business.owner_user_id'][1]];
-				}	
+				}
 				if ($map['business.owner_user_id'][0] == 'neq') {
-					$auth_user_ids = array_diff($auth_user_ids, $map['business.owner_user_id'][1]) ? : [];	//取差集	
+					$auth_user_ids = array_diff($auth_user_ids, $map['business.owner_user_id'][1]) ? : [];	//取差集
 				} else {
-					$auth_user_ids = array_intersect($map['business.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集	
+					$auth_user_ids = array_intersect($map['business.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集
 				}
 		        unset($map['business.owner_user_id']);
 		        $auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
-		        $authMap['business.owner_user_id'] = array('in',$auth_user_ids); 
+		        $authMap['business.owner_user_id'] = array('in',$auth_user_ids);
 		    } else {
 		    	$authMapData = [];
 		    	$authMapData['auth_user_ids'] = $auth_user_ids;
@@ -101,9 +101,9 @@ class Business extends Common
 		    }
 		}
 		//列表展示字段
-		// $indexField = $fieldModel->getIndexField('crm_business', $user_id);	
+		// $indexField = $fieldModel->getIndexField('crm_business', $user_id);
 		$userField = $fieldModel->getFieldByFormType('crm_business', 'user'); //人员类型
-		$structureField = $fieldModel->getFieldByFormType('crm_business', 'structure');  //部门类型	
+		$structureField = $fieldModel->getFieldByFormType('crm_business', 'structure');  //部门类型
 
 		if ($request['order_type'] && $request['order_field']) {
 			$order = trim($request['order_field']).' '.trim($request['order_type']);
@@ -113,10 +113,10 @@ class Business extends Common
 
 		$readAuthIds = $userModel->getUserByPer('crm', 'business', 'read');
         $updateAuthIds = $userModel->getUserByPer('crm', 'business', 'update');
-        $deleteAuthIds = $userModel->getUserByPer('crm', 'business', 'delete');			
+        $deleteAuthIds = $userModel->getUserByPer('crm', 'business', 'delete');
 		$list = db('crm_business')
 				->alias('business')
-				->join('__CRM_CUSTOMER__ customer','business.customer_id = customer.customer_id','LEFT')		
+				->join('__CRM_CUSTOMER__ customer','business.customer_id = customer.customer_id','LEFT')
 				->where($map)
 				->where($partMap)
 				->where($authMap)
@@ -124,7 +124,7 @@ class Business extends Common
         		->field('business.*,customer.name as customer_name')
         		// ->field('business_id,'.implode(',',$indexField))
         		->order($order)
-        		->select();	
+        		->select();
         $dataCount = db('crm_business')
         			->alias('business')
         			->join('__CRM_CUSTOMER__ customer','business.customer_id = customer.customer_id','LEFT')
@@ -133,7 +133,7 @@ class Business extends Common
             $list[$k]['customer_id_info']['customer_id'] = $v['customer_id'];
             $list[$k]['customer_id_info']['name'] = $v['customer_name'];
         	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
-        	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];  
+        	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];
 			foreach ($userField as $key => $val) {
         		$list[$k][$val.'_info'] = isset($v[$val]) ? $userModel->getListByStr($v[$val]) : [];
         	}
@@ -148,7 +148,7 @@ class Business extends Common
         	}
 
         	$list[$k]['status_id_info'] = $statusInfo['name'];//销售阶段
-        	$list[$k]['type_id_info'] = db('crm_business_type')->where('type_id',$v['type_id'])->value('name');//商机状态组 
+        	$list[$k]['type_id_info'] = db('crm_business_type')->where('type_id',$v['type_id'])->value('name');//商机状态组
         	//进度
         	$list[$k]['status_progress'] = [$statusInfo['order_id'], $status_count+1];
 			//权限
@@ -160,12 +160,12 @@ class Business extends Common
 			$is_delete = 0;
 			if (in_array($v['owner_user_id'],$readAuthIds) || $roPre || $rwPre) $is_read = 1;
 			if (in_array($v['owner_user_id'],$updateAuthIds) || $rwPre) $is_update = 1;
-			if (in_array($v['owner_user_id'],$deleteAuthIds)) $is_delete = 1;	        
+			if (in_array($v['owner_user_id'],$deleteAuthIds)) $is_delete = 1;
 	        $permission['is_read'] = $is_read;
 	        $permission['is_update'] = $is_update;
 	        $permission['is_delete'] = $is_delete;
 	        $list[$k]['permission']	= $permission;
-        }    
+        }
         $data = [];
         $data['list'] = $list ? : [];
         $data['dataCount'] = $dataCount ? : 0;
@@ -176,9 +176,9 @@ class Business extends Common
 	/**
 	 * 创建商机主表信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		$fieldModel = new \app\admin\model\Field();
@@ -212,7 +212,7 @@ class Business extends Common
 				if ($resProduct == false) {
 		        	$this->error = '产品添加失败';
 		        	return false;
-		        }		       
+		        }
  		    }
 			//添加商机日志
 			$data_log['business_id'] = $business_id;
@@ -222,23 +222,23 @@ class Business extends Common
 			$data_log['owner_user_id'] = $param['owner_user_id'];
 			$data_log['remark'] = '新建商机';
 			Db::name('CrmBusinessLog')->insert($data_log);
-			
+
 			$data = [];
 			$data['business_id'] = $business_id;
 			return $data;
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 编辑商机主表信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $business_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $business_id = 0)
 	{
 		$productModel = new \app\crm\model\Product();
 		$dataInfo = $this->getDataById($business_id);
@@ -252,7 +252,7 @@ class Business extends Common
 		foreach ($unUpdateField as $v) {
 			unset($param[$v]);
 		}
-		
+
 		$fieldModel = new \app\admin\model\Field();
 		// 自动验证
 		$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则
@@ -284,15 +284,15 @@ class Business extends Common
 			$this->rollback();
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
 	/**
      * 商机数据
      * @param  $id 商机ID
-     * @return 
-     */	
-   	public function getDataById($id = '')
+     * @return
+     */
+   	public function getDataById($id = '', $param = [])
    	{
 		$dataInfo = $this->get($id);
 		if (!$dataInfo) {
@@ -301,14 +301,14 @@ class Business extends Common
 		}
 		$userModel = new \app\admin\model\User();
 		$dataInfo['create_user_id_info'] = isset($dataInfo['create_user_id']) ? $userModel->getUserById($dataInfo['create_user_id']) : [];
-		$dataInfo['owner_user_id_info'] = isset($dataInfo['owner_user_id']) ? $userModel->getUserById($dataInfo['owner_user_id']) : []; 
+		$dataInfo['owner_user_id_info'] = isset($dataInfo['owner_user_id']) ? $userModel->getUserById($dataInfo['owner_user_id']) : [];
 		$dataInfo['type_id_info'] = db('crm_business_type')->where(['type_id' => $dataInfo['type_id']])->value('name');
 		$dataInfo['status_id_info'] = db('crm_business_status')->where(['status_id' => $dataInfo['status_id']])->value('name');
 		$dataInfo['customer_id_info'] = db('crm_customer')->where(['customer_id' => $dataInfo['customer_id']])->field('customer_id,name')->find();
 		// $dataInfo['remark'] = db('crm_business_log')->where(['business_id' => $id,'is_end' => ['gt',0]])->order('create_time desc')->value('remark'); //商机状态推进结束备注
 		return $dataInfo;
    	}
-	
+
 	//根据IDs获取数组
 	public function getDataByStr($idstr)
 	{
@@ -319,13 +319,13 @@ class Business extends Common
 		$list = Db::name('CrmBusiness')->where(['business_id' => ['in',$idArr]])->select();
 		return $list;
 	}
-	
+
 	/**
      * [商机漏斗]
      * @author Michael_xu
      * @param     [string]                   $request [查询条件]
-     * @return    [array]                    
-     */		
+     * @return    [array]
+     */
 	public function getFunnel($request)
     {
     	$userModel = new \app\admin\model\User();
@@ -347,17 +347,17 @@ class Business extends Common
 
 		//商机状态组
 		$default_type_id = db('crm_business_type')->order('type_id asc')->value('type_id');
-		
+
 		$type_id = $request['type_id'] ? $request['type_id'] : $default_type_id;
-		
+
 		$statusList = db('crm_business_status')->where(['type_id' => $type_id])->select();
 		$str = getFieldArray($statusList,'status_id');
-		//$temmpp['status_id'] = ['in',$str]; 
+		//$temmpp['status_id'] = ['in',$str];
 		//$temmpp['create_time'] = $where['create_time'];
 		//$temmpp['owner_user_id'] = $where['owner_user_id'];
-		
+
 		//$logList = Db::name('CrmBusinessLog')->where($temmpp)->order('business_id desc,create_time desc')->select();
-		//赢单 
+		//赢单
 		$map['create_time'] = $where['create_time'];
 		$map['owner_user_id'] = ['in',$request['userIds']];
 		$sum_ying = Db::name('CrmBusiness')->where($map)->where('status_id=1')->sum('money');
@@ -369,9 +369,9 @@ class Business extends Common
 			$where['type_id'] = $type_id;
 			$where['status_id'] = $v['status_id'];
 			$statusList[$k]['status_name'] = $v['name'];
-			$statusList[$k]['count'] = db('crm_business')->where($where)->count(); 
+			$statusList[$k]['count'] = db('crm_business')->where($where)->count();
 			$statusList[$k]['money'] = db('crm_business')->where($where)->sum('money'); //商机金额
-			
+
 			$sum_money += $statusList[$k]['money'];
 			//$statusList[$k]['status_name'] = $v['name'];
 			//根据商机查询 商机组
@@ -395,7 +395,7 @@ class Business extends Common
 		$data['sum_shu'] = $sum_shu;
 		$data['sum_money'] = $sum_money;
         return $data ? : [];
-    } 
+    }
 
 	/**
      * [商机转移]
@@ -403,21 +403,21 @@ class Business extends Common
      * @param ids 商机ID数组
      * @param owner_user_id 变更负责人
      * @param is_remove 1移出，2转为团队成员
-     * @return            
-     */	
+     * @return
+     */
     public function transferDataById($ids, $owner_user_id, $type = 1, $is_remove)
     {
-	    $settingModel = new \app\crm\model\Setting();   
-	    $errorMessage = [];    	
+	    $settingModel = new \app\crm\model\Setting();
+	    $errorMessage = [];
     	foreach ($ids as $id) {
     		$businessInfo = db('crm_business')->where(['business_id' => $id])->find();
 			$data = [];
 	        $data['owner_user_id'] = $owner_user_id;
-	        $data['update_time'] = time(); 
+	        $data['update_time'] = time();
 			if (!db('crm_business')->where(['business_id' => $id])->update($data)) {
 	            $errorMessage[] = '商机：'.$businessInfo['name'].'"转移失败，错误原因：数据出错；';
 	            continue;
-	        }	        
+	        }
 	        //团队成员
 	        $teamData = [];
             $teamData['type'] = $type; //权限 1只读2读写
@@ -425,12 +425,12 @@ class Business extends Common
             $teamData['types'] = 'crm_business'; //类型
             $teamData['types_id'] = $id; //类型ID
             $teamData['is_del'] = ($is_remove == 1) ? 1 : '';
-            $res = $settingModel->createTeamData($teamData); 
+            $res = $settingModel->createTeamData($teamData);
     	}
     	if ($errorMessage) {
 			return $errorMessage;
     	} else {
     		return true;
     	}
-    }    	
+    }
 }

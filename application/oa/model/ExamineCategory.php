@@ -29,9 +29,9 @@ class ExamineCategory extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getDataList($request)
-    {  	
+    {
     	$userModel = new \app\admin\model\User();
     	$structureModel = new \app\admin\model\Structure();
     	$examineFlowModel = new \app\admin\model\ExamineFlow();
@@ -42,24 +42,24 @@ class ExamineCategory extends Common
 			//普通筛选
 			$map['title'] = ['like', '%'.$map['search'].'%'];
 			unset($map['search']);
-		}	
-		$map['is_deleted'] = 0;	
+		}
+		$map['is_deleted'] = 0;
 
 		$list = $this
 				->where($map)
         		->page($request['page'], $request['limit'])
-        		->select();	
+        		->select();
         foreach ($list as $k=>$v) {
         	$flowInfo = [];
         	$flowInfo = $examineFlowModel->getDataById($v['flow_id']);
         	$list[$k]['config'] = $flowInfo['config'];
 			$stepList = [];
             $stepList = $examineStepModel->getDataList($v['flow_id']);
-            $list[$k]['stepList'] = $stepList ? : []; 
+            $list[$k]['stepList'] = $stepList ? : [];
             $list[$k]['user_ids_info'] = $userModel->getListByStr($v['user_ids']);
-            $list[$k]['structure_ids_info'] = $structureModel->getListByStr($v['structure_ids']);	
+            $list[$k]['structure_ids_info'] = $structureModel->getListByStr($v['structure_ids']);
         }
-        $dataCount = $this->where($map)->count('category_id');  
+        $dataCount = $this->where($map)->count('category_id');
         $data = [];
         $data['list'] = $list;
         $data['dataCount'] = $dataCount ? : 0;
@@ -69,9 +69,9 @@ class ExamineCategory extends Common
 	/**
 	 * 创建审批类型信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		$fieldModel = new \app\admin\model\Field();
@@ -114,11 +114,11 @@ class ExamineCategory extends Common
 			if (!$fieldModel->createData('oa_examine', $fieldData)) {
 				db('oa_examine_category')->where(['category_id' => $this->category_id])->delete();
 				$this->error = '程序出错，请重试';
-		        return false;				
-			}	
+		        return false;
+			}
 
 			$data = [];
-			$data['category_id'] = $this->category_id;			
+			$data['category_id'] = $this->category_id;
 			//创建审批流
 			if (is_array($examineStep) && $examineStep) {
 				$examineFlowModel = new \app\admin\model\ExamineFlow();
@@ -129,9 +129,9 @@ class ExamineCategory extends Common
 		        $examineFlow['types'] = 'oa_examine';
 		        $examineFlow['types_id'] = $this->category_id;
 				$examineFlow['user_ids'] = arrayToString($param['user_ids']);
-        		$examineFlow['structure_ids'] = arrayToString($param['structure_ids']);		        
-		        $examineFlow['update_user_id'] = $param['create_user_id'];	
-		        $examineFlow['status'] = 1;	
+        		$examineFlow['structure_ids'] = arrayToString($param['structure_ids']);
+		        $examineFlow['update_user_id'] = $param['create_user_id'];
+		        $examineFlow['status'] = 1;
 		        $res = $examineFlowModel->createData($examineFlow);
 		        if ($res) {
 		            if ((int)$config == 1) {
@@ -144,14 +144,14 @@ class ExamineCategory extends Common
 		                    db('admin_examine_flow')->where(['flow_id' => $res['flow_id']])->delete();
 		                    $this->error = $examineStepModel->getError();
 		                    return false;
-		                }                
+		                }
 		            } else {
 		            	return $data;
 		            }
 		        } else {
 		        	$this->error = $examineFlowModel->getError();
 		        	return false;
-		        }				
+		        }
 			} else {
 				$this->error = '请添加审批步骤';
 				return false;
@@ -159,16 +159,16 @@ class ExamineCategory extends Common
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 编辑审批类型信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $category_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $category_id = 0)
 	{
 		$category_id = intval($category_id);
 		unset($param['id']);
@@ -177,7 +177,7 @@ class ExamineCategory extends Common
 		foreach ($unUpdateField as $v) {
 			unset($param[$v]);
 		}
-		
+
 		//验证
 		$validate = validate($this->name);
 		if (!$validate->check($param)) {
@@ -188,7 +188,7 @@ class ExamineCategory extends Common
 		$param['structure_ids'] = is_array($param['structure_ids']) ? arrayToString($param['structure_ids']) : $param['structure_ids']; //处理structure_id
 
 		$examineStep = $param['step']; //审批步骤
-		$config = $param['config'] ? 1 : 0; //审批流程类型 1固定审批0授权审批		
+		$config = $param['config'] ? 1 : 0; //审批流程类型 1固定审批0授权审批
 
 		if ($this->allowField(true)->save($param, ['category_id' => $category_id])) {
 			$data = [];
@@ -197,16 +197,16 @@ class ExamineCategory extends Common
 		} else {
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
 	/**
      * 审批类型数据
      * @param  $id 审批ID
-     * @return 
-     */	
-   	public function getDataById($id = '')
-   	{   		
+     * @return
+     */
+   	public function getDataById($id = '', $param = [])
+   	{
    		$map['category_id'] = $id;
 		$dataInfo = db('oa_examine_category')->where($map)->find();
 		return $dataInfo ? : [];
@@ -215,8 +215,8 @@ class ExamineCategory extends Common
 	/**
 	 * 逻辑删除,将数据标记为删除状态
 	 * @author Michael_xu
-	 */	
-	public function signDelById($id, $user_id)
+	 */
+	public function signDelById($id, $user_id = 0)
 	{
 		if (!$id) {
 			$this->error = '删除失败';
@@ -225,13 +225,13 @@ class ExamineCategory extends Common
 		$info = $this->get($id);
 		if ($info['is_sys'] == 1) {
 			$this->error = '系统类型，不能删除';
-			return false;			
+			return false;
 		}
 		//是否被使用
 		$resCategory = db('oa_examine')->where(['category_id' => $info['category_id']])->find();
 		if ($resCategory) {
 			$this->error = '已有审批，不能删除';
-			return false;			
+			return false;
 		}
 		$this->startTrans();
 		try {
@@ -245,6 +245,6 @@ class ExamineCategory extends Common
 			$this->error = '删除失败';
 			$this->rollback();
 			return false;
-		}			
+		}
 	}
 }

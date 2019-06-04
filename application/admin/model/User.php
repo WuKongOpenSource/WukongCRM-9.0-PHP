@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 用户
 // +----------------------------------------------------------------------
-// | Author:  Michael_xu | gengxiaoxu@5kcrm.com 
+// | Author:  Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\admin\model;
@@ -56,7 +56,7 @@ class User extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return                     [description]
-     */	    
+     */
 	public function getDataList($request)
 	{
 		$request = $this->fmtRequest( $request );
@@ -71,7 +71,7 @@ class User extends Common
 			$group_user_ids = db('admin_access')->where(['group_id' => $map['group_id']])->column('user_id');
 			if ($map['group_id'] == 1 && !$group_user_ids) {
 				$group_user_ids = ['1'];
-			}			
+			}
 			$map['user.id'] = array('in',$group_user_ids);
 		}
 		$exp = new \think\db\Expression('field(user.status,1,2,0)');
@@ -132,11 +132,11 @@ class User extends Common
 			$list[$k]['groupids'] = $groupids ? implode(',',$groupids) : '';
 			$list[$k]['img'] = $v['img'] ? getFullPath($v['img']) : '';
 			$list[$k]['thumb_img'] = $v['thumb_img'] ? getFullPath($v['thumb_img']) : '';
-		}																	
-		$data = [];			
-		$data['list'] = $list;				
+		}
+		$data = [];
+		$data['list'] = $list;
 		$data['dataCount'] = $dataCount;
-					
+
 		return $data;
 	}
 
@@ -159,9 +159,9 @@ class User extends Common
 	/**
 	 * [getDataById 根据主键获取详情]
 	 * @param     string                   $id [主键]
-	 * @return 
+	 * @return
 	 */
-	public function getDataById($id = '')
+	public function getDataById($id = '', $param = [])
 	{
 		$data = Db::name('AdminUser')->find($id);
 		if (!$data) {
@@ -197,7 +197,7 @@ class User extends Common
 		if (empty($param['group_id']) || !is_array($param['group_id'])) {
 			$this->error = '请至少勾选一个用户组';
 			return false;
-		}		
+		}
 		// 验证
 		$validate = validate($this->name);
 		if (!$validate->check($param)) {
@@ -218,28 +218,28 @@ class User extends Common
 			$param['password'] = user_md5($password, $salt, $param['username']);
 			$param['type'] = 1;
 			$param['mobile'] = $param['username'];
-			$this->data($param)->allowField(true)->save();		
+			$this->data($param)->allowField(true)->save();
 			$user_id = $this->id;
 			//员工档案
 			$data['user_id'] = $param['user_id'];
 			unset($param['user_id']);
 			$data['user_id'] = $user_id;
-			$data['mobile'] = $param['username'];	 	
-			$data['email'] = $param['email'] ? : '';	
-			$data['sex'] = $param['sex'] ? : '';					
+			$data['mobile'] = $param['username'];
+			$data['email'] = $param['email'] ? : '';
+			$data['sex'] = $param['sex'] ? : '';
 			$data['create_time'] = time();
 			Db::name('HrmUserDet')->insert($data);
-			
+
 			foreach ($param['group_id'] as $k => $v) {
 				$userGroup['user_id'] = $user_id;
 				$userGroup['group_id'] = $v;
 				$userGroups[] = $userGroup;
 			}
 			Db::name('admin_access')->insertAll($userGroups);
-		
+
 			$this->commit();
 			$param['user_id'] = $data['user_id'];
-	        $resSync = $syncModel->syncData($param);			
+	        $resSync = $syncModel->syncData($param);
 			return true;
 		} catch(\Exception $e) {
 			$this->rollback();
@@ -247,7 +247,7 @@ class User extends Common
 			return false;
 		}
 	}
-	
+
 	//导入成为正式用户
 	public function beusers($request)
 	{
@@ -276,12 +276,12 @@ class User extends Common
 			return false;
 		}
 	}
-	
+
 	/**
 	 * 通过id修改用户
 	 * @param  array
 	 */
-	public function updateDataById($param, $id)
+	public function updateDataById($param, $id = 0)
 	{
 		if ($param['user_id']) {
 			//修改个人信息
@@ -290,7 +290,7 @@ class User extends Common
 			// $data['mobile'] = $param['username'];
 			if (db('admin_user')->where(['username' => $param['username'],'id' => ['neq',$param['user_id']]])->find()) {
 				$this->error = '手机号已存在';
-				return false;				
+				return false;
 			}
 			Db::name('HrmUserDet')->where(['user_id' => $param['user_id']])->update($data);
 			$data['realname'] = $param['realname'];
@@ -324,9 +324,9 @@ class User extends Common
 			}
 			if (db('admin_user')->where(['id' => ['neq',$id],'username' => $param['username']])->find()) {
 				$this->error = '手机号已存在';
-				return false;			
+				return false;
 			}
-			
+
 			$this->startTrans();
 			try {
 				$accessModel = model('Access');
@@ -340,10 +340,10 @@ class User extends Common
 				}
 				$this->allowField(true)->save($param, ['id' => $id]);
 				$this->commit();
-				
-				// $data['mobile'] = $param['username'];	 	
-				$data['email'] = $param['email'];	
-				$data['sex'] = $param['sex'];				
+
+				// $data['mobile'] = $param['username'];
+				$data['email'] = $param['email'];
+				$data['sex'] = $param['sex'];
 				$data['update_time'] = time();
 				$flagg = Db::name('HrmUserDet')->where('user_id = '.$id)->update($data);
 				return true;
@@ -351,7 +351,7 @@ class User extends Common
 				$this->rollback();
 				$this->error = '编辑失败';
 				return false;
-			}			
+			}
 		}
 	}
 
@@ -392,7 +392,7 @@ class User extends Common
 		$map['username'] = $username;
 		$map['type'] = 1;
 		$userInfo = $this->where($map)->find();
-		
+
     	if (!$userInfo) {
 			$this->error = '帐号不存在';
 			return false;
@@ -417,7 +417,7 @@ class User extends Common
 
 		//登录有效时间
         $cacheConfig = config('cache');
-        $loginExpire = $cacheConfig['expire'] ? : '86400*3';        
+        $loginExpire = $cacheConfig['expire'] ? : '86400*3';
 
         // 保存缓存
         session_start();
@@ -435,14 +435,14 @@ class User extends Common
 			cache('Auth_'.$authKey, $info, $loginExpire);
         }
         unset($userInfo['authkey']);
-		
+
         // 返回信息
         $data['authKey']		= $authKey;
         $data['sessionId']		= $info['sessionId'];
         $data['userInfo']		= $userInfo;
         $data['authList']		= $dataList['authList'];
         $data['menusList']		= $dataList['menusList'];
-             
+
         //保存authKey信息
         $userData = [];
         $userData['authkey'] = $authKey;
@@ -476,7 +476,7 @@ class User extends Common
 
 		//登录有效时间
         $cacheConfig = config('cache');
-        $loginExpire = $cacheConfig['expire'] ? : '86400*3';         
+        $loginExpire = $cacheConfig['expire'] ? : '86400*3';
 
         $password = $this->where('id', $userInfo['id'])->value('password');
         if (user_md5($old_pwd, $userInfo['salt'], $userInfo['username']) != $password) {
@@ -493,7 +493,7 @@ class User extends Common
 	        $syncData['user_id'] = $userInfo['id'];
 	        $syncData['salt'] = $userInfo['salt'];
 	        $syncData['password'] = user_md5($new_pwd, $userInfo['salt'], $userInfo['username']);
-	        $resSync = $syncModel->syncData($syncData);        	
+	        $resSync = $syncModel->syncData($syncData);
 
             $userInfo = $this->where('id', $userInfo['id'])->find();
             // 重新设置缓存
@@ -525,7 +525,7 @@ class User extends Common
 	        $syncData['user_id'] = $value;
 	        $syncData['salt'] = $salt;
 	        $syncData['password'] = $password;
-	        $resSync = $syncModel->syncData($syncData);			
+	        $resSync = $syncModel->syncData($syncData);
 		}
 		if ($flag) {
 			return $flag;
@@ -557,7 +557,7 @@ class User extends Common
 			}
 			$ruleIds = array_unique($ruleIds);
 	        $ruleMap['id'] = array('in', $ruleIds);
-	        $ruleMap['status'] = 1;    	
+	        $ruleMap['status'] = 1;
         }
         $newRuleIds = [];
         // 重新设置ruleIds，除去部分已删除或禁用的权限。
@@ -581,15 +581,15 @@ class User extends Common
 	    $adminTypes = adminGroupTypes($u_id);
 	    $newSetting = [];
 	    foreach ($settingList as $k=>$v) {
-	    	$check = false;  	
+	    	$check = false;
 	    	if (in_array('1', $adminTypes) || in_array('2', $adminTypes)) {
 	    		$check = true;
 	    	} else {
-				if ($v == 'user' && in_array('3', $adminTypes)) $check = true;	    		
-				if ($v == 'permission' && in_array('3', $adminTypes)) $check = true;	    		
-				if ($v == 'examineFlow' && in_array('4', $adminTypes)) $check = true;	    		
-				if ($v == 'oa' && in_array('5', $adminTypes)) $check = true;	    		
-				if ($v == 'crm' && in_array('6', $adminTypes)) $check = true;	    		
+				if ($v == 'user' && in_array('3', $adminTypes)) $check = true;
+				if ($v == 'permission' && in_array('3', $adminTypes)) $check = true;
+				if ($v == 'examineFlow' && in_array('4', $adminTypes)) $check = true;
+				if ($v == 'oa' && in_array('5', $adminTypes)) $check = true;
+				if ($v == 'crm' && in_array('6', $adminTypes)) $check = true;
 	    	}
 	    	if ($check == true) {
 	    		$newSetting['manage'][$v] = $check;
@@ -601,14 +601,14 @@ class User extends Common
 			$authList = $newSetting;
 	    }
 
-	    $ret['authList'] = $authList;    
+	    $ret['authList'] = $authList;
         return $ret;
     }
 
 	/**
 	 * 获取权限结构数组
 	 * @param
-	 */    
+	 */
 	public function getRulesList($uid)
 	{
     	$ruleMap = [];
@@ -625,7 +625,7 @@ class User extends Common
 			}
 			$ruleIds = array_unique($ruleIds);
 	        $ruleMap['id'] = array('in', $ruleIds);
-	        $ruleMap['status'] = 1;    	
+	        $ruleMap['status'] = 1;
         }
         $newRuleIds = [];
         // 重新设置ruleIds，除去部分已删除或禁用的权限。
@@ -638,7 +638,7 @@ class User extends Common
         $tree = new \com\Tree();
         $rulesList = $tree->list_to_tree($rules, 'id', 'pid', 'child', 0, true, array('pid'));
         $rulesList = rulesDeal($rulesList);
-        return $rulesList ? : [];		
+        return $rulesList ? : [];
 	}
 
     /**
@@ -646,7 +646,7 @@ class User extends Common
 	 * @param
 	 */
     public function getGroupTypeByAction($uid, $m, $c, $a)
-    {  	
+    {
     	//根据$m,$c,$a 获取对应的$a 的rule_id
     	$rulesList = $this->getRulesList($uid);
     	if (!in_array($m.'-'.$c.'-'.$a, $rulesList)) {
@@ -658,7 +658,7 @@ class User extends Common
 		//获取用户组
 		$groups = $this->get($uid)->groups;
 		if (!$groups) {
-			return false;	
+			return false;
 		}
 		$groupTypes = [];
 		foreach ($groups as $g) {
@@ -686,7 +686,7 @@ class User extends Common
     		$userIds = db('admin_user')->where(['id' => 1])->column('id');
     	}
 		return $userIds;
-    }    
+    }
 
     /**
 	 * 根据部门获取部门的userId
@@ -694,7 +694,7 @@ class User extends Common
 	 * @param $type  2时包含所有下属部门
 	 */
 	public function getSubUserByStr($structure_id, $type = 1)
-	{	
+	{
 		if (is_array($structure_id)) {
 			$allStrIds = $structure_id;
 		} else {
@@ -713,8 +713,8 @@ class User extends Common
 
 	/**
 	 * [getUserById 根据主键获取详情]
-	 * @param 
-	 * @return 
+	 * @param
+	 * @return
 	 */
 	public function getUserById($id = '')
 	{
@@ -729,8 +729,8 @@ class User extends Common
 
 	/**
 	 * [getUserNameById 根据主键获取详情]
-	 * @param 
-	 * @return 
+	 * @param
+	 * @return
 	 */
 	public function getUserNameById($id = '')
 	{
@@ -740,8 +740,8 @@ class User extends Common
 
 	/**
 	 * [getUserNameByArr 根据主键获取详情]
-	 * @param 
-	 * @return 
+	 * @param
+	 * @return
 	 */
 	public function getUserNameByArr($ids = [])
 	{
@@ -752,13 +752,13 @@ class User extends Common
 		}
 		$data = $this->where(['id' => array('in', $idArr)])->column('realname');
 		return $data ? : [];
-	}	
+	}
 
 	/**
 	 * [getAdminId 获取管理员ID]
-	 * @param 
-	 * @return 
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function getAdminId()
 	{
 		$adminGroupUser = db('admin_access')->where(['group_id' => 1])->column('user_id');
@@ -768,8 +768,8 @@ class User extends Common
 
 	/**
 	 * [getUserByIdArr 根据ID数组获取列表]
-	 * @param 
-	 * @return 
+	 * @param
+	 * @return
 	 */
 	public function getUserByIdArr($ids = [])
 	{
@@ -782,8 +782,8 @@ class User extends Common
 
 	/**
 	 * [getUserByPer 获取权限范围的user_id]
-	 * @param   
-	 * @return 
+	 * @param
+	 * @return
 	 */
 	public function getUserByPer($m = '', $c = '', $a = ''){
 	    $request = Request::instance();
@@ -811,7 +811,7 @@ class User extends Common
 	    } else {
 	        if (!$groupTypes) {
 	            return [];
-	        }    
+	        }
 	        if (in_array(5, $groupTypes)) {
 	            $userIds = getSubUserId(true, 1);
 	        } else {
@@ -825,12 +825,12 @@ class User extends Common
 	                } elseif ($v == 4) {
 	                    $userIds = $this->getSubUserByStr($userInfo['structure_id'], 2);
 	                }
-	            }       
+	            }
 	        }
 	    }
 	    return $userIds ? : [];
-	} 	
-	
+	}
+
 	/*
 	*根据部门ID获取员工列表
 	*
@@ -869,8 +869,8 @@ class User extends Common
 		} else {
 			if (!in_array($user_id, stringToArray($ro_user_id))) {
  				return false;
- 			}			
+ 			}
 		}
 		return true;
-	}		
+	}
 }

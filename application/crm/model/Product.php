@@ -29,9 +29,9 @@ class Product extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getDataList($request)
-    {  	
+    {
     	$userModel = new \app\admin\model\User();
     	$structureModel = new \app\admin\model\Structure();
     	$fieldModel = new \app\admin\model\Field();
@@ -40,7 +40,7 @@ class Product extends Common
     	$scene_id = (int)$request['scene_id'];
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);   	
+		unset($request['user_id']);
 
         $request = $this->fmtRequest($request);
         $requestMap = $request['map'] ? : [];
@@ -71,13 +71,13 @@ class Product extends Common
 		//列表展示字段
 		// $indexField = $fieldModel->getIndexField('crm_product', $user_id) ? : ['name'];
 		$userField = $fieldModel->getFieldByFormType('crm_product', 'user'); //人员类型
-		$structureField = $fieldModel->getFieldByFormType('crm_product', 'structure');  //部门类型		
+		$structureField = $fieldModel->getFieldByFormType('crm_product', 'structure');  //部门类型
 
 		// $newIndexField = [];
 		// foreach ($indexField as $k=>$v) {
 		// 	$newIndexField[] = 'crm_product.'.$v;
 		// }
-		// $indexField  = $newIndexField;			
+		// $indexField  = $newIndexField;
 
 		$join = [
 			['__CRM_PRODUCT_CATEGORY__ product_category', 'product_category.category_id = product.category_id', 'LEFT'],
@@ -106,7 +106,7 @@ class Product extends Common
         	}
         	//产品类型
         	$list[$k]['category_id_info'] = db('crm_product_category')->where(['category_id' => $v['category_id']])->value('name');
-        }    
+        }
         $data = [];
         $data['list'] = $list;
         $data['dataCount'] = $dataCount ? : 0;
@@ -117,9 +117,9 @@ class Product extends Common
 	/**
 	 * 创建产品主表信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		$fieldModel = new \app\admin\model\Field();
@@ -154,16 +154,16 @@ class Product extends Common
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 编辑产品主表信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $product_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $product_id = 0)
 	{
 		$dataInfo = $this->getDataById($product_id);
 		$productCategoryModel = model('ProductCategory');
@@ -177,7 +177,7 @@ class Product extends Common
 		foreach ($unUpdateField as $v) {
 			unset($param[$v]);
 		}
-		
+
 		$fieldModel = new \app\admin\model\Field();
 		// 自动验证
 		$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则
@@ -187,7 +187,7 @@ class Product extends Common
 		if (!$result) {
 			$this->error = $validate->getError();
 			return false;
-		}	
+		}
 
 		//处理部门、员工、附件、多选类型字段
 		$arrFieldAtt = $fieldModel->getArrayField('crm_product');
@@ -200,7 +200,7 @@ class Product extends Common
 		if (is_array($category_id)) {
 			$param['category_id'] = $productCategoryModel->getIdByStr($category_id);
 			$param['category_str'] = arrayToString($category_id);
-		}	
+		}
 
 		if ($this->allowField(true)->save($param, ['product_id' => $product_id])) {
 			//修改记录
@@ -212,16 +212,16 @@ class Product extends Common
 			$this->rollback();
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
 	/**
      * 产品数据
      * @param  $id 产品ID
-     * @return 
-     */	
-   	public function getDataById($id = '')
-   	{   		
+     * @return
+     */
+   	public function getDataById($id = '', $param = [])
+   	{
    		$map['product_id'] = $id;
 		$dataInfo = $this->where($map)->find();
 		if (!$dataInfo) {
@@ -230,7 +230,7 @@ class Product extends Common
 		}
 		$userModel = new \app\admin\model\User();
 		$dataInfo['create_user_id_info'] = $userModel->getUserById($dataInfo['create_user_id']);
-        $dataInfo['category_id_info'] = db('crm_product_category')->where(['category_id' => $dataInfo['category_id']])->value('name');	
+        $dataInfo['category_id_info'] = db('crm_product_category')->where(['category_id' => $dataInfo['category_id']])->value('name');
 		return $dataInfo;
    	}
 
@@ -245,10 +245,10 @@ class Product extends Common
      * @param  subtotal 小计（折扣后价格）
      * @param  unit 单位
      * @param  total_price 折扣后整单总价
-     * @param  discount_rate 整单折扣 
+     * @param  discount_rate 整单折扣
      * @param  objId 关联对象ID
-     * @return 
-     */ 
+     * @return
+     */
     public function createObject($types, $param, $objId)
     {
     	switch ($types) {
@@ -274,7 +274,7 @@ class Product extends Common
 		    		$product[$key]['discount'] = $value['discount']; //折扣
 		    		$product[$key]['unit'] = $value['unit'] ? : ''; //单位
 		    		$product[$key]['subtotal'] = $value['subtotal'];
-		    		// $total_price += $product[$key]['subtotal'] = round(($value['price'] * $value['num']) * $discount); //总价	
+		    		// $total_price += $product[$key]['subtotal'] = round(($value['price'] * $value['num']) * $discount); //总价
 		    		$product[$key][$db_id] = $objId;
 		    	}
 
@@ -287,18 +287,18 @@ class Product extends Common
 				//产品合计
 				$rData['discount_rate'] = !empty($param['discount_rate']) ? $param['discount_rate'] : 0.00; //整单折扣
 		    	$discount_rate = ((100 - $rData['discount_rate']) > 0) ? (100 - $rData['discount_rate'])/100 : 0;
-		    	// $rData['total_price'] = $total_price ? $total_price*$discount_rate : '0.00'; //整单合计	
-		    	$rData['total_price'] = $param['total_price'] ? : '0.00'; //整单合计	
-		    	db($rDb)->where([$db_id => $objId])->update($rData);	    	
-		    	
+		    	// $rData['total_price'] = $total_price ? $total_price*$discount_rate : '0.00'; //整单合计
+		    	$rData['total_price'] = $param['total_price'] ? : '0.00'; //整单合计
+		    	db($rDb)->where([$db_id => $objId])->update($rData);
+
 		    	// 提交事务
     			Db::commit();
-		    	return true;    			
+		    	return true;
 			} catch (\Exception $e) {
 				$this->error = '产品数据创建出错';
 				// 回滚事务
-			    Db::rollback();					
-	    		return false;   				    
+			    Db::rollback();
+	    		return false;
 			}
     	}
     }
@@ -307,8 +307,8 @@ class Product extends Common
      * [产品统计]
      * @author Michael_xu
      * @param     [string]                   $request [查询条件]
-     * @return    [array]                    
-     */		
+     * @return    [array]
+     */
 	public function getStatistics($request)
     {
     	$userModel = new \app\admin\model\User();
@@ -321,7 +321,7 @@ class Product extends Common
 		}
 
 		//员工IDS
-		$map_user_ids = [];	
+		$map_user_ids = [];
 		if ($request['user_id']) {
 			$map_user_ids = [$request['user_id']];
 		} else {
@@ -358,14 +358,14 @@ class Product extends Common
 			$list[$k]['owner_user_id_info'] = $owner_user_info ? : array();
 		}
         return $list;
-    }  
+    }
 
 	/**
      * [根据产品类别ID，查询父级ID]
      * @author Michael_xu
-     * @param 
-     * @return                   
-     */		
+     * @param
+     * @return
+     */
 	public function getPidStr($category_id, $idArr, $first = '')
 	{
 		if ($first == 1) $idArr = [];
@@ -378,5 +378,5 @@ class Product extends Common
 		$arr = array_reverse($idArr);
 		$resStr = ','.implode(',',$arr).',';
 		return $resStr;
-	}         	
+	}
 }

@@ -23,14 +23,14 @@ class ExamineData extends Common
 	/**
 	 * 存储自定义字段数据
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param, $examine_id)
 	{
 		if (!$examine_id) {
 			$this->error = '参数错误';
-			return false;			
+			return false;
 		}
 		$fieldList = db('admin_field')->where(['types' => 'oa_examine','types_id' => $param['category_id']])->select();
 		//过滤掉固定字段
@@ -54,7 +54,7 @@ class ExamineData extends Common
 			$resData = db('oa_examine_data')->insertAll($data);
 			if (!$resData) {
 				$this->error = '添加失败';
-				return false;			
+				return false;
 			}
 		}
 		return true;
@@ -63,20 +63,20 @@ class ExamineData extends Common
 	/**
 	 * 读取自定义字段数据
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function getDataById($examine_id)
+	 * @param
+	 * @return
+	 */
+	public function getDataById($examine_id = '', $param = [])
 	{
 		if (!$examine_id) {
 			$this->error = '参数错误';
-			return false;			
+			return false;
 		}
 		$dataList = db('oa_examine_data')->where(['examine_id' => $examine_id])->select();
 		$newData = [];
 		foreach ($dataList as $k=>$v) {
 			$newData[$v['field']] = $v['value'];
 		}
-		return $newData ? : [];		
-	}	
+		return $newData ? : [];
+	}
 }

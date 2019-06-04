@@ -26,12 +26,12 @@ class Product extends Common
      * [产品分类销量分析]
      * @author Michael_xu
      * @param     [string]                   $request [查询条件]
-     * @return    [array]                    
-     */		
+     * @return    [array]
+     */
 	public function getStatistics($request)
     {
     	// $userModel = new \app\admin\model\User();
-    	$where = $this->getWhere($request);
+    	$where = $this->getProductWhere($request);
 		$join = [
 			['__CRM_CONTRACT__ contract', 'contract.contract_id = a.contract_id', 'LEFT'],
 			['__ADMIN_USER__ user', 'user.id = contract.owner_user_id', 'LEFT'],
@@ -55,7 +55,7 @@ class Product extends Common
      */
     function getDealByProduct($request)
     {
-    	$where = $this->getWhere($request);
+    	$where = $this->getProductWhere($request);
     	$where['customer.deal_status'] = '已成交';
     	$join = [
 			['__CRM_CONTRACT__ contract', 'contract.contract_id = a.contract_id', 'LEFT'],
@@ -81,7 +81,7 @@ class Product extends Common
      */
     function getCycleByProduct($request,$product_id)
     {
-    	$where = $this->getWhere($request);
+    	$where = $this->getProductWhere($request);
     	$where['customer.deal_status'] = '已成交';
     	$where['a.product_id'] = $product_id;
     	$join = [
@@ -113,7 +113,7 @@ class Product extends Common
      */
     function getSortByProduct($request)
     {
-		$where = $this->getWhere($request);
+		$where = $this->getProductWhere($request);
 
 		$join = [
 			['__CRM_CONTRACT__ contract', 'contract.contract_id = a.contract_id', 'LEFT'],
@@ -136,7 +136,7 @@ class Product extends Common
      * @param  [type] $request [description]
      * @return [type]          [description]
      */
-    function getWhere($request)
+    function getProductWhere($request)
     {
     	$userModel = new \app\admin\model\User();
 		$where = [];
@@ -157,7 +157,7 @@ class Product extends Common
         }
         $where['contract.check_status'] = array('eq',2);
 		//员工IDS
-		$map_user_ids = [];	
+		$map_user_ids = [];
 		if ($request['user_id']) {
 			$map_user_ids = [$request['user_id']];
 		} else {
@@ -169,5 +169,5 @@ class Product extends Common
 		$userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
 		$where['contract.owner_user_id'] = array('in',$userIds);
 		return $where;
-    } 	
+    }
 }

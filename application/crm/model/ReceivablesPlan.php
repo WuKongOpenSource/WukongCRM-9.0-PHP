@@ -29,16 +29,16 @@ class ReceivablesPlan extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getDataList($request)
-    {  	
+    {
     	$userModel = new \app\admin\model\User();
 		$search = $request['search'];
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);	    	
+		unset($request['user_id']);
 
         $request = $this->fmtRequest( $request );
         $map = $request['map'] ? : [];
@@ -48,7 +48,7 @@ class ReceivablesPlan extends Common
 			unset($map['search']);
 		} else {
 			$map = where_arr($map, 'crm', 'receivables_plan', 'index'); //高级筛选
-		}	
+		}
 		if ($map['receivables_plan.owner_user_id']) {
 			$map['contract.owner_user_id'] = $map['receivables_plan.owner_user_id'];
 			unset($map['receivables_plan.owner_user_id']);
@@ -64,7 +64,7 @@ class ReceivablesPlan extends Common
 		$dataCount = db('crm_receivables_plan')
 					->alias('receivables_plan')
 					->join('__CRM_CONTRACT__ contract','receivables_plan.contract_id = contract.contract_id','LEFT')
-					->join('__CRM_CUSTOMER__ customer','receivables_plan.customer_id = customer.customer_id','LEFT')		
+					->join('__CRM_CUSTOMER__ customer','receivables_plan.customer_id = customer.customer_id','LEFT')
 					->where($map)
 					->count('plan_id');
         foreach ($list as $k=>$v) {
@@ -72,7 +72,7 @@ class ReceivablesPlan extends Common
         	$list[$k]['contract_id_info']['name'] = $v['contract_name'] ? : '';
         	$list[$k]['contract_id_info']['contract_id'] = $v['contract_id'] ? : '';
 			$list[$k]['customer_id_info']['name'] = $v['customer_name'] ? : '';
-        	$list[$k]['customer_id_info']['customer_id'] = $v['customer_id'] ? : '';	
+        	$list[$k]['customer_id_info']['customer_id'] = $v['customer_id'] ? : '';
         }
         $data = [];
         $data['list'] = $list;
@@ -83,9 +83,9 @@ class ReceivablesPlan extends Common
 	/**
 	 * 创建回款计划信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{		if (!$param['contract_id']) {
 			$this->error = '请先选择合同';
@@ -109,16 +109,16 @@ class ReceivablesPlan extends Common
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 编辑回款计划
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $plan_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $plan_id = 0)
 	{
 		$dataInfo = $this->getDataById($plan_id);
 		if (!$dataInfo) {
@@ -131,7 +131,7 @@ class ReceivablesPlan extends Common
 		foreach ($unUpdateField as $v) {
 			unset($param[$v]);
 		}
-		
+
 		// 自动验证
 		$validate = validate($this->name);
 		if (!$validate->check($param)) {
@@ -140,7 +140,7 @@ class ReceivablesPlan extends Common
 		}
 		if ($param['file_ids']) $param['file'] = arrayToString($param['file_ids']); //附件
 		//提醒日期
-		$param['remind_date'] = $param['remind'] ? date('Y-m-d',strtotime($param['return_date'])-86400*$param['remind']) : $param['return_date'];		
+		$param['remind_date'] = $param['remind'] ? date('Y-m-d',strtotime($param['return_date'])-86400*$param['remind']) : $param['return_date'];
 		if ($this->allowField(true)->save($param, ['plan_id' => $plan_id])) {
 			$data = [];
 			$data['plan_id'] = $plan_id;
@@ -148,16 +148,16 @@ class ReceivablesPlan extends Common
 		} else {
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
 	/**
      * 回款计划数据
      * @param  $id 回款计划ID
-     * @return 
-     */	
-   	public function getDataById($id = '')
-   	{   		
+     * @return
+     */
+   	public function getDataById($id = '', $param = [])
+   	{
    		$map['plan_id'] = $id;
 		$dataInfo = $this->where($map)->find();
 		if (!$dataInfo) {
@@ -172,7 +172,7 @@ class ReceivablesPlan extends Common
 
 	//模拟自定义字段返回
 	public function getField()
-	{	
+	{
 		$field_arr = [
 			'0' => [
 				'field' => 'customer_id',
@@ -185,7 +185,7 @@ class ReceivablesPlan extends Common
 				'name' => '合同编号',
 				'form_type' => 'contract',
 				'setting' => []
-			],	
+			],
 			'2' => [
 				'field' => 'money',
 				'name' => '计划回款金额',
@@ -209,13 +209,13 @@ class ReceivablesPlan extends Common
 				'name' => '提前几日提醒',
 				'form_type' => 'number',
 				'setting' => []
-			],			
+			],
 			'6' => [
 				'field' => 'remark',
 				'name' => '备注',
 				'form_type' => 'textarea',
 				'setting' => []
-			],			
+			],
 			'7' => [
 				'field' => 'file',
 				'name' => '附件',
@@ -224,5 +224,5 @@ class ReceivablesPlan extends Common
 			]
 		];
 		return $field_arr;
-	} 	  	
+	}
 }

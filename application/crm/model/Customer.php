@@ -33,7 +33,7 @@ class Customer extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getDataList($request)
     {
     	$userModel = new \app\admin\model\User();
@@ -45,8 +45,8 @@ class Customer extends Common
     	$is_excel = $request['is_excel']; //导出
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);	
-		unset($request['is_excel']);	
+		unset($request['user_id']);
+		unset($request['is_excel']);
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -77,7 +77,7 @@ class Customer extends Common
 			$partMap = function($query) use ($sceneMap){
 			        $query->where('customer.ro_user_id',array('like','%,'.$sceneMap['ro_user_id'].',%'))
 			        	->whereOr('customer.rw_user_id',array('like','%,'.$sceneMap['rw_user_id'].',%'));
-			};				
+			};
 		} else {
 			$map = $requestMap ? array_merge($sceneMap, $requestMap) : $sceneMap;
 		}
@@ -89,13 +89,13 @@ class Customer extends Common
 		$poolMap = [];
 		$requestData = $this->requestData();
 		if ($requestData['a'] == 'pool') {
-			// unset($map);		
+			// unset($map);
 			//客户公海条件(没有负责人或已经到期)
-        	$poolMap = $this->getWhereByPool();	
+        	$poolMap = $this->getWhereByPool();
 			if ($search) {
 				//普通筛选
 				$customerMap['customer.name'] = array('like','%'.$search.'%');
-			}		
+			}
 		} else {
 			$customerMap = $this->getWhereByCustomer(); //默认条件
 			if (!$partMap) {
@@ -109,14 +109,14 @@ class Customer extends Common
 						$map['customer.owner_user_id'][1] = [$map['customer.owner_user_id'][1]];
 					}
 					if ($map['customer.owner_user_id'][0] == 'neq') {
-						$auth_user_ids = array_diff($auth_user_ids, $map['customer.owner_user_id'][1]) ? : [];	//取差集	
+						$auth_user_ids = array_diff($auth_user_ids, $map['customer.owner_user_id'][1]) ? : [];	//取差集
 					} else {
-						$auth_user_ids = array_intersect($map['customer.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集	
+						$auth_user_ids = array_intersect($map['customer.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集
 					}
 			        unset($map['customer.owner_user_id']);
 					$auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
 				    //负责人、相关团队
-				    $authMap['customer.owner_user_id'] = array('in',$auth_user_ids);      
+				    $authMap['customer.owner_user_id'] = array('in',$auth_user_ids);
 			    } else {
 					$authMapData = [];
 			    	$authMapData['auth_user_ids'] = $auth_user_ids;
@@ -129,10 +129,10 @@ class Customer extends Common
 								->whereOr(function ($query) use ($authMapData) {
 			                        $query->where(['customer.rw_user_id' => array('like','%,'.$authMapData['user_id'].',%'),'customer.owner_user_id' => array('neq','')]);
 			                    });
-				    };			    			    	
+				    };
 			    }
-			}			
-		}	
+			}
+		}
 		//列表展示字段
 		// $indexField = $fieldModel->getIndexField('crm_customer', $user_id) ? : array('name');
 		$userField = $fieldModel->getFieldByFormType('crm_customer', 'user'); //人员类型
@@ -182,7 +182,7 @@ class Customer extends Common
         	}
 			foreach ($structureField as $key => $val) {
         		$list[$k][$val.'_info'] = isset($v[$val]) ? $structureModel->getDataByStr($v[$val]) : [];
-        	} 
+        	}
         	//商机数
         	$list[$k]['business_count'] = db('crm_business')->where(['customer_id' => $v['customer_id']])->count() ? : 0;
         	//距进入公海天数
@@ -202,11 +202,11 @@ class Customer extends Common
 			$is_delete = 0;
 			if (in_array($v['owner_user_id'],$readAuthIds) || $roPre || $rwPre) $is_read = 1;
 			if (in_array($v['owner_user_id'],$updateAuthIds) || $rwPre) $is_update = 1;
-			if (in_array($v['owner_user_id'],$deleteAuthIds)) $is_delete = 1;	        
+			if (in_array($v['owner_user_id'],$deleteAuthIds)) $is_delete = 1;
 	        $permission['is_read'] = $is_read;
 	        $permission['is_update'] = $is_update;
 	        $permission['is_delete'] = $is_delete;
-	        $list[$k]['permission']	= $permission;        	
+	        $list[$k]['permission']	= $permission;
         }
         $data = [];
         $data['list'] = $list;
@@ -217,9 +217,9 @@ class Customer extends Common
 	/**
 	 * 创建客户主表信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		$fieldModel = new \app\admin\model\Field();
@@ -231,24 +231,24 @@ class Customer extends Common
 			$leadsData['ro_user_id'] = '';
 			$leadsData['rw_user_id'] = '';
 			$leadsData['deal_time'] = time();
-            $leadsData['deal_status'] = '未成交';			
+            $leadsData['deal_status'] = '未成交';
 			$param = $leadsData;
 		} else {
 			// 自动验证
 			$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则
-			$validate = new Validate($validateArr['rule'], $validateArr['message']);			
+			$validate = new Validate($validateArr['rule'], $validateArr['message']);
 			$result = $validate->check($param);
 			if (!$result) {
 				$this->error = $validate->getError();
 				return false;
-			}	
+			}
 		}
 		//地址
 		$param['address'] = $param['address'] ? implode(chr(10),$param['address']) : '';
 		$param['deal_time'] = time();
 		if (!$param['deal_status']) {
             $param['deal_status'] = '未成交';
-        }	
+        }
 
 		//处理部门、员工、附件、多选类型字段
 		$arrFieldAtt = $fieldModel->getArrayField('crm_customer');
@@ -257,7 +257,7 @@ class Customer extends Common
 		}
 		if ($this->data($param)->allowField(true)->isUpdate(false)->save()) {
 			//修改记录
-			updateActionLog($param['create_user_id'], 'crm_customer', $this->customer_id, '', '', '创建了客户');			
+			updateActionLog($param['create_user_id'], 'crm_customer', $this->customer_id, '', '', '创建了客户');
 			$data = [];
 			$data['customer_id'] = $this->customer_id;
 			$data['name'] = $param['name'];
@@ -265,9 +265,9 @@ class Customer extends Common
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
-	
+
 	//根据IDs获取数组
 	public function getDataByStr($idstr)
 	{
@@ -278,14 +278,14 @@ class Customer extends Common
 		$list = Db::name('CrmCustomer')->where(['customer_id' => ['in',$idArr]])->select();
 		return $list;
 	}
-	
+
 	/**
 	 * 编辑客户主表信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $customer_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $customer_id = 0)
 	{
 		$user_id = $param['user_id'];
 		$dataInfo = $this->get($customer_id);
@@ -299,7 +299,7 @@ class Customer extends Common
 		foreach ($unUpdateField as $v) {
 			unset($param[$v]);
 		}
-		
+
 		$fieldModel = new \app\admin\model\Field();
 		// 自动验证
 		$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则
@@ -313,7 +313,7 @@ class Customer extends Common
 		$param['address'] = $param['address'] ? implode(chr(10),$param['address']) : '';
 		if ($param['deal_status'] == '已成交' && $dataInfo->data['deal_status'] == '未成交') {
             $param['deal_time'] = time();
-        }		
+        }
 
 		//处理部门、员工、附件、多选类型字段
 		$arrFieldAtt = $fieldModel->getArrayField('crm_customer');
@@ -330,16 +330,16 @@ class Customer extends Common
 		} else {
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
 	/**
      * 客户数据
      * @param  $id 客户ID
-     * @return 
-     */	
-   	public function getDataById($id = '')
-   	{  
+     * @return
+     */
+   	public function getDataById($id = '', $param = [])
+   	{
    		$map['customer_id'] = $id;
 		$dataInfo = $this->where($map)->find();
 		if (!$dataInfo) {
@@ -348,7 +348,7 @@ class Customer extends Common
 		}
 		$userModel = new \app\admin\model\User();
 		$dataInfo['create_user_id_info'] = isset($dataInfo['create_user_id']) ? $userModel->getUserById($dataInfo['create_user_id']) : [];
-		$dataInfo['owner_user_id_info'] = isset($dataInfo['owner_user_id']) ? $userModel->getUserById($dataInfo['owner_user_id']) : []; 
+		$dataInfo['owner_user_id_info'] = isset($dataInfo['owner_user_id']) ? $userModel->getUserById($dataInfo['owner_user_id']) : [];
 		return $dataInfo;
    	}
 
@@ -356,8 +356,8 @@ class Customer extends Common
      * [客户统计]
      * @author Michael_xu
      * @param
-     * @return                  
-     */		
+     * @return
+     */
 	public function getStatistics($request)
     {
     	$userModel = new \app\admin\model\User();
@@ -373,7 +373,7 @@ class Customer extends Common
 		if ($start_time && $end_time) {
 			$create_time = array('between',array($start_time,$end_time));
 		}
-		
+
 		//员工IDS
 		$map_user_ids = [];
 		if ($map['user_id']) {
@@ -413,14 +413,14 @@ class Customer extends Common
 			$userList[$k]['deal_receivables_rate'] = $contract_money ? round(($receivables_money/$contract_money), 2)*100 : 0;
 		}
         return $userList ? : [];
-    }  
+    }
 
 	/**
      * [客户数量]
      * @author Michael_xu
-     * @param 
-     * @return                   
-     */		
+     * @param
+     * @return
+     */
 	public function getDataCount($map)
 	{
 		//非公海条件
@@ -428,15 +428,15 @@ class Customer extends Common
         $where = [];
         $dataCount = $this->where($map)->where($where)->count('customer_id');
         $count = $dataCount ? : 0;
-        return $count;		
+        return $count;
 	}
 
 	/**
      * [客户默认条件]
      * @author Michael_xu
-     * @param 
-     * @return                   
-     */	
+     * @param
+     * @return
+     */
     public function getWhereByCustomer()
     {
 		$configModel = new \app\crm\model\ConfigData();
@@ -459,14 +459,14 @@ class Customer extends Common
 						};
     	}
     	return $whereData ? : '';
-    }	
+    }
 
 	/**
      * [客户公海条件]
      * @author Michael_xu
-     * @param 
-     * @return                   
-     */	
+     * @param
+     * @return
+     */
     public function getWhereByPool()
     {
 		$configModel = new \app\crm\model\ConfigData();
@@ -475,7 +475,7 @@ class Customer extends Common
 		$follow_day = $configInfo['follow_day'] ? : 0;
     	$deal_day = $configInfo['deal_day'] ? : 0;
     	$whereData = [];
-    	//启用    	
+    	//启用
     	if ($config == 1) {
 			//默认公海条件(没有负责人或已经到期)
 	    	$data['update_time'] = time()-$follow_day*86400;
@@ -497,7 +497,7 @@ class Customer extends Common
 						                        $query->where(['customer.deal_status' => '未成交']);
 						                    });
 				                    })->where(['customer.is_lock' => 0]);
-								});							
+								});
 							};
     	} else {
     		$whereData['customer.owner_user_id'] = 0;
@@ -508,9 +508,9 @@ class Customer extends Common
 	/**
      * 客户权限判断(是否客户公海)
      * @author Michael_xu
-     * @param 
+     * @param
      * @return
-     */       
+     */
     public function checkData($customer_id, $user_id)
     {
     	//权限范围
@@ -530,14 +530,14 @@ class Customer extends Common
     	}
     	$this->error = '没有权限';
     	return false;
-    } 
+    }
 
 	/**
      * 客户到期天数
      * @author Michael_xu
-     * @param 
+     * @param
      * @return
-     */     
+     */
     public function getPoolDay($param)
     {
     	$poolDay = '';

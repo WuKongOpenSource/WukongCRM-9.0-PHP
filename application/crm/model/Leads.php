@@ -29,7 +29,7 @@ class Leads extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getDataList($request)
     {
     	$userModel = new \app\admin\model\User();
@@ -41,8 +41,8 @@ class Leads extends Common
     	$is_excel = $request['is_excel']; //导出
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']); 
-		unset($request['is_excel']);	   	
+		unset($request['user_id']);
+		unset($request['is_excel']);
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -62,7 +62,7 @@ class Leads extends Common
 			        $query->where('leads.name',array('like','%'.$search.'%'))
 			        	->whereOr('leads.mobile',array('like','%'.$search.'%'))
 			        	->whereOr('leads.telephone',array('like','%'.$search.'%'));
-			};			
+			};
 			// $sceneMap['name'] = ['condition' => 'contains','value' => $search,'form_type' => 'text','name' => '线索名称'];
 		}
 		//优先级：普通筛选>高级筛选>场景
@@ -79,20 +79,20 @@ class Leads extends Common
 				$map['leads.owner_user_id'][1] = [$map['leads.owner_user_id'][1]];
 			}
 			if ($map['leads.owner_user_id'][0] == 'neq') {
-				$auth_user_ids = array_diff($auth_user_ids, $map['leads.owner_user_id'][1]) ? : [];	//取差集	
+				$auth_user_ids = array_diff($auth_user_ids, $map['leads.owner_user_id'][1]) ? : [];	//取差集
 			} else {
-				$auth_user_ids = array_intersect($map['leads.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集	
+				$auth_user_ids = array_intersect($map['leads.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集
 			}
 	        unset($map['leads.owner_user_id']);
-	    }		    
+	    }
 	    $auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
 	    //负责人
 	    $authMap['leads.owner_user_id'] = ['in',$auth_user_ids];
 		//列表展示字段
 		// $indexField = $fieldModel->getIndexField('crm_leads', $user_id) ? : array('name');
 		$userField = $fieldModel->getFieldByFormType('crm_leads', 'user'); //人员类型
-		$structureField = $fieldModel->getFieldByFormType('crm_leads', 'structure');  //部门类型		
-		
+		$structureField = $fieldModel->getFieldByFormType('crm_leads', 'structure');  //部门类型
+
 		//排序
 		if ($request['order_type'] && $request['order_field']) {
 			$order = trim($request['order_field']).' '.trim($request['order_type']);
@@ -106,7 +106,7 @@ class Leads extends Common
 
 		$readAuthIds = $userModel->getUserByPer('crm', 'leads', 'read');
         $updateAuthIds = $userModel->getUserByPer('crm', 'leads', 'update');
-        $deleteAuthIds = $userModel->getUserByPer('crm', 'leads', 'delete');		
+        $deleteAuthIds = $userModel->getUserByPer('crm', 'leads', 'delete');
 		$list = db('crm_leads')
 				->alias('leads')
 				->where($map)
@@ -115,7 +115,7 @@ class Leads extends Common
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		// ->field('leads_id,'.implode(',',$indexField))
         		->order($order)
-        		->select();	
+        		->select();
         $dataCount = db('crm_leads')->alias('leads')->where($map)->where($searchMap)->where($authMap)->count('leads_id');
         foreach ($list as $k=>$v) {
         	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
@@ -126,7 +126,7 @@ class Leads extends Common
         	}
 			foreach ($structureField as $key => $val) {
         		$list[$k][$val.'_info'] = isset($v[$val]) ? $structureModel->getDataByStr($v[$val]) : [];
-        	} 
+        	}
 			//权限
 			$permission = [];
 			$is_read = 0;
@@ -134,12 +134,12 @@ class Leads extends Common
 			$is_delete = 0;
 			if (in_array($v['owner_user_id'],$readAuthIds)) $is_read = 1;
 			if (in_array($v['owner_user_id'],$updateAuthIds)) $is_update = 1;
-			if (in_array($v['owner_user_id'],$deleteAuthIds)) $is_delete = 1;	        
+			if (in_array($v['owner_user_id'],$deleteAuthIds)) $is_delete = 1;
 	        $permission['is_read'] = $is_read;
 	        $permission['is_update'] = $is_update;
 	        $permission['is_delete'] = $is_delete;
-	        $list[$k]['permission']	= $permission;        	
-        }    
+	        $list[$k]['permission']	= $permission;
+        }
         $data = [];
         $data['list'] = $list;
         $data['dataCount'] = $dataCount ? : 0;
@@ -150,9 +150,9 @@ class Leads extends Common
 	/**
 	 * 创建线索主表信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		$fieldModel = new \app\admin\model\Field();
@@ -174,23 +174,23 @@ class Leads extends Common
 
 		if ($this->data($param)->allowField(true)->isUpdate(false)->save()) {
 			//修改记录
-			updateActionLog($param['create_user_id'], 'crm_leads', $this->leads_id, '', '', '创建了线索');			
+			updateActionLog($param['create_user_id'], 'crm_leads', $this->leads_id, '', '', '创建了线索');
 			$data = [];
 			$data['leads_id'] = $this->leads_id;
 			return $data;
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 编辑线索信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $leads_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $leads_id = 0)
 	{
 		$dataInfo = $this->getDataById($leads_id);
 		if (!$dataInfo) {
@@ -203,7 +203,7 @@ class Leads extends Common
 		foreach ($unUpdateField as $v) {
 			unset($param[$v]);
 		}
-		
+
 		$fieldModel = new \app\admin\model\Field();
 		// 自动验证
 		$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则
@@ -230,16 +230,16 @@ class Leads extends Common
 		} else {
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
 	/**
      * 线索数据
      * @param  $id 线索ID
-     * @return 
-     */	
-   	public function getDataById($id = '')
-   	{   		
+     * @return
+     */
+   	public function getDataById($id = '', $param = [])
+   	{
    		$map['leads_id'] = $id;
 		$dataInfo = $this->where($map)->find();
 		if (!$dataInfo) {
@@ -248,7 +248,7 @@ class Leads extends Common
 		}
 		$userModel = new \app\admin\model\User();
 		$dataInfo['create_user_id_info'] = isset($dataInfo['create_user_id']) ? $userModel->getUserById($dataInfo['create_user_id']) : [];
-		$dataInfo['owner_user_id_info'] = isset($dataInfo['owner_user_id']) ? $userModel->getUserById($dataInfo['owner_user_id']) : []; 
+		$dataInfo['owner_user_id_info'] = isset($dataInfo['owner_user_id']) ? $userModel->getUserById($dataInfo['owner_user_id']) : [];
 		return $dataInfo;
    	}
 }

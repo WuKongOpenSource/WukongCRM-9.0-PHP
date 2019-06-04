@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 组织架构
 // +----------------------------------------------------------------------
-// | Author:  
+// | Author:
 // +----------------------------------------------------------------------
 
 namespace app\admin\model;
@@ -10,7 +10,7 @@ namespace app\admin\model;
 use app\admin\model\Common;
 use think\Db;
 
-class Structure extends Common 
+class Structure extends Common
 {
 
     /**
@@ -21,20 +21,20 @@ class Structure extends Common
 
 	/**
 	 * [getDataList 获取列表]
-	 * @return    [array]                         
+	 * @return    [array]
 	 */
 	public function getDataList($type='')
-	{	
+	{
 		$cat = new \com\Category('admin_structure', array('id', 'pid', 'name', 'title'));
 		$data = $cat->getList('', 0, 'id');
 		// 若type为tree，则返回树状结构
 		if ($type == 'tree') {
 			$tree = new \com\Tree();
 			$data = $tree->list_to_tree($data, 'id', 'pid', 'child', 0, true, array(''));
-		}		
+		}
 		return $data;
 	}
-	
+
 	/*
 	*根据字符串展示参与部门 use by work
 	*add by yykun
@@ -48,12 +48,12 @@ class Structure extends Common
 		$list = $this->field('id as structure_id,name')->where('id in ('.$idstr.')')->select();
 		return $list;
 	}
-	
+
 	/*
-	*根据部门ID获取信息 use by work 
+	*根据部门ID获取信息 use by work
 	*add by yykun
 	*/
-	public function getDataByID( $id ='')
+	public function getDataByID( $id ='', $param = [])
 	{
 		$det = Db::name('AdminStructure')->where('id ='.$id)->find();
 		return $det;
@@ -68,7 +68,7 @@ class Structure extends Common
 		$dataInfo = $this->getDataByID($id);
 		if (empty($dataInfo['pid'])) {
 			$this->error = '删除失败';
-			return false;			
+			return false;
 		}
 		//部门是否被使用
 		$allStrIds = [];
@@ -80,13 +80,13 @@ class Structure extends Common
 			$this->error = '该部门或其下属部门已存在员工，不能删除';
 			return false;
 		}
-		$resDel = $this->delDataById($id, true);
+		$resDel = $this->delDataById(['id' => $id], true);
 		if (!$resDel) {
 			$this->error = '删除失败';
 			return false;
 		} else {
 			return true;
-		}	
+		}
 	}
 
 	/**
@@ -100,7 +100,7 @@ class Structure extends Common
 			$idArr[] = $ids;
 		} else {
 			$idArr = $ids;
-		}		
+		}
 		$data = $this->where(['id' => array('in', $idArr)])->column('name');
 		return $data ? : [];
 	}

@@ -30,9 +30,9 @@ class Contract extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getDataList($request)
-    {  	
+    {
     	$userModel = new \app\admin\model\User();
     	$structureModel = new \app\admin\model\Structure();
     	$fieldModel = new \app\admin\model\Field();
@@ -42,7 +42,7 @@ class Contract extends Common
     	$scene_id = (int)$request['scene_id'];
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);    	
+		unset($request['user_id']);
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -73,22 +73,22 @@ class Contract extends Common
 		}
 		//高级筛选
 		$map = where_arr($map, 'crm', 'contract', 'index');
-		$order = ['contract.update_time desc'];	
+		$order = ['contract.update_time desc'];
 		$authMap = [];
 		if (!$partMap) {
 			$auth_user_ids = $userModel->getUserByPer('crm', 'contract', 'index');
 			if (isset($map['contract.owner_user_id'])) {
 				if (!is_array($map['contract.owner_user_id'][1])) {
 					$map['contract.owner_user_id'][1] = [$map['contract.owner_user_id'][1]];
-				}				
+				}
 				if ($map['contract.owner_user_id'][0] == 'neq') {
-					$auth_user_ids = array_diff($auth_user_ids, $map['contract.owner_user_id'][1]) ? : [];	//取差集	
+					$auth_user_ids = array_diff($auth_user_ids, $map['contract.owner_user_id'][1]) ? : [];	//取差集
 				} else {
 					$auth_user_ids = array_intersect($map['contract.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集
 				}
 		        unset($map['contract.owner_user_id']);
 		        $auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
-		        $authMap['contract.owner_user_id'] = array('in',$auth_user_ids); 
+		        $authMap['contract.owner_user_id'] = array('in',$auth_user_ids);
 		    } else {
 		    	$authMapData = [];
 		    	$authMapData['auth_user_ids'] = $auth_user_ids;
@@ -101,20 +101,20 @@ class Contract extends Common
 		    }
 		}
 		//列表展示字段
-		// $indexField = $fieldModel->getIndexField('crm_contract', $user_id);	
+		// $indexField = $fieldModel->getIndexField('crm_contract', $user_id);
 		//人员类型
 		$userField = $fieldModel->getFieldByFormType('crm_contract', 'user');
 		$structureField = $fieldModel->getFieldByFormType('crm_contract', 'structure');  //部门类型
-	
+
 		$readAuthIds = $userModel->getUserByPer('crm', 'contract', 'read');
         $updateAuthIds = $userModel->getUserByPer('crm', 'contract', 'update');
-        $deleteAuthIds = $userModel->getUserByPer('crm', 'contract', 'delete');			
+        $deleteAuthIds = $userModel->getUserByPer('crm', 'contract', 'delete');
 		$list = db('crm_contract')
 				->alias('contract')
-				->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')		
-				->join('__CRM_BUSINESS__ business','contract.business_id = business.business_id','LEFT')	
-				->join('__CRM_CONTACTS__ contacts','contract.contacts_id = contacts.contacts_id','LEFT')	
-				->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')	
+				->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')
+				->join('__CRM_BUSINESS__ business','contract.business_id = business.business_id','LEFT')
+				->join('__CRM_CONTACTS__ contacts','contract.contacts_id = contacts.contacts_id','LEFT')
+				->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')
 				->where($map)
 				->where($partMap)
 				->where($authMap)
@@ -122,20 +122,20 @@ class Contract extends Common
         		->field('contract.*,customer.name as customer_name,business.name as business_name,contacts.name as contacts_name,plan.receivables_id,plan.remind_date,plan.return_date')
         		// ->field('contract_id,'.implode(',',$indexField))
         		->order($order)
-        		->select();	
+        		->select();
         $dataCount = db('crm_contract')
         			->alias('contract')
-					->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')		
+					->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')
 					->join('__CRM_BUSINESS__ business','contract.business_id = business.business_id','LEFT')
 					->join('__CRM_CONTACTS__ contacts','contract.contacts_id = contacts.contacts_id','LEFT')
-					->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')		
+					->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')
         			->where($map)->where($partMap)->where($authMap)->count('contract.contract_id');
 
         $map['contract.check_status'] = array('eq',2);
         $sumMoney = db('crm_contract')
 					->alias('contract')
 					->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')
-					->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')	
+					->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')
 					->where($map)
 					->where($partMap)
 					->where($authMap)
@@ -144,9 +144,9 @@ class Contract extends Common
 		$map['receivables.check_status'] = array('eq',2);
 		$unReceivablesMoney = db('crm_contract')
 					->alias('contract')
-					->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')	
+					->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')
 					->join('__CRM_RECEIVABLES__ receivables','contract.contract_id = receivables.contract_id','LEFT')
-					->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')	
+					->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')
 					->where($map)
 					->where($partMap)
 					->where($authMap)
@@ -165,11 +165,11 @@ class Contract extends Common
         	$list[$k]['customer_id_info']['customer_id'] = $v['customer_id'];
         	$list[$k]['customer_id_info']['name'] = $v['customer_name'];
 			$list[$k]['contacts_id_info']['contacts_id'] = $v['contacts_id'];
-        	$list[$k]['contacts_id_info']['name'] = $v['contacts_name'];        	
+        	$list[$k]['contacts_id_info']['name'] = $v['contacts_name'];
         	$moneyInfo = [];
         	$moneyInfo = $receivablesModel->getMoneyByContractId($v['contract_id']);
         	$list[$k]['unMoney'] = $moneyInfo['unMoney'] ? : 0.00;
-        	$list[$k]['check_status_info'] = $this->statusArr[$v['check_status']]; 
+        	$list[$k]['check_status_info'] = $this->statusArr[$v['check_status']];
 
 			//权限
         	$roPre = $userModel->rwPre($user_id, $v['ro_user_id'], $v['rw_user_id'], 'read');
@@ -180,11 +180,11 @@ class Contract extends Common
 			$is_delete = 0;
 			if (in_array($v['owner_user_id'],$readAuthIds) || $roPre || $rwPre) $is_read = 1;
 			if (in_array($v['owner_user_id'],$updateAuthIds) || $rwPre) $is_update = 1;
-			if (in_array($v['owner_user_id'],$deleteAuthIds)) $is_delete = 1;	        
+			if (in_array($v['owner_user_id'],$deleteAuthIds)) $is_delete = 1;
 	        $permission['is_read'] = $is_read;
 	        $permission['is_update'] = $is_update;
 	        $permission['is_delete'] = $is_delete;
-	        $list[$k]['permission']	= $permission;           	  		
+	        $list[$k]['permission']	= $permission;
         }
         $data = [];
         $data['list'] = $list;
@@ -204,13 +204,13 @@ class Contract extends Common
 		$list = Db::name('CrmContract')->where(['contract_id' => ['in',$idArr]])->select();
 		return $list;
 	}
-	
+
 	/**
 	 * 创建合同信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		$fieldModel = new \app\admin\model\Field();
@@ -224,7 +224,7 @@ class Contract extends Common
 		if (!$result) {
 			$this->error = $validate->getError();
 			return false;
-		}		
+		}
 
 		//处理部门、员工、附件、多选类型字段
 		$arrFieldAtt = $fieldModel->getArrayField('crm_contract');
@@ -235,7 +235,7 @@ class Contract extends Common
 		if ($this->data($param)->allowField(true)->save()) {
 			if ($param['product']) {
 				//产品数据处理
-		        $resProduct = $productModel->createObject('crm_contract', $param, $this->contract_id);	        
+		        $resProduct = $productModel->createObject('crm_contract', $param, $this->contract_id);
 		        if ($resProduct == false) {
 		        	$this->error = '产品添加失败';
 		        	return false;
@@ -255,16 +255,16 @@ class Contract extends Common
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 编辑合同主表信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $contract_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $contract_id = 0)
 	{
 		$productModel = new \app\crm\model\Product();
 		$userModel = new \app\admin\model\User();
@@ -294,7 +294,7 @@ class Contract extends Common
 
 		if ($this->allowField(true)->save($param, ['contract_id' => $contract_id])) {
 			//产品数据处理
-	        $resProduct = $productModel->createObject('crm_contract', $param, $contract_id);			
+	        $resProduct = $productModel->createObject('crm_contract', $param, $contract_id);
 			//修改记录
 			updateActionLog($param['user_id'], 'crm_contract', $contract_id, $dataInfo, $param);
 			//站内信
@@ -303,25 +303,25 @@ class Contract extends Common
             $sendContent = $createUserInfo['realname'].'提交了合同【'.$param['name'].'】,需要您审批';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $contract_id, 1);
-            }			
+            }
 			$data = [];
 			$data['contract_id'] = $contract_id;
 			return $data;
 		} else {
 			$this->error = '编辑失败';
 			return false;
-		}					
+		}
 	}
 
 	/**
      * 合同数据
      * @param  $id 合同ID
-     * @return 
-     */	
-   	public function getDataById($id = '')
-   	{   
+     * @return
+     */
+   	public function getDataById($id = '', $param = [])
+   	{
    		$receivablesModel = new \app\crm\model\Receivables();
-   		$userModel = new \app\admin\model\User();	
+   		$userModel = new \app\admin\model\User();
    		$map['contract_id'] = $id;
 		$dataInfo = $this->where($map)->find();
 		if (!$dataInfo) {
@@ -329,9 +329,9 @@ class Contract extends Common
 			return false;
 		}
 		$dataInfo['create_user_info'] = isset($dataInfo['create_user_id']) ? $userModel->getUserById($dataInfo['create_user_id']) : [];
-		$dataInfo['owner_user_id_info'] = isset($dataInfo['owner_user_id']) ? $userModel->getUserById($dataInfo['owner_user_id']) : []; 
+		$dataInfo['owner_user_id_info'] = isset($dataInfo['owner_user_id']) ? $userModel->getUserById($dataInfo['owner_user_id']) : [];
 		$dataInfo['business_id_info'] = $dataInfo['business_id'] ? db('crm_business')->where(['business_id' => $dataInfo['business_id']])->field('business_id,name')->find() : [];
-        $dataInfo['customer_id_info'] = $dataInfo['customer_id'] ? db('crm_customer')->where(['customer_id' => $dataInfo['customer_id']])->field('customer_id,name')->find() : [];		
+        $dataInfo['customer_id_info'] = $dataInfo['customer_id'] ? db('crm_customer')->where(['customer_id' => $dataInfo['customer_id']])->field('customer_id,name')->find() : [];
         //回款金额
         $receivablesMoney = $receivablesModel->getMoneyByContractId($id);
         $dataInfo['receivablesMoney'] = $receivablesMoney ? : [];
@@ -344,26 +344,26 @@ class Contract extends Common
      * @param ids 合同ID数组
      * @param owner_user_id 变更负责人
      * @param is_remove 1移出，2转为团队成员
-     * @return            
-     */	
+     * @return
+     */
     public function transferDataById($ids, $owner_user_id, $type = 1, $is_remove)
     {
-	    $settingModel = new \app\crm\model\Setting();  
-	    $errorMessage = [];  	
+	    $settingModel = new \app\crm\model\Setting();
+	    $errorMessage = [];
     	foreach ($ids as $id) {
     		$contractInfo = [];
     		$contractInfo = db('crm_contract')->where(['contract_id' => $id])->find();
 			if (in_array($contractInfo['check_status'],['0','1'])) {
 	            $errorMessage[] = '合同：'.$contractInfo['name'].'"转移失败，错误原因：审批中，无法转移；';
 	            continue;
-	        }	     		
+	        }
 
 			$data = [];
 	        $data['owner_user_id'] = $owner_user_id;
-	        $data['update_time'] = time(); 
+	        $data['update_time'] = time();
 	        if (!db('crm_contract')->where(['contract_id' => $id])->update($data)) {
 				$errorMessage[] = '合同：'.$contractInfo['name'].'"转移失败，错误原因：数据出错；';
-	            continue;				      	
+	            continue;
 	        }
 	        //团队成员
 	        $teamData = [];
@@ -372,7 +372,7 @@ class Contract extends Common
             $teamData['types'] = 'crm_contract'; //类型
             $teamData['types_id'] = $id; //类型ID
             $teamData['is_del'] = ($is_remove == 1) ? 1 : '';
-            $res = $settingModel->createTeamData($teamData); 
+            $res = $settingModel->createTeamData($teamData);
     	}
     	if ($errorMessage) {
 			return $errorMessage;
@@ -389,14 +389,14 @@ class Contract extends Common
 	 * @return [end_time] [结束时间]
 	 */
 	public function getDataByUserId($param)
-	{	
+	{
 		if ($param['obj_type']) {
 			if ($param['obj_type'] == 1) { //部门
 				$userModel = new \app\admin\model\User();
 			    $str = $userModel->getSubUserByStr($param['obj_id'], 1) ? : ['-1'];
-				$map['owner_user_id'] = array('in',$str); 
+				$map['owner_user_id'] = array('in',$str);
 			} else { //员工
-				$map['owner_user_id'] = $param['obj_id']; 
+				$map['owner_user_id'] = $param['obj_id'];
 			}
 		}
 		//审核状态
@@ -405,5 +405,5 @@ class Contract extends Common
 		$map['check_status'] = 2;
 		$data = $this->where($map)->where(['order_date' => ['between',[$start, $stop]]])->sum('money');
 		return $data;
-	}     		
+	}
 }

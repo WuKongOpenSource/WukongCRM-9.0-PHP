@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 菜单
 // +----------------------------------------------------------------------
-// | Author:  
+// | Author:
 // +----------------------------------------------------------------------
 
 namespace app\admin\model;
@@ -10,7 +10,7 @@ namespace app\admin\model;
 use think\Db;
 use app\admin\model\Common;
 
-class Menu extends Common 
+class Menu extends Common
 {
 
     /**
@@ -20,21 +20,21 @@ class Menu extends Common
     protected $name = 'admin_menu';
 	/**
 	 * [getDataList 获取列表]
-	 * @return    [array]                         
+	 * @return    [array]
 	 */
 	public function getDataList()
-	{	
-        $cat = new \com\Category('admin_menu', array('id', 'pid', 'title', 'title'));     
-        $data = $cat->getList('', 0, 'sort'); 
+	{
+        $cat = new \com\Category('admin_menu', array('id', 'pid', 'title', 'title'));
+        $data = $cat->getList('', 0, 'sort');
 		return $data;
 	}
 
 	/**
 	 * [getDataById 根据主键获取详情]
 	 * @param     string                   $id [主键]
-	 * @return    [array]                       
+	 * @return    [array]
 	 */
-	public function getDataById($id = '')
+	public function getDataById($id = '', $param = [])
 	{
 		$data = $this
 				->alias('menu')
@@ -55,19 +55,19 @@ class Menu extends Common
 	 * @param  array   $param  [description]
 	 */
     protected function getMenuTree()
-    {	
+    {
     	$userInfo = $GLOBALS['userInfo'];
     	if (!$userInfo) {
     		return [];
     	}
-    	
+
     	$u_id = $userInfo['id'];
     	if ($u_id === 1) {
     		$map['status'] = 1;
     		$menusList = Db::name('admin_menu')->where($map)->order('sort asc')->select();
     	} else {
     		$groups = model('User')->get($u_id)->groups;
-    		
+
             $ruleIds = [];
     		foreach($groups as $k => $v) {
     			$ruleIds = array_unique(array_merge($ruleIds, explode(',', $v['rules'])));
@@ -88,7 +88,7 @@ class Menu extends Common
         // $tree = new \com\Tree();
         // $menusList = $tree->list_to_tree($menusList, 'id', 'pid', 'child', 0, true, array('pid'));
         // $menusList = memuLevelClear($menusList);
-        
+
         return $menusList? $menusList: [];
     }
 }

@@ -25,9 +25,9 @@ class ConfigData extends Common
 	/**
 	 * 保存相关信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		$data = [];
@@ -37,19 +37,19 @@ class ConfigData extends Common
 			$follow_day = $param['follow_day'] ? : 0;
 			$resFollow = db('crm_config')->where(['name' => 'follow_day'])->update(['value' => $follow_day]);
 			$deal_day = $param['deal_day'] ? : 0;
-			$resDeal = db('crm_config')->where(['name' => 'deal_day'])->update(['value' => $deal_day]);			
+			$resDeal = db('crm_config')->where(['name' => 'deal_day'])->update(['value' => $deal_day]);
 		}
 		$resConfig = db('crm_config')->where(['name' => 'config'])->update(['value' => $config]);
-		return true;	
+		return true;
 	}
 
 	/**
 	 * 获取相关信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function getData()
+	 * @param
+	 * @return
+	 */
+	public function getConfigData()
 	{
 		$list = db('crm_config')->select();
         $data = [];
@@ -57,5 +57,5 @@ class ConfigData extends Common
             $data[$v['name']] = $v['value'];
         }
 		return $data ? : '';
-	}	
-} 		
+	}
+}

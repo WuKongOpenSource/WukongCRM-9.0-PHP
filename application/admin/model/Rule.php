@@ -9,7 +9,7 @@ namespace app\admin\model;
 
 use app\admin\model\Common;
 use \think\Db;
-class Rule extends Common 
+class Rule extends Common
 {
 
     /**
@@ -20,7 +20,7 @@ class Rule extends Common
 	/**
 	 * [getDataList 获取列表]
 	 * @param     string   $type [是否为树状结构]
-	 * @return    [array]                         
+	 * @return    [array]
 	 */
 	public function getDataList($param)
 	{
@@ -37,7 +37,7 @@ class Rule extends Common
 				}
 				if (empty($v['status'])) {
 					unset($data[$k]);
-				}		
+				}
 			}
 			$data = array_merge($data);
 			$tree = new \com\Tree();
@@ -66,7 +66,7 @@ class Rule extends Common
 			}
 			$data['pid'] = $param['pid']; //上级ID
 			$data['name'] = $param['name']; //方法名
-			$data['title'] = $param['title'];//名称 
+			$data['title'] = $param['title'];//名称
 			$data['status'] = 1;  //状态1 显示
 
 			//1超级管理员2系统设置管理员3部门与员工管理员4审批流管理员5工作台管理员6客户管理员7项目管理员8公告管理员
@@ -85,7 +85,7 @@ class Rule extends Common
 	}
 
 	//编辑规则
-	public function updateDataById($param,$id)
+	public function updateDataById($param,$id = 0)
 	{
 		if ($param['id']) {
 			$flag = $this->where('id ='.$param['id'].'')->update($param);

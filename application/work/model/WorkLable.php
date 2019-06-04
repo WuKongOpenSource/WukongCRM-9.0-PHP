@@ -33,7 +33,7 @@ class WorkLable extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */	    
+     */
 	public function getDataList()  //标签列表
 	{
 		$map['status'] = 1;
@@ -51,7 +51,7 @@ class WorkLable extends Common
 			return false;
 		}
 	}
-	
+
 	/**
 	 * 创建标签
 	 * @param  array   $param  [description]
@@ -64,7 +64,7 @@ class WorkLable extends Common
 			$data['create_user_id'] = $param['create_user_id'];
 			$data['name'] = $param['name'];
 			$data['color'] = $param['color'];
-			$data['status'] = 1; 
+			$data['status'] = 1;
 			$this->insert($data);
 			$this->commit();
 			return true;
@@ -79,7 +79,7 @@ class WorkLable extends Common
 	 * 编辑标签
 	 * @param  array   $param  [description]
 	 */
-	public function updateDataById($param)
+	public function updateDataById($param, $id=0)
 	{
 		$map['lable_id'] = $param['lable_id'];
 		unset($param['lable_id']);
@@ -96,9 +96,9 @@ class WorkLable extends Common
 	*删除标签
 	*
 	*/
-	public function delDataById($param)
+	public function delDataById($param=[], $delSon = false)
 	{
-		$map['lable_id'] = $param['lable_id'];	
+		$map['lable_id'] = $param['lable_id'];
 		$this->startTrans();
 		try{
 			$ret = $this->where($map)->setField('status',0);
@@ -114,9 +114,9 @@ class WorkLable extends Common
 			$this->rollback();
 			$this->error = '删除失败';
 			return false;
-		}		
+		}
 	}
-	
+
 	/*
 	*任务标签
 	*

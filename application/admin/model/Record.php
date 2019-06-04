@@ -32,10 +32,10 @@ class Record extends Common
      * @param     [string]                   $by    [分类]
      * @param     [string]                   $types    [类别]
      * @param     [number]                   $types_id    [类别Id]
-     * @return    [array]                    
-     */		
+     * @return    [array]
+     */
 	public function getDataList($request, $by = '')
-    {  	
+    {
     	$userModel = new \app\admin\model\User();
     	$commonModel = new \app\admin\model\Comment();
     	$fileModel = new \app\admin\model\File();
@@ -50,10 +50,10 @@ class Record extends Common
 			return false;
 		}
 		switch ($by) {
-			case 'record' : 
+			case 'record' :
 				$where_record = [];
 				$where_record['types'] = $map['types'];
-				$where_record['types_id'] = $map['types_id'];				
+				$where_record['types_id'] = $map['types_id'];
 				//客户模块下包含被转化线索的跟进记录
 				if ($map['types'] == 'crm_customer') {
 					if ($leads_id = db('crm_leads')->where(['customer_id' => $map['types_id']])->value('leads_id')) {
@@ -70,7 +70,7 @@ class Record extends Common
 				if ($map['types'] == 'crm_business') {
 					$whereOr = [];
 					$whereOr['business_ids'] = array('like','%,'.$map['types_id'].',%');
-				}							
+				}
 				$list = db('admin_record')
 					->page($request['page'], $request['limit'])
 					->order('create_time desc')
@@ -96,64 +96,64 @@ class Record extends Common
 				$where_log['log_id'] = ['in',$r_logs];
 				$list = db('oa_log')
 					->page($request['page'], $request['limit'])
-					->order('create_time desc')				
+					->order('create_time desc')
 					->where($where_log)
 					->select();
 				foreach ($list as $k=>$v) {
 					$list[$k]['id'] = $v['log_id'];
 					$list[$k]['cate'] = 2;
-				}				
+				}
 				$dataCount = db('oa_log')->where($where_log)->count();
 				break;
 			case 'examine' :
 				$where_examine = [];
 				$r_logs = $this->getRelationIdsByType($map['types'], $map['types_id'], 'oa_examine') ? : [];
-				$where_examine['examine_id'] = ['in',$r_logs];			
+				$where_examine['examine_id'] = ['in',$r_logs];
 				$list = db('oa_examine')
 					->page($request['page'], $request['limit'])
-					->order('create_time desc')				
+					->order('create_time desc')
 					->where($where_examine)
 					->select();
 				foreach ($list as $k=>$v) {
 					$list[$k]['id'] = $v['examine_id'];
 					$list[$k]['cate'] = 3;
-				}				
-				$dataCount = db('oa_examine')->where($where_examine)->count();	
+				}
+				$dataCount = db('oa_examine')->where($where_examine)->count();
 				break;
 			case 'task' :
 				$where_task = [];
 				$r_logs = $this->getRelationIdsByType($map['types'], $map['types_id'], 'task') ? : [];
-				$where_task['task_id'] = ['in',$r_logs];				
+				$where_task['task_id'] = ['in',$r_logs];
 				$list = db('task')
 					->page($request['page'], $request['limit'])
-					->order('create_time desc')				
+					->order('create_time desc')
 					->where($where_task)
 					->select();
 				foreach ($list as $k=>$v) {
 					$list[$k]['id'] = $v['task_id'];
 					$list[$k]['cate'] = 4;
-				}				
+				}
 				$dataCount = db('task')->where($where_task)->count();
 				break;
 			case 'event' :
 				$where_event = [];
 				$r_logs = $this->getRelationIdsByType($map['types'], $map['types_id'], 'oa_event') ? : [];
-				$where_event['event_id'] = ['in',$r_logs];				
+				$where_event['event_id'] = ['in',$r_logs];
 				$list = db('oa_event')
 					->page($request['page'], $request['limit'])
-					->order('create_time desc')				
+					->order('create_time desc')
 					->where($where_event)
 					->select();
 				foreach ($list as $k=>$v) {
 					$list[$k]['id'] = $v['event_id'];
 					$list[$k]['cate'] = 5;
-				}				
+				}
 				$dataCount = db('oa_event')->where($where_event)->count();
-				break;											
-			default : 
+				break;
+			default :
 				$where_log = [];
 				$r_logs = $this->getRelationIdsByType($map['types'], $map['types_id'], 'oa_log') ? : [];
-				$where_log['log_id'] = ['in',$r_logs];			
+				$where_log['log_id'] = ['in',$r_logs];
 				$sqlArr[] = Db::table('__OA_LOG__')
 	                ->where($where_log)
 	                ->field(['log_id as id,create_time,create_user_id,2 as cate,content'])
@@ -161,7 +161,7 @@ class Record extends Common
 
 				$where_examine = [];
 				$r_logs = $this->getRelationIdsByType($map['types'], $map['types_id'], 'oa_examine') ? : [];
-				$where_examine['examine_id'] = ['in',$r_logs];		            
+				$where_examine['examine_id'] = ['in',$r_logs];
 				$sqlArr[] = Db::table('__OA_EXAMINE__')
 	                ->where($where_examine)
 	                ->field(['examine_id as id,create_time,create_user_id,3 as cate,content'])
@@ -169,11 +169,11 @@ class Record extends Common
 
 				$where_task = [];
 				$r_logs = $this->getRelationIdsByType($map['types'], $map['types_id'], 'task') ? : [];
-				$where_task['task_id'] = ['in',$r_logs];	                
+				$where_task['task_id'] = ['in',$r_logs];
 				$sqlArr[] = Db::table('__TASK__')
 	                ->where($where_task)
 	                ->field(['task_id as id,create_time,create_user_id,4 as cate,name as content'])
-	                ->buildSql();	            	            
+	                ->buildSql();
 
 				$where_record = [];
 				$where_record['types'] = $map['types'];
@@ -185,11 +185,11 @@ class Record extends Common
 						$whereOr['types'] = 'crm_leads';
 						$whereOr['types_id'] = $leads_id;
 					}
-				}				                
+				}
 	            $e = Db::table('__ADMIN_RECORD__')
 	            	->alias('record')
-	            	->where($where_record)            	
-	            	->whereOr($whereOr)            	
+	            	->where($where_record)
+	            	->whereOr($whereOr)
 	            	->field(['record_id as id,create_time,create_user_id,1 as cate,content'])
 	            	->union($sqlArr)
 	            	->buildSql();
@@ -213,12 +213,12 @@ class Record extends Common
 			$relation_list = [];
 
 			switch ($v['cate']) {
-				case '1' : 
+				case '1' :
 					$where['module'] = 'admin_record';
 					$relation_list = $this->getListByRelationId('record', $v['id']);
 					$dataInfo = [];
 					break;
-				case '2' : 
+				case '2' :
 					$where['module'] = 'oa_log';
 					$dataInfo = db('oa_log')->where(['log_id' => $v['id']])->find();
 					$dataInfo['create_user_info'] = $create_user_info;
@@ -233,15 +233,15 @@ class Record extends Common
 					//3天内的日志可删,可修改
 					if (($dataInfo['create_user_id'] == $user_id) && date('Ymd',$dataInfo['create_time']) > date('Ymd',(strtotime(date('Ymd',time()))-86400*3))) {
 						$is_update = 1;
-						$is_delete = 1;			
+						$is_delete = 1;
 					}
 					$permission['is_update'] = $is_update;
 					$permission['is_delete'] = $is_delete;
-					$dataInfo['permission']  = $permission;					
+					$dataInfo['permission']  = $permission;
 
 					$relation_list = $this->getListByRelationId('log', $v['id']);
 					break;
-				case '3' : 
+				case '3' :
 					$where['module'] = 'oa_examine';
 					$dataInfo = db('oa_examine')->where(['examine_id' => $v['id']])->find();
 					$dataInfo['category_name'] = db('oa_examine_category')->where(['category_id' => $dataInfo['category_id']])->value('title');
@@ -272,14 +272,14 @@ class Record extends Common
 				        $is_update = 1;
 						$is_delete = 1;
 				    }
-				    $permission['is_recheck'] = $is_recheck;	        
+				    $permission['is_recheck'] = $is_recheck;
 			        $permission['is_update'] = $is_update;
 			        $permission['is_delete'] = $is_delete;
 			        $dataInfo['permission']	= $permission;
 
 					$relation_list = $this->getListByRelationId('examine', $v['id']);
 					break;
-				case '4' : 
+				case '4' :
 					$where['module'] = 'work_task';
 					$relation_list = $this->getListByRelationId('task', $v['id']);
 					$dataInfo = db('task')->where(['task_id' => $v['id']])->find();
@@ -295,7 +295,7 @@ class Record extends Common
 					$dataInfo['subcount'] = $subcount; //子任务
 					$dataInfo['subdonecount'] = $subdonecount; //已完成子任务
 					$dataInfo['commentcount'] = Db::name('AdminComment')->where('type=1 and type_id ='.$dataInfo['task_id'])->count();
-					$dataInfo['filecount'] = Db::name('WorkTaskFile')->where('task_id ='.$dataInfo['task_id'])->count();	
+					$dataInfo['filecount'] = Db::name('WorkTaskFile')->where('task_id ='.$dataInfo['task_id'])->count();
 					if ($dataInfo['lable_id']) {
 						$dataInfo['lableList'] = $lableModel->getDataByStr($dataInfo['lable_id']);
 					}else{
@@ -303,12 +303,12 @@ class Record extends Common
 					}
 					//参与人列表数组
 					//$userlist =$userModel->getDataByStr($value['owner_user_id']);
-					//$dataInfo['own_list'] = $userlist?$userlist: array(); 
+					//$dataInfo['own_list'] = $userlist?$userlist: array();
 					//负责人信息
 					$dataInfo['main_user'] = $dataInfo['main_user_id'] ? $userModel->getDataById($dataInfo['main_user_id']) : array();
-					$dataInfo['relationCount'] = $taskModel->getRelationCount($dataInfo['task_id']);					
-					break;					
-				case '5' : 
+					$dataInfo['relationCount'] = $taskModel->getRelationCount($dataInfo['task_id']);
+					break;
+				case '5' :
 					$where['module'] = 'oa_event';
 					$relation_list = $this->getListByRelationId('event', $v['id']);
 
@@ -329,11 +329,11 @@ class Record extends Common
 					} else {
 						$dataInfo['repeat'] =  '';
 					}
-					break;					
-				case '6' : 
+					break;
+				case '6' :
 					$where['module'] = 'work';
 					$relation_list = $this->getListByRelationId('work', $v['id']);
-					break;														
+					break;
 			}
 			$newFileList = [];
 			$newFileList = $fileModel->getDataList($where, 'all');
@@ -344,7 +344,7 @@ class Record extends Common
 					} else {
 						$imgList[] = $val;
 					}
-				}				
+				}
 			}
 			$dataInfo['fileList'] = $fileList ? : [];
 			$dataInfo['imgList'] = $imgList ? : [];
@@ -363,9 +363,9 @@ class Record extends Common
 	/**
 	 * 创建跟进记录信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		$eventModel = new \app\oa\model\Event();
@@ -404,14 +404,14 @@ class Record extends Common
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 根据主键获取详情
 	 * @param  array   $param  [description]
-	 */ 
-	public function getDataById($id = '')
+	 */
+	public function getDataById($id = '', $param = [])
 	{
 		$map['record_id'] = $id;
 		$dataInfo = db('admin_record')->where($map)->find();
@@ -421,15 +421,15 @@ class Record extends Common
 		}
 		$userModel = new \app\admin\model\User();
 		$dataInfo['create_user_info'] = $userModel->getUserById($dataInfo['create_user_id']);
-		return $dataInfo;		
-	}  
+		return $dataInfo;
+	}
 
 	/**
 	 * 相关业务ids
 	 * @param $types 相关业务
 	 * @param $types_id  相关业务ID
 	 * @param $relation  相关模块
-	 */ 	
+	 */
 	public function getRelationIdsByType($types, $types_id, $relation)
 	{
 		$rIds = [];
@@ -448,21 +448,21 @@ class Record extends Common
 			case 'crm_contract' : $rIds = $dbName->where(['contract_ids' => ['like', '%,'.$types_id.',%']])->column($relationId); break;
 		}
 		return $rIds ? : [];
-	}	
+	}
 
 	/**
 	 * 相关业务list
 	 * @param $types 相关业务
 	 * @param $types_id  相关业务ID
 	 * @param $relation  相关模块
-	 */ 
+	 */
 	public function getListByRelationId($relation, $relation_id)
 	{
 
 		$BusinessModel = new \app\crm\model\Business();
 		$ContactsModel = new \app\crm\model\Contacts();
 		$ContractModel = new \app\crm\model\Contract();
-		$CustomerModel = new \app\crm\model\Customer();	
+		$CustomerModel = new \app\crm\model\Customer();
 
 		$data = [];
 		switch ($relation) {
@@ -486,7 +486,7 @@ class Record extends Common
 	 * @param types 类型
 	 * @param types 类型ID
 	 * @param next_time 下次联系时间
-	 */ 
+	 */
 	public function updateNexttime($types, $types_id, $next_time)
 	{
 		switch ($types) {

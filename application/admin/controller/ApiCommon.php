@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: Api基础类，验证权限
 // +----------------------------------------------------------------------
-// | Author:  
+// | Author:
 // +----------------------------------------------------------------------
 
 namespace app\admin\controller;
@@ -15,15 +15,18 @@ use app\common\controller\Common;
 
 class ApiCommon extends Common
 {
+    public $userInfo;
+
     public function _initialize()
     {
         parent::_initialize();
-        /*获取头部信息*/ 
+        /*获取头部信息*/
         $header = Request::instance()->header();
-        
+
         $authKey = $header['authkey'];
-        $sessionId = $header['sessionid'];    
+        $sessionId = $header['sessionid'];
         $cache = cache('Auth_'.$authKey);
+
         // 校验sessionid和authKey
         if (empty($sessionId) || empty($authKey) || empty($cache)) {
             header('Content-Type:application/json; charset=utf-8');
@@ -37,14 +40,19 @@ class ApiCommon extends Common
         $userInfo = $cache['userInfo'];
         $map['id'] = $userInfo['id'];
         $map['status'] = array('in',['1','2']);
+
         $userData = Db::name('admin_user')->where($map)->find();
         if (!$userData) {
             header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>103, 'error'=>'账号已被删除或禁用']));   
-        } 
+            exit(json_encode(['code'=>103, 'error'=>'账号已被删除或禁用']));
+        }
+
+        $this->userInfo = $userInfo;
+
         session('user_id', $userInfo['id']);
+
         // 更新缓存
-        cache('Auth_'.$authKey, $cache, $loginExpire);           
+        cache('Auth_'.$authKey, $cache, $loginExpire);
         // $GLOBALS['userInfo'] = $userInfo;
     }
 }

@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 场景
 // +----------------------------------------------------------------------
-// | Author:   Michael_xu | gengxiaoxu@5kcrm.com 
+// | Author:   Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\admin\controller;
@@ -19,16 +19,16 @@ class Scene extends ApiCommon
      * @permission 无限制
      * @allow 登录用户可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','save','read','update','delete','sort','defaults']            
+            'allow'=>['index','save','read','update','delete','sort','defaults']
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
-        $a = strtolower($request->action());        
+        $a = strtolower($request->action());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
@@ -71,7 +71,7 @@ class Scene extends ApiCommon
     /**
      * 场景详情
      * @param  int  $id
-     * @return 
+     * @return
      */
     public function read()
     {
@@ -88,7 +88,7 @@ class Scene extends ApiCommon
     /**
      * 编辑场景
      * @param  int  $id
-     * @return 
+     * @return
      */
     public function update()
     {
@@ -99,14 +99,14 @@ class Scene extends ApiCommon
         $data = $sceneModel->updateDataById($param, $param['id']);
         if (!$data) {
             return resultArray(['error' => $sceneModel->getError()]);
-        } 
-        return resultArray(['data' => '编辑成功']);        
+        }
+        return resultArray(['data' => '编辑成功']);
     }
 
     /**
      * 删除场景
      * @param  int  $id
-     * @return 
+     * @return
      */
     public function delete($id)
     {
@@ -118,7 +118,7 @@ class Scene extends ApiCommon
             return resultArray(['error' => '数据不存在或已删除']);
         }
         $dataInfo = db('admin_scene')->where(['scene_id' => $param['id']])->find();
-        $resData = $sceneModel->delDataById($param['id']);
+        $resData = $sceneModel->delDataById($param);
         if ($resData) {
             //重新设置默认
             $default = db('admin_scene')->where(['types' => $dataInfo['types'],'bydata' => 'all'])->find();
@@ -127,12 +127,12 @@ class Scene extends ApiCommon
         } else {
             return resultArray(['error' => $sceneModel->getError()]);
         }
-    } 
+    }
 
     /**
      * 场景排序
-     * @param 
-     * @return 
+     * @param
+     * @return
      */
     public function sort()
     {
@@ -146,14 +146,14 @@ class Scene extends ApiCommon
             return resultArray(['error' => $sceneModel->getError()]);
         }
         return resultArray(['data' => '设置成功']);
-    } 
+    }
 
     /**
      * 场景默认
      * @param scene_id 场景ID
-     * @return 
+     * @return
      */
-    public function defaults() 
+    public function defaults()
     {
         $sceneModel = model('Scene');
         $param = $this->param;
@@ -164,6 +164,6 @@ class Scene extends ApiCommon
         if (!$resData) {
             return resultArray(['error' => $sceneModel->getError()]);
         }
-        return resultArray(['data' => '设置成功']);        
-    }     
+        return resultArray(['data' => '设置成功']);
+    }
 }

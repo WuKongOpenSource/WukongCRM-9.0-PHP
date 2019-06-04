@@ -30,9 +30,9 @@ class ExamineFlow extends Common
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
-     */		
+     */
 	public function getDataList($request)
-    {  	
+    {
         $userModel = new \app\admin\model\User();
     	$structureModel = new \app\admin\model\Structure();
         $examineStepModel = new \app\admin\model\ExamineStep();
@@ -52,7 +52,7 @@ class ExamineFlow extends Common
 		$list = $list_view
         		->page($request['page'], $request['limit'])
         		->field('examine_flow.*,user.realname,user.thumb_img')
-        		->select();	
+        		->select();
         foreach ($list as $k=>$v) {
             $list[$k]['user_ids_info'] = $userModel->getListByStr($v['user_ids']);
             $list[$k]['structure_ids_info'] = $structureModel->getListByStr($v['structure_ids']);
@@ -71,9 +71,9 @@ class ExamineFlow extends Common
 	/**
 	 * 创建审批流程信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function createData($param)
 	{
 		//验证
@@ -89,16 +89,16 @@ class ExamineFlow extends Common
 		} else {
 			$this->error = '添加失败';
 			return false;
-		}			
+		}
 	}
 
 	/**
 	 * 编辑审批流程信息
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
-	public function updateDataById($param, $flow_id = '')
+	 * @param
+	 * @return
+	 */
+	public function updateDataById($param, $flow_id = 0)
 	{
 		unset($param['id']);
 		$dataInfo = $this->get($flow_id);
@@ -111,7 +111,7 @@ class ExamineFlow extends Common
 		foreach ($unUpdateField as $v) {
 			unset($param[$v]);
 		}
-		
+
 		//验证
 		if (!$param['name']) {
             $this->error = '请填写审批流名称';
@@ -119,23 +119,23 @@ class ExamineFlow extends Common
         }
 		$param['flow_id'] = $flow_id;
 
-		if ($this->allowField(true)->save($param, ['flow_id' => $flow_id])) {		
+		if ($this->allowField(true)->save($param, ['flow_id' => $flow_id])) {
 			$data = [];
 			$data['flow_id'] = $flow_id;
 			return $data;
 		} else {
 			$this->error = '编辑失败,请重试';
 			return false;
-		}					
+		}
 	}
 
     /**
      * 审批流程详情
      * @author Michael_xu
-     * @param  
-     * @return                            
-     */ 
-    public function getDataById($flow_id = '')
+     * @param
+     * @return
+     */
+    public function getDataById($flow_id = '', $param = [])
     {
         $userModel = new \app\admin\model\User();
         $dataInfo = $this->get($flow_id);
@@ -148,21 +148,21 @@ class ExamineFlow extends Common
         foreach ($stepList as $k=>$v) {
             $examine_user_id_arr = [];
             switch ($v['status']) {
-                case 2 : 
+                case 2 :
                 case 3 : $examine_user_id_arr = stringToArray($v['user_id']); break;
                 default : $examine_user_id_arr = []; break;
             }
-            $stepList[$k]['user_id_info'] = $userModel->getUserByIdArr($examine_user_id_arr);      
+            $stepList[$k]['user_id_info'] = $userModel->getUserByIdArr($examine_user_id_arr);
         }
         $dataInfo['stepList'] = $stepList ? : [];
-        return $dataInfo;          
+        return $dataInfo;
     }
 
 	/**
      * 审批流程（根据对象获取需要执行的审批流程）
      * @param  types 审批对象
      * @param  types_id 审批对象ID(如OA审批类型ID)
-     */ 
+     */
     public function getFlowByTypes($user_id, $types, $types_id = 0)
     {
         $userModel = new \app\admin\model\User();
@@ -194,7 +194,7 @@ class ExamineFlow extends Common
                         $query->where(['config' => 1])
                                 ->where($userData['map'])
                                 ->where('structure_ids','eq','')
-                                ->where('user_ids','eq','');                    
+                                ->where('user_ids','eq','');
                     })->whereOr(function ($query) use ($userData) {
                         $query->where(['config' => 0])
                                 ->where($userData['map']);
@@ -220,17 +220,17 @@ class ExamineFlow extends Common
             //审批流是否为空
             $stepList = $examineStepModel->getStepList($resFlow['flow_id'], $user_id, $types);
             if (!$stepList) {
-               return false; 
+               return false;
             }
         }
         return $resFlow;
-    }  
+    }
 
     /**
      * 审批流程下所有审批人ID
      * @param
      * @return
-     */  
+     */
     public function getUserByFlow($flow_id, $user_id, $check_user_id = '')
     {
         $flowInfo = db('admin_examine_flow')->where(['flow_id' => $flow_id])->find();
@@ -262,5 +262,5 @@ class ExamineFlow extends Common
             }
         }
         return $userIds ? : [];
-    }     
+    }
 }

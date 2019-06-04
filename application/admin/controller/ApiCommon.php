@@ -30,11 +30,11 @@ class ApiCommon extends Common
         // 校验sessionid和authKey
         if (empty($sessionId) || empty($authKey) || empty($cache)) {
             header('Content-Type:application/json; charset=utf-8');
-            dump([
-                'session_id' => $sessionId,
-                'auth_key' => $authKey,
-                'cache' => $cache,
-            ]);
+//            dump([
+//                'session_id' => $sessionId,
+//                'auth_key' => $authKey,
+//                'cache' => $cache,
+//            ]);
             exit(json_encode(['code'=>101, 'error'=>'登录已失效']));
         }
 

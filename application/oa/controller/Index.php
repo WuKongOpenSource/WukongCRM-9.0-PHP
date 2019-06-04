@@ -65,15 +65,18 @@ class Index extends ApiCommon
         $page = $param['page'] ?: '1';
         //获取权限范围内的员工
         $auth_user_ids = getSubUserId();
-        $auth_user_ids = implode(',', $auth_user_ids);
+        $authUserIds = '0';
+        if(!empty($auth_user_ids)){
+            $authUserIds = join(',', $auth_user_ids);
+        }
 
         $actionList = Db::name('AdminActionLog')
-            ->where($where . ' and ( action_delete != 1 ) and ( user_id IN (' . $auth_user_ids . ') or join_user_ids like "%,' . $userInfo['id'] . ',%" or structure_ids like "%,' . $userInfo['structure_id'] . ',%" )')
+            ->where($where . ' and ( action_delete != 1 ) and ( user_id IN (' . $authUserIds . ') or join_user_ids like "%,' . $userInfo['id'] . ',%" or structure_ids like "%,' . $userInfo['structure_id'] . ',%" )')
             ->page($page, $limit)
             ->order('create_time desc')
             ->select();
         $actionCount = Db::name('AdminActionLog')
-            ->where($where . ' and ( action_delete != 1 ) and ( user_id IN (' . $auth_user_ids . ') or join_user_ids like "%,' . $userInfo['id'] . ',%" or structure_ids like "%,' . $userInfo['structure_id'] . ',%" )')
+            ->where($where . ' and ( action_delete != 1 ) and ( user_id IN (' . $authUserIds . ') or join_user_ids like "%,' . $userInfo['id'] . ',%" or structure_ids like "%,' . $userInfo['structure_id'] . ',%" )')
             ->count();
         foreach ($actionList as $key => $value) {
             $actionList[$key]['create_user_info'] = $userModel->getUserById($value['user_id']);

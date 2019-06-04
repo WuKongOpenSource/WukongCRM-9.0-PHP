@@ -26,7 +26,7 @@ return [
     // 注册的根命名空间
     'root_namespace'         => [],
     // 扩展配置文件
-    'extra_config_list'      => ['database', 'deploy', 'authorize'],
+    'extra_config_list'      => ['database', 'deploy', 'authorize','login'],
     // 扩展函数文件
     'extra_file_list'        => [THINK_PATH . 'helper' . EXT],
     // 默认输出类型
@@ -257,4 +257,20 @@ return [
     'map_ak' => 'g4D9pzuFnwjVVpUCDvQ6vhkSfPDx7V3q',
     //组织简称授权码
     'num_ak' => '',
+    // +----------------------------------------------------------------------
+    // | 登录设置
+    // +----------------------------------------------------------------------
+    'login'=>[
+        'wechat' => [
+            'app_id' => 'wx65cc57b99c153074',
+            'secret' => '81acd8e771682429bf67f7f56d856c3d',
+
+            'response_type' => 'array',
+
+            'log' => [
+                'level' => 'debug',
+                'file' => RUNTIME_PATH.'/login/wechat.log',
+            ],
+        ]
+    ],
 ];

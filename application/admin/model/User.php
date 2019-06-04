@@ -188,6 +188,7 @@ class User extends Common
 		return $data;
 	}
 
+
 	/**
 	 * 创建用户
 	 * @param  array   $param  [description]
@@ -355,7 +356,29 @@ class User extends Common
 		}
 	}
 
-	/**
+
+    /**
+     * 微信登录
+     * @param $openId
+     * @return array|bool|false|mixed|\PDOStatement|string|\think\Model
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function wechatLogin($openId)
+    {
+        $data = Db::name('AdminUser')->where('open_id',$openId)->find();
+        if (!$data) {
+            $this->error = '暂无此数据';
+            return false;
+        }
+        $data = $this->login($data['username'],$data['password'],'',false,false,'',0,'wechat');
+        return $data;
+
+    }
+
+
+    /**
 	 * [login 登录]
 	 * @AuthorHTL
 	 * @DateTime
@@ -367,7 +390,7 @@ class User extends Common
 	 * @param     Boolean                    $mobile     [1手机登录]
 	 * @return    [type]                               [description]
 	 */
-	public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false, $authKey = '', $mobile = 0)
+	public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false, $authKey = '', $mobile = 0,$method='')
 	{
         if (!$username) {
 			$this->error = '帐号不能为空';
@@ -398,10 +421,13 @@ class User extends Common
 			return false;
     	}
 		$userInfo['thumb_img'] = $userInfo['thumb_img'] ? getFullPath($userInfo['thumb_img']) : '';
-    	if (user_md5($password, $userInfo['salt'], $userInfo['username']) !== $userInfo['password']) {
-			$this->error = '密码错误';
-			return false;
-    	}
+    	if ($method !='wechat'){
+            if (user_md5($password, $userInfo['salt'], $userInfo['username']) !== $userInfo['password']) {
+                $this->error = '密码错误';
+                return false;
+            }
+        }
+
     	if ($userInfo['status'] === 0) {
 			$this->error = '帐号已被禁用';
 			return false;

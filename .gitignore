@@ -2,4 +2,5 @@
 /runtime/*
 /vendor/*
 /thinkphp/*
+/tests/*
 composer.lock

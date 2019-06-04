@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 基础配置文件
 // +----------------------------------------------------------------------
-// | Author: 
+// | Author:
 // +----------------------------------------------------------------------
 error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
@@ -59,7 +59,7 @@ return [
     // 禁止访问模块
     'deny_module_list'       => ['common'],
     //允许访问模块
-    'allow_module_list'      => ['admin','crm','oa','bi'],    
+    'allow_module_list'      => ['admin','crm','oa','bi'],
     // 默认控制器名
     'default_controller'     => 'Index',
     // 默认操作名
@@ -133,7 +133,7 @@ return [
 
     // 视图输出字符串内容替换
     'view_replace_str'       => [
-        
+
     ],
     // 默认跳转页面对应的模板文件
     'dispatch_success_tmpl'  => THINK_PATH . 'tpl' . DS . 'dispatch_jump.tpl',
@@ -229,22 +229,22 @@ return [
 
     'captcha'  => [
         // 验证码字符集合
-        'codeSet'  => '1234567890', 
+        'codeSet'  => '1234567890',
         // 验证码字体大小(px)
-        'fontSize' => 15, 
+        'fontSize' => 15,
         // 是否画混淆曲线
-        'useCurve' => true, 
+        'useCurve' => true,
          // 验证码图片高度
         'imageH'   => 30,
         // 验证码图片宽度
-        'imageW'   => 100, 
+        'imageW'   => 100,
         // 验证码位数
-        'length'   => 4, 
-        // 验证成功后是否重置        
+        'length'   => 4,
+        // 验证成功后是否重置
         'reset'    => true
-    ], 
+    ],
     //百度地图apiKey
     'map_ak' => 'g4D9pzuFnwjVVpUCDvQ6vhkSfPDx7V3q',
     //组织简称授权码
-    'num_ak' => '',       
+    'num_ak' => '',
 ];

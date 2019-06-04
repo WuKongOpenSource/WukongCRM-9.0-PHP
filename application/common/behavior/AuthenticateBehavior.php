@@ -41,7 +41,7 @@ class AuthenticateBehavior
 
     	if (empty($userInfo)) {
 			header('Content-Type:application/json; charset=utf-8');
-			dump($userInfo);
+			//dump($userInfo);
             exit(json_encode(['code'=>101,'error'=>'请先登录']));
     	}
 		if ($userInfo['id'] == 1) {

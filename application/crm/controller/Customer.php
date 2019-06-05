@@ -798,7 +798,7 @@ class Customer extends ApiCommon
             if ($res =  Db::name('crm_top')->data($param)->insert()) {
                 return resultArray(['data' => $res]);
             } else {
-                return resultArray(['error' => $customerModel->getError()]);
+                return resultArray(['error' => '']);
             }
         }
     }

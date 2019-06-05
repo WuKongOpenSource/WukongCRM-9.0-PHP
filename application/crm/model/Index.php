@@ -17,13 +17,13 @@ class Index extends Common
 	/**
 	 * 销售简报
 	 * @author Michael_xu
-	 * @param  
-	 * @return                            
-	 */	
+	 * @param
+	 * @return
+	 */
 	public function getSalesData($param)
 	{
 		$where = array();
 		$start_time = $param['start_time'];
-		$where['create_time'] = Time::today()	
+		$where['create_time'] = Time::today();
 	}
-} 		
+}

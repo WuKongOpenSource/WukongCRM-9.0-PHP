@@ -231,7 +231,7 @@ class Record extends Common
 					$is_update = 0;
 					$is_delete = 0;
 					//3天内的日志可删,可修改
-					if (($dataInfo['create_user_id'] == $user_id) && date('Ymd',$dataInfo['create_time']) > date('Ymd',(strtotime(date('Ymd',time()))-86400*3))) {
+					if (($dataInfo['create_user_id'] == $v['create_user_id']) && date('Ymd',$dataInfo['create_time']) > date('Ymd',(strtotime(date('Ymd',time()))-86400*3))) {
 						$is_update = 1;
 						$is_delete = 1;
 					}
@@ -264,11 +264,11 @@ class Record extends Common
 					$is_recheck = 0;
 					$is_update = 0;
 					$is_delete = 0;
-			        if (((int)$dataInfo['create_user_id'] == $user_id || !in_array($userr_id, $admin_user_ids)) && (!in_array($dataInfo['check_status'],['2','3']) || (empty($dataInfo['check_status']) && empty($dataInfo['check_user_id'])))) {
+			        if (((int)$dataInfo['create_user_id'] == $v['create_user_id'] || !in_array($v['create_user_id'], $admin_user_ids)) && (!in_array($dataInfo['check_status'],['2','3']) || (empty($dataInfo['check_status']) && empty($dataInfo['check_user_id'])))) {
 			            $is_recheck = 1;
 			        }
 			        //创建人（待审状态且无审批人时可编辑）
-					if (($user_id == (int)$dataInfo['create_user_id']) && $dataInfo['check_status'] == 0 && empty($dataInfo['check_user_id'])) {
+					if (($v['create_user_id'] == (int)$dataInfo['create_user_id']) && $dataInfo['check_status'] == 0 && empty($dataInfo['check_user_id'])) {
 				        $is_update = 1;
 						$is_delete = 1;
 				    }

@@ -22,8 +22,8 @@ class Config extends Common
 	/**
 	 * 修改配置信息
 	 * @author Michael_xu
-	 * @param                          
-	 */	
+	 * @param
+	 */
 	public function updateConfig($param)
 	{
 		$where = $param['name'];
@@ -33,15 +33,16 @@ class Config extends Common
 		} else {
 			$this->error = '设置失败';
 			return false;
-		}		
+		}
 	}
 
-	/**
-	 * 系统配置信息
-	 * @author Michael_xu
-	 * @param                          
-	 */	
-	public function getDataList($param)
+    /**
+     * 系统配置信息
+     * @param $param
+     * @param string $type
+     * @return array
+     */
+	public function getDataList($param, $type = 'tree')
 	{
 		$cat = new \com\Category('admin_config', array('id', 'pid', 'name', 'value'));
 		$data = $cat->getList('', 0, 'id');
@@ -49,7 +50,7 @@ class Config extends Common
 		if ($type == 'tree') {
 			$tree = new \com\Tree();
 			$data = $tree->list_to_tree($data, 'id', 'pid', 'child', 0, true, array('pid'));
-		}		
-		return $data;		
+		}
+		return $data;
 	}
-} 		
+}

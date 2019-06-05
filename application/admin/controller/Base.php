@@ -22,13 +22,15 @@ class Base extends Common
         $userModel = model('User');
         if ($param['type']=='wechat'){
             $code = $param['code'];
+            $username = $param['username'];
             $wechatConfig = config('login.wechat');
             $app = Factory::miniProgram($wechatConfig);
             $login = $app->auth->session($code);
+            //var_dump($login);exit;
             if (!isset($login['openid'])){
-                return resultArray(['error' => 'shao can shu']);
+                return resultArray(['error' => 'not openid']);
             }
-            $data =$userModel->wechatLogin($login['openid']);
+            $data =$userModel->wechatLogin($login['openid'],$username);
 
         }else{
             $username = $param['username'];

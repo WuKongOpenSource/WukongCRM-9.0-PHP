@@ -372,7 +372,7 @@ class User extends Common
         if (!$data) {
             $data = $user->where('username', $username)->find();
             if (!empty($data)){
-                $this->error = '此账号已绑定微信';
+                $this->error = '此账号已绑定微信或账号有误';
                 return false;
             }
             $user->where('username', $username)->update(['open_id'=>$openId]);

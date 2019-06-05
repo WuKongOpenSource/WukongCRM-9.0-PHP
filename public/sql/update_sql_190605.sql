@@ -1,0 +1,1 @@
+ALTER TABLE `5kcrm_admin_user` ADD `open_id` varchar(50) NOT NULL DEFAULT '' COMMENT '微信openid' AFTER `type`;

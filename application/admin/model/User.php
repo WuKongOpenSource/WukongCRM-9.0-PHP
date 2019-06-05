@@ -355,20 +355,47 @@ class User extends Common
 		}
 	}
 
-	/**
-	 * [login 登录]
-	 * @AuthorHTL
-	 * @DateTime
-	 * @param     [string]                   $u_username [账号]
-	 * @param     [string]                   $u_pwd      [密码]
-	 * @param     [string]                   $verifyCode [验证码]
-	 * @param     Boolean                  	 $isRemember [是否记住密码]
-	 * @param     Boolean                    $type       [是否重复登录]
-	 * @param     Boolean                    $mobile     [1手机登录]
-	 * @return    [type]                               [description]
-	 */
-	public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false, $authKey = '', $mobile = 0)
-	{
+
+    /**
+     * 微信登录
+     * @param $openId
+     * @return array|bool|false|mixed|\PDOStatement|string|\think\Model
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function wechatLogin($openId, $username)
+    {
+        $user = Db::name('AdminUser');
+        $data = $user->where('open_id', $openId)->find();
+        if (!$data) {
+            $data = $user->where('username', $username)->find();
+            if (!empty($data)){
+                $this->error = '此账号已绑定微信或账号有误';
+                return false;
+            }
+            $user->where('username', $username)->update(['open_id'=>$openId]);
+        }
+        $data = $this->login($data['username'], $data['password'], '', false, false, '', 0, 'wechat');
+        return $data;
+
+    }
+
+
+    /**
+     * [login 登录]
+     * @AuthorHTL
+     * @DateTime
+     * @param     [string]                   $u_username [账号]
+     * @param     [string]                   $u_pwd      [密码]
+     * @param     [string]                   $verifyCode [验证码]
+     * @param     Boolean $isRemember [是否记住密码]
+     * @param     Boolean $type [是否重复登录]
+     * @param     Boolean $mobile [1手机登录]
+     * @return    [type]                               [description]
+     */
+    public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false, $authKey = '', $mobile = 0, $method = '')
+    {
         if (!$username) {
 			$this->error = '帐号不能为空';
 			return false;
@@ -776,7 +803,7 @@ class User extends Common
 		$list = $this
 				->alias('user')
 				->join('__ADMIN_STRUCTURE__ structure', 'structure.id = user.structure_id', 'LEFT')
-				->where(['user.id' => ['in', join(',', $ids)]])->field('user.id,username,img,thumb_img,realname,parent_id,structure.name as structure_name,structure.id as structure_id')->select();
+				->where(['user.id' => ['in', $id]])->field('user.id,username,img,thumb_img,realname,parent_id,structure.name as structure_name,structure.id as structure_id')->select();
 		return $list ? : [];
 	}
 

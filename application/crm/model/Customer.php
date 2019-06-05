@@ -104,36 +104,38 @@ class Customer extends Common
 				if ($is_excel) $a = 'excelExport';
 				$auth_user_ids = $userModel->getUserByPer('crm', 'customer', $a);
 
-			    //过滤权限
-			    if (isset($map['customer.owner_user_id'])) {
-			    	if (!is_array($map['customer.owner_user_id'][1])) {
-						$map['customer.owner_user_id'][1] = [$map['customer.owner_user_id'][1]];
-					}
-					if ($map['customer.owner_user_id'][0] == 'neq') {
-						$auth_user_ids = array_diff($auth_user_ids, $map['customer.owner_user_id'][1]) ? : [];	//取差集
-					} else {
-                        if(!empty($auth_user_ids)){
-                            $auth_user_ids = array_intersect($map['customer.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集
+				if(!empty($auth_user_ids)){
+                    //过滤权限
+                    if (isset($map['customer.owner_user_id'])) {
+                        if (!is_array($map['customer.owner_user_id'][1])) {
+                            $map['customer.owner_user_id'][1] = [$map['customer.owner_user_id'][1]];
                         }
-					}
-			        unset($map['customer.owner_user_id']);
-					$auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
-				    //负责人、相关团队
-				    $authMap['customer.owner_user_id'] = array('in',$auth_user_ids);
-			    } else {
-					$authMapData = [];
-			    	$authMapData['auth_user_ids'] = $auth_user_ids;
-			    	$authMapData['user_id'] = $user_id;
-			    	$authMap = function($query) use ($authMapData){
-			    		$query->where(['customer.owner_user_id' => array('in',$authMapData['auth_user_ids'])])
-			    			  	->whereOr(function ($query) use ($authMapData) {
-			                        $query->where(['customer.ro_user_id' => array('like','%,'.$authMapData['user_id'].',%'),'customer.owner_user_id' => array('neq','')]);
-			                    })
-								->whereOr(function ($query) use ($authMapData) {
-			                        $query->where(['customer.rw_user_id' => array('like','%,'.$authMapData['user_id'].',%'),'customer.owner_user_id' => array('neq','')]);
-			                    });
-				    };
-			    }
+                        if ($map['customer.owner_user_id'][0] == 'neq') {
+                            $auth_user_ids = array_diff($auth_user_ids, $map['customer.owner_user_id'][1]) ? : [];	//取差集
+                        } else {
+                            if(!empty($auth_user_ids)){
+                                $auth_user_ids = array_intersect($map['customer.owner_user_id'][1], $auth_user_ids) ? : [];	//取交集
+                            }
+                        }
+                        unset($map['customer.owner_user_id']);
+                        $auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
+                        //负责人、相关团队
+                        $authMap['customer.owner_user_id'] = array('in',$auth_user_ids);
+                    } else {
+                        $authMapData = [];
+                        $authMapData['auth_user_ids'] = $auth_user_ids;
+                        $authMapData['user_id'] = $user_id;
+                        $authMap = function($query) use ($authMapData){
+                            $query->where(['customer.owner_user_id' => array('in',$authMapData['auth_user_ids'])])
+                                ->whereOr(function ($query) use ($authMapData) {
+                                    $query->where(['customer.ro_user_id' => array('like','%,'.$authMapData['user_id'].',%'),'customer.owner_user_id' => array('neq','')]);
+                                })
+                                ->whereOr(function ($query) use ($authMapData) {
+                                    $query->where(['customer.rw_user_id' => array('like','%,'.$authMapData['user_id'].',%'),'customer.owner_user_id' => array('neq','')]);
+                                });
+                        };
+                    }
+                }
 			}
 		}
 		//列表展示字段

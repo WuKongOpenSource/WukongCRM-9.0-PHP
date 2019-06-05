@@ -20,7 +20,7 @@
         "topthink/framework": "~v5.0.24",
         "topthink/think-image": "^1.0",
         "topthink/think-helper": "^1.0",
-        "phpoffice/phpexcel": "^1.8",
+        "phpoffice/phpspreadsheet": "^1.7",
         "overtrue/wechat": "^4.1"
     },
     "require-dev": {

@@ -7,10 +7,7 @@
 
 namespace app\admin\model;
 
-use app\admin\model\Common;
-use PHPExcel_IOFactory;
-use PHPExcel_Cell;
-use PHPExcel;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class Excel extends Common
 {
@@ -34,24 +31,16 @@ class Excel extends Common
 		return $_indexCache[$pColumnIndex];
 	}
 
-	/**
-	 * 自定义字段模块导入模板下载
-	 * @param $field_list 自定义字段数据
-	 * @param $types 分类
-	 * @author
-	 **/
+    /**
+     * 自定义字段模块导入模板下载
+     * @param $field_list
+     * @param $types
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
+     */
 	public function excelImportDownload($field_list, $types){
-		$fieldModel = new \app\admin\model\Field();
 
- 		//实例化主文件
-        vendor("phpexcel.PHPExcel");
-        vendor("phpexcel.PHPExcel.Writer.Excel5");
-        vendor("phpexcel.PHPExcel.Writer.Excel2007");
-        vendor("phpexcel.PHPExcel.IOFactory");
-
-		$objPHPExcel = new \phpexcel();
-        $objWriter = new \PHPExcel_Writer_Excel5($objPHPExcel);
-        $objWriter = new \PHPExcel_Writer_Excel2007($objPHPExcel);
+		$objPHPExcel = new Spreadsheet();
 
 		$objProps = $objPHPExcel->getProperties(); // 设置excel文档的属性
 		$objProps->setCreator("5kcrm"); //创建人
@@ -109,8 +98,8 @@ class Excel extends Common
 						for ($c=3; $c<=70; $c++) {
 							//数据有效性   start
 							$objValidation = $objActSheet->getCell($this->stringFromColumnIndex($k).$c)->getDataValidation();
-							$objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)
-					           -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)
+							$objValidation -> setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST)
+					           -> setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_INFORMATION)
 					           -> setAllowBlank(false)
 					           -> setShowInputMessage(true)
 					           -> setShowErrorMessage(true)
@@ -126,8 +115,8 @@ class Excel extends Common
 	 						for ($c=3; $c<=70; $c++) {
 								//数据有效性   start
 								$objValidation = $objActSheet->getCell($this->stringFromColumnIndex($k).$c)->getDataValidation();
-								$objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)
-						           -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)
+								$objValidation -> setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST)
+						           -> setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_INFORMATION)
 						           -> setAllowBlank(false)
 						           -> setShowInputMessage(true)
 						           -> setShowErrorMessage(true)
@@ -151,8 +140,8 @@ class Excel extends Common
         $mark_row = $this->stringFromColumnIndex($k);
 
         $objActSheet->mergeCells('A1:'.$max_row.'1');
-		$objActSheet->getStyle('A1:'.$mark_row.'1')->getAlignment()->setHorizontal(\PHPExcel_Style_Alignment::HORIZONTAL_CENTER); //水平居中
-		$objActSheet->getStyle('A1:'.$mark_row.'1')->getAlignment()->setVertical(\PHPExcel_Style_Alignment::VERTICAL_CENTER); //垂直居中
+		$objActSheet->getStyle('A1:'.$mark_row.'1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER); //水平居中
+		$objActSheet->getStyle('A1:'.$mark_row.'1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER); //垂直居中
 		$objActSheet->getRowDimension(1)->setRowHeight(28); //设置行高
 		$objActSheet->getStyle('A1')->getFont()->getColor()->setARGB('FFFF0000');
 		$objActSheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -162,7 +151,7 @@ class Excel extends Common
         //设置单元格格式范围的字体、字体大小、加粗
         $objActSheet->getStyle('A1:'.$max_row.'1')->getFont()->setName("微软雅黑")->setSize(13)->getColor()->setARGB('#00000000');
         //给单元格填充背景色
-        $objActSheet->getStyle('A1:'.$max_row.'1')->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('#ff9900');
+        $objActSheet->getStyle('A1:'.$max_row.'1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('#ff9900');
 
 		switch ($types) {
 			case 'crm_leads' : $types_name = '线索信息'; break;
@@ -176,12 +165,15 @@ class Excel extends Common
 		}
         $content = $types_name.'（*代表必填项）';
         $objActSheet->setCellValue('A1', $content);
-		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+		$objWriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Excel5');
+
 		ob_end_clean();
 		header("Content-Type: application/vnd.ms-excel;");
         header("Content-Disposition:attachment;filename=".$types_name."导入模板".date('Y-m-d',time()).".xls");
         header("Pragma:no-cache");
         header("Expires:0");
+
+
         $objWriter->save('php://output');
     }
 
@@ -189,9 +181,9 @@ class Excel extends Common
      * 自定义字段模块导出csv
      * @param $file_name
      * @param $field_list
-     * @param callback $callback
+     * @param Closure $callback
      */
-	public function exportCsv($file_name, $field_list, callback $callback)
+	public function exportCsv($file_name, $field_list, \Closure $callback)
 	{
 		$fieldModel = new \app\admin\model\Field();
 		ini_set('memory_limit','256M');
@@ -207,6 +199,7 @@ class Excel extends Common
 		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 		header('Content-Description: File Transfer');
 		header('Content-Encoding: UTF-8');
+
 		// 加上bom头，防止用office打开时乱码
 		echo "\xEF\xBB\xBF"; 	// UTF-8 BOM
 
@@ -236,15 +229,17 @@ class Excel extends Common
 		exit();
 	}
 
-	/**
-	 * 自定义字段模块数据导入
-	 * @param $types 分类
-	 * @param $file 导入文件
-	 * @param $create_user_id 创建人ID
-	 * @param $owner_user_id 负责人ID
-	 * @author Michael_xu
-	 * @return
-	 */
+    /**
+     * 自定义字段模块数据导入
+     * @param $file
+     * @param $param
+     * @return bool
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
 	public function importExcel($file, $param)
 	{
 		$get_filesize_byte = get_upload_max_filesize_byte();
@@ -272,9 +267,6 @@ class Excel extends Common
             // //对上传的Excel数据进行处理生成编程数据,再进行数据库写入
             // $res = $ExcelToArrary->read($savePath, "UTF-8", $ext);//传参,判断office2007还是office2003
 
-            //实例化主文件
-			vendor("phpexcel.PHPExcel");
-
 			// set_time_limit(300);
    			// ini_set("memory_limit","1024M");
 
@@ -285,20 +277,18 @@ class Excel extends Common
 			// );
 			// \PHPExcel_Settings::setCacheStorageMethod($cacheMethod, $cacheSettings);
 
-        	$objPHPExcel = new \phpexcel();
+        	$objPHPExcel = new Spreadsheet();
 
 	        if ($ext =='xlsx') {
-	        	$objWriter = new \PHPExcel_Writer_Excel2007($objPHPExcel);
-			    $objRender = \PHPExcel_IOFactory::createReader('Excel2007');
+			    $objRender = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
 			    // $objRender->setReadDataOnly(true);
 			    $ExcelObj = $objRender->load($savePath);
 			} elseif ($ext =='xls') {
-				$objWriter = new \PHPExcel_Writer_Excel5($objPHPExcel);
-			    $objRender = \PHPExcel_IOFactory::createReader('Excel5');
+			    $objRender = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xls');
 			    // $objRender->setReadDataOnly(true);
 			    $ExcelObj = $objRender->load($savePath);
 			} elseif ($ext=='csv') {
-				$objWriter = new \PHPExcel_Reader_CSV($objPHPExcel);
+				$objWriter = new \PhpOffice\PhpSpreadsheet\Reader\Csv($objPHPExcel);
 			    //默认输入字符集
 			    $objWriter->setInputEncoding('UTF-8');
 			    //默认的分隔符
@@ -553,22 +543,16 @@ class Excel extends Common
 		return $newArr;
 	}
 
-	/**
-	 * excel参数配置（备份）
-	 * @param
-	 * @author Michael_xu
-	 * @return
-	 */
-	public function config()
+    /**
+     * excel参数配置（备份）
+     * @param $i
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
+     */
+	public function config($i)
 	{
-		vendor("PHPExcel.PHPExcel.PHPExcel");
-		vendor("PHPExcel.PHPExcel.Writer.Excel5");
-		vendor("PHPExcel.PHPExcel.Writer.Excel2007");
-		vendor("PHPExcel.PHPExcel.IOFactory");
 		//实例化
-		$objPHPExcel = new \phpexcel();
-		$objWriter = new \PHPExcel_Writer_Excel5($objPHPExcel);
-		$objWriter = new \PHPExcel_Writer_Excel2007($objPHPExcel);
+		$objPHPExcel = new Spreadsheet();
 
 		$objProps = $objPHPExcel->getProperties(); // 设置excel文档的属性
 		$objProps->setCreator("snowerp"); //创建人
@@ -591,18 +575,18 @@ class Excel extends Common
 		$objPHPExcel->getActiveSheet()->getProtection()->setSheet(true);
 		$objPHPExcel->getActiveSheet()->protectCells('A3:E13', 'PHPExcel');
 		//设置格式
-		$objPHPExcel->getActiveSheet()->getStyle('E4')->getNumberFormat()->setFormatCode(PHPExcel_Style_NumberFormat::FORMAT_CURRENCY_EUR_SIMPLE);
+		$objPHPExcel->getActiveSheet()->getStyle('E4')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_EUR_SIMPLE);
 		$objPHPExcel->getActiveSheet()->duplicateStyle( $objPHPExcel->getActiveSheet()->getStyle('E4'), 'E5:E13' );
 		//设置加粗
 		$objPHPExcel->getActiveSheet()->getStyle('B1')->getFont()->setBold(true);
 		//设置水平对齐方式（HORIZONTAL_RIGHT，HORIZONTAL_LEFT，HORIZONTAL_CENTER，HORIZONTAL_JUSTIFY）
-		$objPHPExcel->getActiveSheet()->getStyle('D11')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_RIGHT);
+		$objPHPExcel->getActiveSheet()->getStyle('D11')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
 		//设置垂直居中
-		$objPHPExcel->getActiveSheet()->getStyle('A18')->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+		$objPHPExcel->getActiveSheet()->getStyle('A18')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 		//设置字号
 		$objPHPExcel->getActiveSheet()->getDefaultStyle()->getFont()->setSize(10);
 		//设置边框
-		$objPHPExcel->getActiveSheet()->getStyle('A1:I20')->getBorders()->getAllBorders()->setBorderStyle(\PHPExcel_Style_Border::BORDER_THIN);
+		$objPHPExcel->getActiveSheet()->getStyle('A1:I20')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 		//设置边框颜色
 		$objPHPExcel->getActiveSheet()->getStyle('D13')->getBorders()->getLeft()->getColor()->setARGB('FF993300');
 		$objPHPExcel->getActiveSheet()->getStyle('D13')->getBorders()->getTop()->getColor()->setARGB('FF993300');
@@ -612,7 +596,7 @@ class Excel extends Common
 		$objPHPExcel->getActiveSheet()->getStyle('E13')->getBorders()->getRight()->getColor()->setARGB('FF993300');
 
 		//插入图像
-		$objDrawing = new PHPExcel_Worksheet_Drawing();
+		$objDrawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
 		/*设置图片路径 切记：只能是本地图片*/
 		$objDrawing->setPath('图像地址');
 		/*设置图片高度*/
@@ -628,7 +612,7 @@ class Excel extends Common
 		$objDrawing->setWorksheet($objPHPExcel->getActiveSheet());
 
 		//设置单元格背景色
-		$objPHPExcel->getActiveSheet(0)->getStyle('A1')->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID);
+		$objPHPExcel->getActiveSheet(0)->getStyle('A1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
 		$objPHPExcel->getActiveSheet(0)->getStyle('A1')->getFill()->getStartColor()->setARGB('FFCAE8EA');
 
 		//输入浏览器，导出Excel
@@ -643,7 +627,7 @@ class Excel extends Common
 		header('Content-Type: application/vnd.ms-excel');
 		header('Content-Disposition: attachment;filename="'.$savename.'.xls"');  //日期为文件名后缀
 		header('Cache-Control: max-age=0');
-		$objWriter = \PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');  //excel5为xls格式，excel2007为xlsx格式
+		$objWriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xls');  //excel5为xls格式，excel2007为xlsx格式
 		$objWriter->save('php://output');
 	}
 }

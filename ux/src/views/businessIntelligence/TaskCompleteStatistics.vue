@@ -310,6 +310,7 @@ export default {
             name: '合同金额',
             type: 'bar',
             yAxisIndex: 0,
+            barWidth: 15,
             data: []
           },
           {
@@ -323,7 +324,6 @@ export default {
             name: '完成率',
             type: 'line',
             yAxisIndex: 1,
-            barWidth: 15,
             data: []
           }
         ]

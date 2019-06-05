@@ -249,9 +249,7 @@ class Event extends Common
 		$ContractModel = new \app\crm\model\Contract();
 		$CustomerModel = new \app\crm\model\Customer();
 
-		$ownerlist = $userModel->getDataByStr($dataInfo['owner_user_ids']);
-	    $dataInfo['ownerList'] = $ownerList;
-		
+	    $dataInfo['ownerList'] = $userModel->getDataByStr($dataInfo['owner_user_ids']);
 		$relation = Db::name('OaEventRelation')->where('event_id ='.$id)->find();
 		$dataInfo['businessList'] = $relation['business_ids']?$BusinessModel->getDataByStr($relation['business_ids']):''; //商机
 		$dataInfo['contactsList'] = $relation['contacts_ids']?$ContactsModel->getDataByStr($relation['contacts_ids']):''; //联系人

@@ -78,13 +78,11 @@ class Index extends ApiCommon
             } elseif ($map_structure_user_ids) {
                 $map_user_ids = $map_structure_user_ids;
             }
-        } else {
-            // $map_user_ids = [$userInfo['id']]; 
-            $map_user_ids = getSubUserId(true);
         }
+        if (!$map_user_ids) $map_user_ids = getSubUserId(true);
         $perUserIds = getSubUserId(); //权限范围内userIds
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
-        $where['owner_user_id'] = array('in',$userIds);        
+        $where['owner_user_id'] = array('in',$userIds);      
         if (!empty($param['type'])) {
             $between_time = getTimeByType($param['type']);
             $where['create_time'] = array('between',$between_time);
@@ -92,7 +90,7 @@ class Index extends ApiCommon
             //自定义时间
             if (!empty($param['start_time'])) {
                 $where['create_time'] = array('between',array($param['start_time'],$param['end_time']));
-            }   
+            }
         }
         $customerNum = 0; //录入客户
         $contactsNum = 0; //新增联系人
@@ -160,10 +158,8 @@ class Index extends ApiCommon
             } elseif ($map_structure_user_ids) {
                 $map_user_ids = $map_structure_user_ids;
             }
-        } else {
-            // $map_user_ids = [$userInfo['id']]; 
-            $map_user_ids = getSubUserId(true);
         }
+        if (!$map_user_ids) $map_user_ids = getSubUserId(true);
         $status = $param['status'] ? : 1; //1合同目标2回款目标    
 
         $perUserIds = getSubUserId(); //权限范围内userIds
@@ -173,21 +169,22 @@ class Index extends ApiCommon
             $between_time = getTimeByType($param['type']);
             $start_time = $between_time[0];
             $end_time = $between_time[1];
-            $where['create_time'] = array('between',$between_time);
         } else {
             //自定义时间
             $start_time = $param['start_time'] ? : strtotime(date('Y-01-01',time()));
             $end_time = $param['end_time'] ? strtotime(date('Y-m-01', $param['end_time']) . ' +1 month -1 day') : strtotime(date('Y-m-01', time()) . ' +1 month -1 day');
             $between_time = array($start_time,$end_time);
-            $where['create_time'] = array('between',$between_time); 
         }
         //合同金额
         $where_contract = $where;
+        $where_contract['order_date'] = array('between',[date('Y-m-d',$between_time[0]),date('Y-m-d',$between_time[1])]);
         $where_contract['check_status'] = 2; //审核通过
         $contractMoney = db('crm_contract')->where($where_contract)->sum('money');
 
         //回款金额
+        
         $where_receivables = $where;
+        $where_contract['return_time'] = array('between',[date('Y-m-d',$between_time[0]),date('Y-m-d',$between_time[1])]);
         $where_receivables['check_status'] = 2; //审核通过
         $receivablesMoney = db('crm_receivables')->where($where_receivables)->sum('money');
 
@@ -260,10 +257,8 @@ class Index extends ApiCommon
             } elseif ($map_structure_user_ids) {
                 $map_user_ids = $map_structure_user_ids;
             }
-        } else {
-            // $map_user_ids = [$userInfo['id']]; 
-            $map_user_ids = getSubUserId(true);
         }
+        if (!$map_user_ids) $map_user_ids = getSubUserId(true);
         unset($param['user_id']);
         unset($param['structure_id']);
         $perUserIds = getSubUserId(); //权限范围内userIds
@@ -304,10 +299,8 @@ class Index extends ApiCommon
             } elseif ($map_structure_user_ids) {
                 $map_user_ids = $map_structure_user_ids;
             }
-        } else {
-            // $map_user_ids = [$userInfo['id']]; 
-            $map_user_ids = getSubUserId(true);
         }
+        if (!$map_user_ids) $map_user_ids = getSubUserId(true);
         $perUserIds = getSubUserId(); //权限范围内userIds
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : array($userInfo['id']); //数组交集
 
@@ -328,16 +321,18 @@ class Index extends ApiCommon
             $item['type'] = $timeArr['type'];
             $day = $timeArr['day']?$timeArr['day']:'1';
             $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
-            $next_day = $timeArr['next_day']?$timeArr['next_day']:'1';
+            $next_day = $timeArr['next_day'] ? $timeArr['next_day']-1 : '1';
             $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
             $create_time = [];
             if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
+                $create_time = array('between',array(date('Y-m-d',$start_time),date('Y-m-d',$end_time)));
             }
-            $whereArr['create_time'] = $create_time;
+            $whereArr['order_date'] = $create_time;
             $whereArr['check_status'] = array('eq',2);
             $whereArr['owner_user_id'] = array('in',$userIds);
             $totlaContractMoney += $item['contractMoney'] = $biContractModel->getDataMoney($whereArr);
+            unset($whereArr['order_date']);
+            $whereArr['return_time'] = $create_time;
             $totlaReceivablesMoney += $item['receivablesMoney'] = $receivablesModel->getDataMoney($whereArr);
             $list[] = $item;
         }
@@ -440,10 +435,10 @@ class Index extends ApiCommon
                 $resWhere .= " `name` like '%".$param['name']."%' ";
             } elseif ($param['mobile']) {
                 if ($resWhere) $resWhere .= 'OR';
-                $resWhere .= " `mobile` like '%".$param['mobile']."%'";
+                $resWhere .= " `mobile` = '".$param['mobile']."'";
             } elseif ($param['telephone']) {
                 if ($resWhere) $resWhere .= 'OR';
-                $resWhere .= " `telephone` like '%".$param['telephone']."%' ";
+                $resWhere .= " `telephone` = '".$param['telephone']."' ";
             }
             $dataList = db('crm_customer')
                             ->where($resWhere)
@@ -467,10 +462,10 @@ class Index extends ApiCommon
                 $resWhere .= " `contacts`.`name` like '%".$param['name']."%' ";
             } elseif ($param['mobile']) {
                 if ($resWhere) $resWhere .= 'OR';
-                $resWhere .= " `contacts`.`mobile` like '%".$param['mobile']."%' ";
+                $resWhere .= " `contacts`.`mobile` = '".$param['mobile']."' ";
             } elseif ($param['telephone']) {
                 if ($resWhere) $resWhere .= 'OR';
-                $resWhere .= " `contacts`.`telephone` like '%".$param['telephone']."%' ";
+                $resWhere .= " `contacts`.`telephone` = '".$param['telephone']."' ";
             } elseif ($param['customer_name']) {
                 if ($resWhere) $resWhere .= 'OR';
                 $resWhere .= " `customer`.`name` like '%".$param['customer_name']."%'";
@@ -497,10 +492,10 @@ class Index extends ApiCommon
                 $resWhere .= " `name` like '%".$param['name']."%' ";
             } elseif ($param['mobile']) {
                 if ($resWhere) $resWhere .= 'OR';
-                $resWhere .= " `mobile` like '%".$param['mobile']."%'";
+                $resWhere .= " `mobile` = '".$param['mobile']."'";
             } elseif ($param['telephone']) {
                 if ($resWhere) $resWhere .= 'OR';
-                $resWhere .= " `telephone` like '%".$param['telephone']."%'";
+                $resWhere .= " `telephone` = '".$param['telephone']."'";
             }            
             $dataList = db('crm_leads')
                         ->where($resWhere)

@@ -182,8 +182,9 @@
       </div>
     </div>
     <div class="footer">
-      <i class="wukong wukong-log-reply log-handle"
-         @click="commentBtn(data)"></i>
+      <el-button type="primary"
+                 icon="el-icon-chat-line-round"
+                 @click="commentBtn(data)">回复</el-button>
     </div>
     <!-- 底部评论 -->
     <div class="comment-box"

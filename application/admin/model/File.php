@@ -29,7 +29,7 @@ class File extends Common
 	 * @param     $x 裁剪图的长 ,$y 裁剪图的宽
 	 * @return    [array]                         
 	 */
-	public function createData($files, $param, $x = '150', $y = '150')
+	public function createData($files, $param = [], $x = '150', $y = '150')
 	{	
         if (empty($files)) {
 			$this->error = '请选择上传文件';

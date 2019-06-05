@@ -39,7 +39,7 @@ class Announcement extends ApiCommon
         $adminTypes = adminGroupTypes($userInfo['id']);
         if (!in_array(8,$adminTypes) && !in_array(1,$adminTypes) && !in_array($a, $unAction)) {
             header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作1']));
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
         }  
 
     }
@@ -110,7 +110,7 @@ class Announcement extends ApiCommon
         $data = $announcementModel->getDataById($param['announcement_id']);
         $adminTypes = adminGroupTypes($user_id);
         //判断权限
-        if (!in_array($user_id, stringToArray($data['owner_user_ids'])) && !in_array($userInfo['structure_id'], stringToArray($data['structure_ids'])) && !in_array(1,$adminTypes)) {
+        if (!in_array($user_id, stringToArray($data['owner_user_ids'])) && !in_array($userInfo['structure_id'], stringToArray($data['structure_ids'])) && !in_array(1,$adminTypes) && ($data['owner_user_ids'] && $data['structure_id'])) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'没有权限']));
         }        

@@ -97,6 +97,7 @@ import {
   crmCustomerLock,
   crmCustomerPutInPool,
   crmCustomerExcelExport,
+  crmCustomerPoolExcelExportAPI,
   crmCustomerDelete,
   crmCustomerReceive
 } from '@/api/customermanagement/customer'
@@ -258,12 +259,18 @@ export default {
       } else if (type == 'export') {
         let params = { scene_id: this.scene_id }
 
-        let request = {
-          customer: crmCustomerExcelExport,
-          leads: crmLeadsExcelExport,
-          contacts: crmContactsExcelExport,
-          product: crmProductExcelExport
-        }[this.crmType]
+        let request
+        // 公海的请求
+        if (this.isSeas) {
+          request = crmCustomerPoolExcelExportAPI
+        } else {
+          request = {
+            customer: crmCustomerExcelExport,
+            leads: crmLeadsExcelExport,
+            contacts: crmContactsExcelExport,
+            product: crmProductExcelExport
+          }[this.crmType]
+        }
         params[this.crmType + '_id'] = this.selectionList.map(item => {
           return item[this.crmType + '_id']
         })
@@ -528,7 +535,11 @@ export default {
         ])
       } else if (this.crmType == 'customer') {
         if (this.isSeas) {
-          return this.forSelectionHandleItems(handleInfos, ['alloc', 'get'])
+          return this.forSelectionHandleItems(handleInfos, [
+            'alloc',
+            'get',
+            'export'
+          ])
         } else {
           return this.forSelectionHandleItems(handleInfos, [
             'transfer',
@@ -589,6 +600,9 @@ export default {
           ? false
           : this.crm[this.crmType].transform
       } else if (type == 'export') {
+        if (this.isSeas) {
+          return this.crm[this.crmType].poolexcelexport
+        }
         return this.crm[this.crmType].excelexport
       } else if (type == 'delete') {
         return this.crm[this.crmType].delete

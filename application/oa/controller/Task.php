@@ -156,7 +156,6 @@ class Task extends ApiCommon
 				$taskList[$k]['pname'] = $ptask['name'];
 			}
 			$taskList[$k]['task_name'] = $v['name'];
-			$taskList[$k]['mainDetail'] = $mainUserdet;
 			$subcount = Db::name('Task')->where('status=1 and pid = '.$v['task_id'])->count();
 			$subdonecount = Db::name('Task')->where('status = 5 and pid = '.$v['task_id'])->count();
 			$taskList[$k]['subcount'] = $subcount; //子任务

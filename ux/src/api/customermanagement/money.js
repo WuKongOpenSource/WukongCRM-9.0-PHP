@@ -74,6 +74,18 @@ export function crmReceivablesPlanIndex(data) {
 }
 
 /**
+ * 回款计划删除
+ * @param {*} data 
+ */
+export function crmReceivablesPlanDeleteAPI(data) {
+  return request({
+    url: 'crm/receivables_plan/delete',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
  * 回款审核
  * @param {*} data
  */

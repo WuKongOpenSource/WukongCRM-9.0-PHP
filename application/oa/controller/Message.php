@@ -64,7 +64,7 @@ class Message extends ApiCommon
         }
         //任务（我负责的和我参与的未完成的任务提醒）
         if ($type == 'task' || $type == 'all') {
-            $taskWhere = '';
+            $taskWhere = [];
             $str = ','.$userInfo['id'].',';
             $task = 'main_user_id ='.$userInfo['id'].' or create_user_id ='.$user_id.' or ( is_open = 1 and owner_user_id like "%'.$str.'%")';
             $taskWhere['pid'] = 0;

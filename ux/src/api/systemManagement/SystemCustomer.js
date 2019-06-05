@@ -167,3 +167,39 @@ export function crmAchievementIndexForuser(data) {
     data: data
   })
 }
+
+/**
+ * 记录类型 数据
+ * @param {*} data 
+ */
+export function crmSettingRecordListAPI(data) {
+  return request({
+    url: 'crm/setting/recordList',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 记录类型 编辑
+ * @param {*} data 
+ */
+export function crmSettingRecordEditAPI(data) {
+  return request({
+    url: 'crm/setting/recordEdit',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 合同到期提醒 设置
+ * @param {*} data 
+ */
+export function crmSettingContractDayAPI(data) {
+  return request({
+    url: 'crm/setting/contractDay',
+    method: 'post',
+    data: data
+  })
+}

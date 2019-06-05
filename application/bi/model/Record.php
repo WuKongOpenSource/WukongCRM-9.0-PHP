@@ -107,6 +107,6 @@ class Record extends Common
             $where['create_user_id'] = array('eq',$value['create_user_id']);
             $list[$key]['count'] = count(db('admin_record')->group('types_id')->field('count(types_id) as count')->order('count desc')->where($where)->select());
         }
-        return $list;
+        return sort_select($list,'count');
     }
 }

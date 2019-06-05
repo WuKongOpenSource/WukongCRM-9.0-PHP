@@ -40,16 +40,15 @@ class Addresslist extends ApiCommon
 		$param = $this->param;
 		$where = array();
 		$where['user.status'] = 1;
-		if($param['search']){
+		if ($param['search']) {
 			$where['user.realname']  = array('like', '%'.$param['search'].'%');
 		} 
-		if($param['type'] ==1){
+		if ($param['type'] == 1) {
 			$datalist =  Db::name('AdminUser')
 				->where($where)
 				->alias('user')
 				->join('AdminStructure structure', 'structure.id = user.structure_id', 'LEFT')
 				->join('HrmUserDet hud','hud.user_id = user.id','LEFT')
-				->page( $request['page'], $request['limit'])
 				->field('user.id,user.realname,user.thumb_img,user.post,user.structure_id,structure.name as structure_name,user.username,user.mobile,user.sex,user.email,user.status')
 				->select();
 				foreach( $datalist as $k=>$v){

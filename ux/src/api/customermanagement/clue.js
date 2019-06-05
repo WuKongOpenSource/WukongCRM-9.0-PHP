@@ -84,7 +84,8 @@ export function crmLeadsExcelExport(data) {
     url: 'crm/leads/excelExport',
     method: 'post',
     data: data,
-    responseType: 'blob'
+    responseType: 'blob',
+    timeout: 60000
   })
 }
 
@@ -104,7 +105,8 @@ export function crmLeadsExcelImport(data) {
     data: param,
     headers: {
       'Content-Type': 'multipart/form-data'
-    }
+    },
+    timeout: 60000
   })
 }
 

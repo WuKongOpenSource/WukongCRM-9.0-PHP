@@ -31,6 +31,7 @@ class Rule extends Common
 			$cat = new \com\Category('admin_rule', array('id', 'pid', 'title', 'title'));
 			$data = $cat->getList('', 0, 'id');
 			foreach ($data as $k => $v) {
+				if ($v['id'] == '31') unset($data[$k]); continue;
 				$data[$k]['check'] = false;
 				if ($types && !in_array((int)$v['types'], $types)) {
 					unset($data[$k]);

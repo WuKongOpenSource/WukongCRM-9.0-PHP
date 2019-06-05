@@ -8,6 +8,7 @@
         <div class="message-body-side">
           <div v-for="(item, index) in leftSides"
                :key="index"
+               v-if="!item.hidden"
                :class="leftType==item.infoType? 'side-item-select' : 'side-item-default'"
                @click="sideClick(item)"
                class="side-item">
@@ -63,49 +64,56 @@ export default {
           crmType: 'customer',
           infoType: 'todayCustomer',
           num: 0,
-          tips: '下次跟进时间为今日的客户'
+          tips: '下次跟进时间为今日的客户',
+          hidden: false
         },
         {
           name: '分配给我的线索',
           crmType: 'leads',
           infoType: 'followLeads',
           num: 0,
-          tips: '转移之后未跟进的线索'
+          tips: '转移之后未跟进的线索',
+          hidden: false
         },
         {
           name: '分配给我的客户',
           crmType: 'customer',
           infoType: 'followCustomer',
           num: 0,
-          tips: '转移、领取、分配之后未跟进的客户，默认显示自己负责的客户'
+          tips: '转移、领取、分配之后未跟进的客户，默认显示自己负责的客户',
+          hidden: false
         },
         {
           name: '待审核合同',
           crmType: 'contract',
           infoType: 'checkContract',
           num: 0,
-          tips: ''
+          tips: '',
+          hidden: false
         },
         {
           name: '待审核回款',
           crmType: 'receivables',
           infoType: 'checkReceivables',
           num: 0,
-          tips: ''
+          tips: '',
+          hidden: false
         },
         {
           name: '待回款提醒',
           crmType: 'receivables_plan',
           infoType: 'remindReceivablesPlan',
           num: 0,
-          tips: ''
+          tips: '',
+          hidden: false
         },
         {
           name: '即将到期的合同',
           crmType: 'contract',
           infoType: 'endContract',
           num: 0,
-          tips: '根据“合同到期时间”，提前7天提醒'
+          tips: '根据“合同到期时间”及设置的“提前提醒天数”提醒',
+          hidden: false
         }
       ]
     }
@@ -131,7 +139,12 @@ export default {
     refreshNum() {
       for (let index = 0; index < this.leftSides.length; index++) {
         const element = this.leftSides[index]
-        element.num = this.messageNum[element.infoType] || 0
+        if (this.messageNum.hasOwnProperty(element.infoType)) {
+          element.num = this.messageNum[element.infoType] || 0
+          element.hidden = false
+        } else {
+          element.hidden = true
+        }
       }
     },
 

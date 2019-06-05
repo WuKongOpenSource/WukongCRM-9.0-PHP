@@ -22,7 +22,7 @@ class Base extends Common
         $password = $param['password'];
         $verifyCode = !empty($param['verifyCode'])? $param['verifyCode']: '';
         $isRemember = !empty($param['isRemember'])? $param['isRemember']: '';
-        $is_mobile = $param['is_mobile'] ? : '';
+        $is_mobile = $param['mobile'] ? : '';
         $data = $userModel->login($username, $password, $verifyCode, $isRemember, $type, $authKey, $is_mobile);
         
         Session::set('user_id', $data['userInfo']['id']);

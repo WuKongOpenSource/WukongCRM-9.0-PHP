@@ -91,7 +91,6 @@ export default {
           'wukong-examine-category-borrowing'
         ][categoryId - 1]
       } else {
-        console.log('object---', categoryId % 9)
         return [
           'wukong-examine-category-one',
           'wukong-examine-category-two',

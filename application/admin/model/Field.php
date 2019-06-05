@@ -661,6 +661,8 @@ class Field extends Model
 					$travelList = db('oa_examine_travel')->where($whereTravel)->select() ? : [];
 					foreach ($travelList as $key=>$val) {
 						$where = [];
+						$fileList = [];
+						$imgList = [];
 						$where['module'] = 'oa_examine_travel';
 						$where['module_id'] = $val['travel_id'];			
 						$newFileList = [];
@@ -688,7 +690,6 @@ class Field extends Model
 				$field_list[$k]['setting'] = $setting;
 				$field_list[$k]['default_value'] = $default_value;
 				$field_list[$k]['value'] = $value;
-				$field_list[$k]['width'] = $resIndexField[$v['field']]['width'] ? : '';
 			}
 		}
 		return $field_list ? : [];

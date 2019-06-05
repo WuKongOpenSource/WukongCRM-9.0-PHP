@@ -58,6 +58,8 @@ class Message extends ApiCommon
     {
         $param = $this->param;
         $userInfo = $this->userInfo;
+        $configDataModel = model('ConfigData');
+        $configData = $configDataModel->getData();
         $data = [];
         // $sysNum = db('admin_message')->where(['from_user_id' => 0,'to_user_id' => $userInfo['id'],'read_time' => ''])->count();
         $todayCustomer = $this->todayCustomer();
@@ -72,8 +74,10 @@ class Message extends ApiCommon
         $data['checkReceivables'] = $checkReceivables['dataCount'] ? : ''; 
         $remindReceivablesPlan = $this->remindReceivablesPlan();
         $data['remindReceivablesPlan'] = $remindReceivablesPlan['dataCount'] ? : '';
-        $endContract = $this->endContract();
-        $data['endContract'] = $endContract['dataCount'] ? : '';                                      
+        if ($configData['contract_config'] == 1) {
+            $endContract = $this->endContract();
+            $data['endContract'] = $endContract['dataCount'] ? : '';  
+        }                                   
         return resultArray(['data' => $data]);
     }
 

@@ -79,14 +79,6 @@ export default {
         { field: 'num', name: '数量', width: '115px' },
         { field: 'subtotal', name: '订单产品小计', width: '115px' }
       ],
-      infoFieldList: [
-        { field: 'name1', name: '产品分类', width: '115px' },
-        { field: 'name2', name: '产品名称', width: '115px' },
-        { field: 'name3', name: '合同编号', width: '115px' },
-        { field: 'name4', name: '负责人', width: '115px' },
-        { field: 'count', name: '客户名称', width: '115px' },
-        { field: 'money', name: '销售单价', width: '115px' }
-      ],
       list: [],
       //
       spanList: [],

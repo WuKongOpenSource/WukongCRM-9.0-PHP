@@ -107,7 +107,7 @@ class User extends Common
 				->alias('user')
 				->join('__ADMIN_STRUCTURE__ structure', 'structure.id = user.structure_id', 'LEFT')
 				->join('HrmUserDet hud','hud.user_id = user.id','LEFT')
-				->page( $request['page'], $request['limit'])
+				->limit(($request['page']-1)*$request['limit'], $request['limit'])
 				->where($map)
 				->field('user.id,user.username,user.img,user.thumb_img,user.realname,user.num,user.email,user.mobile,user.sex,user.structure_id,user.post,user.status,user.parent_id,user.type,user.create_time,structure.name as s_name')
 				->order($exp)
@@ -427,13 +427,13 @@ class User extends Common
        // $info['_AUTH_LIST_'] = $dataList['rulesList'];
         $info['authKey'] = $authKey;
         //手机登录
-        if ($mobile == 1) {
-        	cache('Auth_'.$userInfo['authkey'].'mobile', NULL);
-        	cache('Auth_'.$authKey.'mobile', $info, $loginExpire);
-        } else {
+        // if ($mobile == 1) {
+        // 	cache('Auth_'.$userInfo['authkey'].'_mobile', NULL);
+        // 	cache('Auth_'.$authKey.'_mobile', $info, $loginExpire);
+        // } else {
         	cache('Auth_'.$userInfo['authkey'], NULL);
 			cache('Auth_'.$authKey, $info, $loginExpire);
-        }
+        // }
         unset($userInfo['authkey']);
 		
         // 返回信息

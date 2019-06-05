@@ -167,6 +167,19 @@ export function crmIndexFieldRecord(data) {
   })
 }
 
+
+/**
+ * 记录类型 数据 与系统设置系统(repeat)
+ * @param {*} data 
+ */
+export function crmSettingRecordListAPI(data) {
+  return request({
+    url: 'crm/setting/recordList',
+    method: 'post',
+    data: data
+  })
+}
+
 // 客户管理下 合同审批信息
 export function crmExamineFlowStepList(data) {
   return request({

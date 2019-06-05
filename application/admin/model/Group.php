@@ -103,7 +103,7 @@ class Group extends Common
 	}
 	
 	//删除角色
-	public function delDataById($group_id)
+	public function delGroupById($group_id = '')
 	{
 		$dataInfo = $this->get($group_id);
 		if(!$dataInfo){

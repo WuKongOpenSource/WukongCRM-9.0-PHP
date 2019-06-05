@@ -14,6 +14,7 @@
   "dependencies": {
     "axios": "0.18.0",
     "babel-polyfill": "^6.26.0",
+    "clipboard": "^2.0.4",
     "echarts": "^4.2.0-rc.2",
     "element-ui": "^2.8.2",
     "file-saver": "^2.0.1",
@@ -25,6 +26,7 @@
     "normalize.css": "7.0.0",
     "nprogress": "0.2.0",
     "nzh": "^1.0.4",
+    "qrcodejs2": "0.0.2",
     "v-distpicker": "^1.0.21",
     "vue": "2.5.17",
     "vue-bus": "^1.1.0",

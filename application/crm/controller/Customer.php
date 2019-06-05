@@ -820,5 +820,34 @@ class Customer extends ApiCommon
                 return resultArray(['error' => $customerModel->getError()]);
             }
         }
-    }     
+    }
+
+    /**
+     * 客户公海导出
+     * @author Michael_xu
+     * @param 
+     * @return
+     */
+    public function poolExcelExport()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $param['user_id'] = $userInfo['id'];
+        if ($param['customer_id']) {
+           $param['customer_id'] = ['condition' => 'in','value' => $param['customer_id'],'form_type' => 'text','name' => ''];
+           $param['is_excel'] = 1;
+        }
+        $excelModel = new \app\admin\model\Excel();
+        // 导出的字段列表
+        $fieldModel = new \app\admin\model\Field();
+        $field_list = $fieldModel->getIndexFieldList('crm_customer', $userInfo['id']);
+        // 文件名
+        $file_name = '5kcrm_customer_'.date('Ymd');
+        $param['pageType'] = 'all'; 
+        $param['action'] = 'pool';
+        $excelModel->exportCsv($file_name, $field_list, function($list) use ($param){
+            $list = model('Customer')->getDataList($param);
+            return $list;
+        });
+    }      
 }

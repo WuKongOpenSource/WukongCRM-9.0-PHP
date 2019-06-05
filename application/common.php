@@ -1,4 +1,5 @@
 <?php
+error_reporting(E_ERROR | E_PARSE );
 /**
  * 行为绑定
  */
@@ -156,7 +157,7 @@ function where_arr($array = [], $m = '', $c = '', $a = '')
                 $k = 'name';
                 $c = 'contacts.';
             }
-            if ($k == 'check_status' && is_array($v)) $v = $checkStatusArray[$v['value']] ? : $v; 
+            if ($k == 'check_status' && is_array($v)) $v['value'] = $checkStatusArray[$v['value']] ? : '0';
             if (is_array($v)) {
                 if ($v['state']) {
                     $address_where[] = '%'.$v['state'].'%';
@@ -188,7 +189,7 @@ function where_arr($array = [], $m = '', $c = '', $a = '')
                     } else {
                         $where[$c.$k] = ['elt', $v['end_date']];
                     }                                     
-                } elseif (!empty($v['value'])) {
+                } elseif (!empty($v['value']) || $v['value'] === '0') {
                     if (in_array($k, $check_field_arr)) {
                         $where[$c.$k] = field($v['value'], 'contains');
                     } else {
@@ -449,7 +450,7 @@ function getSubUser($userId)
     if ($sub_user) {
         foreach ($sub_user as $v) {
             $son_user = [];
-            $son_user = getSubUser($v, $sub);
+            $son_user = getSubUser($v);
             if (!empty($son_user)) {
                 $sub_user = array_merge($sub_user, $son_user);
             }
@@ -858,8 +859,8 @@ function getTimeBySec($time){
  */
 function getmonthByYM($param)
 {
-    $month = $param['month']?$param['month']:1; date('m',$time);
-    $year = $param['year']?$param['year']:date('Y',$time);
+    $month = $param['month'] ? $param['month'] : date('m',time());
+    $year = $param['year'] ? $param['year'] : date('Y',time());
     if (in_array($month, array('1', '3', '5', '7', '8', '01', '03', '05', '07', '08', '10', '12'))) {  
         $days = '31';  
     } elseif ($month == 2) { 
@@ -1355,8 +1356,8 @@ function setting($data)
     foreach($options as $v){
         $v = trim(str_replace(chr(13),'',trim($v)));
         if($v != '' && !in_array($v ,$s)){
-            $i++;
             $setting .= "$i=>'$v',";
+            $i++;
             $s[] = $v;
         }
     }

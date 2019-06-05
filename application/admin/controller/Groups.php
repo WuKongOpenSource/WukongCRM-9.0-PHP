@@ -22,7 +22,7 @@ class Groups extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','read','save','update','delete','deletes','enables','copy']
+            'allow'=>['index','read','save','update','delete','enables','copy']
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -127,7 +127,7 @@ class Groups extends ApiCommon
         if ($dataInfo['types']) {
             return resultArray(['error' => '系统角色，不能删除']);
         }        
-        $data = $groupModel->delDataById($param['id']);      
+        $data = $groupModel->delGroupById($param['id']);      
         if (!$data) {
             return resultArray(['error' => $groupModel->getError()]);
         } 

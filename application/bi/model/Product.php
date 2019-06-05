@@ -126,6 +126,7 @@ class Product extends Common
 		 ->alias('a')
 		 ->where($where)
 	     ->join($join)
+	     ->order('num desc')
 	     ->group('contract.owner_user_id')
 	     ->field('sum(a.num) as num,contract.owner_user_id')
 	     ->select();

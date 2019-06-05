@@ -39,10 +39,12 @@ class Contacts extends Common
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
     	$is_excel = $request['is_excel']; //导出
+    	$business_id = $request['business_id'];
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);
 		unset($request['is_excel']);		    	
+		unset($request['business_id']);		    	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -88,7 +90,15 @@ class Contacts extends Common
 	    $auth_user_ids = array_merge(array_unique(array_filter($auth_user_ids))) ? : ['-1'];
 	    //负责人、相关团队
 	    $authMap['contacts.owner_user_id'] = ['in',$auth_user_ids];		
-
+		//联系人商机
+		if ($business_id) {
+			$contacts_id = Db::name('crm_contacts_business')->where(['business_id' => $business_id])->column('contacts_id');
+			if ($contacts_id) {
+		    	$map['contacts.contacts_id'] = array('in',$contacts_id);
+		    }else{
+		    	$map['contacts.contacts_id'] = array('eq',-1);
+		    }
+		}	    
 		//列表展示字段
 		// $indexField = $fieldModel->getIndexField('crm_contacts', $user_id); 
 		$userField = $fieldModel->getFieldByFormType('crm_contacts', 'user'); //人员类型

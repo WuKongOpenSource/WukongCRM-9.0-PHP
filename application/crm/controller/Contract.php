@@ -148,7 +148,7 @@ class Contract extends ApiCommon
         //判断权限
         $auth_user_ids = $userModel->getUserByPer('crm', 'contract', 'update');
         //读写权限
-        $rwPre = $userModel->rwPre($userInfo['id'], $data['ro_user_id'], $data['rw_user_id'], 'update');        
+        $rwPre = $userModel->rwPre($userInfo['id'], $dataInfo['ro_user_id'], $dataInfo['rw_user_id'], 'update');        
         if (!in_array($dataInfo['owner_user_id'],$auth_user_ids) && !$rwPre) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));

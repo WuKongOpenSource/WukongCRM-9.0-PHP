@@ -109,7 +109,8 @@ export function crmCustomerExcelExport(data) {
     url: 'crm/customer/excelExport',
     method: 'post',
     data: data,
-    responseType: 'blob'
+    responseType: 'blob',
+    timeout: 60000
   })
 }
 
@@ -129,7 +130,8 @@ export function crmCustomerExcelImport(data) {
     data: param,
     headers: {
       'Content-Type': 'multipart/form-data'
-    }
+    },
+    timeout: 60000
   })
 }
 
@@ -139,6 +141,21 @@ export function crmCustomerExcelImport(data) {
  *
  */
 export const crmCustomerExcelDownloadURL = 'crm/customer/excelDownload'
+
+
+/**
+ * 公海导出
+ * @param {*} data
+ */
+export function crmCustomerPoolExcelExportAPI(data) {
+  return request({
+    url: 'crm/customer/poolExcelExport',
+    method: 'post',
+    data: data,
+    responseType: 'blob',
+    timeout: 60000
+  })
+}
 
 /**
  * 客户分配

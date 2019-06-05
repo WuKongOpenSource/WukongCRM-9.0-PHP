@@ -136,8 +136,7 @@ class Customer extends Common
                         $timeArr['next_month'] = 1;
                     }
                     $timeArr['type'] = $year.'-'.$month+$i-1;
-                } 
-                                                                   
+                }                                                         
             break;
             case 'month'://本月
                 $timeArr['year'] = $year;
@@ -150,23 +149,7 @@ class Customer extends Common
                 }else{
                     $timeArr['next_month'] = date('m')+1;
                     $timeArr['next_day'] = 1;
-                }
-                // if($i != date("t")){
-                //     $timeArr['day'] = $i;
-                //     $timeArr['next_day'] = $i+1;
-                //     $timeArr['month'] = date('m');
-                //     $timeArr['next_month'] = date('m');
-                // }else{
-                //     $timeArr['day'] = $i;
-                //     $timeArr['next_day'] = 1;
-                //     $timeArr['month'] = date('m');
-                //     if(date('m') != 12){
-                //         $timeArr['next_month'] = date('m')+1;
-                //     }else{
-                //         $timeArr['next_month'] = 1;
-                //         $timeArr['next_year'] = $year+1;
-                //     }
-                // }    
+                }  
                 $timeArr['type'] = $year.'-'.date('m').'-'.$i;                                                            
             break;
             case 'lastMonth'://上月
@@ -248,10 +231,10 @@ class Customer extends Common
                 $timeArr['type'] = $year.'-'.date("m",$today).'-'.date("d",$today);    
             break;
             case 'month_k'://跨月
-                $start_time_y = date('y',strtotime($param['start_time']));
+                $start_time_y = date('y',$param['start_time']);
                 $timeArr['year'] = $start_time_y;
                 $timeArr['next_year'] = $start_time_y;   
-                $m = date('m',strtotime($start_time));
+                $m = date('m',$param['start_time']);
                 if($i > 1){
                     $timeArr['month'] = $m+$i-1;
                     $timeArr['next_month'] = $m+$i;
@@ -266,11 +249,11 @@ class Customer extends Common
                 $start_time = $param['start_time'];
                 $end_time = $param['end_time'];
 
-                $start_y = date('y',strtotime($start_time));
-                $start_m = date('m',strtotime($start_time));
-                $start_d = date('d',strtotime($start_time));
+                $start_y = date('y',$start_time);
+                $start_m = date('m',$start_time);
+                $start_d = date('d',$start_time);
 
-                $monthNum = $this->getMonthNum(strtotime($start_time),strtotime($end_time));
+                $monthNum = $this->getMonthNum($start_time,$end_time);
                 $y = ceil(($start_m+$i-1)/12);
                 if(($start_m+$i-1)/12 <= $y){
                     if($i == 1){
@@ -305,9 +288,8 @@ class Customer extends Common
                 }
             break;
             default ://自定义时间
-                $start_time = strtotime($param['start_time']);
-                $end_time = strtotime($param['end_time']);
-
+                $start_time = $param['start_time'];
+                $end_time = $param['end_time'];
                 $start_time_y = date('y',$start_time);
                 $start_time_m = date('m',$start_time);
                 $end_time_y = date('y',$end_time);
@@ -379,8 +361,8 @@ class Customer extends Common
                 $company['j'] = 1;
             break;
             default ://自定义时间
-                $start_time = strtotime($param['start_time']);
-                $end_time = strtotime($param['end_time']);
+                $start_time = $param['start_time'];
+                $end_time = $param['end_time'];
                 $company['start_time_y'] = $start_time_y = date('y',$start_time);
                 $start_time_m = date('m',$start_time);
                 $end_time_y = date('y',$end_time);

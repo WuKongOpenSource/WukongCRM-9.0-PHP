@@ -184,7 +184,10 @@ return [
 	// 【审批流程】自选审批人列表
 	'admin/examine_flow/userList' => ['admin/examine_flow/userList', ['method' => 'POST']],	
 	// 【审批流程】审批记录
-	'admin/examine_flow/recordList' => ['admin/examine_flow/recordList', ['method' => 'POST']],					
+	'admin/examine_flow/recordList' => ['admin/examine_flow/recordList', ['method' => 'POST']],	
+
+	// 【员工部门】员工账号编辑
+	'admin/users/usernameEdit' => ['admin/users/usernameEdit', ['method' => 'POST']],					
 	
 	// MISS路由
 	'__miss__'  => 'admin/base/miss',

@@ -197,6 +197,13 @@ export default {
                 temps.push({ value: item })
               }
               element.showSetting = temps //放到showSeeting上
+
+              // 删除无效的多选默认值
+              if (element.form_type == 'checkbox') {
+                element.default_value = element.default_value.filter(item => {
+                  return element.setting.indexOf(item) != -1
+                })
+              }
             }
             element.is_null = element.is_null == 1 ? true : false
             element.is_unique = element.is_unique == 1 ? true : false

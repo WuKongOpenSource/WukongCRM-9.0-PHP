@@ -50,7 +50,7 @@ class Common extends Model
             unset($request['limit']);
         }
         if ($pageType == 'all') {
-        	$page = 0;
+        	$page = 1;
         	$limit = 0;
         	unset($request['pageType']);
         }

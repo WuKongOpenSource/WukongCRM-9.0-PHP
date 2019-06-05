@@ -183,4 +183,12 @@ export default {
 .customer-lock {
   color: #f15e64;
 }
+
+.el-table /deep/ tbody tr td:nth-child(2) {
+  border-right-width: 0;
+}
+
+.el-table /deep/ tbody tr td:nth-child(3) {
+  border-right: 1px solid #E6E6E6;
+}
 </style>

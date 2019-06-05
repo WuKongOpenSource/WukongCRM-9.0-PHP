@@ -38,9 +38,11 @@ class Business extends Common
 		$search = $request['search'];
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
+    	$contacts_id = $request['contacts_id'];
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);    	
+		unset($request['user_id']);
+		unset($request['contacts_id']);    	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -58,7 +60,7 @@ class Business extends Common
 		}
 		if (isset($requestMap['type_id'])) {
 			$requestMap['type_id']['value'] = $requestMap['type_id']['type_id'];
-			if ($requestMap['type_id']['status_id']) $requestMap['type_id']['value'] = $requestMap['type_id']['status_id'];
+			if ($requestMap['type_id']['status_id']) $requestMap['status_id']['value'] = $requestMap['type_id']['status_id'];
 		}
 		$partMap = [];
 		//优先级：普通筛选>高级筛选>场景
@@ -100,6 +102,15 @@ class Business extends Common
 			    };
 		    }
 		}
+		//联系人商机
+		if ($contacts_id) {
+			$business_id = Db::name('crm_contacts_business')->where(['contacts_id' => $contacts_id])->column('business_id');
+			if ($business_id) {
+		    	$map['business.business_id'] = array('in',$business_id);
+		    }else{
+		    	$map['business.business_id'] = array('eq',-1);
+		    }
+		}		
 		//列表展示字段
 		// $indexField = $fieldModel->getIndexField('crm_business', $user_id);	
 		$userField = $fieldModel->getFieldByFormType('crm_business', 'user'); //人员类型
@@ -336,9 +347,10 @@ class Business extends Common
             $start_time = $between_time[0];
             $end_time = $between_time[1];
         }else{
-        	$start_time = strtotime($request['start_time']);
-			$end_time = strtotime($request['end_time']);
+        	$start_time = $request['start_time'];
+			$end_time = $request['end_time'];
         }
+        
 		$create_time = [];
 		if ($start_time && $end_time) {
 			$where['create_time'] = array('between',array($start_time,$end_time));

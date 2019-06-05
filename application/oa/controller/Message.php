@@ -97,7 +97,7 @@ class Message extends ApiCommon
         if ($type == 'examine' || $type == 'all') {
             // $examineWhere['check_status'] = array('not in',array('2','3'));
             $map_str = "( `check_user_id` LIKE '%,".$user_id.",%' OR `check_user_id` = ".$user_id." )";
-            $examineNum = db('oa_examine')->where($map_str)->where($examineWhere)->count();
+            $examineNum = db('oa_examine')->where($map_str)->count();
             $data['examineNum'] = $examineNum ? : 0;
         }
         return resultArray(['data'=>$data]);

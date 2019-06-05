@@ -53,12 +53,12 @@ class ApiCommon extends Common
             exit(json_encode(['code'=>103, 'error'=>'账号已被删除或禁用']));
         }
 
-        $this->userInfo = $userInfo;
-
         session('user_id', $userInfo['id']);
 
         // 更新缓存
         cache('Auth_'.$authKey, $cache, $loginExpire);
+
+        $this->userInfo = $userInfo;
 
         // $GLOBALS['userInfo'] = $userInfo;
     }

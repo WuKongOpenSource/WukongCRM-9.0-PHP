@@ -500,7 +500,7 @@ class User extends Common
             session_start();
             $cache['userInfo'] = $userInfo;
             $cache['authKey'] = user_md5($userInfo['username'].$userInfo['password'].session_id(), $userInfo['salt']);
-            cache('Auth_'.$auth_key, null);
+            cache('Auth_'.$cache['authKey'], null);
             cache('Auth_'.$cache['authKey'], $cache, $loginExpire);
             return $cache['authKey'];//把auth_key传回给前端
         }
@@ -776,7 +776,7 @@ class User extends Common
 		$list = $this
 				->alias('user')
 				->join('__ADMIN_STRUCTURE__ structure', 'structure.id = user.structure_id', 'LEFT')
-				->where(['user.id' => ['in', $id]])->field('user.id,username,img,thumb_img,realname,parent_id,structure.name as structure_name,structure.id as structure_id')->select();
+				->where(['user.id' => ['in', join(',', $ids)]])->field('user.id,username,img,thumb_img,realname,parent_id,structure.name as structure_name,structure.id as structure_id')->select();
 		return $list ? : [];
 	}
 

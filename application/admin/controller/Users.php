@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | Description: 系统员工
 // +----------------------------------------------------------------------
-// | Author:  Michael_xu | gengxiaoxu@5kcrm.com 
+// | Author:  Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
 
 namespace app\admin\controller;
@@ -19,7 +19,7 @@ class Users extends ApiCommon
      * @permission 无限制
      * @allow 登录员工可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         parent::_initialize();
@@ -30,7 +30,7 @@ class Users extends ApiCommon
         Hook::listen('check_auth',$action);
 
         $request = Request::instance();
-        $a = strtolower($request->action());        
+        $a = strtolower($request->action());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
@@ -42,29 +42,29 @@ class Users extends ApiCommon
         if (!in_array(3,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
+        }
     }
 
     /**
      * 员工列表
-     * @param 
+     * @param
      * @return
      */
     public function index()
-    {   
+    {
         $userModel = model('User');
-        $param = $this->param;  
+        $param = $this->param;
         $data = $userModel->getDataList($param);
         return resultArray(['data' => $data]);
     }
 
     /**
      * 员工详情
-     * @param 
+     * @param
      * @return
      */
     public function read()
-    {   
+    {
         $userModel = model('User');
         $param = $this->param;
         $userInfo = $this->userInfo;
@@ -72,15 +72,15 @@ class Users extends ApiCommon
         $data = $userModel->getDataById($param['id']);
         if (!$data) {
             return resultArray(['error' => $userModel->getError()]);
-        } 
+        }
         return resultArray(['data' => $data]);
     }
 
     /**
      * 员工创建
-     * @param 
+     * @param
      * @return
-     */    
+     */
     public function save()
     {
         $userModel = model('User');
@@ -95,7 +95,7 @@ class Users extends ApiCommon
 
     /**
      * 员工编辑
-     * @param 
+     * @param
      * @return
      */
     public function update()
@@ -113,7 +113,7 @@ class Users extends ApiCommon
             if (!in_array(3,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes)) {
                 header('Content-Type:application/json; charset=utf-8');
                 exit(json_encode(['code'=>102,'error'=>'无权操作']));
-            }            
+            }
         }
         unset($param['username']);
         $data = $userModel->updateDataById($param, $param['id']);
@@ -122,10 +122,10 @@ class Users extends ApiCommon
         }
 
         $param['userInfo'] = $userData;
-        $resSync = model('Sync')->syncData($param);        
+        $resSync = model('Sync')->syncData($param);
 
         return resultArray(['data' => '编辑成功']);
-    }    
+    }
 
 	//批量设置密码
 	public function updatePwd()
@@ -143,7 +143,7 @@ class Users extends ApiCommon
 			return resultArray(['error'=>'参数错误']);
 		}
 	}
-	
+
     /**
      * 员工状态
      * @param status   0禁用,1启用,2禁止登陆,3未激活
@@ -164,16 +164,16 @@ class Users extends ApiCommon
                 unset($ids[$k]);
             }
         }
-        $data = $userModel->enableDatas($ids, $param['status']);  
+        $data = $userModel->enableDatas($ids, $param['status']);
         if (!$data) {
             return resultArray(['error' => $userModel->getError()]);
-        } 
-        return resultArray(['data' => '操作成功']);         
+        }
+        return resultArray(['data' => '操作成功']);
     }
 
     /**
      * 获取权限范围内的员工数组
-     * @param  
+     * @param
      * @return
      */
     public function getUserList()
@@ -183,9 +183,9 @@ class Users extends ApiCommon
         $by = $param['by'] ? : '';
         if ($param['m'] && $param['c'] && $param['a']) {
             if ($param['m'] == 'oa' && $param['c'] == 'task') {
-               $belowIds = getSubUserId(true, 1); 
+               $belowIds = getSubUserId(true, 1);
             }
-            $belowIds = $userModel->getUserByPer($param['m'], $param['c'], $param['a']); 
+            $belowIds = $userModel->getUserByPer($param['m'], $param['c'], $param['a']);
         } else {
             if ($by == 'sub') {
                 $userInfo = $this->userInfo;
@@ -195,9 +195,9 @@ class Users extends ApiCommon
                 } else {
                     //下属id
                     $belowIds = getSubUserId();
-                } 
+                }
             } else {
-                $belowIds = getSubUserId(true, 1);        
+                $belowIds = getSubUserId(true, 1);
             }
             // $belowIds = getSubUserId(true, 1);
         }
@@ -212,14 +212,14 @@ class Users extends ApiCommon
             $userList[$k]['username'] = $v['realname'];
             $userList[$k]['thumb_img'] = $v['thumb_img'] ? getFullPath($v['thumb_img']) : '';
         }
-        return resultArray(['data' => $userList ? : []]); 
+        return resultArray(['data' => $userList ? : []]);
     }
 
     /**
      * 修改头像
-     * @param 
+     * @param
      * @return
-     */ 
+     */
     public function updateImg()
     {
         $fileModel = model('File');
@@ -228,9 +228,9 @@ class Users extends ApiCommon
         //处理图片
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Methods: POST');
-        header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept"); 
+        header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
         $param['file'] = request()->file('file');
-		
+
         $resImg = $fileModel->updateByField($param['file'], 'User', $param['id'], 'img', 'thumb_img', 150, 150);
         if (!$resImg) {
             return resultArray(['error' => $fileModel->getError()]);
@@ -240,14 +240,14 @@ class Users extends ApiCommon
 
     /**
      * 重置密码
-     * @param 
+     * @param
      * @return
-     */     
+     */
     public function resetPassword()
-    {   
+    {
         $param = $this->param;
         $userModel = model('User');
-        if ($param['id'] && $param['id'] !== $userInfo['id']) {
+        if ($param['id'] && $param['id'] !==  $this->userInfo['id']) {
             $user_id = $param['id'];
             if (!$param['new_pwd']) {
                 $this->error = '请输入重置密码';
@@ -265,26 +265,26 @@ class Users extends ApiCommon
                 $syncData['user_id'] = $userInfo['id'];
                 $syncData['salt'] = $userInfo['salt'];
                 $syncData['password'] = user_md5($param['new_pwd'], $userInfo['salt'], $userInfo['username']);
-                $resSync = $syncModel->syncData($syncData);                
+                $resSync = $syncModel->syncData($syncData);
                 return resultArray(['data' => '密码重置成功']);
             } else {
                 return resultArray(['error' => '密码重置失败，请重试']);
-            }      
+            }
         } else {
             $userModel = model('User');
             $old_pwd = $param['old_pwd'];
             $new_pwd = $param['new_pwd'];
-            $data = $userModel->updatePaw($userInfo, $old_pwd, $new_pwd);
+            $data = $userModel->updatePaw($this->userInfo, $old_pwd, $new_pwd);
             if (!$data) {
                 return resultArray(['error' => $userModel->getError()]);
-            } 
-            return resultArray(['data' => $data]);            
+            }
+            return resultArray(['data' => $data]);
         }
     }
 
     /**
      * 员工角色关系
-     * @param 
+     * @param
      * @return
      */
     public function groups()
@@ -302,7 +302,7 @@ class Users extends ApiCommon
         if (is_array($param['structures'])) {
             foreach ($param['structures'] as $v) {
                 $userArr[] = $userModel->getSubUserByStr($v);
-            }            
+            }
         }
         if ($userArr) $userArr = call_user_func_array('array_merge', $userArr); //数组合并
         if ($userArr && $param['users']) {
@@ -314,24 +314,24 @@ class Users extends ApiCommon
         }
         $userIds = array_unique($userIds);
         $groups = $param['groups'];
-        $accessModel = model('Access');       
+        $accessModel = model('Access');
         $resData = true;
         foreach ($userIds as $k=>$v) {
             //角色员工关系处理
             $res = $accessModel->userGroup($v, $param['groups']);
             if (!$res) {
                 $resData = false;
-            }            
+            }
         }
         // if ($resData == false) {
-        //     return resultArray(['error' => '操作失败，请重试']);      
+        //     return resultArray(['error' => '操作失败，请重试']);
         // }
-        return resultArray(['data' => '创建成功']);       
+        return resultArray(['data' => '创建成功']);
     }
 
     /**
      * 员工角色关系（删除）
-     * @param 
+     * @param
      * @return
      */
     public function groupsDel()
@@ -345,16 +345,16 @@ class Users extends ApiCommon
         }
         $res = db('admin_access')->where(['user_id' => $param['user_id'],'group_id' => $param['group_id']])->delete();
         if (!$res) {
-            return resultArray(['error' => '操作失败，请重试']);      
+            return resultArray(['error' => '操作失败，请重试']);
         }
-        return resultArray(['data' => '删除成功']);         
+        return resultArray(['data' => '删除成功']);
     }
 
     /**
      * [structureUserList 部门员工混合数据]
-     * @param 
+     * @param
      * @return
-     */ 
+     */
     public function structureUserList()
     {
         $structure_list = db('admin_structure')->select();
@@ -365,8 +365,8 @@ class Users extends ApiCommon
             $structureList[$k]['userList'] = $userList;
         }
         return $structureList;
-    }    
-	
+    }
+
 	//人资员工导入
 	public function tobeusers(){
 		$userModel = model('User');
@@ -378,7 +378,7 @@ class Users extends ApiCommon
 			return resultArray(['error'=>$userModel->getError()]);
 		}
 	}
-	
+
 	//根据部门ID获取员工列表
 	public function userListByStructId()
 	{

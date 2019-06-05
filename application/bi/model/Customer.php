@@ -34,7 +34,7 @@ class Customer extends Common
     {
         $userModel = new \app\admin\model\User();
         $receivables = new \app\bi\model\Receivables();
-        
+
         $list = db('crm_customer')->field('customer_id,name,owner_user_id,create_user_id,industry,source,create_time')->where($whereArr)->select();
         foreach ($list as $key => $value) {
             $where_c = array();
@@ -136,8 +136,8 @@ class Customer extends Common
                         $timeArr['next_month'] = 1;
                     }
                     $timeArr['type'] = $year.'-'.$month+$i-1;
-                } 
-                                                                   
+                }
+
             break;
             case 'month'://本月
                 $timeArr['year'] = $year;
@@ -166,8 +166,8 @@ class Customer extends Common
                 //         $timeArr['next_month'] = 1;
                 //         $timeArr['next_year'] = $year+1;
                 //     }
-                // }    
-                $timeArr['type'] = $year.'-'.date('m').'-'.$i;                                                            
+                // }
+                $timeArr['type'] = $year.'-'.date('m').'-'.$i;
             break;
             case 'lastMonth'://上月
                 $timeArr['year'] = $year;
@@ -196,8 +196,8 @@ class Customer extends Common
                     $month = 12;
                     $timeArr['year'] = $year-1;
                     $timeArr['next_year'] = $year;
-                }        
-                $timeArr['type'] = $year.'-'.$month.'-'.$i;                                                  
+                }
+                $timeArr['type'] = $year.'-'.$month.'-'.$i;
             break;
             case 'week'://本周
                 date_default_timezone_set('PRC');
@@ -209,8 +209,8 @@ class Customer extends Common
                 $timeArr['month'] = date("m",$day);
                 $timeArr['next_month'] = date("m",$lastDay);
                 $timeArr['year'] = date("y",$day);
-                $timeArr['next_year'] = date("y",$lastDay);    
-                $timeArr['type'] = $year.'-'.date("m",$day).'-'.date("d",$day);                                  
+                $timeArr['next_year'] = date("y",$lastDay);
+                $timeArr['type'] = $year.'-'.date("m",$day).'-'.date("d",$day);
             break;
             case 'lastWeek'://上周
                 date_default_timezone_set('PRC');
@@ -222,8 +222,8 @@ class Customer extends Common
                 $timeArr['month'] = date("m",$day);
                 $timeArr['next_month'] = date("m",$lastDay);
                 $timeArr['year'] = date("y",$day);
-                $timeArr['next_year'] = date("y",$lastDay);  
-                $timeArr['type'] = $year.'-'.date("m",$day).'-'.date("d",$day);                                    
+                $timeArr['next_year'] = date("y",$lastDay);
+                $timeArr['type'] = $year.'-'.date("m",$day).'-'.date("d",$day);
             break;
             case 'today'://今天
                 $today = time();
@@ -233,8 +233,8 @@ class Customer extends Common
                 $timeArr['month'] = date("m",$today);
                 $timeArr['next_month'] = date("m",$yesterday);
                 $timeArr['year'] = date("y",$today);
-                $timeArr['next_year'] = date("y",$yesterday);     
-                $timeArr['type'] = $year.'-'.date("m",$today).'-'.date("d",$today);     
+                $timeArr['next_year'] = date("y",$yesterday);
+                $timeArr['type'] = $year.'-'.date("m",$today).'-'.date("d",$today);
             break;
             case 'yesterday'://昨天
                 $today = time()-60*60*24;
@@ -244,14 +244,14 @@ class Customer extends Common
                 $timeArr['month'] = date("m",$today);
                 $timeArr['next_month'] = date("m",$yesterday);
                 $timeArr['year'] = date("y",$today);
-                $timeArr['next_year'] = date("y",$yesterday);      
-                $timeArr['type'] = $year.'-'.date("m",$today).'-'.date("d",$today);    
+                $timeArr['next_year'] = date("y",$yesterday);
+                $timeArr['type'] = $year.'-'.date("m",$today).'-'.date("d",$today);
             break;
             case 'month_k'://跨月
                 $start_time_y = date('y',strtotime($param['start_time']));
                 $timeArr['year'] = $start_time_y;
-                $timeArr['next_year'] = $start_time_y;   
-                $m = date('m',strtotime($start_time));
+                $timeArr['next_year'] = $start_time_y;
+                $m = date('m',strtotime($param['start_time']));
                 if($i > 1){
                     $timeArr['month'] = $m+$i-1;
                     $timeArr['next_month'] = $m+$i;
@@ -277,7 +277,7 @@ class Customer extends Common
                         $timeArr['day'] = $start_d;
                         $timeArr['end_d'] = 1;
                     }
-                    $timeArr['year'] = $start_y+$y-1;                        
+                    $timeArr['year'] = $start_y+$y-1;
                     if($start_m+$i-1 < 12){
                         $timeArr['month'] = $start_m+$i-1;
                         $timeArr['next_year'] = $start_y+$y-1;
@@ -331,7 +331,7 @@ class Customer extends Common
         }
         return $timeArr;
     }
-    
+
     /**
      * 根据条件获取单位
      * @return [type] [description]
@@ -504,7 +504,7 @@ class Customer extends Common
             }else{
                 $cycle = ceil($cycle_num/$customer_num);
             }
-            
+
         }
         return $cycle;
     }

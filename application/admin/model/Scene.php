@@ -165,6 +165,7 @@ class Scene extends Common
 		$checkData = $this->get($id);
 		$sceneInfo = $checkData->data;
 		$user_id = $param['user_id'];
+        $types = !empty($param['type']) ? $param['type'] : 0;
 		if (!$sceneInfo) {
 			$this->error = '暂无数据';
 			return false;

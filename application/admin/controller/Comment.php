@@ -19,18 +19,18 @@ class Comment extends Common
      * @permission 无限制
      * @allow 登录用户可访问
      * @other 其他根据系统设置
-    **/    
+    **/
     public function _initialize()
     {
         $action = [
             'permission'=>[''],  //不登录可访问
-            'allow'=>['save','delete']  //需要登录才能访问          
+            'allow'=>['save','delete']  //需要登录才能访问
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
-        $a = strtolower($request->action());  
-		$c = strtolower($request->controller()); 
-		$m = strtolower($request->module()); 		
+        $a = strtolower($request->action());
+		$c = strtolower($request->controller());
+		$m = strtolower($request->module());
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
@@ -43,12 +43,12 @@ class Comment extends Common
         $model = model('Comment');
         if ($param['task_id']) {
             $userInfo = $this->userInfo;
-			$param['create_user_id'] = $userInfo['id']; 
+			$param['create_user_id'] = $userInfo['id'];
             $flag = $model->createData($param);
             if ($flag) {
                 return resultArray(['data'=>$flag]);
             } else {
-                return resultArray(['error'=>$workModel->getError()]);
+                return resultArray(['error'=>$model->getError()]);
             }
         } else {
             return resultArray(['error'=>'参数错误']);
@@ -63,7 +63,7 @@ class Comment extends Common
         $commentModel = model('Comment');
         if ($param['comment_id']) {
             $userInfo   			 = $this->userInfo;
-			$param['create_user_id'] = $userInfo['id']; 
+			$param['create_user_id'] = $userInfo['id'];
             $flag = $commentModel->delDataById($param);
             if ($flag) {
                 return resultArray(['data'=>'删除成功']);
@@ -73,6 +73,5 @@ class Comment extends Common
         } else {
             return resultArray(['error'=>'参数错误']);
         }
-    }   
+    }
 }
- 

@@ -92,7 +92,7 @@ class ProductCategory extends ApiCommon
         if ($res) {
             return resultArray(['data' => '编辑成功']);
         } else {
-            return resultArray(['error' => $productDataModel->getError()]);
+            return resultArray(['error' => $categoryModel->getError()]);
         }
     }
 

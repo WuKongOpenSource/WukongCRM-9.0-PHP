@@ -316,7 +316,7 @@ class Achievement extends Common
     	}
 
     	if ($dataInfo['type']=='2') {
-    		$det = Db::name('AdminStructure')->where('id ='.$v['obj_id'])->find();
+    		$det = Db::name('AdminStructure')->where('id ='.$dataInfo['obj_id'])->find();
     		$dataInfo['name'] = $det['name'];
     	}
 

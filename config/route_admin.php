@@ -70,7 +70,9 @@ return [
 	'admin/users/index' => ['admin/users/index', ['method' => 'POST']],	
 	'admin/users/read' => ['admin/users/read', ['method' => 'POST']],	
 	// 【用户】创建
-	'admin/users/save' => ['admin/users/save', ['method' => 'POST']],		
+	'admin/users/save' => ['admin/users/save', ['method' => 'POST']],
+    //【用户】第三方用户创建addThird
+    'admin/users/addThird' => ['admin/users/addThird', ['method' => 'POST']],
 	// 【用户】编辑
 	'admin/users/update' => ['admin/users/update', ['method' => 'POST']],
 	// 【用户】状态

@@ -12,6 +12,7 @@ use app\admin\model\Common;
 use com\verify\HonrayVerify;
 use think\Cache;
 use think\Request;
+use EasyWeChat\Factory;
 
 class User extends Common
 {
@@ -200,6 +201,7 @@ class User extends Common
         }
         // 验证
         $validate = validate($this->name);
+
         if (!$validate->check($param)) {
             $this->error = $validate->getError();
             return false;
@@ -902,5 +904,29 @@ class User extends Common
             }
         }
         return true;
+    }
+
+    /**
+     * 通过微信code查找用户信息
+     * @param $code
+     * @return array|false|\PDOStatement|string|\think\Model
+     * @throws \EasyWeChat\Kernel\Exceptions\InvalidConfigException
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function getInfoByOpenID($code)
+    {
+        $wechatConfig = config('login.wechat');
+        $app = Factory::miniProgram($wechatConfig);
+        $login = $app->auth->session($code);
+        if (!isset($login['openid'])){
+            return ['error'=>'无效code'];
+        }
+        $user = $this->where('open_id',$login['openid'])->find();
+        if (!empty($user)){
+            return [];
+        }
+        return ['open_id'=>$login['openid']];
     }
 }

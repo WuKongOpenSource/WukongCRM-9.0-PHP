@@ -94,6 +94,40 @@ class Users extends ApiCommon
     }
 
     /**
+     * 第三方注册
+     * @return \think\response\Json
+     */
+    public function addThird()
+    {
+        $param = $this->param;
+        $data = [
+            'username'=>$param['phone'],
+            'mobile'=>$param['phone'],
+            'password'=>'123456',
+            'realname'=>$param['nickname'],
+            'structure_id'=>1,
+            'group_id'=>[11],
+            'sex'=>$param['gender']==1?"女":"男",
+        ];
+
+        $userModel = model('User');
+        $isExist = $userModel->getInfoByOpenID($param['code']);
+        if (isset($isExist['error'])){
+            return resultArray($isExist);
+        }
+        if (!$isExist){
+            return resultArray(['error'=>'用户存在']);
+        }
+        $data['open_id'] = $isExist['open_id'];
+        $userData = $userModel->createData($data);
+        if (!$userData) {
+            return resultArray(['error' => $userData->getError()]);
+        }
+        return resultArray(['data' => '添加成功']);
+
+    }
+
+    /**
      * 员工编辑
      * @param
      * @return

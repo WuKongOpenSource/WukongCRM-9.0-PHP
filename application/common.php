@@ -1437,3 +1437,17 @@ function setting($data)
     }
     return $setting = substr($setting, 0, strlen($setting) - 1) . ')';
 }
+
+/**
+ * 随机字符串加数字
+ * @param $length
+ * @return string
+ * @throws Exception
+ */
+function string_random($length)
+{
+    $int = $length / 2;
+    $bytes = random_bytes($int);
+    $string = bin2hex($bytes);
+    return $string;
+}

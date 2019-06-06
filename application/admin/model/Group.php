@@ -109,7 +109,7 @@ class Group extends Common
      * @return bool
      * @throws \think\exception\DbException
      */
-	public function delDataById($param = [], $delSon = false)
+	public function delGroupById($param = [], $delSon = false)
 	{
 		$dataInfo = $this->get($param['id']);
 		if(!$dataInfo){

@@ -26,11 +26,11 @@ class Record extends Common
      * [跟进统计]
      * @author Michael_xu
      * @param
-     * @return                  
-     */ 
+     * @return
+     */
     function getDataList($request){
         $userModel = new \app\admin\model\User();
-        
+
         //员工IDS
         $map_user_ids = [];
         if ($request['user_id']) {
@@ -78,8 +78,8 @@ class Record extends Common
      * [根据条件获取跟进次数]
      * @author Michael_xu
      * @param
-     * @return                  
-     */ 
+     * @return
+     */
     function getRecordNum($whereArr){
         $dataCount = db('admin_record')->where($whereArr)->count();
         return $dataCount;
@@ -107,6 +107,6 @@ class Record extends Common
             $where['create_user_id'] = array('eq',$value['create_user_id']);
             $list[$key]['count'] = count(db('admin_record')->group('types_id')->field('count(types_id) as count')->order('count desc')->where($where)->select());
         }
-        return $list;
+        return sort_select($list,'count');
     }
 }

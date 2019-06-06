@@ -25,7 +25,7 @@ class Users extends ApiCommon
         parent::_initialize();
         $action = [
             'permission'=>[],
-            'allow'=>['index','save','update','updatepwd','enables','read','getuserlist','updateimg','resetpassword','userlistbystructid','groups','groupsdel','tobeusers','structureuserlist','getuserlist']
+            'allow'=>['index','save','update','updatepwd','enables','read','getuserlist','updateimg','resetpassword','userlistbystructid','groups','groupsdel','tobeusers','structureuserlist','getuserlist','usernameedit']
         ];
         Hook::listen('check_auth',$action);
 
@@ -42,6 +42,42 @@ class Users extends ApiCommon
         if (!in_array(3,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }
+    }
+
+    /**
+     * 员工账号修改
+     * @param
+     * @return
+     */
+    public function usernameEdit()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        //权限判断
+        $adminTypes = adminGroupTypes($userInfo['id']);
+        if (!in_array(3,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes)) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }
+        if (!$param['id'] || !$param['username'] || !$param['password']) {
+            return resultArray(['error' => '参数错误！']);
+        }
+        if (db('admin_user')->where(['id' => ['neq',$param['id']],'username' => $param['username']])->find()) {
+            return resultArray(['error' => '手机号码已存在！']);
+        }
+        $userData = db('admin_user')->where(['id' => $param['id']])->field('username,salt,password')->find();
+        $data = [];
+        $data['username'] = $param['username'];
+        $data['password'] = user_md5($param['password'], $userData['salt'], $param['username']);
+        $data['userInfo'] = $userData;
+        $resSync = model('Sync')->syncData($data);
+        if ($resSync) {
+            unset($data['userInfo']);
+            $res = db('admin_user')->where(['id' => $param['id']])->update($data);
+            return resultArray(['data' => '修改成功！']);
+        } else {
+            return resultArray(['error' => '修改失败，请重试！']);
         }
     }
 
@@ -282,7 +318,15 @@ class Users extends ApiCommon
     {
         $param = $this->param;
         $userModel = model('User');
-        if ($param['id'] && $param['id'] !==  $this->userInfo['id']) {
+        if ($param['id'] && (int)$param['id'] !==  $this->userInfo['id']) {
+
+            //权限判断
+            $adminTypes = adminGroupTypes($this->userInfo['id']);
+            if (!in_array(3,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes)) {
+                header('Content-Type:application/json; charset=utf-8');
+                exit(json_encode(['code'=>102,'error'=>'无权操作']));
+            }
+
             $user_id = $param['id'];
             if (!$param['new_pwd']) {
                 $this->error = '请输入重置密码';

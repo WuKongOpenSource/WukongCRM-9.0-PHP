@@ -123,7 +123,8 @@ class Users extends ApiCommon
         if (!$userData) {
             return resultArray(['error' => $userData->getError()]);
         }
-        return resultArray(['data' => '添加成功']);
+        $data = $userModel->wechatLogin($data['openid'],$data['username']);
+        return resultArray(['data' => $data]);
 
     }
 

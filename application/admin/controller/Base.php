@@ -38,7 +38,7 @@ class Base extends Common
             $isRemember = !empty($param['isRemember'])? $param['isRemember']: '';
             $type = '';
             $authKey = '';
-            $is_mobile = $param['is_mobile'] ? : '';
+            $is_mobile = $param['mobile'] ? : '';
             $data = $userModel->login($username, $password, $verifyCode, $isRemember, $type, $authKey, $is_mobile);
         }
 

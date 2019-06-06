@@ -455,13 +455,13 @@ class User extends Common
        // $info['_AUTH_LIST_'] = $dataList['rulesList'];
         $info['authKey'] = $authKey;
         //手机登录
-        if ($mobile == 1) {
-        	cache('Auth_'.$userInfo['authkey'].'mobile', NULL);
-        	cache('Auth_'.$authKey.'mobile', $info, $loginExpire);
-        } else {
+//        if ($mobile == 1) {
+//        	cache('Auth_'.$userInfo['authkey'].'mobile', NULL);
+//        	cache('Auth_'.$authKey.'mobile', $info, $loginExpire);
+//        } else {
         	cache('Auth_'.$userInfo['authkey'], NULL);
 			cache('Auth_'.$authKey, $info, $loginExpire);
-        }
+        //}
         unset($userInfo['authkey']);
 
         // 返回信息

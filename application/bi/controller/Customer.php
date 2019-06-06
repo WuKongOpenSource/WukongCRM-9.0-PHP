@@ -603,8 +603,9 @@ class Customer extends ApiCommon
      * @param
      * @return
      */
-    public function addressAnalyse($param)
+    public function addressAnalyse()
     {
+        $param = $this->param;
         if (!checkPerByAction('bi', 'portrait' , 'read')) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));

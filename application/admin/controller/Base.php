@@ -17,7 +17,6 @@ class Base extends Common
 {
     public function login()
     {
-
         $param = $this->param;
         $userModel = model('User');
         if ($param['type']=='wechat'){
@@ -40,10 +39,10 @@ class Base extends Common
             $type = '';
             $authKey = '';
             $is_mobile = $param['is_mobile'] ? : '';
-
             $data = $userModel->login($username, $password, $verifyCode, $isRemember, $type, $authKey, $is_mobile);
         }
-        Session::set('user_id', $data['userInfo']['id']);
+
+        //Session::set('user_id', $data['userInfo']['id']);
         if (!$data) {
             return resultArray(['error' => $userModel->getError()]);
         }
@@ -60,9 +59,9 @@ class Base extends Common
         } else {
             cache('Auth_'.$header['authkey'], null);
         }
-        session('null', 'admin');
-        session('admin','null');
-        session('user_id','null');
+//        session('null', 'admin');
+//        session('admin','null');
+//        session('user_id','null');
         return resultArray(['data'=>'退出成功']);
     }
 

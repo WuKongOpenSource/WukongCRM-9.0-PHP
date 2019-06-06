@@ -7,6 +7,7 @@
 
 namespace app\admin\model;
 
+use function EasyWeChat\Kernel\Support\str_random;
 use think\Db;
 use app\admin\model\Common;
 use com\verify\HonrayVerify;
@@ -420,9 +421,9 @@ class User extends Common
         $loginExpire = $cacheConfig['expire'] ? : '86400*3';
 
         // 保存缓存
-        session_start();
+        // session_start();
         $info['userInfo'] = $userInfo;
-        $info['sessionId'] = session_id();
+        $info['sessionId'] = str_random(8);
         $authKey = user_md5($userInfo['username'].$userInfo['password'].$info['sessionId'], $userInfo['salt']);
        // $info['_AUTH_LIST_'] = $dataList['rulesList'];
         $info['authKey'] = $authKey;
@@ -497,9 +498,9 @@ class User extends Common
 
             $userInfo = $this->where('id', $userInfo['id'])->find();
             // 重新设置缓存
-            session_start();
+            //session_start();
             $cache['userInfo'] = $userInfo;
-            $cache['authKey'] = user_md5($userInfo['username'].$userInfo['password'].session_id(), $userInfo['salt']);
+            $cache['authKey'] = user_md5($userInfo['username'].$userInfo['password'].str_random(8), $userInfo['salt']);
             cache('Auth_'.$cache['authKey'], null);
             cache('Auth_'.$cache['authKey'], $cache, $loginExpire);
             return $cache['authKey'];//把auth_key传回给前端

@@ -11,22 +11,36 @@ use com\verify\HonrayVerify;
 use app\common\controller\Common;
 use think\Request;
 use think\Session;
+use EasyWeChat\Factory;
 
 class Base extends Common
 {
     public function login()
     {
-        $userModel = model('User');
         $param = $this->param;
-        $username = $param['username'];
-        $password = $param['password'];
-        $verifyCode = !empty($param['verifyCode'])? $param['verifyCode']: '';
-        $isRemember = !empty($param['isRemember'])? $param['isRemember']: '';
-        $type = '';
-        $authKey = '';
-        $is_mobile = $param['is_mobile'] ? : '';
+        $userModel = model('User');
+        if ($param['type']=='wechat'){
+            $code = $param['code'];
+            $username = $param['username'];
+            $wechatConfig = config('login.wechat');
+            $app = Factory::miniProgram($wechatConfig);
+            $login = $app->auth->session($code);
+            //var_dump($login);exit;
+            if (!isset($login['openid'])){
+                return resultArray(['error' => 'not openid']);
+            }
+            $data =$userModel->wechatLogin($login['openid'],$username);
 
-        $data = $userModel->login($username, $password, $verifyCode, $isRemember, $type, $authKey, $is_mobile);
+        }else{
+            $username = $param['username'];
+            $password = $param['password'];
+            $verifyCode = !empty($param['verifyCode'])? $param['verifyCode']: '';
+            $isRemember = !empty($param['isRemember'])? $param['isRemember']: '';
+            $type = '';
+            $authKey = '';
+            $is_mobile = $param['is_mobile'] ? : '';
+            $data = $userModel->login($username, $password, $verifyCode, $isRemember, $type, $authKey, $is_mobile);
+        }
 
         //Session::set('user_id', $data['userInfo']['id']);
         if (!$data) {

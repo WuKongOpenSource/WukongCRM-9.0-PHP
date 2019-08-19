@@ -79,7 +79,8 @@
             <div class="table-head-name">{{scope.column.label}}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="pool_day"
+        <el-table-column v-if="CRMConfig.config == 1"
+                         prop="pool_day"
                          show-overflow-tooltip
                          :resizable='false'
                          label="距进入公海天数"
@@ -118,6 +119,7 @@
     <c-r-m-all-detail :visible.sync="showDview"
                       :crmType="rowType"
                       :id="rowID"
+                      @handle="handleHandle"
                       class="d-view">
     </c-r-m-all-detail>
     <fields-set :crmType="crmType"
@@ -130,6 +132,7 @@
 import CRMAllDetail from '@/views/customermanagement/components/CRMAllDetail'
 import BusinessCheck from './components/BusinessCheck' // 相关商机
 import table from '../mixins/table'
+import { mapGetters } from 'vuex'
 
 export default {
   /** 客户管理 的 客户列表 */
@@ -144,7 +147,9 @@ export default {
       crmType: 'customer'
     }
   },
-  computed: {},
+  computed: {
+    ...mapGetters(['CRMConfig'])
+  },
   mounted() {},
   methods: {
     relativeBusinessClick(data) {
@@ -189,6 +194,6 @@ export default {
 }
 
 .el-table /deep/ tbody tr td:nth-child(3) {
-  border-right: 1px solid #E6E6E6;
+  border-right: 1px solid #e6e6e6;
 }
 </style>

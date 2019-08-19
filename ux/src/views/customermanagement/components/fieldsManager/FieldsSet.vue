@@ -29,7 +29,7 @@
                        v-model="checkedLeftData"
                        @end="leftMoveEnd"
                        :move="leftMove"
-                       :options="{group: 'list',forceFallback:true}">
+                       :options="{group: 'list', forceFallback:false, dragClass: 'sortable-drag'}">
               <flexbox class="list-item"
                        v-if="item.show"
                        v-for="(item, index) in checkedLeftData"
@@ -81,7 +81,7 @@
                        v-model="checkedRightData"
                        @end="rightMoveEnd"
                        :move="rightMove"
-                       :options="{group: 'list',forceFallback:true}">
+                       :options="{group: 'list', forceFallback: false, dragClass: 'sortable-drag'}">
               <flexbox class="list-item"
                        v-if="item.show"
                        v-for="(item, index) in checkedRightData"
@@ -523,5 +523,10 @@ export default {
       margin-right: 10px;
     }
   }
+}
+
+.sortable-drag {
+  background-color: white;
+  border: 1px solid #e6e6e6;
 }
 </style>

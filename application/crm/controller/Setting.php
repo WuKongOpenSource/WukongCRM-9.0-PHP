@@ -23,7 +23,7 @@ class Setting extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['config','configdata','team','teamsave','contractday','recordlist','recordedit']            
+            'allow'=>['config','configdata','team','teamsave','contractday','recordlist','recordedit','configdata']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -34,7 +34,7 @@ class Setting extends ApiCommon
 
         $userInfo = $this->userInfo;
         //权限判断
-        $unAction = ['team','teamsave','recordlist'];
+        $unAction = ['team','teamsave','recordlist','configdata'];
         $adminTypes = adminGroupTypes($userInfo['id']);
         if (!in_array(6,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
             header('Content-Type:application/json; charset=utf-8');
@@ -279,10 +279,10 @@ class Setting extends ApiCommon
     public function recordList()
     {
         $record_type = db('crm_config')->where(['name' => 'record_type'])->find();
-        if($record_type){
+        if ($record_type) {
             $arr = json_decode($record_type['value']);
             return resultArray(['data' => $arr]);
-        }else{
+        } else {
             return resultArray(['data' => array()]);
         }
     }

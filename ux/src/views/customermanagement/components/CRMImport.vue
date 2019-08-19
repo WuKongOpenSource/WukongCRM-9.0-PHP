@@ -1,5 +1,8 @@
 <template>
-  <el-dialog :visible.sync="showDialog"
+  <el-dialog v-loading="loading"
+             element-loading-text="资料导入中"
+             element-loading-spinner="el-icon-loading"
+             :visible.sync="showDialog"
              :title="'导入'+crmTypeName"
              width="550px"
              :append-to-body="true"
@@ -86,7 +89,6 @@ import {
 import { adminFieldUniqueFieldAPI } from '@/api/customermanagement/common'
 
 import { XhUserCell } from '@/components/CreateCom'
-import { Loading } from 'element-ui'
 
 export default {
   name: 'c-r-m-import', // 文件导入
@@ -130,11 +132,13 @@ export default {
   watch: {
     show: function(val) {
       this.showDialog = val
+      if (!this.fieldUniqueInfo) {
+        this.getFieldUniqueInfo()
+      }
     }
   },
   mounted() {
     this.user.push(this.userInfo)
-    this.getFieldUniqueInfo()
   },
   methods: {
     sure() {
@@ -157,15 +161,15 @@ export default {
           contacts: crmContactsExcelImport,
           product: crmProductExcelImport
         }[this.crmType]
-        let loading = Loading.service({ fullscreen: true })
+        this.loading = true
         request(params)
           .then(res => {
-            loading.close()
+            this.loading = false
             this.$message.success(res.data)
             this.closeView()
           })
           .catch(() => {
-            loading.close()
+            this.loading = false
           })
       }
     },
@@ -257,6 +261,17 @@ export default {
   }
   button {
     margin-left: 20px;
+  }
+}
+
+.el-dialog__wrapper {
+  /deep/ .el-icon-loading {
+    font-size: 30px;
+  }
+
+  /deep/ .el-loading-text {
+    font-size: 18px;
+    margin-top: 10px;
   }
 }
 </style>

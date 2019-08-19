@@ -39,6 +39,10 @@ export default {
     this.$bus.on('message-scroll', tableHeight => {
       this.tableHeight = tableHeight
     })
+
+    window.onresize = () => {
+      this.updateTableHeight()
+    }
   },
 
   beforeDestroy() {
@@ -202,7 +206,7 @@ export default {
             name: '提前几日提醒'
           },
           {
-            prop: 'remark',
+            field: 'remark',
             form_type: 'text',
             name: '备注'
           }
@@ -393,6 +397,15 @@ export default {
           'background-color': '#FFFFFF'
         }
       }
+    },
+
+    /**
+     * 更新表高
+     */
+    updateTableHeight() {
+      var offsetHei = document.documentElement.clientHeight
+      var removeHeight = Object.keys(this.filterObj).length > 0 ? 360 : 300
+      this.tableHeight = offsetHei - removeHeight
     }
   },
 

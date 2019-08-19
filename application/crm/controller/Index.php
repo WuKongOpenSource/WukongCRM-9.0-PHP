@@ -182,9 +182,8 @@ class Index extends ApiCommon
         $contractMoney = db('crm_contract')->where($where_contract)->sum('money');
 
         //回款金额
-        
         $where_receivables = $where;
-        $where_contract['return_time'] = array('between',[date('Y-m-d',$between_time[0]),date('Y-m-d',$between_time[1])]);
+        $where_receivables['return_time'] = array('between',[date('Y-m-d',$between_time[0]),date('Y-m-d',$between_time[1])]);
         $where_receivables['check_status'] = 2; //审核通过
         $receivablesMoney = db('crm_receivables')->where($where_receivables)->sum('money');
 

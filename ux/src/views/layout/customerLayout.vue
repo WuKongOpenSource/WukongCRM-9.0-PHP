@@ -119,6 +119,7 @@ export default {
 
   created() {
     this.getcrmMessagNum()
+    this.getcrmSettingConfig()
   },
 
   mounted() {},
@@ -144,6 +145,13 @@ export default {
         .dispatch('GetMessageNum')
         .then(res => {})
         .catch(() => {})
+    },
+
+    /**
+     * 获取客户管理配置信息
+     */
+    getcrmSettingConfig() {
+      this.$store.dispatch('CRMSettingConfig')
     },
 
     /**

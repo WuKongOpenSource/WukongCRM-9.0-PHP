@@ -9,8 +9,8 @@
     <div ref="hoverDialog"
          class="hover-dialog">
       <div class="img-content">
-        <span>{{hoverDialogList.start_time | moment("YYYY-MM-DD")}}</span>
-        <span v-if="hoverDialogList.end_time"> - {{hoverDialogList.end_time | moment("YYYY-MM-DD")}}</span>
+        <span>{{hoverDialogList.start_time | filterTimestampToFormatTime("YYYY-MM-DD")}}</span>
+        <span v-if="hoverDialogList.end_time"> - {{hoverDialogList.end_time | filterTimestampToFormatTime("YYYY-MM-DD")}}</span>
       </div>
       <div>
         {{hoverDialogList.text}}
@@ -50,8 +50,8 @@ import {
   scheduleEdit
 } from '@/api/oamanagement/schedule'
 
-import { getDateFromTimestamp } from '@/utils'
-import moment from 'moment'
+import { timestampToFormatTime, getDateFromTimestamp } from '@/utils'
+
 export default {
   components: {
     createSchedule,
@@ -77,50 +77,43 @@ export default {
     }
   },
   created() {
-    let _this = this
-    $(function() {
-      _this.listFun()
+    $(() => {
+      this.listFun()
     })
   },
   methods: {
     // 初始化日历任务
     listFun() {
-      let _this = this
       $('#calendar').fullCalendar({
         height: document.documentElement.clientHeight - 101,
         nextDayThreshold: '00:00:00',
-        dayClick: function(date, jsEvent, view) {
-          _this.newText = '创建日程'
-          _this.showDialog = true
-          _this.formData = {
-            start_time: date._i,
-            end_time: date._i,
+        dayClick: (date, jsEvent, view) => {
+          this.newText = '创建日程'
+          this.showDialog = true
+          this.formData = {
+            start_time: date.toDate(),
+            end_time: date.toDate(),
             checkList: []
           }
         },
         // 点击显示详情
-        eventClick: function(val, key) {
-          let list = []
-          list.push(val.start_time, val.end_time)
-          val.time = list
-          _this.listData = val
-          _this.showParticulars(val)
+        eventClick: (val, key) => {
+          this.showParticulars(val)
         },
         header: {
-          left: 'today,agendaDay,agendaWeek,month',
+          left: 'today,   agendaDay,agendaWeek,month',
           center: 'prevYear,prev, title, next,nextYear',
           right: ''
         },
-        eventMouseover: function(event, jsEvent, view) {
-          _this.$refs.hoverDialog.style.display = 'block'
-          _this.$refs.hoverDialog.style.width =
+        eventMouseover: (event, jsEvent, view) => {
+          this.$refs.hoverDialog.style.display = 'block'
+          this.$refs.hoverDialog.style.width =
             document.getElementsByClassName('fc-day')[0].offsetWidth + 'px'
-          _this.$refs.hoverDialog.style.left =
+          this.$refs.hoverDialog.style.left =
             jsEvent.currentTarget.offsetLeft - 5 + 'px'
-          _this.$refs.hoverDialog.style.top =
+          this.$refs.hoverDialog.style.top =
             jsEvent.clientY - jsEvent.offsetY - 60 + 'px'
-          _this.hoverDialogList = {
-            time: event.start._i,
+          this.hoverDialogList = {
             start_time: event.start_time,
             end_time: event.end_time,
             text: event.title,
@@ -128,39 +121,39 @@ export default {
             priority: event.priority
           }
         },
-        eventMouseout: function(event, jsEvent, view) {
-          _this.$refs.hoverDialog.style.display = 'none'
+        eventMouseout: (event, jsEvent, view) => {
+          this.$refs.hoverDialog.style.display = 'none'
         },
-        events: function(start, end, timezone, callback) {
-          _this.loading = true
-          let start_date = moment(start).valueOf() / 1000
-          let end_date = moment(end).valueOf() / 1000
+        events: (start, end, timezone, callback) => {
           scheduleList({
-            start_time: start_date,
-            end_time: end_date
+            start_time: start.unix(),
+            end_time: end.unix()
           })
             .then(res => {
-              let list = res.data.list.map(item => {
-                item.start = moment(
-                  getDateFromTimestamp(item.start_time)
-                ).format('YYYY-MM-DD HH:mm:ss')
-                item.end = moment(getDateFromTimestamp(item.end_time)).format(
+              let list = res.data.map(item => {
+                item.start = timestampToFormatTime(
+                  item.start_time,
+                  'YYYY-MM-DD HH:mm:ss'
+                )
+                item.end = timestampToFormatTime(
+                  item.end_time,
                   'YYYY-MM-DD HH:mm:ss'
                 )
                 item.textColor = '#333'
                 return item
               })
               callback(list)
-              _this.loading = false
+              this.loading = false
             })
             .catch(err => {
-              _this.loading = false
+              this.loading = false
             })
         }
       })
     },
     // 详情数据
     showParticulars(val) {
+      this.listData = val
       this.dialogVisible = true
     },
     // 详情关闭
@@ -175,12 +168,8 @@ export default {
     // 详情编辑
     editBtn(val) {
       this.newText = '编辑日程'
-      let times = []
-      for (let item of val.time) {
-        times.push(item * 1000)
-      }
-      val.start_time = times[0]
-      val.end_time = times[1]
+      val.start_time = getDateFromTimestamp(val.start_time)
+      val.end_time = getDateFromTimestamp(val.end_time)
       this.formData = val
       this.handleClose()
       this.showDialog = true
@@ -218,6 +207,8 @@ export default {
 </style>
 
 <style lang="scss" scoped>
+@import '@/styles/calendars.scss';
+
 .task-calendars {
   position: relative;
   border: 1px solid #e6e6e6;
@@ -243,146 +234,6 @@ export default {
     position: absolute;
     top: 14px;
     right: 40px;
-  }
-  #calendar {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-  }
-  #calendar /deep/ .fc-license-message {
-    display: none !important;
-  }
-  #calendar /deep/ .fc-toolbar {
-    padding-top: 1em;
-    .fc-left {
-      padding-left: 20px;
-      .fc-button-group {
-        .fc-button {
-          text-shadow: none;
-        }
-        .fc-state-default {
-          background: #f0f0f0;
-          padding: 0 1.2em;
-          border: 0;
-          margin-right: 3px;
-        }
-        .fc-state-down {
-          box-shadow: none;
-          text-shadow: none;
-        }
-        .fc-state-active {
-          background: #3e84e9;
-          color: #fff;
-        }
-      }
-      .fc-today-button {
-        background: #fff;
-        margin-right: 50px;
-      }
-    }
-    .fc-center {
-      margin-left: -277px;
-      h2 {
-        font-size: 20px;
-        font-weight: normal;
-        margin-top: 5px;
-      }
-      .fc-prevYear-button,
-      .fc-prev-button,
-      .fc-next-button,
-      .fc-nextYear-button {
-        background: none;
-        border: 0;
-        color: #aaa;
-        outline: none;
-        box-shadow: none;
-      }
-      .fc-button-group {
-        .fc-prev-button .fc-icon-left-single-arrow:after,
-        .fc-next-button .fc-icon-right-single-arrow:after {
-          font-size: 160%;
-          font-weight: none;
-        }
-      }
-    }
-  }
-  #calendar /deep/ .fc-view-container {
-    .fc-body {
-      .fc-row {
-        .fc-day {
-          border-color: #e9e9e9;
-        }
-        .fc-bg {
-          .fc-sat,
-          .fc-sun {
-            background: #fbfbfb;
-          }
-          .fc-today {
-            background: none;
-          }
-        }
-        .fc-content-skeleton {
-          .fc-today {
-            .fc-day-number {
-              background: #3e84e9;
-              border-radius: 50%;
-              padding: 3px;
-              color: #fff;
-              min-width: 16px;
-              text-align: center;
-            }
-          }
-          .fc-day-grid-event {
-            border: 0 !important;
-            border-radius: 23px;
-            margin-left: 5px;
-            margin-right: 5px;
-            .fc-content {
-              color: #fff;
-              .fc-time {
-                display: none;
-              }
-              .fc-title {
-                float: left;
-                width: 100%;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-              }
-            }
-          }
-        }
-        .fc-day-number {
-          margin: 5px;
-        }
-        .fc-day-grid-event {
-          border-left: 2px solid #ff9668 !important;
-          border-radius: 0;
-          margin-left: 0;
-          margin-right: 0;
-          padding: 2px 15px;
-        }
-      }
-    }
-    .fc-body > tr > .fc-widget-content {
-      border: 0;
-    }
-    .fc-head {
-      .fc-head-container {
-        border: 0;
-        border-bottom: 1px solid #ddd;
-      }
-    }
-  }
-  #calendar /deep/ .fc-day-header {
-    background: #f5f5f5;
-    border-width: 0;
-    font-weight: normal;
-    span {
-      height: 50px;
-      line-height: 50px;
-    }
   }
 }
 </style>

@@ -226,7 +226,7 @@ import {
 } from '@/api/oamanagement/journal'
 // 关联业务 - 选中列表
 import relatedBusiness from '@/components/relatedBusiness'
-
+import xss from 'xss'
 import { mapGetters } from 'vuex'
 import FileCell from '@/views/OAManagement/components/fileCell'
 
@@ -425,7 +425,7 @@ export default {
         journalCommentSave({
           reply_fid: this.replyChildComment.comment_id,
           log_id: item.type_id,
-          content: this.childCommentsTextarea,
+          content: xss(this.childCommentsTextarea),
           reply_content: item.content,
           reply_comment_id: item.comment_id,
           reply_user_id: item.userInfo.id,
@@ -437,7 +437,7 @@ export default {
               type_id: item.type_id,
               userInfo: this.userInfo,
               create_time: parseInt(new Date().getTime() / 1000),
-              content: this.childCommentsTextarea,
+              content: xss(this.childCommentsTextarea),
               reply_content: item.content,
               replyuserInfo: item.userInfo
             })
@@ -464,7 +464,7 @@ export default {
         this.contentLoading = true
         journalCommentSave({
           log_id: this.showWorkbench ? this.data.action_id : this.data.log_id,
-          content: this.commentsTextarea
+          content: xss(this.commentsTextarea)
         })
           .then(res => {
             // 插入一条数据
@@ -476,7 +476,7 @@ export default {
                 : this.data.log_id,
               userInfo: this.userInfo,
               create_time: parseInt(new Date().getTime() / 1000),
-              content: this.commentsTextarea,
+              content: xss(this.commentsTextarea),
               replyList: [],
               show: false
             })

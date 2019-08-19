@@ -24,10 +24,7 @@
 </template>
 
 <script>
-import {
-  crmSettingConfigData,
-  crmSettingContractDayAPI
-} from '@/api/systemManagement/SystemCustomer'
+import { crmSettingContractDayAPI } from '@/api/systemManagement/SystemCustomer'
 
 export default {
   name: 'contract-expire-set',
@@ -53,7 +50,8 @@ export default {
      */
     getDetail() {
       this.loading = true
-      crmSettingConfigData()
+      this.$store
+        .dispatch('CRMSettingConfig')
         .then(res => {
           this.loading = false
           this.contractDay = res.data.contract_day

@@ -247,7 +247,7 @@ export default {
         this.showDview = true
       } else if (column.property == 'customer_name') {
         this.rowID = row.customer_id
-        this.rowType = 'customer_id'
+        this.rowType = 'customer'
         this.showDview = true
       }
     },

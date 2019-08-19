@@ -73,7 +73,7 @@ class Event extends Common
 			$event_date[$k]['stop_time'] = $noticeList ? $noticeList['stop_time'] : '';
 			$event_date[$k]['noticetype'] = $noticeList ? $noticeList['noticetype'] : '';
 			if ($noticeList['noticetype'] == '2') {
-				$event_date[$k]['repeat'] =  $noticeList['repeated'] ? explode('|||',$noticeList['repeated']) : [];
+				$event_date[$k]['repeat'] = $noticeList['repeated'] ? explode('|||',$noticeList['repeated']) : [];
 			} else {
 				$event_date[$k]['repeat'] =  '';
 			}
@@ -88,11 +88,7 @@ class Event extends Common
 	        $permission['is_delete'] = $is_delete;
 	        $event_date[$k]['permission']	= $permission;
 		}
-		$count = Db::name('OaEvent')->where($where)->count();
-        $data = [];
-		$data['dataCount'] = $count;
-        $data['list'] = $event_date;
-        return $data;
+        return $event_date ? : [];
     }
 
 	/**

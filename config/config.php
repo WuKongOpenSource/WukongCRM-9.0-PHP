@@ -14,7 +14,7 @@ return [
     // 应用命名空间
     'app_namespace'          => 'app',
     // 应用调试模式
-    'app_debug'              => true,
+    'app_debug'              => false,
     // 应用Trace
     'app_trace'              => false,
     // 应用模式状态
@@ -26,7 +26,7 @@ return [
     // 注册的根命名空间
     'root_namespace'         => [],
     // 扩展配置文件
-    'extra_config_list'      => ['database', 'deploy', 'authorize'],
+    'extra_config_list'      => ['database','deploy'],
     // 扩展函数文件
     'extra_file_list'        => [THINK_PATH . 'helper' . EXT],
     // 默认输出类型
@@ -59,7 +59,7 @@ return [
     // 禁止访问模块
     'deny_module_list'       => ['common'],
     //允许访问模块
-    'allow_module_list'      => ['admin','crm','oa','bi'],    
+    'allow_module_list'      => ['admin','crm','oa','bi','work'],    
     // 默认控制器名
     'default_controller'     => 'Index',
     // 默认操作名
@@ -92,7 +92,7 @@ return [
     // 是否开启路由
     'url_route_on'           => true,
     // 路由配置文件（支持配置多个）
-    'route_config_file'      => ['route_admin','route_crm','route_oa','route_bi'],
+    'route_config_file'      => ['route_admin','route_crm','route_oa','route_bi','route_work'],
     // 是否强制使用路由
     'url_route_must'         => false,
     // 域名部署
@@ -212,7 +212,7 @@ return [
     // +----------------------------------------------------------------------
     'cookie'                 => [
         // cookie 名称前缀
-        'prefix'    => '',
+        'prefix'    => '72crm_',
         // cookie 保存时间
         'expire'    => 0,
         // cookie 保存路径

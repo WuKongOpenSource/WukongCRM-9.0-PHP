@@ -364,15 +364,11 @@ class User extends Common
 	 * @param     [string]                   $verifyCode [验证码]
 	 * @param     Boolean                  	 $isRemember [是否记住密码]
 	 * @param     Boolean                    $type       [是否重复登录]
-	 * @param     Boolean                    $mobile     [1手机登录]
-	 * @return    [type]                               [description]
+	 * @param     array                      $paramArr 
+	 * @return    [type]                     [description]
 	 */
-	public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false, $authKey = '', $mobile = 0)
+	public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false, $authKey = '', $paramArr = [])
 	{
-        if (!$username) {
-			$this->error = '帐号不能为空';
-			return false;
-		}
 		if (!$password){
 			$this->error = '密码不能为空';
 			return false;
@@ -424,16 +420,15 @@ class User extends Common
         $info['userInfo'] = $userInfo;
         $info['sessionId'] = session_id();
         $authKey = user_md5($userInfo['username'].$userInfo['password'].$info['sessionId'], $userInfo['salt']);
-       // $info['_AUTH_LIST_'] = $dataList['rulesList'];
+        // $info['_AUTH_LIST_'] = $dataList['rulesList'];
         $info['authKey'] = $authKey;
-        //手机登录
-        // if ($mobile == 1) {
-        // 	cache('Auth_'.$userInfo['authkey'].'_mobile', NULL);
-        // 	cache('Auth_'.$authKey.'_mobile', $info, $loginExpire);
-        // } else {
-        	cache('Auth_'.$userInfo['authkey'], NULL);
-			cache('Auth_'.$authKey, $info, $loginExpire);
-        // }
+        
+    	$platform = $paramArr['platform'] ? '_'.$paramArr['platform'] : ''; //请求平台(mobile,ding)
+		//删除旧缓存
+        if (cache('Auth_'.$userInfo['authkey'].$platform)) {
+        	cache('Auth_'.$userInfo['authkey'].$platform, NULL);
+        }      
+        cache('Auth_'.$authKey.$platform, $info, $loginExpire);
         unset($userInfo['authkey']);
 		
         // 返回信息
@@ -442,6 +437,7 @@ class User extends Common
         $data['userInfo']		= $userInfo;
         $data['authList']		= $dataList['authList'];
         $data['menusList']		= $dataList['menusList'];
+        $data['loginExpire']	= $loginExpire;
              
         //保存authKey信息
         $userData = [];
@@ -451,7 +447,7 @@ class User extends Common
     	if ($userInfo['status'] == 2) {
     		$userData['status'] = 1;
     	}
-        db('admin_user')->where(['id' => $userInfo['id']])->update($userData);
+        $this->where(['id' => $userInfo['id']])->update($userData);
         return $data;
     }
 

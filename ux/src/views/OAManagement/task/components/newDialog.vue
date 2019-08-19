@@ -11,7 +11,7 @@
            src="@/assets/img/task_close.png"
            @click="handleClose"
            alt="">
-      <el-form :model="formInline"
+      <el-form :model="formData"
                ref="form"
                :rules="rules">
         <el-form-item :class="'el-form-item'+ '-' + item.field"
@@ -21,16 +21,16 @@
                       :key="index">
           <el-input v-if="item.type == 'textarea'"
                     :autosize="{ minRows: 4}"
-                    v-model="formInline[item.field]"
+                    v-model="formData[item.field]"
                     type="textarea"></el-input>
           <el-date-picker v-else-if="item.type == 'time'"
-                          v-model="formInline[item.field]"
+                          v-model="formData[item.field]"
                           type="date"
                           placeholder="选择日期">
           </el-date-picker>
           <div v-else-if="item.type == 'priority'"
                class="priority-box">
-            <el-radio-group v-model="formInline[item.field]"
+            <el-radio-group v-model="formData[item.field]"
                             fill="red"
                             text-color="#FFF">
               <el-radio :label="3">高</el-radio>
@@ -63,7 +63,7 @@
             </el-popover>
           </div>
           <el-input v-else
-                    v-model="formInline[item.field]"></el-input>
+                    v-model="formData[item.field]"></el-input>
         </el-form-item>
         <related-business :allData="allData"
                           :marginLeft="'0'"
@@ -81,10 +81,10 @@
 </template>
 
 <script>
-import { usersList, depList } from '@/api/common'
 // 关联业务 - 选中列表
 import relatedBusiness from '@/components/relatedBusiness'
 import XhUser from '@/components/CreateCom/XhUser'
+import { getDateFromTimestamp } from '@/utils/index'
 
 export default {
   components: {
@@ -92,8 +92,18 @@ export default {
     XhUser
   },
   data() {
+    var validateTime = (rule, value, callback) => {
+      if (this.formData.start_time && this.formData.end_time) {
+        if (
+          this.formData.start_time.getTime() >= this.formData.end_time.getTime()
+        ) {
+          callback(new Error('开始时间必须小于结束时间'))
+        }
+      }
+      callback()
+    }
     return {
-      formInline: {
+      formData: {
         priority: 0
       },
       formList: [
@@ -113,12 +123,23 @@ export default {
         name: [
           { required: true, message: '任务名称不能为空', trigger: 'blur' },
           { max: 50, message: '任务名称长度最多为50个字符', trigger: 'blur' }
-        ]
+        ],
+        start_time: [{ validator: validateTime, trigger: 'blur' }],
+        end_time: [{ validator: validateTime, trigger: 'blur' }]
       },
       // 获取选择的数据id数组
       relevanceAll: {},
       allData: {},
       radio: true
+    }
+  },
+  watch: {
+    newDialogVisible(value) {
+      if (!value) {
+        this.formData = {
+          priority: 0
+        }
+      }
     }
   },
   props: {
@@ -133,26 +154,26 @@ export default {
     dialogVisibleSubmit() {
       this.$refs.form.validate(valid => {
         if (valid) {
-          var formInlineCopy = Object.assign({}, this.formInline)
-          formInlineCopy = {
+          var formDataCopy = Object.assign({}, this.formData)
+          formDataCopy = {
             main_user_id:
               this.colleaguesList.length == 0 ? '' : this.colleaguesList[0].id,
-            start_time: this.formInline.start_time
-              ? new Date(this.formInline.start_time).getTime() / 1000
-              : this.formInline.start_time,
-            stop_time: this.formInline.end_time
-              ? new Date(this.formInline.end_time).getTime() / 1000
-              : this.formInline.end_time,
-            description: this.formInline.description,
-            priority: this.formInline.priority,
-            work_id: this.formInline.work_id,
-            name: this.formInline.name,
+            start_time: this.formData.start_time
+              ? this.formData.start_time.getTime() / 1000
+              : '',
+            stop_time: this.formData.end_time
+              ? this.formData.end_time.getTime() / 1000
+              : '',
+            description: this.formData.description,
+            priority: this.formData.priority,
+            work_id: this.formData.work_id,
+            name: this.formData.name,
             customer_ids: this.relevanceAll.customer_ids,
             contacts_ids: this.relevanceAll.contacts_ids,
             business_ids: this.relevanceAll.business_ids,
             contract_ids: this.relevanceAll.contract_ids
           }
-          this.$emit('dialogVisibleSubmit', formInlineCopy)
+          this.$emit('dialogVisibleSubmit', formDataCopy)
         } else {
           return false
         }

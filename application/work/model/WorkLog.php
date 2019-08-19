@@ -1,6 +1,6 @@
 <?php
 // +----------------------------------------------------------------------
-// | Description: 用户
+// | Description: 项目操作日志
 // +----------------------------------------------------------------------
 // | Author:  
 // +----------------------------------------------------------------------
@@ -39,7 +39,7 @@ class WorkLog extends Common
 	];
 
 	/**
-	 * 项目日志展示
+	 * 项目日志
 	 * @param  
 	 * @return
 	 */
@@ -47,26 +47,23 @@ class WorkLog extends Common
 	{
 		$data = array();
 		$data['status'] = $param['type'];
-		if($param['type'] == '1') {
-			//添加
-			$param['content'] = '新建了任务：'.$param['name'];  
-		}
-		if($param['type'] == '2') {
-			//删除
-			$param['content'] = '重命名任务为：'.$param['name']; 
-			$data['status'] = 4; 
-		}
-		if($param['type'] == '3') {
-			//修改
-			$param['content'] = '删除了任务！';  
-			$data['status'] = 4;
+		switch ($param['type']) {
+			case '1' : $param['content'] = '新建了任务：'.$param['name']; break;
+			case '2' : 
+				$param['content'] = '重命名任务为：'.$param['name']; 
+				$data['status'] = 3; 
+				break;
+			case '3' : 
+				$param['content'] = '删除了任务！';  
+				$data['status'] = 4;
+				break;			
 		}
 		unset($param['type']);
 		$data['user_id'] = $param['create_user_id'];
 		$data['content'] = $param['content'];
 		$data['create_time'] = time();
 		$data['work_id'] = $param['work_id'];
-		$data['task_id'] = $param['task_id']?:'0'; //任务编辑ID为空 
+		$data['task_id'] = $param['task_id'] ? : '0'; //任务编辑ID为空 
 		
 		$flag = $this->insert($data);
 		if ($flag) {
@@ -77,8 +74,11 @@ class WorkLog extends Common
 	}	
 
 	/**
-	 * 添加新任务
-	 */
+     * 添加新任务
+     * @author yykun
+     * @param
+     * @return
+     */	
 	public function newTaskLog($param)
 	{
 		$data['content'] =  '添加新任务:'.$param['name'];
@@ -94,25 +94,28 @@ class WorkLog extends Common
 		}
 	}
 
-    /*
-     *任务模块修改添加日志
-     */
+	/**
+     * 任务模块修改添加日志
+     * @author yykun
+     * @param
+     * @return
+     */	
     public function taskLogAdd($param)
     {
     	$taskField = $this->taskField;
     	switch ($param['type']) {
 		    case 'name':
-		    	$data['content'] =  '将任务名由'.$param['before'].'改为'.$param['after'];
+		    	$data['content'] =  '将任务名由'.$param['before'].'改为:'.$param['after'];
 		        break;
 			case 'main_user_id':  //负责人
-		    	$data['content']  = '设定'.$param['after'].'为主要负责人！';// $taskField['main_user_id'];
+		    	$data['content']  = $param['after'];
 		        break;
 		    case 'owner_user_id':
 		    	$typename = $taskField['owner_user_id'];
 				$data['content']  = '编辑任务参与人';
 		        break;
 			case 'class_id': //分类
-		    	$data['content'] = '设定项目类型为：'.$param['after'];//$taskField['class_id'];
+		    	$data['content'] = '设定项目类型为：'.$param['after'];
 		        break;
 		    case 'lable_id_add': //新增标签
 		    	$data['content'] = '新增项目标签为：'.$param['after'];;
@@ -121,7 +124,7 @@ class WorkLog extends Common
 		    	$data['content'] = '删除项目标签：'.$param['after'];;
 		        break;
 			case 'description': //描述
-		    	$data['content'] =  '将'.$taskField[$typename].'由'.$param['before'].'改为'.$param['after'];
+		    	$data['content'] =  '将描述由'.$param['before'].'改为:'.$param['after'];
 		        break;
 		    case 'start_time': //开始时间
 		    	$typename = $taskField['start_time'];
@@ -136,10 +139,10 @@ class WorkLog extends Common
 		    	$data['content'] = $taskField['is_top'];
 		        break;
 		    case 'owner_userid_del':  //删除参与者
-		    	$data['content'] = '将'.$param['after'].'从任务中移除！';// $param['after'] ;//$taskField['is_top'];
+		    	$data['content'] = '将'.$param['after'].'从任务中移除！';
 		        break;
 		    case 'owner_userid_add':  //添加参与者
-		    	$data['content'] = '添加'.$param['after'].'参与任务！';// $param['after'] ;//$taskField['is_top'];
+		    	$data['content'] = '添加'.$param['after'].'参与任务！';
 		        break;
 		    case 'structure_id_del':  //删除参与部门
 		    	$data['content'] = '将'.$param['after'].'（部门）从任务中移除！';
@@ -149,9 +152,7 @@ class WorkLog extends Common
 		        break;
 		    default:
 				return false;
-		    	//$typename = '暂无';
 		}
-		
 		$data['user_id'] = $param['user_id'];
 		$data['task_id'] = $param['task_id'];
 		$data['work_id'] = $param['work_id'];

@@ -31,12 +31,10 @@ class AuthenticateBehavior
 		/*获取头部信息*/ 
         $header = $request->header();
         $authKey = $header['authkey'];
-		// $is_mobile = $header['is_mobile'];  
-  //       if ($is_mobile) {
-  //           $cache = cache('Auth_'.$authKey.'_mobile');
-  //       } else {
-            $cache = cache('Auth_'.$authKey);
-        // }
+        
+		$paramArr = $request->param();
+        $platform = $paramArr['platform'] ? '_'.$paramArr['platform'] : ''; //请求分类(mobile,ding)
+        $cache = cache('Auth_'.$authKey.$platform); 
         $userInfo = $cache['userInfo'];
     	
     	if (in_array($a, $permission)) {

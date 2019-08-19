@@ -244,10 +244,8 @@ class Receivables extends ApiCommon
             $data = $receivablesModel->delDatas($delIds);
             if (!$data) {
                 return resultArray(['error' => $receivablesModel->getError()]);
-            }
-            //删除操作记录
-            $actionRecordModel = new \app\admin\model\ActionRecord();
-            $res = $actionRecordModel->delDataById(['types' => 'crm_receivables','action_id' => $delIds]);            
+            } 
+            actionLog($delIds,'','','');         
         }
         if ($errorMessage) {
             return resultArray(['error' => $errorMessage]);

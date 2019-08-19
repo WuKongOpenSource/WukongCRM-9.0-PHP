@@ -173,9 +173,7 @@ class Business extends ApiCommon
             if (!$data) {
                 return resultArray(['error' => $businessModel->getError()]);
             }
-            //删除操作记录
-            $actionRecordModel = new \app\admin\model\ActionRecord();
-            $res = $actionRecordModel->delDataById(['types' => 'crm_business','action_id' => $delIds]);
+            actionLog($delIds,'','','');         
         }
         if ($errorMessage) {
             return resultArray(['error' => $errorMessage]);

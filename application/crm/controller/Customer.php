@@ -226,9 +226,7 @@ class Customer extends ApiCommon
             if (!$data) {
                 return resultArray(['error' => $customerModel->getError()]);
             }
-            //删除操作记录
-            $actionRecordModel = new \app\admin\model\ActionRecord();
-            $res = $actionRecordModel->delDataById(['types' => 'crm_customer','action_id' => $delIds]);                    
+            actionLog($delIds,'','','');                    
         }
         if ($errorMessage) {
             return resultArray(['error' => $errorMessage]);

@@ -215,7 +215,13 @@ class Customer extends ApiCommon
         $param = $this->param;
         $whereArr = array();
         $whereArr = $biCustomerModel->getParamByWhere($param,'record');
-        $record_categorys = array('打电话','发邮件','发短信','见面拜访','活动');
+        //跟进类型
+        $record_type = db('crm_config')->where(['name' => 'record_type'])->find();
+        if ($record_type) {
+            $record_categorys = json_decode($record_type['value']);        
+        } else {
+            $record_categorys = array('打电话','发邮件','发短信','见面拜访','活动');
+        }
         $count = $biRecordModel->getRecordNum($whereArr);
 
         $datas = array();

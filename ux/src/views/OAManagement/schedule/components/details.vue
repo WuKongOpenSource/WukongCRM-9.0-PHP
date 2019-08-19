@@ -11,8 +11,8 @@
              :key="index"
              class="list-data">
           <label>{{item.label}}：</label>
-          <span v-if="item.type=='time' && listData.time">{{listData[item.value] | moment("YYYY-MM-DD HH:mm:ss")}}</span>
-          <span v-else-if="item.type=='create_time'">{{listData[item.value] | moment("YYYY-MM-DD HH:mm:ss")}}</span>
+          <span v-if="item.type=='time'">{{listData[item.value] | filterTimestampToFormatTime("YYYY-MM-DD HH:mm:ss")}}</span>
+          <span v-else-if="item.type=='create_time'">{{listData[item.value] | filterTimestampToFormatTime("YYYY-MM-DD HH:mm:ss")}}</span>
           <span v-else-if="item.type=='ownerList'"
                 class="owner-list">
             <span v-for="(k, j) in listData[item.value]"

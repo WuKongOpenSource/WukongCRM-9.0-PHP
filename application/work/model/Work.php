@@ -2,18 +2,16 @@
 // +----------------------------------------------------------------------
 // | Description: 项目管理
 // +----------------------------------------------------------------------
-// | Author:  
+// | Author:  Michael_xu | gengxiaoxu@5kcrm.com 
 // +----------------------------------------------------------------------
 
 namespace app\work\model;
 
 use think\Db;
-use think\Model;
 use app\work\model\WorkClass as ClassModel;
-use com\verify\HonrayVerify;
-use think\Cache;
+use app\admin\model\Common;
 
-class Work extends Model
+class Work extends Common
 {
 
     /**
@@ -28,148 +26,49 @@ class Work extends Model
 		'status' => 1,
 	];
 
-	//[getDataList 列表] 
+	/**
+     * 列表
+     * @author yykun
+     * @param 
+     * @return
+     */
 	public function getDataList()
 	{
-		$list = $this->field('work_id,name,status,create_time')->where('status =1')->select();
+		$list = $this->where(['status' => 1])->field('work_id,name,status,create_time')->select();
 		return $list ;	
 	}
 
-	//退出项目 项目id,会员ID
-	public function leaveById($work_id,$user_id)
-	{
-		$workDet = Db::name('Work')->where('work_id = '.$work_id)->find();
-		if ( $user_id == $workDet['create_user_id'] ) {
-			$this->error = '项目创建人不可以退出';
-			return false;
-		}
-
-		$list = Db::name('Task')->where('work_id ='.$work_id)->select();
-
-		foreach ( $list as $key => $value ) {
-			$str = ','.$user_id.',';
-			if ( strstr($str,$value['own_user_id']) ) {
-				$newField = str_replace($str,',',$value['own_user_id']); 
-				Db::name('Task')->where('task_id = '.$value['task_id'])->setField('own_user_id',$newField);
-			}
-			if( $value['main_user_id'] == $param['create_user_id'] ) {
-				Db::name('Task')->where('task_id = '.$value['task_id'])->setField('main_user_id','');
-			}
-		}
-		return true;
-	}
-
-	//添加参与人
-	public function addOwner($param)
-	{
-		$newstr = implode(',',$param['owner_user_id']);
-		$temp = ','.$newstr.',';
-		
-		$flag = $this->where('work_id ='.$param['work_id'])->setField('owner_user_id',$temp);
-		if ($flag) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	//删除参与人
-	public function delOwner($param)
-	{
-		$det = $this->get($param['work_id']);
-		if ( $det['owner_user_id'] ){
-
-			$temp = str_replace(','.$param['owner_user_id'].',',',',$det['owner_user_id']);
-			$flag = $this->where('work_id ='.$param['work_id'])->setField('owner_user_id',$temp);
-
-			if ($flag) {
-				return true;
-			} else {
-				return false;
-			}
-		} else {
-			return false;
-		}
-	}
-	
-	//参与人列表
-	public function ownerList($param)
-	{
-		$det = Db::name('Work')->where('work_id ='.$param['work_id'])->find();
-		if ($det['owner_user_id'] ) {
-
-			$idstr = $det['owner_user_id'];
-			$idstr=substr($idstr,1,strlen($idstr)-2);
-			if (!$idstr) {
-				$this->error= '没有参与人';
-				return false;
-			}
-			$list = Db::name('AdminUser')->field('id,username,realname,thumb_img')->where('id in ('.$idstr.')')->select();
-			foreach($list as $k=>$v){
-				//$det = Db::name('AdminUserAccess')->where('user_id = '.$v['id'])->find();
-				//$list[$k]['group_id'] = $det['group_id']?(int)$det['group_id']:''; 
-				$list[$k]['thumb_img'] = getFullPath($v['thumb_img']);
-			}
-			return $list;
-		} else {
-			$this->error= '无参与人';
-			return false;
-		}
-	}
-
-	//获取项目详情
-	public function getDataById($id = '')
-	{
-		$data = $this->get($id);
-		if (!$data) {
-			$this->error = '暂无此数据';
-			return false;
-		}
-		return $data;
-	}
-
-	//创建项目
+	/**
+     * 创建项目
+     * @author yykun
+     * @param
+     * @return
+     */
 	public function createData($param)
 	{
 		$this->startTrans();
 		try {
-			$rdata['customer_ids'] = count($param['customer_ids'])?','.implode(',',$param['customer_ids']).',':''; 
-			$rdata['contacts_ids'] = count($param['contacts_ids'])?','.implode(',',$param['contacts_ids']).',':''; 
-			$rdata['business_ids'] = count($param['business_ids'])?','.implode(',',$param['business_ids']).',':''; 
-			$rdata['contract_ids'] = count($param['contract_ids'])?','.implode(',',$param['contract_ids']).',':'';  
-
-			$arr = ['customer_ids','contacts_ids','business_ids','contract_ids'];
-			foreach($arr as $value){
-				unset($param[$value]);
-			}
-			
-			$data['create_time'] = time();
-			$data['create_user_id'] = $param['create_user_id'];
-			$data['name'] = $param['name'];
-			$data['owner_user_id'] = $param['owner_user_id']?','.implode(',', $param['owner_user_id']).',':'';
-			$data['description'] = $param['description']?:'';
-			$data['color'] = $param['color']?:'';
-			$data['status'] = 1; 
-			$flag = $this->insertGetId($data); 
-			if ($flag) {
-				$this->commit();
-				$rdata['work_id'] = $flag;
-				Db::name('WorkRelation')->insert($rdata);
-				$create_time = time();
-				$create_user_id = $param['create_user_id'];
-				$prefix= config("database.prefix");
-				$sql = 'INSERT INTO '.$prefix.'work_task_class (name,create_time,create_user_id,status,work_id,order_id) VALUES
-					("要做",'.$create_time.','.$create_user_id.', 1,'.$flag.',1),
-					("在做",'.$create_time.','.$create_user_id.', 1,'.$flag.',2),
-					("待定",'.$create_time.','.$create_user_id.', 1,'.$flag.',3);';
-				Db::query($sql);
-				return $flag;
-			} else {
-				$this->rollback();
-				$this->error = '添加失败';
-				return false;
-			}
-			
+			$owner_user_id = $param['owner_user_id'] ? : [];
+			$param['owner_user_id'] = $owner_user_id ? arrayToString($owner_user_id) : '';
+			$param['status'] = 1; 
+			$this->data($param)->allowField(true)->save();
+			$work_id = $this->work_id;
+			$create_time = time();
+			$create_user_id = $param['create_user_id'];
+			$prefix = config("database.prefix");
+			$sql = 'INSERT INTO '.$prefix.'work_task_class (name,create_time,create_user_id,status,work_id,order_id) VALUES
+				("要做",'.$create_time.','.$create_user_id.', 1,'.$work_id.',1),
+				("在做",'.$create_time.','.$create_user_id.', 1,'.$work_id.',2),
+				("待定",'.$create_time.','.$create_user_id.', 1,'.$work_id.',3);';
+			Db::query($sql);
+			//相关成员
+			$ownerData = [];
+			$ownerData['work_id'] = $work_id;
+			$ownerData['create_user_id'] = $create_user_id;
+			$ownerData['owner_user_id'] = $owner_user_id;
+			$this->addOwner($ownerData);
+			$this->commit();
+			return $work_id;
 		} catch(\Exception $e) {
 			$this->rollback();
 			$this->error = '添加失败';
@@ -177,29 +76,33 @@ class Work extends Model
 		}
 	}
 
-	//编辑保存
+	/**
+     * 编辑项目
+     * @author yykun
+     * @param
+     * @return
+     */	
 	public function updateDataById($param)
 	{
-		$rdata['customer_ids'] = count($param['customer_ids'])?','.implode(',',$param['customer_ids']).',':''; 
-		$rdata['contacts_ids'] = count($param['contacts_ids'])?','.implode(',',$param['contacts_ids']).',':''; 
-		$rdata['business_ids'] = count($param['business_ids'])?','.implode(',',$param['business_ids']).',':''; 
-		$rdata['contract_ids'] = count($param['contract_ids'])?','.implode(',',$param['contract_ids']).',':''; 
-		$rdata['work_id'] = $param['work_id'];
-		$arr = ['customer_ids','contacts_ids','business_ids','contract_ids'];
-		foreach($arr as $value){
-			unset($param[$value]);
-		}
-	
 		$map['work_id'] = $param['work_id'];
-		$flag = $this->where($map)->update($param);
-		if ($flag) {
-			$logmodel = model('TaskLog');
-			$datalog['type']=2; //重命名项目
-			$datalog['name'] = $param['name'];//项目名
+		$workInfo = $this->where(['work_id' => $param['work_id']])->find();
+		if (isset($param['is_open']) && empty($param['is_open']) && $workInfo['is_open'] == 1) {
+			//公有改私有
+			$ownerData = [];
+			$ownerData['work_id'] = $param['work_id'];
+			$ownerData['create_user_id'] = $workInfo['create_user_id'];
+			$ownerData['owner_user_id'] = stringToArray($workInfo['create_user_id']);
+			$ownerData['is_open'] = $param['is_open'] ? : '0';
+			$this->addOwner($ownerData);	
+		}
+		$resUpdata = $this->where($map)->update($param);
+		if ($resUpdata) {
+			$logmodel = model('WorkLog');
+			$datalog['type'] = 2; //重命名项目
+			$datalog['name'] = $param['name']; //项目名
 			$datalog['create_user_id'] = $param['create_user_id']; 
-			$datalog['work_id'] = $flag;
+			$datalog['work_id'] = $param['work_id'];
 			$ret = $logmodel->workLogAdd($datalog);
-			Db::name('WorkRelation')->where('work_id = '.$param['work_id'])->update($rdata);
 			return true;
 		} else {
 			$this->error = '重命名失败';
@@ -207,21 +110,24 @@ class Work extends Model
 		}
 	}
 
-	//删除项目
+	/**
+     * 删除项目
+     * @author yykun
+     * @param
+     * @return
+     */
 	public function delWorkById($param)
 	{
 		$map['work_id'] = $param['work_id'];
 		Db::name('Task')->where($map)->delete();
+		Db::name('WorkTaskClass')->where($map)->delete();
 		$flag = $this->where($map)->delete();
-		
 		if ($flag) {
-			$logmodel = model('TaskLog');
-			$datalog['type']=3; //删除项目
-			//$datalog['name'] = $param['name'];//项目名
+			$logmodel = new \app\work\model\WorkLog();
+			$datalog['status'] = 4; //删除项目
 			$datalog['create_user_id'] = $param['create_user_id']; 
-			$datalog['work_id'] = $map['work_id'];
+			$datalog['work_id'] = $param['work_id'];
 			$datalog['content'] = '删除了项目';
-			Db::name('')->insert($datalog);
 			$ret = $logmodel->workLogAdd($datalog); 
 			return true;
 		} else {
@@ -230,15 +136,22 @@ class Work extends Model
 		}
 	}
 
-	//归档项目
+	/**
+     * 归档项目
+     * @author yykun
+     * @param
+     * @return
+     */	
 	public function archiveData($param)
 	{
 		$map['work_id'] = $param['work_id'];
 		$flag = $this->where($map)->setField('status',0);
 		$this->where($map)->setField('archive_time',time());
 		if ($flag) {
-			Db::name('task')->where($map)->setField('status',3);
-			Db::name('task')->where($map)->setField('archive_time',time());
+			$data = [];
+			$data['status'] = 3;
+			$data['archive_time'] = time();
+			Db::name('task')->where($map)->update($data);
 			return true;
 		} else {
 			$this->error = '归档失败';
@@ -246,37 +159,193 @@ class Work extends Model
 		}
 	}
 
-	//归档项目列表
-	public function archiveList()
+	/**
+     * 归档项目列表
+     * @author yykun
+     * @param
+     * @return
+     */	
+	public function archiveList($param)
 	{
-		$map['status'] = 0;
-		$map['ishidden'] = 0;
-		$list = $this->where($map)->select();
-		foreach ($list as $key => $value) {
-			$list[$key]['tasklist'] = Db::name('task')->field('name')->where('ishidden =0 and work_id = '.$value['work_id'])->select();
-		}
-		
-		return $list;
-		
+        //权限
+        $map = $this->getWorkWhere($param);		
+		$where['status'] = 0;
+		$where['ishidden'] = 0;
+		$list = $this->where($map)->where($where)->field('work_id,name,color,archive_time')->select();
+		return $list ? : [];
 	}
 
-	//归档恢复
+	/**
+     * 归档恢复
+     * @author yykun
+     * @param
+     * @return
+     */	
 	public function arRecover($work_id='')
 	{
-		if ($work_id) {
-			$map['work_id'] =$work_id;
-			$map['status'] = 0;
-			$this->where($map)->setField('status',1);
-			$map['status'] = 3;
-			Db::name('Task')->where($map)->setField('status',1);
-			return true;
-		} else {
+		if (!$work_id) {
 			$this->error = '参数错误';
 			return false;
 		}
+		$map['work_id'] =$work_id;
+		$map['status'] = 0;
+		$this->where($map)->setField('status',1);
+		$map['status'] = 3;
+		Db::name('Task')->where($map)->setField('status',1);
+		return true;
 	}
 
-	//[checkWork 项目权限判断] 
+	/**
+     * 退出项目
+     * @author yykun
+     * @param 项目id,会员ID
+     * @return
+     */
+	public function leaveById($work_id,$user_id)
+	{
+		$workInfo = $this->where(['work_id' => $work_id])->find();
+		if ($user_id == $workInfo['create_user_id']) {
+			$this->error = '项目创建人不可以退出';
+			return false;
+		}
+		$list = Db::name('Task')->where(['work_id' => $work_id])->select();
+		foreach ($list as $key => $value) {
+			$data = [];
+			$str = ','.$user_id.',';
+			if (strstr($str,$value['own_user_id'])) {
+				$new_own_user_id = str_replace($str,',',$value['own_user_id']);
+				$data['own_user_id'] = $new_own_user_id;
+			}
+			if ($value['main_user_id'] == $param['create_user_id']) {
+				$data['main_user_id'] = '';
+			}
+			if ($data) Db::name('Task')->where(['task_id' => $value['task_id']])->update($data);
+		}
+		return true;
+	}
+
+	/**
+     * 添加项目成员
+     * @author yykun
+     * @param
+     * @return
+     */	
+	public function addOwner($param)
+	{
+		$workInfo = $this->get($param['work_id']);
+		$oldOwner = stringToArray($workInfo['owner_user_id']);
+		if (isset($param['is_open']) && empty($param['is_open'])) {
+			$newOwner = $param['owner_user_id'];
+		} else {
+			$newOwner = $oldOwner ? array_unique(array_filter(array_merge($oldOwner,$param['owner_user_id']))) : $param['owner_user_id'];
+		}
+		$resUpdate = $this->where(['work_id' => $param['work_id']])->update(['owner_user_id' => arrayToString($newOwner)]);
+		//差集，需删除的
+		$del_user_ids = array_diff($oldOwner, $param['owner_user_id']);
+
+		$create_user_id = $param['create_user_id'] ? : '';
+		unset($param['create_user_id']);
+		$owner_user = $param['owner_user_id'];
+		$owner_user_arr = db('work_user')->where(['work_id' => $param['work_id']])->column('user_id');
+		foreach ($owner_user as $k=>$v) {
+			$data = [];
+			if (in_array($v,$owner_user_arr)) continue;
+			$data['work_id'] = $param['work_id'];
+			$data['user_id'] = $v;
+			$data['types'] = 0;
+			if ($v == $create_user_id) {
+				$data['types'] = 1;
+				$group_id = 1;
+			} else {
+				//默认角色
+				$group_id = db('admin_group')->where(['pid' => 5,'system' => 1])->order('id asc')->value('id');				
+			}
+			$data['group_id'] = $group_id;
+			$saveData[] = $data;
+		}
+		$res = true;
+		if ($saveData && !db('work_user')->insertAll($saveData)) {
+			$res = false;
+		}
+		if ($del_user_ids && !db('work_user')->where(['work_id' => $param['work_id'],'user_id' => ['in',$del_user_ids]])->delete()) {
+			$res = false;
+		}
+		return $res;
+	}
+
+	/**
+     * 删除项目成员
+     * @author yykun
+     * @param
+     * @return
+     */	
+	public function delOwner($param)
+	{
+		$work_id = $param['work_id'];
+		$workUserInfo = db('work_user')->where(['work_id' => $work_id,'user_id' => $param['owner_user_id']])->find();
+		if (!$workUserInfo) {
+			$this->error = '数据不存在或已删除';
+			return false;
+		}
+		if ($workUserInfo['types'] == 1) {
+			$this->error = '项目负责人不能删除';
+			return false;			
+		}
+		$res = db('work_user')->where(['id' => $workUserInfo['id']])->delete();
+
+		$owner_user_id[] = $param['owner_user_id'];
+		$workInfo = $this->get($param['work_id']);
+		$oldOwner = stringToArray($workInfo['owner_user_id']);
+		$newOwner = array_diff($oldOwner,$owner_user_id);
+		$resUpdate = $this->where(['work_id' => $work_id])->update(['owner_user_id' => arrayToString($newOwner)]);
+		if (!$res || !$resUpdate){
+			$this->error = '删除失败，请重试！';
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+     * 项目成员列表
+     * @author yykun
+     * @param
+     * @return
+     */	
+	public function ownerList($param)
+	{	
+		if ($param['work_id']) {
+			$workInfo = $this->get($param['work_id']);
+			if ($workInfo['is_open'] == 1) {
+				//公开项目
+				$list = db('admin_user')->where(['status' => 1])->field('username,realname,thumb_img,id')->select();
+			} else {
+				// $exp = new \think\db\Expression('field(types,1,0,2)');
+				$list = db('work_user')
+					->alias('work')
+					->join('__ADMIN_USER__ user', 'user.id = work.user_id', 'LEFT')
+					->where(['work.work_id' => $param['work_id']])
+					->field('work.*,user.username,user.realname,user.thumb_img')
+					->order('work.types desc,user.id asc')
+					->select();
+			}			
+		} else {
+			$list = db('admin_user')->where(['status' => 1])->field('username,realname,thumb_img,id')->select();
+		}
+		if ($list) {
+			foreach ($list as $k=>$v) {
+				$list[$k]['thumb_img'] = $v['thumb_img'] ? getFullPath($v['thumb_img']) : '';
+				$list[$k]['id'] = $v['user_id'] ? : $v['id'];
+			}			
+		}
+		return $list ? : [];
+	}	
+
+	/**
+     * 项目权限判断(成员)
+     * @author yykun
+     * @param
+     * @return
+     */	 
 	public function checkWork($work_id, $user_id)
 	{
 		$info = $this->get($work_id);
@@ -285,11 +354,140 @@ class Work extends Model
 			return false;
 		}
 		//私有项目（成员可见）
-		$resData = Db::name('Work')->where(' work_id = '.$work_id.' and ( (is_open=0 and owner_user_id like ",'.$user_id.'," ) or (is_open = 1 ) or ( create_user_id = '.$user_id.')  ) ')->find();
-		if (!$resData) {
+		$map = function($query) use ($user_id){
+                    $query->whereOr(function ($query) use ($user_id) {
+                            $query->where(['is_open' => 0,'owner_user_id' => array('like','%,'.$user_id.',%')]);
+                        })
+                        ->whereOr(function ($query) use ($user_id) {
+                            $query->where(['is_open' => 1]);
+                        })
+                        ->whereOr(function ($query) use ($user_id) {
+                            $query->where(['create_user_id' => $user_id]);
+                        });
+                };
+		$resData = db('work')->where(['work_id' => $work_id])->where($map)->find();
+		$userMap = function($query) {
+	                    $query->where(['types' => 1])
+        				->whereOr(['group_id' => 1]);
+	                };
+		$adminUser = db('work_user')->where(['work_id' => $work_id])->where($userMap)->column('user_id');
+		$adminTypes = adminGroupTypes($user_id);
+		if (!$resData && !in_array(1,$adminTypes) && !in_array(7,$adminTypes) && !in_array($user_id,$adminUser)) {
 			$this->error = '没有权限';
 			return false;
 		}
 		return true;
 	}
+
+	/**
+     * 判断项目操作权限
+     * @author yykun
+     * @return
+     */
+	public function isCheck($m, $c, $a, $work_id, $user_id)
+	{
+		if (!$work_id) return false;
+        $adminTypes = adminGroupTypes($user_id);
+        $workInfo = Db::name('Work')->where(['work_id' => $work_id])->find();
+		if (in_array(1,$adminTypes) || in_array(7,$adminTypes)) {
+            return true;
+        }        
+        if (empty($workInfo['is_open'])) {
+        	//私有项目
+        	$groupInfo = db('work_user')->where(['work_id' => $work_id,'user_id' => $user_id])->find();
+			if ($groupInfo['types'] == 1 && $groupInfo['group_id'] == 1) {
+	            return true;
+	        }       
+			$checkParam = [];
+	        $checkParam['user_id'] = $user_id;
+	        $checkParam['group_id'] = $groupInfo['group_id'];
+	        if (checkWorkPerByAction($m, $c, $a, $checkParam)) {
+	        	return true;
+	        }	         	
+        } else {
+        	if ($m == 'work' && $c == 'work' && $a == 'update') {
+				//公开项目(创建人)
+	        	if ($workInfo['create_user_id'] == $user_id) {
+	        		return true;
+	        	}
+	        	return false;        		
+        	}
+        	return true;
+        }
+        return false;
+	}	
+
+	/**
+     * 获取项目权限范围
+     * @author Michael_xu
+     * @return
+     */	
+    public function getWorkWhere($param)
+    {
+    	$user_id = $param['user_id'];
+    	$adminTypes = adminGroupTypes($user_id);
+    	$map = [];
+		if (!in_array(1,$adminTypes) && !in_array(7,$adminTypes)) {
+	        $map = function($query) use ($user_id){
+	            $query->whereOr(function ($query) use ($user_id) {
+	                $query->where(['is_open' => 0,'owner_user_id' => array('like','%,'.$user_id.',%')]);
+	            })
+	            ->whereOr(function ($query) use ($user_id) {
+	                $query->where(['is_open' => 1]);
+	            })
+	            ->whereOr(function ($query) use ($user_id) {
+	                $query->where(['create_user_id' => $user_id]);
+	            });
+	        };
+	    }
+	    return $map ? : [];    	
+    }
+
+	/**
+     * 获取项目下权限信息
+     * @author Michael_xu
+     * @return
+     */    
+    public function authList($param)
+    {
+    	$user_id = $param['user_id'];
+    	$work_id = $param['work_id'];
+        $ruleMap = [];
+        $adminTypes = adminGroupTypes($user_id);
+        $ruleMap['types'] = ['eq',3];
+        $ruleMap['status'] = 1;
+        if (!in_array(1,$adminTypes) && !in_array(7,$adminTypes)) {
+        	$workInfo = $this->get($work_id);
+        	if ($workInfo['is_open'] == 1) {
+        		//公开项目
+        		if ($workInfo['create_user_id'] !== $user_id) {
+        			$ruleMap['name'] = ['not in',['update']];
+        		}
+        	} else {
+        		//私有项目
+        		$groupInfo = db('work_user')->where(['work_id' => $work_id,'user_id' => $user_id])->find();
+        		if ($groupInfo['types'] !== 1 || $groupInfo['group_id'] !== 1) {
+        			$rule_ids = db('admin_group')->where(['id' => $groupInfo['group_id']])->value('rules');
+        			$ruleIds = stringToArray($rule_ids);
+        			if ($ruleIds) {
+						$ruleMap['id'] = array('in', $ruleIds);
+        			} else {
+        				$ruleMap['types'] = ['neq',3];
+        			}
+        		}
+        	}    
+        }
+        $newRuleIds = [];
+        // 重新设置ruleIds，除去部分已删除或禁用的权限。
+        $rules = Db::name('admin_rule')->where($ruleMap)->order('types asc')->select();
+        foreach ($rules as $k => $v) {
+            $newRuleIds[] = $v['id'];
+            $rules[$k]['name'] = strtolower($v['name']);
+        }
+        $tree = new \com\Tree();
+        $rulesList = $tree->list_to_tree($rules, 'id', 'pid', 'child', 0, true, array('pid'));
+        //权限数组
+        $authList = rulesListToArray($rulesList, $newRuleIds);
+        return $authList ? : [];  	
+    }
 }

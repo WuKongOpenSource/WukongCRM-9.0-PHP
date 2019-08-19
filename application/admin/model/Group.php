@@ -32,6 +32,7 @@ class Group extends Common
 			foreach ($list as $k=>$v) {
 				$where = [];
 				$where['pid'] = $v['pid'];
+				$where['type'] = ['gt',0];
 				$groupList = db('admin_group')->where($where)->select() ? : [];
 				foreach ($groupList as $key => $val) {
 					$crmRules = [];
@@ -53,6 +54,7 @@ class Group extends Common
 				$list[$k]['list'] = $groupList ? : [];				
 			}
 		} else {
+			$map['type'] = isset($param['type']) ? 0 : ['gt',0];
 			$list = db('admin_group')->where($map)->select();
 			foreach($list as $key=>$value){
 				if ($value['norules']) {
@@ -75,6 +77,10 @@ class Group extends Common
 	public function createData($param)
 	{
 		unset($param['types']);
+		if ($param['pid'] == 5 && $param['type'] == 'work') {
+			//项目模块下角色
+			$param['type'] = 0;
+		}
 		$flag = $this->insertGetId($param);
 		if ($flag) {
 			return $flag;

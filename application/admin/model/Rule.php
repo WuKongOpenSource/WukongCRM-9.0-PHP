@@ -25,7 +25,7 @@ class Rule extends Common
 	public function getDataList($param)
 	{
 		$type = $param['type'];
-		$types = $param['types'] ? [2,6] : [2,6];
+		$types = $param['types'] ? : [2,6,3];
 		// 若type为tree，则返回树状结构
 		if ($type == 'tree') {
 			$cat = new \com\Category('admin_rule', array('id', 'pid', 'title', 'title'));
@@ -46,8 +46,9 @@ class Rule extends Common
 			$list = [];
 			$list['crm'] = $data[0];
 			$list['bi'] = $data[1];
+			$list['work'] = $data[2];
 		} elseif ($types) {
-			$list = Db::name('AdminRule')->where(['types' => $types])->select();
+			$list = Db::name('AdminRule')->where(['types' => ['in',$types]])->select();
 		}
 		return $list;
 	}

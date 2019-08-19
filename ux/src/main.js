@@ -67,8 +67,5 @@ window.app = new Vue({
   el: '#app',
   router,
   store,
-  data: {
-    eventHub: new Vue()
-  },
   render: h => h(App)
 })

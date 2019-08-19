@@ -262,6 +262,17 @@ return [
 	// 【公海】数据统计 导出
 	'crm/customer/poolExcelExport' => ['crm/customer/poolExcelExport', ['method' => 'POST']],	
 
+
+	// 【跟进记录类型设置】列表
+	'crm/setting/recordList' => ['crm/setting/recordList', ['method' => 'POST']],	
+	// 【跟进记录类型设置】记录类型编辑
+	'crm/setting/recordEdit' => ['crm/setting/recordEdit', ['method' => 'POST']],
+	// 【客户】联系人商机关联/取消关联
+	'crm/contacts/relation' => ['crm/contacts/relation', ['method' => 'POST']],	
+
+	// 【公海】数据统计 导出
+	'crm/customer/poolExcelExport' => ['crm/customer/poolExcelExport', ['method' => 'POST']],	
+
 	// MISS路由
 	'__miss__'  => 'admin/base/miss',
 ];

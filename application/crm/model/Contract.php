@@ -100,6 +100,10 @@ class Contract extends Common
 			    };
 		    }
 		}
+		//合同签约人
+		if ($map['contract.order_user_id']) {
+			$map['contract.order_user_id'] = ['like','%,'.$map['contract.order_user_id'][1].',%'];
+		}
 		//列表展示字段
 		// $indexField = $fieldModel->getIndexField('crm_contract', $user_id);	
 		//人员类型
@@ -151,7 +155,7 @@ class Contract extends Common
         	$list[$k]['unMoney'] = $moneyInfo['unMoney'] ? : 0.00;
         	$list[$k]['check_status_info'] = $this->statusArr[$v['check_status']]; 
 			$planInfo = [];
-			$planInfo = db('crm_receivables_plan')->where(['contract_id' => $val['contract_id']])->find();
+			$planInfo = db('crm_receivables_plan')->where(['contract_id' => $v['contract_id']])->find();
 			$list[$k]['receivables_id'] = $planInfo['receivables_id'] ? : '';
 			$list[$k]['remind_date'] = $planInfo['remind_date'] ? : '';
 			$list[$k]['return_date'] = $planInfo['return_date'] ? : '';

@@ -268,11 +268,16 @@ function field_arr($value, $condition = '')
 /**
  * 记录操作日志 
  * @author Michael_xu
- * @param  $id int   操作对象id
+ * @param  $id array  操作对象id数组
  * @return       
  */
 function actionLog($id, $join_user_ids='', $structure_ids='', $content='')
 {
+    if (!is_array($id)) {
+        $idArr[] = $id;
+    } else {
+        $idArr = $id;
+    }
     $header = Request::instance()->header();
     $authKey = $header['authkey'];       
     $cache = cache('Auth_'.$authKey);  
@@ -287,20 +292,26 @@ function actionLog($id, $join_user_ids='', $structure_ids='', $content='')
     $c = strtolower($request->controller());
     $a = strtolower($request->action());
 	
-    $data = [];
-    $data['user_id'] = $userInfo['id'];
-    $data['module_name'] = $module_name = $m;
-    $data['controller_name'] = $controller_name = $c;
-    $data['action_name'] = $action_name = $a;
-    $data['action_id'] = $id;
-    $data['create_time'] = time();
-    $data['content'] = $content ? : lang('ACTIONLOG', [$category, $userInfo['username'], date('Y-m-d H:i:s'), lang($action_name), $id, lang($controller_name)]);
-	$data['join_user_ids'] = $join_user_ids ? : ''; //抄送人
-	$data['structure_ids'] = $structure_ids ? : ''; //抄送部门
-    if ($action_name == 'delete' || $action_name == 'commentdel') {
-        $data['action_delete'] = 1;
+    $res_action = true;
+    foreach ($idArr as $v) {
+        $data = [];
+        $data['user_id'] = $userInfo['id'];
+        $data['module_name'] = $module_name = $m;
+        $data['controller_name'] = $controller_name = $c;
+        $data['action_name'] = $action_name = $a;
+        $data['action_id'] = $v;
+        $data['create_time'] = time();
+        $data['content'] = $content ? : lang('ACTIONLOG', [$category, $userInfo['username'], date('Y-m-d H:i:s'), lang($action_name), $v, lang($controller_name)]);
+        $data['join_user_ids'] = $join_user_ids ? : ''; //抄送人
+        $data['structure_ids'] = $structure_ids ? : ''; //抄送部门
+        if ($action_name == 'delete' || $action_name == 'commentdel') {
+            $data['action_delete'] = 1;
+        }
+        if (!db('admin_action_log')->insert($data)) {
+            $res_action = false;
+        }      
     }
-    $res_action = db('admin_action_log')->insert($data);
+    
     if ($res_action) {
         return true;
     } else {
@@ -527,6 +538,7 @@ function sendMessage($user_id, $content, $action_id, $sysMessage = 0)
     } else {
         $user_ids = $user_id;
     }
+    $user_ids = array_unique(array_filter($user_ids));
     $request = request();
     $m = strtolower($request->module());
     $c = strtolower($request->controller());
@@ -554,7 +566,7 @@ function sendMessage($user_id, $content, $action_id, $sysMessage = 0)
         $data['action_name'] = $a;        
         $data['action_id'] = $action_id;        
         db('admin_message')->insert($data); 
-    }
+    }   
     return true;
 }
 
@@ -1211,17 +1223,23 @@ function adminGroupTypes($user_id)
 function rulesListToArray($rulesList, $ruleIds = [])
 {
     $newList = [];
-    foreach ($rulesList as $k=>$v) {
-        foreach ($v['children'] as $k1 => $v1) {
-            foreach ($v1['children'] as $k2 => $v2) {
-                $check = false;
-                if (in_array($v2['id'], $ruleIds)) {
-                    $check = true;
+    if (!is_array($rulesList)) {
+        return array();
+    } else {
+        foreach ($rulesList as $k=>$v) {
+            if (!is_array($v['children'])) continue;
+            foreach ($v['children'] as $k1 => $v1) {
+                if (!is_array($v1['children'])) continue;
+                foreach ($v1['children'] as $k2 => $v2) {
+                    $check = false;
+                    if (in_array($v2['id'], $ruleIds)) {
+                        $check = true;
+                    }
+                    $newList[$v['name']][$v1['name']][$v2['name']] = $check;
                 }
-                $newList[$v['name']][$v1['name']][$v2['name']] = $check;
             }
         }
-    }   
+    }
     return $newList ? : [];
 }
 
@@ -1313,53 +1331,28 @@ function get_upload_max_filesize_byte($dec=2){
 }
 
 /**
- * 修改config的函数
- * @param $arr1 配置前缀
- * @param $arr2 数据变量
- * @return bool 返回状态
+ * 模拟post进行url请求
+ * @param string $url
+ * @param string $param
  */
-function setconfig($pat, $rep)
+function curl_post($url = '', $post = array()) 
 {
-    /**
-     * 原理就是 打开config配置文件 然后使用正则查找替换 然后在保存文件.
-     * 传递的参数为2个数组 前面的为配置 后面的为数值.  正则的匹配为单引号  如果你的是分号 请自行修改为分号
-     * $pat[0] = 参数前缀;  例:   default_return_type
-       $rep[0] = 要替换的内容;    例:  json
-     */
-    if (is_array($pat) and is_array($rep)) {
-        for ($i = 0; $i < count($pat); $i++) {
-            $pats[$i] = '/\'' . $pat[$i] . '\'(.*?),/';
-            $reps[$i] = "'". $pat[$i]. "'". "=>" . "'".$rep[$i] ."',";
-        }
-        $fileurl = APP_PATH . "config.php";
-        $string = file_get_contents($fileurl); //加载配置文件
-        $string = preg_replace($pats, $reps, $string); // 正则查找然后替换
-        file_put_contents($fileurl, $string); // 写入配置文件
-        return true;
-    } else {
-        return flase;
+    $curl = curl_init(); // 启动一个CURL会话
+    curl_setopt($curl, CURLOPT_URL, $url); // 要访问的地址
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0); // 对认证证书来源的检查
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 1); // 从证书中检查SSL加密算法是否存在
+    curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']); // 模拟用户使用的浏览器
+    curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1); // 使用自动跳转
+    curl_setopt($curl, CURLOPT_AUTOREFERER, 1); // 自动设置Referer
+    curl_setopt($curl, CURLOPT_POST, 1); // 发送一个常规的Post请求
+    curl_setopt($curl, CURLOPT_POSTFIELDS, $post); // Post提交的数据包
+    curl_setopt($curl, CURLOPT_TIMEOUT, 30); // 设置超时限制防止死循环
+    curl_setopt($curl, CURLOPT_HEADER, 0); // 显示返回的Header区域内容
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1); // 获取的信息以文件流的形式返回
+    $res = curl_exec($curl); // 执行操作
+    if (curl_errno($curl)) {
+        echo 'Errno'.curl_error($curl);//捕抓异常
     }
-}
-
-/**
- * 处理 字符串转数组  入库
- * @author zhi
- * @param  [type] $data 字符串
- * @return [type] $setting  转数组后
- */
-function setting($data)
-{
-    $setting = 'array(';
-    $i = 0;
-    $options = explode(' ',$data);
-    $s = array();
-    foreach($options as $v){
-        $v = trim(str_replace(chr(13),'',trim($v)));
-        if($v != '' && !in_array($v ,$s)){
-            $setting .= "$i=>'$v',";
-            $i++;
-            $s[] = $v;
-        }
-    }
-    return $setting = substr($setting,0,strlen($setting) -1 ) .')';
+    curl_close($curl); // 关闭CURL会话
+    return $res; // 返回数据，json格式
 }

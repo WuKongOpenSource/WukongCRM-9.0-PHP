@@ -140,17 +140,17 @@ class Customer extends Common
             break;
             case 'month'://本月
                 $timeArr['year'] = $year;
-                $timeArr['month'] = date('m');
+                $timeArr['month'] = $param['start_time'] ? date('m',$param['start_time']) : date('m');
                 $timeArr['next_year'] = $year;
                 $timeArr['day'] = $i;
                 if($i != date("t")){
-                    $timeArr['next_month'] = date('m');
+                    $timeArr['next_month'] = $param['end_time'] ? date('m',$param['end_time']) : date('m');
                     $timeArr['next_day'] = $i+1;
                 }else{
-                    $timeArr['next_month'] = date('m')+1;
+                    $timeArr['next_month'] = $param['end_time'] ? date('m',$param['end_time']) : date('m')+1;
                     $timeArr['next_day'] = 1;
                 }  
-                $timeArr['type'] = $year.'-'.date('m').'-'.$i;                                                            
+                $timeArr['type'] = $param['start_time'] ? $year.'-'.date('m',$param['start_time']).'-'.$i : $year.'-'.date('m').'-'.$i;                                                            
             break;
             case 'lastMonth'://上月
                 $timeArr['year'] = $year;

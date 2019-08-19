@@ -17,7 +17,8 @@
                class="button-name">{{createButtonTitle}}</div>
           <div v-show="!buttonNameCollapse"
                class="button-line"></div>
-          <i class="el-icon-arrow-right button-mark"></i>
+          <i class="button-mark"
+             :class="createButtonIcon"></i>
         </div>
       </el-popover>
     </div>
@@ -39,7 +40,7 @@
                         :class="{'menu-item-select': activeIndex == item.path}">
             <i class="wukong"
                :class="'wukong-' + item.meta.icon"
-               :style="{ 'color': activeIndex == item.path ? activeTextColor : textColor}"></i>
+               :style="{ 'color': activeIndex == item.path ? activeTextColor : textColor, fontSize: item.meta.fontSize || '16px'}"></i>
             <span slot="title">{{item.meta.title}}</span>
             <el-badge v-if="item.meta.num && item.meta.num > 0"
                       :max="99"
@@ -52,7 +53,8 @@
           <template slot="title"
                     v-if="!item.hidden">
             <i class="wukong"
-               :class="'wukong-' + item.meta.icon"></i>
+               :class="'wukong-' + item.meta.icon"
+               :style="{fontSize: item.meta.fontSize || '16px'}"></i>
             <span slot="title">{{item.meta.title}}</span>
           </template>
           <router-link v-for="(subitem, subindex) in item.children"
@@ -147,22 +149,20 @@ export default {
     createButtonBackgroundColor: {
       type: String,
       default: '#3E84E9'
+    },
+    createButtonIcon: {
+      type: String,
+      default: 'el-icon-arrow-right'
     }
   },
   mounted() {},
   methods: {
     toggleSideBarClick() {
       this.collapse = !this.collapse
-      this.$root.eventHub.$emit('collapseBtn', this.collapse)
     },
 
     // 快速创建
     quicklyCreate() {
-      switch (this.mainRouter) {
-        case 'project':
-          this.$router.push('add-project')
-          break
-      }
       this.$emit('quicklyCreate')
     }
   }

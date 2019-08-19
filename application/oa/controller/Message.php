@@ -69,6 +69,7 @@ class Message extends ApiCommon
             $task = 'main_user_id ='.$userInfo['id'].' or create_user_id ='.$user_id.' or ( is_open = 1 and owner_user_id like "%'.$str.'%")';
             $taskWhere['pid'] = 0;
             $taskWhere['status'] = array('neq',5);
+            $taskWhere['work_id'] = 0;
             $taskNum = db('task')->where(' ishidden=0 and ( '.$task.' )')->where($taskWhere)->count();
             $data['taskNum'] = $taskNum ? : 0;
         }

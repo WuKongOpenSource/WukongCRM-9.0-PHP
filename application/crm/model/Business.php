@@ -62,6 +62,11 @@ class Business extends Common
 			$requestMap['type_id']['value'] = $requestMap['type_id']['type_id'];
 			if ($requestMap['type_id']['status_id']) $requestMap['status_id']['value'] = $requestMap['type_id']['status_id'];
 		}
+		if ($sceneMap['type_id']) {
+			$requestMap['type_id']['value'] = $sceneMap['type_id']['type_id'];
+			if ($sceneMap['type_id']['status_id']) $requestMap['status_id']['value'] = $sceneMap['type_id']['status_id'];
+			unset($sceneMap['type_id']);
+		}		
 		$partMap = [];
 		//优先级：普通筛选>高级筛选>场景
 		if ($sceneMap['ro_user_id'] && $sceneMap['rw_user_id']) {

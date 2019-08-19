@@ -63,26 +63,25 @@ class Log extends ApiCommon
         return resultArray(['data' => $data]);
     }
 	
-	//标记已读
+    /**
+     * 标记已读
+     * @author Michael_xu
+     * @return 
+     */ 
 	public function setread()
 	{
 		$param = $this->param;
         $userInfo = $this->userInfo;
         $user_id = $userInfo['id'];
-		if ($param['log_id']) {
-            $where = [];
-            $where['log_id'] = $param['log_id'];
-            $where['read_user_ids'] = array('like','%,'.$user_id.',%');
-			$resData = Db::name('OaLog')->where($where)->find();
-			if (!$resData) {
-				$read_user_ids = stringToArray($resData['read_user_ids']) ? array_merge(stringToArray($resData['read_user_ids']),array($user_id)) : array($user_id);
-				$res = Db::name('OaLog')->where(['log_id' => $param['log_id']])->update(['read_user_ids' => arrayToString($read_user_ids)]);
-                return resultArray(['data'=>'操作成功']);
-			}
-			return resultArray(['data'=>'操作成功']);
-		} else {
-			return resultArray(['error'=>'参数错误']);
-		}
+		if (!$param['log_id']) {
+            return resultArray(['error'=>'参数错误']);
+        }
+        $where = [];
+        $where['log_id'] = $param['log_id'];
+		$resData = Db::name('OaLog')->where($where)->find();
+		$read_user_ids = stringToArray($resData['read_user_ids']) ? array_merge(stringToArray($resData['read_user_ids']),array($user_id)) : array($user_id);
+		$res = Db::name('OaLog')->where(['log_id' => $param['log_id']])->update(['read_user_ids' => arrayToString($read_user_ids)]);
+        return resultArray(['data'=>'操作成功']);
 	}
 
     /**
@@ -97,6 +96,7 @@ class Log extends ApiCommon
         $userInfo = $this->userInfo;
         $logModel = model('Log');
         $param['create_user_id'] = $userInfo['id'];
+        $param['create_user_name'] = $userInfo['realname'];
         $res = $logModel->createData($param);
         if ($res) {
 			$res['realname'] = $userInfo['realname'];

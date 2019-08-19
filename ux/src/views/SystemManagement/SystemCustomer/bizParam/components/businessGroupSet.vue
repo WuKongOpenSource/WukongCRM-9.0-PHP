@@ -66,9 +66,6 @@ export default {
     return {
       loading: false, // 展示加载中效果
 
-      // 导航显示不同的页面
-      menuIndex: 'business',
-
       // 商机组设置
       /** 商机组每行的信息 */
       businessObj: { name: '', businessDep: [], settingList: '' },

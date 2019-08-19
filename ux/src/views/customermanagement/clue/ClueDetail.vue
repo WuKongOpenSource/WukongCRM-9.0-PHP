@@ -164,6 +164,7 @@ export default {
     handleClick(tab, event) {
     },
     editSaveSuccess() {
+      this.$emit('handle', { type: 'save-success' })
       this.getDetial()
     }
   }

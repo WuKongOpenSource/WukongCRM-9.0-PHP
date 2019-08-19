@@ -14,7 +14,6 @@
   "dependencies": {
     "axios": "0.18.0",
     "babel-polyfill": "^6.26.0",
-    "clipboard": "^2.0.4",
     "echarts": "^4.2.0-rc.2",
     "element-ui": "^2.8.2",
     "file-saver": "^2.0.1",
@@ -26,7 +25,7 @@
     "normalize.css": "7.0.0",
     "nprogress": "0.2.0",
     "nzh": "^1.0.4",
-    "qrcodejs2": "0.0.2",
+    "throttle-debounce": "^2.1.0",
     "v-distpicker": "^1.0.21",
     "vue": "2.5.17",
     "vue-bus": "^1.1.0",
@@ -34,10 +33,12 @@
     "vue-cropper": "^0.4.8",
     "vue-i18n": "^8.7.0",
     "vue-moment": "^4.0.0",
+    "vue-radial-progress": "^0.2.10",
     "vue-router": "3.0.1",
     "vuedraggable": "^2.16.0",
     "vuex": "3.0.1",
-    "xlsx": "^0.14.1"
+    "xlsx": "^0.14.1",
+    "xss": "^1.0.6"
   },
   "devDependencies": {
     "autoprefixer": "8.5.0",
@@ -86,7 +87,7 @@
     "webpack": "4.16.5",
     "webpack-bundle-analyzer": "^2.13.1",
     "webpack-cli": "3.1.0",
-    "webpack-dev-server": "^3.3.1",
+    "webpack-dev-server": "^3.1.5",
     "webpack-merge": "4.1.4"
   },
   "engines": {

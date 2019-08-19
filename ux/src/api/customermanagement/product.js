@@ -61,7 +61,7 @@ export function crmProductExcelExport(data) {
     method: 'post',
     data: data,
     responseType: 'blob',
-    timeout: 60000
+    timeout: 600000
   })
 }
 
@@ -82,7 +82,7 @@ export function crmProductExcelImport(data) {
     headers: {
       'Content-Type': 'multipart/form-data'
     },
-    timeout: 60000
+    timeout: 600000
   })
 }
 

@@ -47,6 +47,7 @@
 import Calendar from 'vue-calendar-component'
 import createSchedule from '../schedule/components/createSchedule'
 import { scheduleListAPI } from '@/api/oamanagement/workbench'
+import moment from 'moment'
 
 export default {
   components: {
@@ -57,6 +58,7 @@ export default {
     return {
       // 日历事件
       scheduleList: [],
+      currentMonthDate: new Date(),
       // 新建日程
       formData: {},
       showDialog: false,
@@ -99,6 +101,7 @@ export default {
     },
     // 创建日程
     addSchedule() {
+      this.formData = {}
       this.showDialog = true
       this.newText = '创建日程'
     },
@@ -107,6 +110,7 @@ export default {
       this.showDialog = false
     },
     onSubmit() {
+      this.refreshMonthData()
       this.closeDialog()
     },
     // 查看详情
@@ -115,22 +119,23 @@ export default {
     },
     // 切换月份
     changeMonth(val) {
+      this.currentMonthDate = new Date(val)
+      this.refreshMonthData()
+    },
+
+    /**
+     * 刷新月份数据
+     */
+    refreshMonthData() {
       this.scheduleList = []
-      // 初始化时间
-      let now = new Date(val)
-      // 获取当月第一天
-      var nowYear = now.getYear() //当前年
-      nowYear += nowYear < 2000 ? 1900 : 0
-      var nowMonth = now.getMonth() //当前月
-      var monthStartDate = new Date(nowYear, nowMonth, 1)
-      // 获取当月最后一天
-      var monthEndDate = new Date(nowYear, nowMonth + 1, 1)
-      var days = (monthEndDate - monthStartDate) / (1000 * 60 * 60 * 24)
-      var lastDay = new Date(nowYear, nowMonth, days)
       this.$emit(
         'changeMonth',
-        monthStartDate.getTime() / 1000,
-        lastDay.getTime() / 1000
+        moment(this.currentMonthDate)
+          .startOf('month')
+          .unix(),
+        moment(this.currentMonthDate)
+          .endOf('month')
+          .unix()
       )
     }
   }

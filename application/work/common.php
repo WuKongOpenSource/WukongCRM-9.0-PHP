@@ -1,30 +1,25 @@
 <?php
+//权限控制
+\think\Hook::add('check_auth','app\\common\\behavior\\AuthenticateBehavior');
+
 use think\Db;
 
 /**
- * 根据项目ID统计
- * @param  [type] $param [description]
- * @return [type]        [description]
- */
-function statistic($param)
+ * 判断操作权限
+ * @author Michael_xu 
+ * @param  
+ * @return       
+ */    
+function checkWorkPerByAction($m, $c, $a, $param)
 {
-    $data = array();
-    $workDet = Db::name('Work')->field('work_id,name')->find($param['work_id']);
-    $data['work_id'] = $param['work_id'];
-    $data['name'] = $workDet['name'];
-    $data['all'] = Db::name('Task')->where('work_id ='.$param['work_id'])->count();
-    if ($data['all'] == 0) {
-        $data['todo'] = 0;
-        $data['hasdone'] = 0;
-        $data['overtime'] = 0;
-        $data['donelv'] = 0;
-        $data['overlv'] = 0;
-    } else {
-        $data['todo'] = Db::name('Task')->where('status =1 and work_id ='.$param['work_id'])->count();
-        $data['hasdone'] = Db::name('Task')->where('status =5 and work_id ='.$param['work_id'])->count();
-        $data['overtime'] = Db::name('Task')->where('status =2 and work_id ='.$param['work_id'])->count();
-        $data['donelv'] = $data['hasdone']/$data['all'];
-        $data['overlv'] = 1.00*$data['overtime']/$data['all'];
-    }
-    return $data;
+	$user_id = $param['user_id'];
+	$group_id = $param['group_id'];
+	$mRuleId = db('admin_rule')->where(['name'=>$m,'level'=>1])->value('id');
+	$cRuleId = db('admin_rule')->where(['name'=>$c,'level'=>2,'pid'=>$mRuleId])->value('id');
+	$aRuleId = db('admin_rule')->where(['name'=>$a,'level'=>3,'pid'=>$cRuleId])->value('id');
+	$resGroup = db('admin_group')->where(['id' => $group_id,'rules' => ['like','%,'.$aRuleId.',%']])->find();
+	if ($resGroup) {
+		return true;
+	}
+    return false;
 }

@@ -13,8 +13,8 @@ use think\Hook;
 use think\Db;
 
 class Index extends ApiCommon
-{
-    /**
+
+{    /**
      * 用于判断权限
      * @permission 无限制
      * @allow 登录用户可访问
@@ -103,7 +103,7 @@ class Index extends ApiCommon
         $authList = rulesListToArray($rulesList, $newRuleIds);
 
         //系统设置权限（1超级管理员2系统设置管理员3部门与员工管理员4审批流管理员5工作台管理员6客户管理员7项目管理员8公告管理员）
-        $settingList = ['0' => 'system','1' => 'user','2' => 'permission','3' => 'examineFlow','4' => 'oa','5' => 'crm'];
+        $settingList = ['0' => 'system','1' => 'user','2' => 'permission','3' => 'examineFlow','4' => 'oa','5' => 'crm','6' => 'work'];
         $adminTypes = adminGroupTypes($u_id);
         $newSetting = [];
         foreach ($settingList as $k=>$v) {
@@ -116,6 +116,7 @@ class Index extends ApiCommon
                 if ($v == 'examineFlow' && in_array('4', $adminTypes)) $check = true;               
                 if ($v == 'oa' && in_array('5', $adminTypes)) $check = true;                
                 if ($v == 'crm' && in_array('6', $adminTypes)) $check = true;               
+                if ($v == 'work' && in_array('7', $adminTypes)) $check = true;               
             }
             if ($check == true) {
                 $newSetting['manage'][$v] = $check;

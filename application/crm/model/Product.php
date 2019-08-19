@@ -61,10 +61,6 @@ class Product extends Common
 		$map = $requestMap ? array_merge($sceneMap, $requestMap) : $sceneMap;
 		//高级筛选
 		$map = where_arr($map, 'crm', 'product', 'index');
-		if (isset($map['product.category_id'])) {
-			$map['product_category.name'] = $map['product.category_id'];
-			unset($map['product.category_id']);
-		}
 		if (!$map['product.status']) {
 			$map['product.status'] = '上架';
 		}

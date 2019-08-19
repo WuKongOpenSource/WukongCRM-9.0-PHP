@@ -51,7 +51,7 @@ class Announcement extends Common
 		$time = strtotime(date('Y-m-d',time()));
 		$map = array();
 		if ($requestMap['type'] && $requestMap['type'] == 1) {
-			$time = 'end_time >= '.$time.' AND start_time <= '.$time.' AND ';
+			$time = 'end_time >= '.$time.' AND start_time <= '.time().' AND ';
 		} elseif ($requestMap['type'] && $requestMap['type'] == 2) {
 			$time = 'end_time < '.$time.' AND ';
 		} else {
@@ -176,7 +176,7 @@ class Announcement extends Common
 				$send_user_id = getSubUserId(true, 1); 
 			}
             $createUserInfo = $userModel->getDataById($param['create_user_id']);
-            $sendContent = $createUserInfo['realname'].'修改了公告【'.$param['title'].'】,请及时查看';
+            $sendContent = $createUserInfo['realname'].'修改了公告《'.$param['title'].'》,请及时查看';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $announcement_id, 1);
             }			

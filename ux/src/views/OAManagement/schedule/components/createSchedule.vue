@@ -24,6 +24,7 @@
             <template v-if="item.type == 'time'">
               <el-date-picker v-model="formData[item.field]"
                               type="datetime"
+                              format="yyyy-MM-dd HH:mm:ss"
                               placeholder="选择日期时间">
               </el-date-picker>
             </template>
@@ -106,7 +107,7 @@ import { usersList } from '@/api/common'
 // 关联业务 - 选中列表
 import relatedBusiness from '@/components/relatedBusiness'
 import XhUser from '@/components/CreateCom/XhUser'
-import { getMaxIndex } from '@/utils/index'
+import { getMaxIndex, formatTimeToTimestamp } from '@/utils/index'
 
 export default {
   components: {
@@ -114,6 +115,16 @@ export default {
     XhUser
   },
   data() {
+    var validateTime = (rule, value, callback) => {
+      if (this.formData.start_time && this.formData.end_time) {
+        if (
+          this.formData.start_time.getTime() >= this.formData.end_time.getTime()
+        ) {
+          callback(new Error('开始时间必须小于结束时间'))
+        }
+      }
+      callback()
+    }
     return {
       zIndex: getMaxIndex(),
       formList: [
@@ -184,10 +195,12 @@ export default {
           { max: 50, message: '主题长度最多为50个字符', trigger: 'blur' }
         ],
         start_time: [
-          { required: true, message: '开始时间不能为空', trigger: 'blur' }
+          { required: true, message: '开始时间不能为空', trigger: 'blur' },
+          { validator: validateTime, trigger: 'blur' }
         ],
         end_time: [
-          { required: true, message: '结束时间不能为空', trigger: 'blur' }
+          { required: true, message: '结束时间不能为空', trigger: 'blur' },
+          { validator: validateTime, trigger: 'blur' }
         ]
       },
       // 获取选择的数据id数组
@@ -263,8 +276,8 @@ export default {
           if (this.text == '创建日程') {
             scheduleAdd({
               title: data.title,
-              start_time: new Date(data.start_time).getTime() / 1000,
-              end_time: new Date(data.end_time).getTime() / 1000,
+              start_time: data.start_time.getTime() / 1000,
+              end_time: data.end_time.getTime() / 1000,
               owner_user_ids: owner_user_ids,
               remark: data.remark,
               color: data.color,

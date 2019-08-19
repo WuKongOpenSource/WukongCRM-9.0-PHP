@@ -36,6 +36,7 @@ export default {
     valueChange(val) {
       this.$emit('value-change', {
         index: this.index,
+        item: this.item,
         value: val
       })
     }

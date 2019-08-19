@@ -40,7 +40,6 @@
         <flexbox class="selection-item"
                  v-for="(item, index) in getSelectionHandleItemsInfo()"
                  :key="index"
-                 v-if="whetherTypeShowByPermision(item.type)"
                  @click.native="selectionBarClick(item.type)">
           <img class="selection-item-icon"
                :src="item.icon" />
@@ -136,7 +135,7 @@ export default {
     SceneSet
   },
   computed: {
-    ...mapGetters(['crm'])
+    ...mapGetters(['crm', 'CRMConfig'])
   },
   data() {
     return {
@@ -361,6 +360,7 @@ export default {
               type: 'success',
               message: res.data
             })
+            this.$emit('handle', { type: type })
           })
           .catch(() => {})
       } else if (type === 'put_seas') {
@@ -585,12 +585,15 @@ export default {
     forSelectionHandleItems(handleInfos, array) {
       var tempsHandles = []
       for (let index = 0; index < array.length; index++) {
-        tempsHandles.push(handleInfos[array[index]])
+        let type = array[index]
+        if (this.whetherTypeShowByPermision(type)) {
+          tempsHandles.push(handleInfos[type])
+        }
       }
       return tempsHandles
     },
     // 判断是否展示
-    whetherTypeShowByPermision: function(type) {
+    whetherTypeShowByPermision(type) {
       if (type == 'transfer') {
         return this.sceneData.bydata == 'is_transform'
           ? false
@@ -611,7 +614,7 @@ export default {
         return this.crm[this.crmType].putinpool
       } else if (type == 'lock' || type == 'unlock') {
         // 锁定解锁(客户)
-        return this.crm[this.crmType].lock
+        return this.crm[this.crmType].lock && this.CRMConfig.config == 1
       } else if (type == 'add_user' || type == 'delete_user') {
         // 添加 移除团队成员
         return this.crm[this.crmType].teamsave

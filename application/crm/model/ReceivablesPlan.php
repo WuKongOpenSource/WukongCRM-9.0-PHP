@@ -182,7 +182,7 @@ class ReceivablesPlan extends Common
 			],
 			'1' => [
 				'field' => 'contract_id',
-				'name' => '合同编号',
+				'name' => '合同名称',
 				'form_type' => 'contract',
 				'setting' => []
 			],	

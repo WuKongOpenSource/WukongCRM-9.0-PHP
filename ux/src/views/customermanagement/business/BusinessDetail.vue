@@ -474,6 +474,7 @@ export default {
       }
     },
     editSaveSuccess() {
+      this.$emit('handle', { type: 'save-success' })
       this.getDetial()
     }
   }

@@ -1087,9 +1087,12 @@ export default {
 /* 新建和编辑 */
 .new-dialog-title {
   padding-left: 10px;
+  margin-bottom: 3px;
   border-left: 2px solid #46cdcf;
 }
 .new-dialog-form {
+  height: 47vh;
+  overflow-y: auto;
   padding: 20px;
 }
 .new-dialog-form /deep/ .el-form-item {

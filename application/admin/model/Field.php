@@ -623,8 +623,11 @@ class Field extends Model
 					if ($param['action'] == 'read') {
 						$category_name = db('crm_product_category')->where(['category_id' => $dataInfo['category_id']])->value('name');	
 						$value = $category_name ? : '';
-					} else {
+					} elseif ($param['action'] == 'update') {
 						$value = $dataInfo['category_str'] ? stringToArray($dataInfo['category_str']) : [];
+					} else {
+						$categoryModel = new \app\crm\model\ProductCategory();
+				        $value = $categoryModel->getDataList('tree');
 					}
 				} elseif ($v['form_type'] == 'business_type') {
 					//商机状态组
@@ -713,7 +716,7 @@ class Field extends Model
 		$userModel = new \app\admin\model\User();
 		$user_id = $param['user_id'];
 		$map['types'] = ['in',['',$types]];
-		$map['form_type'] = ['not in',['file','form','checkbox','user','structure','business_status']];
+		$map['form_type'] = ['not in',['file','form','checkbox','structure','business_status']];
 		$field_list = db('admin_field')
 						->where($map)
 						->whereOr(['types' => ''])

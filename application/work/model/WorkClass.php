@@ -8,11 +8,10 @@
 namespace app\work\model;
 
 use think\Db;
-use app\admin\model\Common;
-use com\verify\HonrayVerify;
-use think\Cache;
+use think\Model;
+use think\Request;
 
-class WorkClass extends Common
+class WorkClass extends Model
 {
 
     /**
@@ -38,24 +37,27 @@ class WorkClass extends Common
 	public function getDataList($work_id='')
 	{
 		$map['status'] = 1;
-		if($work_id){
+		if ($work_id) {
 			$map['work_id'] = $work_id;
 		}
-		
-		$dataCount = Db::name('WorkTaskClass')->where($map)->count();
-		$list = Db::name('WorkTaskClass')->where($map)->order('order_id asc')->select();
+		$dataCount = $this->where($map)->count();
+		$list = $this->where($map)->order('order_id asc')->select();
 		$data = [];
-		$data['list'] = $list;
-		$data['dataCount'] = $dataCount;
+		$data['list'] = $list ? : [];
+		$data['dataCount'] = $dataCount ? : 0;
 		return $data;
 	}
 	
 	/**
-	 * 创建
-	 * @param  array   $param  [description]
-	 */
+     * 创建
+     * @author yykun
+     * @param
+     * @return
+     */	
 	public function createData($param)
 	{
+		//获取最大order_id
+		$max_order_id = $this->where(['work_id' => $param['work_id'],'status' => 1])->max('order_id');
 		$this->startTrans();
 		try {
 			$data['create_time'] = time();
@@ -63,6 +65,7 @@ class WorkClass extends Common
 			$data['name'] = $param['name'];
 			$data['work_id'] = $param['work_id'];
 			$data['status'] = 1; 
+			$data['order_id'] = $max_order_id ? $max_order_id+1 : 0;
 			$this->insert($data);
 			$this->commit();
 			return true;
@@ -74,42 +77,41 @@ class WorkClass extends Common
 	}
 
 	/**
-	 * 重命名
-	 * @param  array   $param  [description]
-	 */
+     * 重命名
+     * @author yykun
+     * @param
+     * @return
+     */	
 	public function rename($param)
 	{
 		$map['class_id'] = $param['class_id'];
-		$flag = $this->where($map)->setField('name',$param['name']);
-
-		if($flag){
-			return true;
-		}else{
+		$flag = $this->where($map)->update(['name' => $param['name']]);
+		if (!$flag) {
 			$this->error = '重命名失败';
 			return false;
 		}
+		return true;
 	}
 
-	/*
-	*删除分类 该分类下所有任务删除
-	*/
+	/**
+     * 删除分类 该分类下所有任务删除
+     * @author yykun
+     * @param
+     * @return
+     */
 	public function deleteById($param)
 	{
 		$map['class_id'] = $param['class_id'];
 		$this->startTrans();
-		try{
-			Db::name('Task')->where($map)->setField('status',0);
-			$flag = 1;
-			if ($flag) {
-				$ret = $this->where($map)->setField('status',0);
-				if ($ret) {
-					$this->commit();
-					return true;
-				} else {
-					$this->rollback();
-					$this->error = '删除失败';
-					return false;
-				}
+		try {
+			$taskData = [];
+			$taskData['ishidden'] = 1;
+			$taskData['hidden_time'] = time();
+			$flag = Db::name('Task')->where($map)->update($taskData);
+			$ret = $this->where($map)->update(['status' => 0]);
+			if ($ret) {
+				$this->commit();
+				return true;
 			} else {
 				$this->rollback();
 				$this->error = '删除失败';

@@ -1,8 +1,7 @@
 <template>
   <div class="system-customer">
     <div class="title">业绩目标设置</div>
-    <div class="customer-content"
-         v-loading="loading">
+    <div class="customer-content">
       <!-- 业绩目标设置 -->
       <div class="system-view-table">
         <task-set-statistics></task-set-statistics>
@@ -22,9 +21,7 @@ export default {
   },
 
   data() {
-    return {
-      loading: false
-    }
+    return {}
   },
 
   created() {},

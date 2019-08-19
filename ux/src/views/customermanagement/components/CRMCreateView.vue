@@ -120,6 +120,7 @@ import {
   formatTimeToTimestamp,
   timestampToFormatTime
 } from '@/utils'
+import { isArray } from '@/utils/types'
 
 import {
   XhInput,
@@ -689,7 +690,7 @@ export default {
       //验证唯一
       if (item.is_unique == 1) {
         var validateUnique = (rule, value, callback) => {
-          if (!value && rule.item.is_null == 0) {
+          if ((isArray(value) && value.length == 0) || !value) {
             callback()
           } else {
             var validatesParams = {}
@@ -711,7 +712,10 @@ export default {
         tempList.push({
           validator: validateUnique,
           item: item,
-          trigger: ['blur']
+          trigger:
+            item.form_type == 'checkbox' || item.form_type == 'select'
+              ? ['change']
+              : ['blur']
         })
       }
 

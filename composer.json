@@ -25,7 +25,8 @@
         "topthink/think-queue": "^1.0",
         "topthink/think-migration": "^1.0",
         "topthink/think-helper": "^1.0",
-        "phpoffice/phpexcel": "^1.8"
+        "phpoffice/phpexcel": "^1.8",
+        "phpoffice/phpspreadsheet": "^1.8"
     },
     "extra": {
         "think-path": "thinkphp"

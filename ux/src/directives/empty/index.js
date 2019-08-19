@@ -16,13 +16,18 @@ const Mask = Vue.extend(Empty)
  * xs-empty-custom-class
  * 类选择器样式 多个以空格分开
  */
+
+const checkIsVisible = (value) => {
+  return (Object.prototype.toString.call(value) === '[object Array]' && value.length === 0) ||
+    (Object.prototype.toString.call(value) !== '[object Array]' && value)
+}
+
 const loadingDirective = {}
 loadingDirective.install = Vue => {
   if (Vue.prototype.$isServer) return
   const toggleEmpty = (el, binding) => {
     /** 如果是数组 判断数组长度  否则 判断是否存在 当做Boolean */
-    if ((Object.prototype.toString.call(binding.value) === '[object Array]' && binding.value.length === 0) ||
-      (Object.prototype.toString.call(binding.value) !== '[object Array]' && binding.value)) {
+    if (checkIsVisible(binding.value)) {
       Vue.nextTick(() => {
         el.originalPosition = getStyle(el, 'position')
         insertDom(el, el, binding)
@@ -31,7 +36,7 @@ loadingDirective.install = Vue => {
       el.domVisible = false
       removeClass(el, 'xs-empty-parent--relative')
       removeClass(el, 'xs-empty-parent--hidden')
-      el.instance.visible = false
+      el.emptyInstance.visible = false
     }
   }
   const insertDom = (parent, el, binding) => {
@@ -47,7 +52,7 @@ loadingDirective.install = Vue => {
 
       parent.appendChild(el.mask)
       Vue.nextTick(() => {
-        el.instance.visible = true
+        el.emptyInstance.visible = true
       })
       el.domInserted = true
     }
@@ -69,7 +74,7 @@ loadingDirective.install = Vue => {
           customClass: vm && vm[customClassExr] || customClassExr
         }
       })
-      el.instance = mask
+      el.emptyInstance = mask
       el.mask = mask.$el
       el.maskStyle = {}
 
@@ -77,8 +82,8 @@ loadingDirective.install = Vue => {
     },
 
     update: function (el, binding) {
-      el.instance.setText(el.getAttribute('xs-empty-text'))
-      el.instance.setIcon(el.getAttribute('xs-empty-icon'))
+      el.emptyInstance.setText(el.getAttribute('xs-empty-text'))
+      el.emptyInstance.setIcon(el.getAttribute('xs-empty-icon'))
       if (binding.oldValue !== binding.value) {
         toggleEmpty(el, binding)
       }

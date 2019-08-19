@@ -144,7 +144,7 @@ class Achievement extends Common
     	$user_ids = [];
     	//业绩目标
 		if ($param['user_id']) {
-			$dataList = Db::name('CrmAchievement')->where(['type' => 1,'obj_id' => $param['user_id'],'year' => $param['year'],'status' => $param['status']])->find();
+			$dataList = Db::name('CrmAchievement')->where(['type' => 3,'obj_id' => $param['user_id'],'year' => $param['year'],'status' => $param['status']])->find();
 		} else {
 			if ($param['structure_id']) {
 				$dataList = Db::name('CrmAchievement')->where(['type' => 2,'obj_id' => $param['structure_id'],'year' => $param['year'],'status' => $param['status']])->find();
@@ -207,10 +207,12 @@ class Achievement extends Common
 	    	$user_ids[] = $param['user_id'];
 			$map['obj_id'] = $param['user_id'];
 			$map['obj_type'] = 2;
-    	} elseif ($param['structure_id']) {
-    		//部门统计
-			$map['obj_id'] = $param['structure_id'];
-			$map['obj_type'] = 1;
+    	} else {
+	    	if ($param['structure_id']) {
+	    		//部门统计
+				$map['obj_id'] = $param['structure_id'];
+				$map['obj_type'] = 1;
+	    	}
     	}
     	$ret = array();
 		for ($i = 1; $i < 13; $i++) {
@@ -223,7 +225,7 @@ class Achievement extends Common
 	    	} else {
 	    		$ret[$i]['receivables'] = $receivablesModel->getDataByUserId($map); //回款
 	    	}
-	    	$ret[$i]['achiement'] = (float)$achiementList[$i]['data']?:'0';  //目标
+	    	$ret[$i]['achiement'] = (float)$achiementList[$i]['data'] ? :'0';  //目标
 	    	$rate = 0.00;
 			if ($ret[$i]['achiement']) {
 				$rate = round(($ret[$i]['receivables']/$ret[$i]['achiement']),4)*100;

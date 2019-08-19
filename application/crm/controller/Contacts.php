@@ -176,9 +176,7 @@ class Contacts extends ApiCommon
             if (!$data) {
                 return resultArray(['error' => $contactsModel->getError()]);
             }
-            //删除操作记录
-            $actionRecordModel = new \app\admin\model\ActionRecord();
-            $res = $actionRecordModel->delDataById(['types' => 'crm_contacts','action_id' => $delIds]);                        
+            actionLog($delIds,'','',''); 
         }        
         if ($errorMessage) {
             return resultArray(['error' => $errorMessage]);

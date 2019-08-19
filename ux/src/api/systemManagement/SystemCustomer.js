@@ -170,7 +170,7 @@ export function crmAchievementIndexForuser(data) {
 
 /**
  * 记录类型 数据
- * @param {*} data 
+ * @param {*} data
  */
 export function crmSettingRecordListAPI(data) {
   return request({
@@ -182,7 +182,7 @@ export function crmSettingRecordListAPI(data) {
 
 /**
  * 记录类型 编辑
- * @param {*} data 
+ * @param {*} data
  */
 export function crmSettingRecordEditAPI(data) {
   return request({
@@ -194,7 +194,7 @@ export function crmSettingRecordEditAPI(data) {
 
 /**
  * 合同到期提醒 设置
- * @param {*} data 
+ * @param {*} data
  */
 export function crmSettingContractDayAPI(data) {
   return request({

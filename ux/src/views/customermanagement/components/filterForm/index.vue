@@ -4,7 +4,8 @@
              @close="handleCancel"
              width="800px">
     <div style="margin-bottom: 10px;">筛选条件</div>
-    <el-form class="filter-container">
+    <el-form class="filter-container"
+             id="filter-container">
       <el-form-item>
         <template v-for="(formItem, index) in form">
           <el-row :key="index">
@@ -21,9 +22,9 @@
             </el-col>
 
             <el-col :span="1"
-                    v-if="formItem.form_type !== 'date' && formItem.form_type !== 'datetime' && formItem.form_type !== 'business_type'">&nbsp;</el-col>
+                    v-if="formItem.form_type !== 'date' && formItem.form_type !== 'datetime' && formItem.form_type !== 'business_type' && formItem.form_type !== 'category'">&nbsp;</el-col>
             <el-col :span="4"
-                    v-if="formItem.form_type !== 'date' && formItem.form_type !== 'datetime' && formItem.form_type !== 'business_type'">
+                    v-if="formItem.form_type !== 'date' && formItem.form_type !== 'datetime' && formItem.form_type !== 'business_type' && formItem.form_type !== 'category'">
               <el-select v-model="formItem.condition"
                          placeholder="请选择范围">
                 <el-option v-for="item in calConditionOptions(formItem.form_type, formItem)"
@@ -82,7 +83,10 @@
               <xh-user-cell v-else-if="formItem.form_type === 'user'"
                             :item="formItem"
                             :infoParams="{m	:'crm',c: crmType,a: 'index' }"
-                            @value-change="userValueChange"></xh-user-cell>
+                            @value-change="arrayValueChange"></xh-user-cell>
+              <xh-prouct-cate v-else-if="formItem.form_type === 'category'"
+                              :item="formItem"
+                              @value-change="arrayValueChange"></xh-prouct-cate>
               <el-input v-else
                         v-model="formItem.value"
                         placeholder="请输入筛选条件"></el-input>
@@ -102,7 +106,8 @@
     </p>
     <el-button type="text"
                @click="handleAdd">+ 添加筛选条件</el-button>
-    <div class="save" v-if="!isSeas">
+    <div class="save"
+         v-if="!isSeas">
       <el-checkbox v-model="saveChecked">保存为场景</el-checkbox>
       <el-input class="name"
                 v-show="saveChecked"
@@ -126,7 +131,7 @@
 
 <script>
 import { formatTimeToTimestamp, objDeepCopy } from '@/utils'
-import { XhUserCell } from '@/components/CreateCom'
+import { XhUserCell, XhProuctCate } from '@/components/CreateCom'
 /**
  * fieldList: 高级筛选的字段
  *     type:  date || datetime || select || 其他 input
@@ -134,7 +139,8 @@ import { XhUserCell } from '@/components/CreateCom'
 export default {
   name: 'index',
   components: {
-    XhUserCell
+    XhUserCell,
+    XhProuctCate
   },
   props: {
     dialogVisible: {
@@ -165,6 +171,7 @@ export default {
   data() {
     return {
       form: [],
+      formCopy: [],
       visible: false,
       showErrors: false,
       saveChecked: false, // 展示场景
@@ -198,6 +205,13 @@ export default {
       },
       deep: true,
       immediate: true
+    },
+
+    form() {
+      this.$nextTick(() => {
+        var container = document.getElementById('filter-container')
+        container.scrollTop = container.scrollHeight
+      })
     }
   },
   methods: {
@@ -217,10 +231,12 @@ export default {
     },
     /**
      * 用户创建人
+     * 产品类别
      */
-    userValueChange(data) {
+    arrayValueChange(data) {
       if (data.value.length > 0) {
         data.item.value = data.value
+        data.item.valueContent = data.valueContent
       } else {
         data.item.value = []
       }
@@ -305,7 +321,8 @@ export default {
         } else if (
           formItem.form_type === 'date' ||
           formItem.form_type === 'datetime' ||
-          formItem.form_type === 'user'
+          formItem.form_type === 'user' ||
+          formItem.form_type === 'category'
         ) {
           formItem.value = []
         }
@@ -351,7 +368,8 @@ export default {
         } else if (
           o.form_type == 'date' ||
           o.form_type == 'datetime' ||
-          o.form_type == 'user'
+          o.form_type == 'user' ||
+          o.form_type == 'category'
         ) {
           if (!o.value || o.value.length === 0) {
             this.$message.error('请输入筛选条件的值！')
@@ -389,6 +407,12 @@ export default {
           obj[o.field] = {
             condition: o.condition,
             value: o.value[0].id,
+            form_type: o.form_type,
+            name: o.name
+          }
+        } else if (o.form_type == 'category') {
+          obj[o.field] = {
+            value: o.value[o.value.length - 1],
             form_type: o.form_type,
             name: o.name
           }

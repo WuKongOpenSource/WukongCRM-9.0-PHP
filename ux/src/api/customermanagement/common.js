@@ -167,7 +167,6 @@ export function crmIndexFieldRecord(data) {
   })
 }
 
-
 /**
  * 记录类型 数据 与系统设置系统(repeat)
  * @param {*} data 

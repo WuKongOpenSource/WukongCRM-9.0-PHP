@@ -1,6 +1,6 @@
 <?php
 // +----------------------------------------------------------------------
-// | Description: 用户
+// | Description: 任务标签
 // +----------------------------------------------------------------------
 // | Author:  yykun
 // +----------------------------------------------------------------------
@@ -27,35 +27,30 @@ class WorkLable extends Common
 	];
 
 	/**
-     * [getDataList 列表]  获取标签列表
+     * [getDataList 标签列表]
      * @AuthorHTL
      * @param     [string]                   $map [查询条件]
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
      * @return    [array]                    [description]
      */	    
-	public function getDataList()  //标签列表
+	public function getDataList()
 	{
 		$map['status'] = 1;
 		$dataCount = $this->field('lable_id,name,create_time')->where($map)->count();
-		$list = $this
-				->where($map)
-				->select();
-		if ($list) {
-			$data = [];
-			$data['list'] = $list;
-			$data['dataCount'] = $dataCount;
-			return $data;
-		} else {
-			$this->error = '暂无数据';
-			return false;
-		}
+		$list = $this->where($map)->select();
+		$data = [];
+		$data['list'] = $list ? : [];
+		$data['dataCount'] = $dataCount ? : 0;
+		return $data;
 	}
 	
 	/**
-	 * 创建标签
-	 * @param  array   $param  [description]
-	 */
+     * 创建标签
+     * @author yykun
+     * @param
+     * @return
+     */	
 	public function createData($param)
 	{
 		$this->startTrans();
@@ -76,9 +71,11 @@ class WorkLable extends Common
 	}
 
 	/**
-	 * 编辑标签
-	 * @param  array   $param  [description]
-	 */
+     * 编辑标签
+     * @author yykun
+     * @param
+     * @return
+     */
 	public function updateDataById($param)
 	{
 		$map['lable_id'] = $param['lable_id'];
@@ -92,15 +89,17 @@ class WorkLable extends Common
 		}
 	}
 
-	/*
-	*删除标签
-	*
-	*/
+	/**
+     * 删除标签
+     * @author yykun
+     * @param
+     * @return
+     */
 	public function delDataById($param)
 	{
 		$map['lable_id'] = $param['lable_id'];	
 		$this->startTrans();
-		try{
+		try {
 			$ret = $this->where($map)->setField('status',0);
 			if ($ret) {
 				$this->commit();
@@ -110,24 +109,35 @@ class WorkLable extends Common
 				$this->error = '删除失败';
 				return false;
 			}
-		} catch(\Exception $e){
+		} catch (\Exception $e){
 			$this->rollback();
 			$this->error = '删除失败';
 			return false;
 		}		
 	}
 	
-	/*
-	*任务标签
-	*
-	*/
+	/**
+     * 任务标签
+     * @author yykun
+     * @param
+     * @return
+     */
 	public function getDataByStr($idstr)
 	{
 		$idstr = stringToArray($idstr);
-		if (!$idstr) {
-			return false;
-		}
 		$list = Db::name('WorkTaskLable')->field('lable_id,name,color')->where(['lable_id' => ['in',$idstr]])->select();
-		return $list;
+		return $list ? : [];
 	}
+
+	/**
+     * 任务标签名称
+     * @author yykun
+     * @param
+     * @return
+     */
+	public function getNameByIds($ids)
+	{
+		$list = Db::name('WorkTaskLable')->where(['lable_id' => ['in',$ids]])->column('name');
+		return $list ? : [];
+	}	
 }

@@ -1,6 +1,7 @@
 import {
   asyncRouterMap
 } from '@/router'
+import Vue from 'vue'
 
 /**
  * 
@@ -94,11 +95,11 @@ const permission = {
      * 客户管理待办消息数
      */
     SET_CRMROUTERSNUM: (state, num) => {
-      let messageItem = state.crmRouters.children[1]
+      const messageItem = state.crmRouters.children[1]
       messageItem.meta.num = num
-      Vue.set(state.crmRouters.children, 1, messageItem);
+      Vue.set(state.crmRouters.children, 1, messageItem)
     }
-    
+
   },
   actions: {
     GenerateRoutes({

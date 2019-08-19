@@ -142,11 +142,14 @@ export function regexIsCRMEmail(email) {
 import moment from 'moment'
 
 export function getDateFromTimestamp(time) {
-  var times = 0
+  time = time ? time.toString() : ''
+  let times = 0
   if (time.length === 13) {
     times = parseInt(time)
-  } else {
+  } else if (time.length === 10) {
     times = parseInt(time) * 1000
+  } else {
+    return null
   }
   return new Date(times) // 如果date为13位不需要乘1000
 }

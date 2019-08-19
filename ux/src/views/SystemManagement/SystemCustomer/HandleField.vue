@@ -9,7 +9,7 @@
         <ul>
           <draggable class="list-wrapper"
                      :list="fieldList"
-                     :options="{group: {pull: 'clone', put: false, name: 'list'},forceFallback:true, sort:false }"
+                     :options="{group: {pull: 'clone', put: false, name: 'list'},forceFallback: false, sort:false, dragClass: 'sortable-drag' }"
                      :clone="handleMove"
                      @end="handleEnd">
             <li class="field-item"
@@ -38,7 +38,7 @@
         </el-header>
         <el-main>
           <draggable :list="fieldArr"
-                     :options="{group: 'list',forceFallback:true, fallbackClass:'draggingStyle'}"
+                     :options="{group: 'list',forceFallback: false, dragClass: 'sortable-drag'}"
                      @end="handleListMove">
             <component v-for="(item, index) in fieldArr"
                        v-if="!item.is_deleted"
@@ -514,5 +514,9 @@ export default {
       @include left;
     }
   }
+}
+
+.sortable-drag {
+  background-color: white;
 }
 </style>

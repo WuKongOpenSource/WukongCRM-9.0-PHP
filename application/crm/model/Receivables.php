@@ -127,7 +127,7 @@ class Receivables extends Common
         	$list[$k]['check_status_info'] = $this->statusArr[$v['check_status']];
         	//期数
         	$plan_num = db('crm_receivables_plan')->where(['plan_id' => $v['plan_id']])->value('num');
-        	$list[$k]['num'] = $plan_num ? : '';
+        	$list[$k]['plan_id_info'] = $plan_num ? : '';
 			//权限
 			$permission = [];
 			$is_read = 0;

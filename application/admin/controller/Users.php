@@ -202,8 +202,8 @@ class Users extends ApiCommon
             // $belowIds = getSubUserId(true, 1);
         }
         $userList = db('admin_user')
-                    ->where(['user.id' => ['in',$belowIds]])
                     ->alias('user')
+                    ->where(['user.id' => ['in',$belowIds]])
                     ->where('user.status>0 and user.type=1')
                     ->join('__ADMIN_STRUCTURE__ structure', 'structure.id = user.structure_id', 'LEFT')
                     ->field('user.id,user.realname,user.thumb_img,structure.name as s_name')
@@ -249,6 +249,12 @@ class Users extends ApiCommon
         $userInfo = $this->userInfo;
         $userModel = model('User');
         if ($param['id'] && (int)$param['id'] !== $userInfo['id']) {
+            //权限判断
+            $adminTypes = adminGroupTypes($userInfo['id']);
+            if (!in_array(3,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes)) {
+                header('Content-Type:application/json; charset=utf-8');
+                exit(json_encode(['code'=>102,'error'=>'无权操作']));
+            }  
             //权限判断
             $adminTypes = adminGroupTypes($userInfo['id']);
             if (!in_array(3,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes)) {

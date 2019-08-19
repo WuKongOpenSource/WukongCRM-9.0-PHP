@@ -24,7 +24,8 @@ class Common extends Controller
         header('Access-Control-Allow-Credentials: true');
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, authKey, sessionId");
-        $param = Request::instance()->param();          
+        $param = Request::instance()->param();  
+        unset($param['platform']);         
         $this->param = $param;   
         $request = request();
         $header = $request->header();

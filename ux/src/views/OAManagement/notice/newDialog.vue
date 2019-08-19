@@ -22,6 +22,7 @@
             <template v-if="item.type == 'date'">
               <el-date-picker v-model="formData[item.field]"
                               type="date"
+                              value-format="yyyy-MM-dd"
                               placeholder="选择日期">
               </el-date-picker>
             </template>
@@ -78,12 +79,34 @@ import { usersList, depList } from '@/api/common'
 import membersDep from '@/components/selectEmployee/membersDep'
 // API
 import { noticeAdd } from '@/api/oamanagement/notice'
+import { formatTimeToTimestamp } from '@/utils/index'
+
 export default {
   components: {
     CreateView,
     membersDep
   },
   data() {
+    var validateTime = (rule, value, callback) => {
+      if (
+        (rule.field == 'start_time' &&
+          !this.formData.start_time &&
+          this.formData.end_time) ||
+        (rule.field == 'end_time' &&
+          !this.formData.end_time &&
+          this.formData.start_time)
+      ) {
+        callback(new Error('请完善时间'))
+      } else if (this.formData.start_time && this.formData.end_time) {
+        if (
+          formatTimeToTimestamp(this.formData.start_time) >=
+          formatTimeToTimestamp(this.formData.end_time)
+        ) {
+          callback(new Error('开始时间必须小于结束时间'))
+        }
+      }
+      callback()
+    }
     return {
       formList: [
         { label: '公告标题', field: 'title' },
@@ -100,7 +123,9 @@ export default {
         ],
         content: [
           { required: true, message: '公告正文不能为空', trigger: 'blur' }
-        ]
+        ],
+        start_time: [{ validator: validateTime, trigger: 'blur' }],
+        end_time: [{ validator: validateTime, trigger: 'blur' }]
       },
       loading: false
     }

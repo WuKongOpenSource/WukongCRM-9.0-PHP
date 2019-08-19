@@ -364,6 +364,7 @@ export default {
     handleFilter(form) {
       this.filterObj = form
       this.showFilter = false
+      this.updateTableHeight()
       this.refreshList()
     },
 
@@ -371,10 +372,8 @@ export default {
      * 删除筛选字段
      */
     handleDeleteField(data) {
-      this.filterObj = data.obj
-      var offsetHei = document.documentElement.clientHeight
-      var removeHeight = Object.keys(this.filterObj).length > 0 ? 310 : 240
-      this.tableHeight = offsetHei - removeHeight
+      this.filterObj = data.obj.obj
+      this.updateTableHeight()
       this.refreshList()
     },
 

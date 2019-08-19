@@ -56,7 +56,7 @@ export default {
           this.list[data.index].subcount = data.value.allcount - data.value.subdonecount
         }
       }
-    },
+    }
   },
 
   deactivated: function () {}

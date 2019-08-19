@@ -186,6 +186,9 @@ class Scene extends Common
 		// $scene_data = $this->dataChangeString($param);
 		//处理data数据
 		$res = $this->allowField(true)->save($param, ['scene_id' => $id]);
+		if ($param['is_default'] == 1) {
+			$this->defaultDataById($param,$param['id']);
+		}
 		if ($res) {
 			return true;
 		} else {
@@ -232,7 +235,6 @@ class Scene extends Common
 	 */
 	public function dataChangeString($param = [])
 	{
-		die();
 		$scene_data = '[';
 		$field_arr = [];
 		$i = 0;

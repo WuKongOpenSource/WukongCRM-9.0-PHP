@@ -16,14 +16,15 @@ class Base extends Common
 {
     public function login()
     {
+        $request = Request::instance();
+        $paramArr = $request->param();        
         $userModel = model('User');
         $param = $this->param;
         $username = $param['username'];
         $password = $param['password'];
-        $verifyCode = !empty($param['verifyCode'])? $param['verifyCode']: '';
-        $isRemember = !empty($param['isRemember'])? $param['isRemember']: '';
-        $is_mobile = $param['mobile'] ? : '';
-        $data = $userModel->login($username, $password, $verifyCode, $isRemember, $type, $authKey, $is_mobile);
+        $verifyCode = !empty($param['verifyCode']) ? $param['verifyCode']: '';
+        $isRemember = !empty($param['isRemember']) ? $param['isRemember']: '';
+        $data = $userModel->login($username, $password, $verifyCode, $isRemember, $type, $authKey, $paramArr);
         
         Session::set('user_id', $data['userInfo']['id']);
         if (!$data) {
@@ -37,13 +38,12 @@ class Base extends Common
     {
         $param = $this->param;
         $header = Request::instance()->header();
-        if ($param['mobile'] == 1) {
-            cache('Auth_'.$header['authkey'].'mobile', null);
-        } else {
-            cache('Auth_'.$header['authkey'], null);
-        }
-        session('null', 'admin');
-        session('admin','null');
+        $request = Request::instance();
+        $paramArr = $request->param();
+        $platform = $paramArr['platform'] ? '_'.$paramArr['platform'] : ''; //请求平台(mobile,ding)
+        $cache = cache('Auth_'.$authKey.$platform,null);
+        cookie(null, '72crm_');
+        cookie(null, '5kcrm_');
         session('user_id','null');
         return resultArray(['data'=>'退出成功']);
     }

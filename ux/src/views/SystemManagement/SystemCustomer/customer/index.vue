@@ -38,14 +38,11 @@
 </template>
 
 <script>
-import {
-  crmSettingConfig, // 客户保护规则
-  crmSettingConfigData // 客户详情
-} from '@/api/systemManagement/SystemCustomer'
+import { crmSettingConfig } from '@/api/systemManagement/SystemCustomer'
 
 export default {
   name: 'customer', // 客户设置
-  
+
   components: {},
 
   data() {
@@ -70,7 +67,8 @@ export default {
      */
     customerSettingData() {
       this.loading = true
-      crmSettingConfigData()
+      this.$store
+        .dispatch('CRMSettingConfig')
         .then(res => {
           this.loading = false
           res.data.config = parseInt(res.data.config)

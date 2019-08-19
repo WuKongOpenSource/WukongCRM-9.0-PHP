@@ -194,7 +194,6 @@
               <div v-show="addDescriptionShow">
                 <el-input type="textarea"
                           :autosize="{ minRows: 2}"
-                          maxlength="50"
                           placeholder="请输入内容"
                           v-model="addDescriptionTextarea">
                 </el-input>
@@ -534,6 +533,7 @@
 </template>
 
 <script type="text/javascript">
+import xss from 'xss'
 import {
   editTask,
   editTaskName,
@@ -1006,15 +1006,15 @@ export default {
         this.commentsLoading = true
         comAdd({
           task_id: this.id,
-          content: this.commentsTextarea
+          content: xss(this.commentsTextarea)
         })
           .then(res => {
             this.taskData.replyList.push({
               comment_id: res.data,
               type_id: this.id,
               userInfo: this.userInfo,
-              create_time: new Date().getTime() / 1000,
-              content: this.commentsTextarea,
+              create_time: parseInt(new Date().getTime() / 1000),
+              content: xss(this.commentsTextarea),
               replyList: [],
               show: false
             })
@@ -1042,7 +1042,7 @@ export default {
         comAdd({
           reply_fid: this.replyChildComment.comment_id,
           task_id: item.type_id,
-          content: this.childCommentsTextarea,
+          content: xss(this.childCommentsTextarea),
           reply_content: item.content,
           reply_comment_id: item.comment_id,
           reply_user_id: item.userInfo.id,
@@ -1054,8 +1054,8 @@ export default {
               comment_id: res.data,
               type_id: item.type_id,
               userInfo: this.userInfo,
-              create_time: new Date().getTime() / 1000,
-              content: this.childCommentsTextarea,
+              create_time: parseInt(new Date().getTime() / 1000),
+              content: xss(this.childCommentsTextarea),
               reply_content: item.content,
               replyuserInfo: item.userInfo
             })

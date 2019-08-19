@@ -12,9 +12,11 @@
                  class="head-handle-button"
                  @click.native="handleTypeClick('edit')"
                  type="primary">编辑</el-button>
-      <el-dropdown trigger="click"
+      <el-dropdown v-if="moreTypes.length > 0"
+                   trigger="click"
                    @command="handleTypeClick">
-        <flexbox class="t-more">
+        <flexbox class="t-more"
+                 v-if="moreTypes.length > 0">
           <div>更多</div>
           <i class="el-icon-arrow-down el-icon--right"
              style="color:#ccc;"></i>
@@ -22,7 +24,6 @@
         <el-dropdown-menu slot="dropdown">
           <el-dropdown-item v-for="(item, index) in moreTypes"
                             :key="index"
-                            v-if="whetherTypeShowByPermision(item.type)"
                             :command="item.type">{{item.name}}</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
@@ -78,7 +79,7 @@ export default {
     AllocHandle
   },
   computed: {
-    ...mapGetters(['crm']),
+    ...mapGetters(['crm', 'CRMConfig']),
     crmIcon() {
       if (this.crmType === 'customer') {
         return require('@/assets/img/customer_detail.png')
@@ -105,7 +106,11 @@ export default {
     },
     // 展示转移
     showTransfer() {
-      if (this.crmType === 'receivables' || this.crmType === 'product' || this.isSeas) {
+      if (
+        this.crmType === 'receivables' ||
+        this.crmType === 'product' ||
+        this.isSeas
+      ) {
         return false
       }
       return this.crm[this.crmType].transfer
@@ -397,12 +402,15 @@ export default {
     forSelectionHandleItems(handleInfos, array) {
       var tempsHandles = []
       for (let index = 0; index < array.length; index++) {
-        tempsHandles.push(handleInfos[array[index]])
+        let type = array[index]
+        if (this.whetherTypeShowByPermision(type)) {
+          tempsHandles.push(handleInfos[type])
+        }
       }
       return tempsHandles
     },
     // 判断是否展示
-    whetherTypeShowByPermision: function(type) {
+    whetherTypeShowByPermision(type) {
       if (type == 'transfer') {
         return this.crm[this.crmType].transfer
       } else if (type == 'transform') {
@@ -416,7 +424,7 @@ export default {
         return this.crm[this.crmType].putinpool
       } else if (type == 'lock' || type == 'unlock') {
         // 锁定解锁(客户)
-        return this.crm[this.crmType].lock
+        return this.crm[this.crmType].lock && this.CRMConfig.config == 1
       } else if (type == 'add_user' || type == 'delete_user') {
         // 添加 移除团队成员
         return this.crm[this.crmType].teamsave

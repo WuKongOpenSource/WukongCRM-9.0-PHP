@@ -40,9 +40,13 @@ class Contract extends Common
 		$search = $request['search'];
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
+		$order_field = $request['order_field'];
+    	$order_type = $request['order_type'];     	
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);    	
+		unset($request['user_id']);
+		unset($request['order_field']);	
+		unset($request['order_type']);		  	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -110,6 +114,13 @@ class Contract extends Common
 		$userField = $fieldModel->getFieldByFormType('crm_contract', 'user');
 		$structureField = $fieldModel->getFieldByFormType('crm_contract', 'structure');  //部门类型
 	
+		//排序
+		if ($order_type && $order_field) {
+			$order = 'convert(contract.'.trim($order_field).' using gbk) '.trim($order_type);
+		} else {
+			$order = 'contract.update_time desc';
+		}
+				
 		$readAuthIds = $userModel->getUserByPer('crm', 'contract', 'read');
         $updateAuthIds = $userModel->getUserByPer('crm', 'contract', 'update');
         $deleteAuthIds = $userModel->getUserByPer('crm', 'contract', 'delete');			
@@ -125,7 +136,7 @@ class Contract extends Common
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		->field('contract.*,customer.name as customer_name,business.name as business_name,contacts.name as contacts_name')
         		// ->field('contract_id,'.implode(',',$indexField))
-        		->order($order)
+        		->orderRaw($order)
         		->group('contract.contract_id')
         		->select();	
         $dataCount = db('crm_contract')

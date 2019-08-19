@@ -39,10 +39,14 @@ class Leads extends Common
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
     	$is_excel = $request['is_excel']; //导出
+		$order_field = $request['order_field'];
+    	$order_type = $request['order_type'];    	
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']); 
-		unset($request['is_excel']);	   	
+		unset($request['is_excel']);
+		unset($request['order_field']);	
+		unset($request['order_type']);			   	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -94,10 +98,11 @@ class Leads extends Common
 		$structureField = $fieldModel->getFieldByFormType('crm_leads', 'structure');  //部门类型		
 		
 		//排序
-		if ($request['order_type'] && $request['order_field']) {
-			$order = trim($request['order_field']).' '.trim($request['order_type']);
+		if ($order_type && $order_field) {
+			// $order = 'leads.'.trim($order_field).' '.trim($order_type);
+			$order = 'convert(leads.'.trim($order_field).' using gbk) '.trim($order_type);
 		} else {
-			$order = 'update_time desc';
+			$order = 'leads.update_time desc';
 		}
 		//过滤已转化线索
 		if (!$map['leads.is_transform']) {
@@ -114,7 +119,7 @@ class Leads extends Common
 				->where($authMap)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		// ->field('leads_id,'.implode(',',$indexField))
-        		->order($order)
+        		->orderRaw($order)
         		->select();	
         $dataCount = db('crm_leads')->alias('leads')->where($map)->where($searchMap)->where($authMap)->count('leads_id');
         foreach ($list as $k=>$v) {

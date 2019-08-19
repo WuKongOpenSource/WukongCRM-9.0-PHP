@@ -41,7 +41,7 @@ class WorkClass extends Model
 			$map['work_id'] = $work_id;
 		}
 		$dataCount = $this->where($map)->count();
-		$list = $this->where($map)->order('order_id asc')->select();
+		$list = $this->where($map)->order('order_id asc')->field('class_id,name')->select();
 		$data = [];
 		$data['list'] = $list ? : [];
 		$data['dataCount'] = $dataCount ? : 0;

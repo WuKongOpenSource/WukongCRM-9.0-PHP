@@ -224,7 +224,7 @@ class Contract extends ApiCommon
 
         //数据权限判断
         $userModel = new \app\admin\model\User();
-        $auth_user_ids = $userModel->getUserByPer('crm', 'business', 'delete');
+        $auth_user_ids = $userModel->getUserByPer('crm', 'contract', 'delete');
         $adminTypes = adminGroupTypes($userInfo['id']);
         foreach ($contract_id as $k=>$v) {
             $isDel = true;

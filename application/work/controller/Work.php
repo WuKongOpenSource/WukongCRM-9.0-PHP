@@ -25,7 +25,7 @@ class work extends ApiCommon
     {
         $action = [
             'permission'=>[''],  
-            'allow'=>['index','filelist','save','delete','read','archive','owneradd','ownerdel','ownerlist','leave','archivelist','arrecover','statistic']            
+            'allow'=>['index','filelist','save','delete','read','archive','owneradd','ownerdel','ownerlist','leave','archivelist','arrecover','statistic','grouplist','addusergroup']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -320,6 +320,7 @@ class work extends ApiCommon
     {
         $param = $this->param;
         $userModel = new \app\admin\model\User();
+        $workModel = model('work');
         $work_id = $param['work_id'];
         if (!$work_id) {
             return resultArray(['error'=>'参数错误']);
@@ -342,10 +343,16 @@ class work extends ApiCommon
         } else {
             $taskList = Db::name('Task')->where(['work_id' => ['gt',0],'ishidden' => 0])->field('task_id,main_user_id,lable_id,status,owner_user_id,stop_time,is_archive')->select();
         }
-        $allNum = count($taskList);
         foreach ($taskList as $key => $value) {
-            if ($value['status'] == 1) $undoneNum += 1;
-            if (($value['status'] == 1) && $value['stop_time'] && ($value['stop_time'] < time())) $overtimeNum += 1;
+            if (empty($value['is_archive'])) {
+                $allNum += 1;
+                if ($value['status'] == 1) {
+                    $undoneNum += 1;
+                }
+                if ($value['status'] == 1 && $value['stop_time'] && ($value['stop_time'] < time())) {
+                    $overtimeNum += 1;
+                }                
+            }
             if ($value['is_archive'] == 1) $archiveNum += 1;
             if ($value['status'] == 5) $doneNum += 1;            
             //获取项目下成员ID
@@ -410,8 +417,8 @@ class work extends ApiCommon
             }
             foreach ($taskArr as $v) {
                 $allCount += 1;
-                if ($v['status'] == 1) $undoneCount += 1;
-                if (($v['status'] == 1) && $v['stop_time'] && ($v['stop_time'] < time())) $overtimeCount += 1;
+                if ($v['status'] == 1 && empty($v['is_archive'])) $undoneCount += 1;
+                if (($v['status'] == 1 && empty($v['is_archive'])) && $v['stop_time'] && ($v['stop_time'] < time())) $overtimeCount += 1;
                 if ($v['is_archive'] == 1) $archiveCount += 1;
                 if ($v['status'] == 5) $doneCount += 1;
             }
@@ -429,57 +436,9 @@ class work extends ApiCommon
 
         if ($work_id !== 'all') {
             //任务列表统计
-            $classList = Db::name('WorkTaskClass')->where(['status' => 1,'work_id' => $work_id])->order('order_id asc')->select();
-            $taskarray = array();
-            foreach ($classList as $k1 => $v1) {
-                $task_list = [];
-                $task_list = db('task')->where(['work_id' => $work_id,'class_id' => $v1['class_id'],'is_archive' => 0,'ishidden' => 0])->field('is_archive,status')->select();
-                $allTask = 0;
-                $undoneTask = 0;
-                $doneTask = 0;
-                foreach ($task_list as $kk => $vv) {
-                    $allTask += 1;
-                    if ($vv['status'] == 1) {
-                        $undoneTask += 1; 
-                        continue;
-                    }
-                    if ($vv['status'] == 5) {
-                        $doneTask += 1; 
-                        continue;
-                    }
-                }
-                $classList[$k1]['allTask'] = $allTask ? : 0;
-                $classList[$k1]['undoneTask'] = $undoneTask ? : 0;
-                $classList[$k1]['doneTask'] = $doneTask ? : 0;
-            }
-            $dataAry['classList'] = $classList;
+            $dataAry['classList'] = $workModel->classList($work_id);
             //标签统计
-            $labelList = [];
-            foreach ($lableary as $k2 => $v2) {
-                $labledet = [];
-                $task_list = [];
-                $labledet = Db::name('WorkTaskLable')->where(['lable_id' => $v2])->find();
-                $task_list = Db::name('Task')->where(['lable_id' => ['like','%,'.$v2.',%'],'work_id' => $work_id,'is_archive' => 0,'ishidden' => 0])->field('status,task_id')->select();
-                $allTask = 0;
-                $undoneTask = 0;
-                $doneTask = 0;
-                foreach ($task_list as $kk => $vv) {
-                    if ($vv['status'] !== 3) $allTask += 1;
-                    if ($vv['status'] == 1) {
-                        $undoneTask += 1;
-                        continue;
-                    }
-                    if ($vv['status'] == 5) {
-                        $doneTask += 1; 
-                        continue;
-                    }
-                }
-                $labelList[$k2]['allTask'] = $allTask ? : 0;
-                $labelList[$k2]['undoneTask'] = $undoneTask ? : 0;
-                $labelList[$k2]['doneTask'] = $doneTask ? : 0;                
-                $labelList[$k2]['lablename'] = $labledet['name'];
-            }
-            $dataAry['labelList'] = $labelList ? : [];            
+            $dataAry['labelList'] = $workModel->labelList($work_id,$lableary);            
         }
         return resultArray(['data'=>$dataAry]);
     }
@@ -502,7 +461,7 @@ class work extends ApiCommon
         //权限判断
         if (!$workModel->isCheck('work','work','update',$param['work_id'],$userInfo['id'])) {
             header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));            
+            exit(json_encode(['code'=>102,'error'=>'无权操作1']));            
         }          
 		foreach ($list as $value) {
 			$data = array();
@@ -563,7 +522,7 @@ class work extends ApiCommon
         $list = array(
                 '0'=>array('id' => 1,'title'=>'管理','remark' => '系统默认权限，包含项目所有权限,不可修改/删除'),
                 );
-        $groupList = db('admin_group')->where(['pid' => 5])->order('system desc')->field('id,title,remark')->select();
+        $groupList = db('admin_group')->where(['pid' => 5,'type' => 0])->order('system desc')->field('id,title,remark')->select();
         $listArr = array_merge($list, $groupList) ? : [];
         return resultArray(['data' => $listArr]);
     }       

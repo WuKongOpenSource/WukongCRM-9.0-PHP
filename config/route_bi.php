@@ -78,7 +78,14 @@ return [
 	// 【商业智能】客户所在城市分析
 	'bi/customer/addressAnalyse' => ['bi/customer/addressAnalyse', ['method' => 'POST']],
 	// 【商业智能】客户行业/级别/来源分析
-	'bi/customer/portrait' => ['bi/customer/portrait', ['method' => 'POST']],	
+	'bi/customer/portrait' => ['bi/customer/portrait', ['method' => 'POST']],
+	// 【商业智能】日志统计
+	'bi/log/statistics' => ['bi/log/statistics', ['method' => 'POST']],	
+	'bi/log/excelExport' => ['bi/log/excelExport', ['method' => 'POST']],
+	// 【商业智能】审批统计
+	'bi/examine/statistics' => ['bi/examine/statistics', ['method' => 'POST']],	
+	'bi/examine/index' => ['bi/examine/index', ['method' => 'POST']],	
+	'bi/examine/excelExport' => ['bi/examine/excelExport', ['method' => 'POST']],
 
 	// MISS路由
 	'__miss__'  => 'admin/base/miss',

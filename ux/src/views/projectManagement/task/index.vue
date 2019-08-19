@@ -56,7 +56,7 @@
                     <span :style="{'color': element.is_end == 1 && !element.checked ? 'red': '#999'}">{{element.stop_time | filterTimestampToFormatTime('MM-DD')}} 截止</span>
                   </div>
                   <div class="img-box"
-                       v-if="element.subcount">
+                       v-if="element.subcount || element.subdonecount">
                     <i class="wukong wukong-sub-task"></i>
                     <span>{{element.subdonecount}}/{{element.subcount + element.subdonecount}}</span>
                   </div>
@@ -306,12 +306,15 @@ export default {
     detailHandle(data) {
       if (data.index == 0 || data.index) {
         // 是否完成勾选
+        let sectionItem = this.taskList[data.section]
         if (data.type == 'title-check') {
-          this.$set(
-            this.taskList[data.section].list[data.index],
-            'checked',
-            data.value
-          )
+          this.$set(sectionItem.list[data.index], 'checked', data.value)
+          if (data.value) {
+            sectionItem.checkedNum++
+          } else {
+            sectionItem.checkedNum--
+          }
+          this.$set(sectionItem, 'checkedNum', sectionItem.checkedNum)
         } else if (data.type == 'delete') {
           this.taskList[data.section].list.splice(data.index, 1)
         } else if (data.type == 'change-stop-time') {

@@ -66,6 +66,7 @@
     </el-select>
     <el-button @click.native="postFiltrateValue()"
                type="primary">搜索</el-button>
+    <slot></slot>
   </div>
 </template>
 

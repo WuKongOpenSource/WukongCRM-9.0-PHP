@@ -936,7 +936,7 @@ export default {
         index: this.detailIndex,
         section: this.detailSection
       })
-      taskOver({
+      workTaskTaskOverAPI({
         task_id: val.task_id,
         type: e ? 1 : 2
       })

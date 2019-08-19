@@ -82,6 +82,7 @@ class Examine extends Common
 		//审核状态
 		if ($check_status == 'all') {
 			$map['examine.check_status'] = ['egt',0];
+			if ($by == 'stay_examine') $map['examine.check_status'] = ['elt',1];
 		} else {
 			$map['examine.check_status'] = $check_status;
 		}

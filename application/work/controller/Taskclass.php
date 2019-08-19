@@ -88,7 +88,7 @@ class taskclass extends ApiCommon
     }
 
     /**
-     * 删除任务列表(该分类下任务也要删除)
+     * 删除任务列表(该分类下任务标记删除)
      * @author yykun
      * @return
      */

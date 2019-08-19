@@ -7,6 +7,7 @@
         <span v-if="item.form_type == 'date' && item.value.length > 1">{{item.name +'&nbsp;“' + item.value[0] + '-' + item.value[1] + '”'}}</span>
         <span v-else-if="item.form_type === 'datetime' && item.value.length > 1">{{item.name +'&nbsp;“' + item.value[0] + '-' + item.value[1] + '”'}}</span>
         <span v-else-if="item.form_type === 'business_type' && item.status_id">{{item.name +'&nbsp;“' + getTypesName(item) + getStatusName(item) + '”'}}</span>
+        <span v-else-if="item.form_type === 'address'">{{`${item.name} ${item.address.state} ${item.address.city} ${item.address.area}`}}</span>
         <span v-else-if="item.form_type === 'user' && item.value.length > 0">{{item.name +'&nbsp;' + optionsNames[item.condition] + '“' + item.value[0].realname + '”'}}</span>
         <span v-else-if="item.form_type === 'category' && item.value.length > 0">{{item.name +'&nbsp;“' + item.valueContent + '”'}}</span>
         <span v-else>{{item.name + '&nbsp;' + optionsNames[item.condition] + '“' + item.value + '”' }}</span>

@@ -276,11 +276,19 @@ class Message extends ApiCommon
         $param['owner_user_id'] = $userInfo['id'];
         if ($isSub) {
             $param['owner_user_id'] = array('in',getSubUserId(false));
-        }          
+        }       
         switch ($type) {
-            case '1' : $param['receivables_id'] = 0; $param['remind_date'] = array('elt',date('Y-m-d',time())); $param['return_date'] = array('egt',date('Y-m-d',time())); break;
-            case '2' : $param['receivables_id'] = array('gt',0); break;
-            case '3' : $param['receivables_id'] = 0; $param['remind_date'] = array('lt',date('Y-m-d',time())); break;
+            case '1' : $param['receivables_id'] = 0; 
+                       $param['check_status'] = array('lt',2); 
+                       $param['remind_date'] = array('elt',date('Y-m-d',time())); 
+                       $param['return_date'] = array('egt',date('Y-m-d',time())); 
+                       break;
+            case '2' : $param['receivables_id'] = array('gt',0);
+                        $param['check_status'] = 2; 
+                        break;
+            case '3' : $param['receivables_id'] = 0;
+                        $param['remind_date'] = array('lt',date('Y-m-d',time())); 
+                        break;
         }
         $data = $receivablesPlanModel->getDataList($param);
         if ($types == 'list') {

@@ -82,7 +82,10 @@ class Trash extends ApiCommon
     {
         $param = $this->param;
         if (!$param['task_id']) return resultArray(['error'=>'参数错误']);
-        $ret = Db::name('Task')->where(['ishidden' => 1,'task_id' => $param['task_id']])->setField('ishidden',0);
+        $updateData = [];
+        $updateData['ishidden'] = 0;
+        $updateData['class_id'] = 0;
+        $ret = Db::name('Task')->where(['ishidden' => 1,'task_id' => $param['task_id']])->update($updateData);
         if ($ret) {
             return resultArray(['data'=>'操作成功']);
         } else {

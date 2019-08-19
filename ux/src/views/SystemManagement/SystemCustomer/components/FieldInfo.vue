@@ -100,6 +100,21 @@
       <div class="input-tips"><span>*</span>上限为2000字</div>
     </div>
 
+    <div v-if="canTransform && transformData && transformData[field.form_type]"
+         class="item-section">
+      <div class="name">
+        转化客户字段
+      </div>
+      <el-select v-model="field.relevant"
+                 placeholder="请选择">
+        <el-option v-for="item in transformData[field.form_type]"
+                   :key="item.value"
+                   :label="item.label"
+                   :value="item.value">
+        </el-option>
+      </el-select>
+    </div>
+
     <div class="item-check-section">
       <el-checkbox v-model="field.is_null"
                    :disabled="disabled">设为必填</el-checkbox>
@@ -108,6 +123,7 @@
       <el-checkbox v-model="field.is_unique"
                    :disabled="disabled">设为唯一</el-checkbox>
     </div>
+
   </div>
 </template>
 <script type="text/javascript">
@@ -212,10 +228,14 @@ export default {
           max_length: '', // textarea 多行文本有最大数量
           default_value: '', // 默认值
           setting: '', // 接口返回setting数据
-          showSetting: '' // 单选选项
+          showSetting: '', // 单选选项
+          relevant: '' // 转移字段
         }
       }
-    }
+    },
+    // 是否开启转移  转移对应数据
+    canTransform: Boolean,
+    transformData: Object
   },
   mounted() {
     if (this.show_select && this.field.showSetting.length == 0) {

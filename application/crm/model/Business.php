@@ -39,10 +39,14 @@ class Business extends Common
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
     	$contacts_id = $request['contacts_id'];
+		$order_field = $request['order_field'];
+    	$order_type = $request['order_type'];     	
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);
-		unset($request['contacts_id']);    	
+		unset($request['contacts_id']);
+		unset($request['order_field']);	
+		unset($request['order_type']);		   	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -121,8 +125,9 @@ class Business extends Common
 		$userField = $fieldModel->getFieldByFormType('crm_business', 'user'); //人员类型
 		$structureField = $fieldModel->getFieldByFormType('crm_business', 'structure');  //部门类型	
 
-		if ($request['order_type'] && $request['order_field']) {
-			$order = trim($request['order_field']).' '.trim($request['order_type']);
+		//排序
+		if ($order_type && $order_field) {
+			$order = 'convert(business.'.trim($order_field).' using gbk) '.trim($order_type);
 		} else {
 			$order = 'business.update_time desc';
 		}
@@ -139,7 +144,7 @@ class Business extends Common
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		->field('business.*,customer.name as customer_name')
         		// ->field('business_id,'.implode(',',$indexField))
-        		->order($order)
+        		->orderRaw($order)
         		->select();	
         $dataCount = db('crm_business')
         			->alias('business')
@@ -160,7 +165,7 @@ class Business extends Common
         	$status_count = 0;
         	$statusInfo = db('crm_business_status')->where('status_id',$v['status_id'])->find();
         	if ($statusInfo['order_id'] < 99) {
-				$status_count = db('crm_business_status')->where('type_id',['eq',$v['type_id']],['eq',''],'or')->count();
+				$status_count = db('crm_business_status')->where('type_id',['eq',$v['type_id']])->count();
         	}
 
         	$list[$k]['status_id_info'] = $statusInfo['name'];//销售阶段

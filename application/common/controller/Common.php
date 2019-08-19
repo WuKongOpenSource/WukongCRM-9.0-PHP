@@ -24,13 +24,14 @@ class Common extends Controller
         header('Access-Control-Allow-Credentials: true');
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, authKey, sessionId");
-        $param = Request::instance()->param();  
+        $param = Request::instance()->param(); 
+        $platform = $param['platform'] ? '_'.$param['platform'] : ''; //请求平台(mobile,ding)         
         unset($param['platform']);         
         $this->param = $param;   
         $request = request();
         $header = $request->header();
         $authKey = $header['authkey'];
-        $cache = cache('Auth_'.$authKey);
+        $cache = cache('Auth_'.$authKey.$platform);
         if ($cache) $this->userInfo = $cache['userInfo'];
 
         $m = strtolower($request->module());

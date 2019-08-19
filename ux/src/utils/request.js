@@ -61,7 +61,10 @@ service.interceptors.response.use(
               showCancelButton: false,
               showClose: false,
               confirmButtonText: '重新登录',
-              type: 'warning'
+              type: 'warning',
+              callback: () => {
+                showLoginMessageBox = false
+              }
             }
           ).then(() => {
             showLoginMessageBox = false

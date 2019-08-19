@@ -36,9 +36,11 @@ class ReceivablesPlan extends Common
 		$search = $request['search'];
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
+    	$check_status = $request['check_status'];
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);	    	
+		unset($request['check_status']);	    	
 
         $request = $this->fmtRequest( $request );
         $map = $request['map'] ? : [];
@@ -48,25 +50,45 @@ class ReceivablesPlan extends Common
 			unset($map['search']);
 		} else {
 			$map = where_arr($map, 'crm', 'receivables_plan', 'index'); //高级筛选
-		}	
+		}
 		if ($map['receivables_plan.owner_user_id']) {
 			$map['contract.owner_user_id'] = $map['receivables_plan.owner_user_id'];
 			unset($map['receivables_plan.owner_user_id']);
+		}
+		$whereData = [];
+		if ($check_status) {
+			unset($map['receivables_plan.check_status']);
+			if ($check_status == 2) {
+				$map['receivables.check_status'] = $check_status;
+			} else {
+				unset($map['receivables_plan.receivables_id']);
+				$data = [];
+				$data['check_status'] = $check_status;
+				$whereData = function($query) use ($data){
+					        	$query->where(['receivables_plan.receivables_id'=> ['eq',0]])
+						        	->whereOr(['receivables.check_status' => $data['check_status']]);					
+								};			
+			}
 		}
 		$list = db('crm_receivables_plan')
 				->alias('receivables_plan')
 				->join('__CRM_CONTRACT__ contract','receivables_plan.contract_id = contract.contract_id','LEFT')
 				->join('__CRM_CUSTOMER__ customer','receivables_plan.customer_id = customer.customer_id','LEFT')
-				->where($map)
+				->join('__CRM_RECEIVABLES__ receivables','receivables_plan.plan_id = receivables.plan_id','LEFT')
 				->limit(($request['page']-1)*$request['limit'], $request['limit'])
-				->field('receivables_plan.*,customer.name as customer_name,contract.name as contract_name')
+				->field('receivables_plan.*,customer.name as customer_name,contract.num as contract_name,receivables.receivables_id,receivables.check_status')
+				->where($map)
+				->where($whereData)				
 				->select();
+			// echo db()->getLastSql();die();
 		$dataCount = db('crm_receivables_plan')
 					->alias('receivables_plan')
 					->join('__CRM_CONTRACT__ contract','receivables_plan.contract_id = contract.contract_id','LEFT')
-					->join('__CRM_CUSTOMER__ customer','receivables_plan.customer_id = customer.customer_id','LEFT')		
+					->join('__CRM_CUSTOMER__ customer','receivables_plan.customer_id = customer.customer_id','LEFT')
+					->join('__CRM_RECEIVABLES__ receivables','receivables_plan.plan_id = receivables.plan_id','LEFT')		
 					->where($map)
-					->count('plan_id');
+					->where($whereData)	
+					->count('receivables_plan.plan_id');
         foreach ($list as $k=>$v) {
         	$list[$k]['create_user_id_info'] = $userModel->getUserById($v['create_user_id']);
         	$list[$k]['contract_id_info']['name'] = $v['contract_name'] ? : '';

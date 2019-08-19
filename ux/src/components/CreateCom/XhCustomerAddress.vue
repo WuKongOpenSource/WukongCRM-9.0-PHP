@@ -21,10 +21,12 @@
     </flexbox-item>
     <flexbox-item>
       <div class="area-title">省/市/区</div>
-      <v-distpicker @selected="onAddressSelected"
-                    :province="addressSelect.province"
+      <v-distpicker :province="addressSelect.province"
                     :city="addressSelect.city"
-                    :area="addressSelect.area"></v-distpicker>
+                    :area="addressSelect.area"
+                    @province="selectProvince"
+                    @city="selectCity"
+                    @area="selectArea"></v-distpicker>
     </flexbox-item>
   </flexbox>
 </template>
@@ -166,10 +168,16 @@ export default {
       this.map.addOverlay(new BMap.Marker(point))
     },
     /** 区域选择 */
-    onAddressSelected(data) {
-      this.addressSelect.province = data.province.value
-      this.addressSelect.city = data.city.value
-      this.addressSelect.area = data.area.value
+    selectProvince(value) {
+      this.addressSelect.province = value.value
+      this.valueChange()
+    },
+    selectCity(value) {
+      this.addressSelect.city = value.value
+      this.valueChange()
+    },
+    selectArea(value) {
+      this.addressSelect.area = value.value
       this.valueChange()
     },
     /** 地图选择区域 */

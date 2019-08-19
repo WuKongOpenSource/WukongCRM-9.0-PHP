@@ -13,7 +13,7 @@
              align="stretch"
              class="d-container">
       <c-r-m-detail-head crmType="customer"
-                         :isSeas="isSeas"
+                         :isSeas="isSeasDetail"
                          @handle="detailHeadHandle"
                          @close="hideView"
                          :detail="detailData"
@@ -37,7 +37,7 @@
                      crmType="customer"
                      :detail="detailData"
                      :id="id"
-                     :isSeas="isSeas"></component>
+                     :isSeas="isSeasDetail"></component>
         </keep-alive>
       </div>
     </flexbox>
@@ -171,6 +171,15 @@ export default {
       tempsTabs.push({ label: '附件', name: 'file' })
       tempsTabs.push({ label: '操作记录', name: 'operationlog' })
       return tempsTabs
+    },
+    /**
+     * isSeas 是从公海模块传入的 配合详情is_pool字段确定
+     */
+    isSeasDetail() {
+      if (this.detailData && this.detailData.hasOwnProperty('is_pool')) {
+        return this.detailData.is_pool == 1
+      }
+      return this.isSeas
     }
   },
   mounted() {},
@@ -186,7 +195,7 @@ export default {
           // 负责人
           this.headDetails[0].value = res.data.level
           this.headDetails[1].value = res.data.deal_status
-          this.headDetails[2].value = this.isSeas
+          this.headDetails[2].value = this.isSeasDetail
             ? '- -'
             : res.data.owner_user_id_info
             ? res.data.owner_user_id_info.realname

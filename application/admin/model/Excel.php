@@ -187,7 +187,8 @@ class Excel extends Common
 	{
 		$fieldModel = new \app\admin\model\Field();
 		ini_set('memory_limit','1024M');
-	    set_time_limit (0);
+		ini_set('max_execution_time','300');
+	    // set_time_limit(0);
 
 	    //调试时，先把下面这个两个header注释即可
 	    header("Access-Control-Expose-Headers: Content-Disposition");  
@@ -212,17 +213,27 @@ class Excel extends Common
 		// 将标题名称通过fputcsv写到文件句柄    
 		fputcsv($fp, $title_cell);
 	    // $export_data = $callback(0);
-	    cache($file_name, $callback(0));
-	   // p(cache($file_name));
-		foreach (cache($file_name)['list'] as $item) {
-	    	$rows = [];
-	    	foreach ($field_list as $rule) {
-	    		$rows[] = $fieldModel->getValueByFormtype($item[$rule['field']], $rule['form_type']);
-	    	}
-	        fputcsv($fp, $rows);
-	    } 
+	    $round = round(1000,9999);
+	    cache($file_name.$round, $callback(0));
+	    $sheetContent = cache($file_name.$round)['list'];
+
+	    $sheetCount = $callback(0)['dataCount'];
+		$forCount = 1000; //每次取出1000个
+		for ($i = 0; $i <= ceil(round($sheetCount/$forCount,2)); $i++){
+			$_sub = array_slice($sheetContent, ($i)*$forCount, 1000);			
+			foreach ($_sub as $kk => $item) {
+				$rows = [];
+		    	foreach ($field_list as $rule) {
+		    		$rows[] = $fieldModel->getValueByFormtype($item[$rule['field']], $rule['form_type']);
+		    	}
+		        fputcsv($fp, $rows);				
+			}
+			ob_flush();//清除内存
+        	flush();
+		}
 	    // 将已经写到csv中的数据存储变量销毁，释放内存占用  
 		//$m = memory_get_usage();
+		Cache::rm($file_name.$round); 
         ob_flush();
         flush();
 		fclose($fp);
@@ -648,5 +659,54 @@ class Excel extends Common
 		header('Cache-Control: max-age=0'); 
 		$objWriter = \PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');  //excel5为xls格式，excel2007为xlsx格式  
 		$objWriter->save('php://output');
-	}	
+	}
+
+	/**
+	 * 非自定义字段模块导出csv
+	 * @param $file_name 导出文件名称
+	 * @param $field_list 导出字段列表
+	 * @param $callback 回调函数，查询需要导出的数据
+	 * @author
+	 **/
+	public function dataExportCsv($file_name, $field_list, callback $callback)
+	{
+		ini_set('memory_limit','128M');
+	    set_time_limit (0);
+
+	    //调试时，先把下面这个两个header注释即可
+	    header("Access-Control-Expose-Headers: Content-Disposition");  
+	    header("Content-type:application/vnd.ms-excel;charset=UTF-8");  
+		header("Content-Disposition:attachment;filename=" . $file_name . ".csv");
+
+		header('Expires: 0');
+		header('Cache-control: private');
+		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+		header('Content-Description: File Transfer');
+		header('Content-Encoding: UTF-8');
+		// 加上bom头，防止用office打开时乱码
+		echo "\xEF\xBB\xBF"; 	// UTF-8 BOM
+
+		// 打开PHP文件句柄，php://output 表示直接输出到浏览器  
+		$fp = fopen('php://output', 'a');
+
+		// 将中文标题转换编码，否则乱码  
+		foreach ($field_list as $i => $v) {    
+		    $title_cell[$i] = $v['name'];    
+		}
+		// 将标题名称通过fputcsv写到文件句柄    
+		fputcsv($fp, $title_cell);
+	    $export_data = $callback(0);
+		foreach ($export_data as $item) {
+			$rows = [];
+			foreach ($field_list as $rule) {
+				$rows[] = $item[$rule['field']];
+			}
+	        fputcsv($fp, $rows);
+	    }
+	    // 将已经写到csv中的数据存储变量销毁，释放内存占用
+        ob_flush();
+        flush();
+		fclose($fp);
+		exit();
+	}		
 }

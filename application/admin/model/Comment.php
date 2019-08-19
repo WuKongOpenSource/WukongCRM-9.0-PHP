@@ -120,4 +120,19 @@ class Comment extends Model
 		}
 		return true;
 	}
+
+	/**
+     * 获取评论数
+     * @author Michael_xu
+     * @param
+     * @return
+     */	
+	public function getCount($type,$type_id)
+	{
+		$count = 0;
+		if ($type && $type_id) {
+			$count = $this->where(['type' => $type,'type_id' => $type_id])->count();
+		}
+		return $count;
+	}	
 }

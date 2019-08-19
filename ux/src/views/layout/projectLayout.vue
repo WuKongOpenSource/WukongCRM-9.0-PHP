@@ -142,7 +142,8 @@ export default {
             item.children.push({
               path: 'list/' + id,
               meta: {
-                title: name
+                title: name,
+                id: id
               }
             })
             this.$nextTick(() => {
@@ -157,6 +158,22 @@ export default {
           }
         }
       })
+
+      // 恢复项目
+      this.$bus.$on('recover-project', (name, id) => {
+        for (let item of this.sidebarItems) {
+          if (item.meta && item.meta.title == '项目') {
+            item.children.push({
+              path: 'list/' + id,
+              meta: {
+                title: name,
+                id: id
+              }
+            })
+          }
+        }
+      })
+
       // 项目删除
       this.$bus.$on('delete-project', id => {
         for (let item of this.sidebarItems) {
@@ -180,6 +197,7 @@ export default {
     this.$bus.$off('project-setting')
     this.$bus.$off('add-project')
     this.$bus.$off('delete-project')
+    this.$bus.$off('recover-project')
   }
 }
 </script>

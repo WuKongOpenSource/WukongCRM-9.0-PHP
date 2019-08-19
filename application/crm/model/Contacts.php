@@ -40,11 +40,15 @@ class Contacts extends Common
     	$scene_id = (int)$request['scene_id'];
     	$is_excel = $request['is_excel']; //导出
     	$business_id = $request['business_id'];
+		$order_field = $request['order_field'];
+    	$order_type = $request['order_type'];    	
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);
 		unset($request['is_excel']);		    	
-		unset($request['business_id']);		    	
+		unset($request['business_id']);
+		unset($request['order_field']);	
+		unset($request['order_type']);				    	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -104,11 +108,12 @@ class Contacts extends Common
 		$userField = $fieldModel->getFieldByFormType('crm_contacts', 'user'); //人员类型
 		$structureField = $fieldModel->getFieldByFormType('crm_contacts', 'structure');  //部门类型			
 
-		if ($request['order_type'] && $request['order_field']) {
-			$order = trim($request['order_field']).' '.trim($request['order_type']);
+		//排序
+		if ($order_type && $order_field) {
+			$order = 'convert(contacts.'.trim($order_field).' using gbk) '.trim($order_type);
 		} else {
 			$order = 'contacts.update_time desc';
-		}	
+		}
 		$readAuthIds = $userModel->getUserByPer('crm', 'contacts', 'read');
         $updateAuthIds = $userModel->getUserByPer('crm', 'contacts', 'update');
         $deleteAuthIds = $userModel->getUserByPer('crm', 'contacts', 'delete');		
@@ -121,7 +126,7 @@ class Contacts extends Common
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		->field('contacts.*,customer.name as customer_name')
         		// ->field('contacts_id,'.implode(',',$indexField)
-        		->order($order)
+        		->orderRaw($order)
         		->select();	
         $dataCount = db('crm_contacts')
         			->alias('contacts')

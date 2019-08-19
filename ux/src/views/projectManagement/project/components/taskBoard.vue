@@ -2,15 +2,17 @@
   <div class="content-box"
        v-loading="loading">
     <draggable :list="taskList"
-               :options="{ group: 'mission', forceFallback: false, dragClass: 'sortable-parent-drag'}"
+               :options="{ group: 'mission', forceFallback: false, dragClass: 'sortable-parent-drag', filter: '.ignore-elements'}"
                handle=".board-column-wrapper"
                @end="moveEndParentTask"
+               :move="moveParentTask"
                id="task-board-body"
                class="board-column-content-parent"
                v-scrollx="{ ignoreClass :['ignoreClass']}">
       <div class="board-column"
            v-for="(item, index) in taskList"
-           :key="index">
+           :key="index"
+           :class="{'ignore-elements': item.class_id == -1}">
         <flexbox orient="vertical"
                  align="stretch"
                  class="board-column-wrapper ignoreClass">
@@ -18,7 +20,7 @@
             <div>
               <span class="text"> {{ item.class_name }} </span>
               <span class="text-num">{{item.checkedNum}} / {{item.list.length}}</span>
-              <el-popover v-if="canUpdateTaskClass"
+              <el-popover v-if="canUpdateTaskClass && item.class_id != -1"
                           placement="bottom-start"
                           width="150"
                           v-model="item.taskHandleShow"
@@ -57,7 +59,8 @@
                      @click="createSubTaskClick(item)">新建任务</p>
                   <p v-if="canUpdateTaskClass"
                      @click="archiveTaskListClick(item)">归档已完成任务</p>
-                  <p v-if="canDeleteTaskClass" @click="delectTaskListClick(item, index)">删除列表</p>
+                  <p v-if="canDeleteTaskClass"
+                     @click="delectTaskListClick(item, index)">删除列表</p>
                 </div>
                 <img class="img-gd"
                      ref="imgPopoverSlot"
@@ -71,7 +74,10 @@
                          :percentage="item.checkedNum / item.list.length * 100"></el-progress>
           </div>
           <draggable :list="item.list"
-                     :options="{ group: 'missionSon', forceFallback: false, dragClass: 'sortable-drag' }"
+                     :options="{ group: {
+                       name: 'missionSon',
+                       put: item.class_id != -1
+                     }, forceFallback: false, dragClass: 'sortable-drag' }"
                      @end="moveEndSonTask"
                      class="board-column-content"
                      :id="item.class_id">
@@ -102,7 +108,7 @@
                   <span :style="{'color': element.is_end == 1 && !element.checked ? 'red': '#999'}">{{element.stop_time | filterTimestampToFormatTime('MM-DD')}}截止</span>
                 </div>
                 <div class="img-box"
-                     v-if="element.subcount">
+                     v-if="element.subcount || element.subdonecount">
                   <i class="wukong wukong-sub-task"></i>
                   <span>{{element.subdonecount}}/{{element.subcount + element.subdonecount}}</span>
                 </div>
@@ -220,7 +226,7 @@
           </div>
           <div class="new-task"
                @click="createSubTaskClick(item)"
-               v-else-if="canCreateTask">
+               v-else-if="canCreateTask && item.class_id != -1">
             <span class="el-icon-plus"></span>
             <span>新建任务</span>
           </div>
@@ -228,7 +234,8 @@
       </div>
 
       <!-- 新建列表 -->
-      <div v-if="canCreateTaskClass" class="board-column-new-list">
+      <div v-if="canCreateTaskClass"
+           class="board-column-new-list">
         <div class="new-list"
              v-if="!createTaskListShow && loading == false"
              @click="createTaskListShow = true">
@@ -443,6 +450,15 @@ export default {
         })
           .then(res => {})
           .catch(err => {})
+      }
+    },
+
+    moveParentTask(evt) {
+      if (
+        evt.draggedContext.futureIndex == 0 &&
+        this.taskList[0].class_id == -1
+      ) {
+        return false
       }
     },
 
@@ -690,11 +706,14 @@ export default {
       if (data.index == 0 || data.index) {
         // 是否完成勾选
         if (data.type == 'title-check') {
-          this.$set(
-            this.taskList[data.section].list[data.index],
-            'checked',
-            data.value
-          )
+          let sectionItem = this.taskList[data.section]
+          this.$set(sectionItem.list[data.index], 'checked', data.value)
+          if (data.value) {
+            sectionItem.checkedNum++
+          } else {
+            sectionItem.checkedNum--
+          }
+          this.$set(sectionItem, 'checkedNum', sectionItem.checkedNum)
         } else if (data.type == 'delete') {
           this.taskList[data.section].list.splice(data.index, 1)
         } else if (data.type == 'change-stop-time') {

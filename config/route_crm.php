@@ -13,7 +13,8 @@ return [
 
 	// 【仪表盘】销售简报
 	'crm/index/index' => ['crm/index/index', ['method' => 'POST']],    
-
+	'crm/index/indexList' => ['crm/index/indexList', ['method' => 'POST']], 
+	
 	// 【客户】列表
 	'crm/customer/index' => ['crm/customer/index', ['method' => 'POST']],
 	// 【客户】创建

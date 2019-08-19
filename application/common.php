@@ -157,7 +157,7 @@ function where_arr($array = [], $m = '', $c = '', $a = '')
                 $k = 'name';
                 $c = 'contacts.';
             }
-            if ($k == 'check_status' && is_array($v)) $v['value'] = $checkStatusArray[$v['value']] ? : '0';
+            if ($k == 'check_status' && is_array($v) && in_array($v['value'],$checkStatusArray)) $v['value'] = $checkStatusArray[$v['value']] ? : '0';
             if (is_array($v)) {
                 if ($v['state']) {
                     $address_where[] = '%'.$v['state'].'%';
@@ -167,7 +167,6 @@ function where_arr($array = [], $m = '', $c = '', $a = '')
                             $address_where[] = '%'.$v['area'].'%';
                         }
                     }
-                    if ($v['search']) $address_where[] = '%'.$v['search'].'%'; 
                     if ($v['condition'] == 'not_contain') {
                         $where[$c.$k] = ['notlike', $address_where, 'OR'];
                     } else {
@@ -301,7 +300,7 @@ function actionLog($id, $join_user_ids='', $structure_ids='', $content='')
         $data['action_name'] = $action_name = $a;
         $data['action_id'] = $v;
         $data['create_time'] = time();
-        $data['content'] = $content ? : lang('ACTIONLOG', [$category, $userInfo['username'], date('Y-m-d H:i:s'), lang($action_name), $v, lang($controller_name)]);
+        $data['content'] = $content ? : lang('ACTIONLOG', [$category, $userInfo['realname'], date('Y-m-d H:i:s'), lang($action_name), $v, lang($controller_name)]);
         $data['join_user_ids'] = $join_user_ids ? : ''; //抄送人
         $data['structure_ids'] = $structure_ids ? : ''; //抄送部门
         if ($action_name == 'delete' || $action_name == 'commentdel') {
@@ -439,7 +438,9 @@ function getSubUserId($self = true, $type = 0)
 
     $belowIds = [];
     if (empty($type)) {
-        $belowIds = getSubUser($userInfo['id']);
+        if ($userInfo['id']) {
+            $belowIds = getSubUser($userInfo['id']);
+        }
     } else {
         $belowIds = getSubUser(0);
     }   
@@ -1353,6 +1354,4 @@ function curl_post($url = '', $post = array())
     if (curl_errno($curl)) {
         echo 'Errno'.curl_error($curl);//捕抓异常
     }
-    curl_close($curl); // 关闭CURL会话
-    return $res; // 返回数据，json格式
 }

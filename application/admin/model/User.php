@@ -308,9 +308,8 @@ class User extends Common
 			// 	$this->error = '非法操作';
 			// 	return false;
 			// }
-			$checkData = $this->get($id);
-			$userInfo = $checkData->data;
-			if (!$checkData) {
+			$userInfo = $this->get($id);
+			if (!$userInfo) {
 				$this->error = '暂无此数据';
 				return false;
 			}
@@ -318,9 +317,25 @@ class User extends Common
 				$this->error = '请至少勾选一个用户组';
 				return false;
 			}
-			if ($param['parent_id'] == $id) {
-				$this->error = '直属上级不能是当前人';
-				return false;
+			$unUserId = [];
+			if ($param['parent_id'] == $userInfo['id']) {
+				$this->error = '直属上级不能是自己';
+				return false;				
+			}
+			if ($param['parent_id']) {
+				if ($userInfo['id'] == 1) {
+					$this->error = '超级管理员不能设置上级';
+					return false;
+				} else {
+					$unUserId[] = $id;
+					$subUserId = getSubUser($id);
+					$unUserId = $subUserId ? array_merge($subUserId,$unUserId) : $unUserId;
+				}
+				$parentInfo = $this->get($param['parent_id']);
+				if (in_array($param['parent_id'],$unUserId) && $parentInfo['parent_id']) {
+					$this->error = '直属上级不能是自己或下属';
+					return false;					
+				}				
 			}
 			if (db('admin_user')->where(['id' => ['neq',$id],'username' => $param['username']])->find()) {
 				$this->error = '手机号已存在';

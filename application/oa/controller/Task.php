@@ -326,12 +326,12 @@ class Task extends ApiCommon
         if (!$param['task_id']) {
         	return resultArray(['error'=>'参数错误']);
         }
-        $model = new \app\work\model\Task();
-        $data = $model->getDataById($param['task_id'], $userInfo);
+        $taskmodel = new \app\work\model\Task();
+        $data = $taskmodel->getDataById($param['task_id'], $userInfo);
         if ($data) {
             return resultArray(['data'=>$data]);
         } else {
-            return resultArray(['error'=>$model->getError()]);
+            return resultArray(['error'=>$taskmodel->getError()]);
         }
     }
 
@@ -430,9 +430,8 @@ class Task extends ApiCommon
         $param['create_user_id'] = $userInfo['id']; 
      	
         if (isset($param['priority_id']) && $param['task_id']) {
-			$taskInfo = Db::name('Task')->where(['task_id' => $param['task_id']].'')->find();
-            $flag = Db::name('Task')->where('task_id ='.$param['task_id'])->setField('priority',$param['priority_id']);
-            if ($flag) {
+            if (db('task')->where(['task_id' => $param['task_id']])->setField('priority',$param['priority_id'])) {
+            	$taskInfo = db('task')->where(['task_id' => $param['task_id']])->find();
 				if (!$taskInfo['pid']) {
 					actionLog( $taskInfo['task_id'],$taskInfo['owner_user_id'],$taskInfo['structure_ids'],'修改优先级'); 
 				}
@@ -547,7 +546,7 @@ class Task extends ApiCommon
 			return resultArray(['error'=>'没有权限']);
 		}
 		
-        $ret = $model->updateDetTask($param);
+        $ret = $taskModel->updateDetTask($param);
         if ( $ret ) {
             return resultArray(['data'=>'操作成功']);
         } else {
@@ -569,11 +568,11 @@ class Task extends ApiCommon
         $param['create_user_id'] = $userInfo['id']; 
         $ary = array('lable_id_add','lable_id_del');
         if ( in_array($param['type'], $ary) ) {
-            $ret = $model->updateDetTask($param);
+            $ret = $taskModel->updateDetTask($param);
             if ( $ret ) {
                 return resultArray(['data'=>'操作成功']);
             } else {
-                return resultArray(['error'=>$model->getError()]);
+                return resultArray(['error'=>$taskModel->getError()]);
             }
         } else {
             return resultArray(['error'=>$taskModel->getError()]);
@@ -652,14 +651,14 @@ class Task extends ApiCommon
     public function dateList() 
     {
         $param = $this->param;
-        $model = new \app\work\model\Task(); 
+        $taskmodel = new \app\work\model\Task(); 
 		$userInfo = $this->userInfo;
         $param['user_id'] = $userInfo['id'];        
-        $ret = $model->getDateList($param);
+        $ret = $taskmodel->getDateList($param);
         if ($ret) {
             return resultArray(['data'=>$ret]);
         } else {
-            return resultArray(['error'=>$model->getError()]);
+            return resultArray(['error'=>$taskmodel->getError()]);
         }
     }
 

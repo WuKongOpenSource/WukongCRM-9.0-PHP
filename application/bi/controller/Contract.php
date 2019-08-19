@@ -220,7 +220,10 @@ class Contract extends ApiCommon
             $next_day = $timeArr['next_day']?$timeArr['next_day']:'1';
             $end_time = $timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day;
             $create_time = [];
-            if ($start_time && $end_time) {
+
+            if((int)$next_day-(int)$day == 1){
+                $create_time = $start_time;
+            }else{
                 $create_time = array('between',array($start_time,$end_time));
             }
             $where = array();
@@ -235,15 +238,17 @@ class Contract extends ApiCommon
             $datas['items'][] = $item;
         }
         if(!empty($param['start_time'])){
-            $whereArr['create_time'] = array('between',array($param['start_time'],$param['end_time']));
+            $whereArr['order_date'] = array('between',array($param['start_time'],$param['end_time']));
         }else{
             $create_time = getTimeByType($param['type']);
             if ($create_time) {
-                $whereArr['create_time'] = array('between',array($create_time[0],$create_time[1]));
+                $whereArr['order_date'] = array('between',array(date('Y-m-d',$create_time[0]),date('Y-m-d',$create_time[1])));
             }
         }
         $datas['count_zong'] = $biContractModel->getDataCount($whereArr);
         $datas['money_zong'] = $biContractModel->getDataMoney($whereArr);
+        $whereArr['return_time'] = $whereArr['order_date'];
+        unset($whereArr['order_date']);
         $datas['back_zong'] = $receivablesModel->getDataMoney($whereArr);
         $datas['w_back_zong'] = $datas['money_zong']-$datas['back_zong'];
         return resultArray(['data' => $datas]);

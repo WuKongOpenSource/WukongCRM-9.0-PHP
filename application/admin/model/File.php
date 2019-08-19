@@ -125,7 +125,7 @@ class File extends Common
 				$resData[$k] = ['key' => $k,'name' => $fileInfo['name'],'status' => 0,'error' => $v['obj']->getError()];
 			}
         }
-        return $resData;		
+        return $resData;
 	}
 
 	/**
@@ -274,8 +274,16 @@ class File extends Common
         	$list[$k]['create_time'] = date('Y-m-d H:i:s',$v['create_time']);
         	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
         	$list[$k]['ext'] = getExtension($v['save_name']);
-        	$list[$k]['file_path'] = getFullPath($v['file_path']);
-        	$list[$k]['file_path_thumb'] = getFullPath($v['file_path_thumb']);
+        	if($v['status'] == 0){
+        		$list[$k]['file_path'] = getFullPath($v['file_path']);
+        		$list[$k]['file_path_thumb'] = getFullPath($v['file_path_thumb']);
+        	}else if($v['status'] == 1){
+        		$list[$k]['file_path'] = $v['file_path'];
+        		$list[$k]['file_path_thumb'] = $v['file_path_thumb'];
+        	}else if($v['status'] == 2){
+        		$list[$k]['file_path'] = 'http://crm190517.oss-cn-beijing.aliyuncs.com/'.$v['file_path'];
+        		$list[$k]['file_path_thumb'] = 'http://crm190517.oss-cn-beijing.aliyuncs.com/'.$v['file_path_thumb'];
+        	}
         }
         $data = [];
         $data['list'] = $list ? : [];

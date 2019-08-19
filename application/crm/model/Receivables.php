@@ -39,9 +39,13 @@ class Receivables extends Common
 		$search = $request['search'];
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
+		$order_field = $request['order_field'];
+    	$order_type = $request['order_type'];    	
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);	    	
+		unset($request['user_id']);	
+		unset($request['order_field']);	
+		unset($request['order_type']);		    	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -90,6 +94,12 @@ class Receivables extends Common
 		} else {
 			$order = 'receivables.update_time desc';
 		}
+		//排序
+		if ($order_type && $order_field) {
+			$order = 'convert(receivables.'.trim($order_field).' using gbk) '.trim($order_type);
+		} else {
+			$order = 'receivables.update_time desc';
+		}		
 
 		$readAuthIds = $userModel->getUserByPer('crm', 'receivables', 'read');
         $updateAuthIds = $userModel->getUserByPer('crm', 'receivables', 'update');
@@ -102,7 +112,7 @@ class Receivables extends Common
 				->where($authMap)
 				->limit(($request['page']-1)*$request['limit'], $request['limit'])
 				->field('receivables.*,customer.name as customer_name,contract.name as contract_name,contract.num as contract_num,contract.money as contract_money')
-				->order($order)
+				->orderRaw($order)
 				->select();	
         $dataCount = db('crm_receivables')
         			->alias('receivables')

@@ -90,6 +90,7 @@
                        @click="addEmployees"> 关联员工 </el-button>
           </flexbox>
           <el-table :data="tableData"
+                    :height="tableHeight"
                     style="width: 100%">
             <el-table-column :prop="item.field"
                              show-overflow-tooltip
@@ -101,9 +102,7 @@
                 <div class="table-head-name">{{scope.column.label}}</div>
               </template>
             </el-table-column>
-            <el-table-column fixed="right"
-                             label="操作"
-                             show-overflow-tooltip>
+            <el-table-column label="操作">
               <template slot-scope="scope">
                 <!-- <span class="el-icon-edit content-table-span"
                       @click="editBtn(scope.row)"></span> -->
@@ -112,6 +111,18 @@
               </template>
             </el-table-column>
           </el-table>
+          <div class="p-contianer">
+            <el-pagination class="p-bar"
+                           @size-change="handleSizeChange"
+                           @current-change="handleCurrentChange"
+                           :current-page="currentPage"
+                           :page-sizes="pageSizes"
+                           :page-size.sync="pageSize"
+                           layout="total, sizes, prev, pager, next, jumper"
+                           :total="total">
+            </el-pagination>
+          </div>
+
         </div>
         <!-- 权限管理 -->
         <div class="jurisdiction-box"
@@ -201,6 +212,11 @@ export default {
     return {
       activeIndex: '1', // 角色员工  角色权限 切换 默认左边
       tableData: [], // 与角色关联的员工
+      tableHeight: document.documentElement.clientHeight - 319, // 表的高度
+      currentPage: 1,
+      pageSize: 15,
+      pageSizes: [15, 30, 45, 60],
+      total: 0,
       tableList: [
         { label: '姓名', field: 'realname' },
         { label: '部门', field: 's_name' },
@@ -247,6 +263,10 @@ export default {
   },
   computed: {},
   mounted() {
+    /** 控制table的高度 */
+    window.onresize = () => {
+      this.tableHeight = document.documentElement.clientHeight - 319
+    }
     /** 获取权限信息 */
     this.getRulesList()
   },
@@ -522,18 +542,38 @@ export default {
       this.roleRulesEdit['bi_upload'] = role.rules['bi'] ? role.rules['bi'] : []
     },
     // 获取角色下员工列表
-    getUserListWithRole(role) {
+    getUserListWithRole(role, noReset) {
+      if (!noReset) {
+        this.currentPage = 1
+      }
       this.menuLoading = true
       adminUsersIndex({
+        page: this.currentPage,
+        limit: this.pageSize,
         group_id: role.id
       })
         .then(res => {
           this.tableData = res.data.list
+          this.total = res.data.dataCount
           this.menuLoading = false
         })
         .catch(err => {
           this.menuLoading = false
         })
+    },
+    /**
+     * 更改每页展示数量
+     */
+    handleSizeChange(val) {
+      this.pageSize = val
+      this.getUserListWithRole(this.roleActive, true)
+    },
+    /**
+     * 更改当前页数
+     */
+    handleCurrentChange(val) {
+      this.currentPage = val
+      this.getUserListWithRole(this.roleActive, true)
     },
     // 员工权限标记
     getUserRulesWithRole(role) {
@@ -856,5 +896,16 @@ export default {
   right: 30px;
 }
 
+/** 分页布局 */
+.p-contianer {
+  position: relative;
+  background-color: white;
+  height: 44px;
+  .p-bar {
+    float: right;
+    margin: 5px 100px 0 0;
+    font-size: 14px !important;
+  }
+}
 @import './styles/table.scss';
 </style>

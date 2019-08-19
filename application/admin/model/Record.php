@@ -493,9 +493,11 @@ class Record extends Common
 			case 'crm_customer' : $dbName = db('crm_customer'); $dbId = 'customer_id'; break;
 			case 'crm_leads' : $dbName = db('crm_leads'); $dbId = 'leads_id'; break;
 			case 'crm_contacts' : $dbName = db('crm_contacts'); $dbId = 'contacts_id'; break;
-			case 'crm_contract' : $dbName = db('crm_contract'); $dbId = 'contract_id'; break;
 			case 'crm_business' : $dbName = db('crm_business'); $dbId = 'business_id'; break;
 			default : break;
+		}
+		if (!$dbName || !$dbId) {
+			return true;
 		}
 		$data = [];
 		if ($next_time) $data['next_time'] = $next_time;

@@ -2,6 +2,7 @@
 import {
   mapGetters
 } from 'vuex'
+import Lockr from 'lockr'
 import CRMListHead from '../components/CRMListHead'
 import CRMTableHead from '../components/CRMTableHead'
 import FieldsSet from '../components/fieldsManager/FieldsSet'
@@ -40,6 +41,7 @@ import {
   getDateFromTimestamp
 } from '@/utils'
 import moment from 'moment'
+import { Loading } from 'element-ui'
 
 export default {
   components: {
@@ -54,9 +56,10 @@ export default {
       tableHeight: document.documentElement.clientHeight - 240, // 表的高度
       list: [],
       fieldList: [],
+      sortData: {}, // 字段排序
       currentPage: 1,
-      pageSize: 15,
-      pageSizes: [15, 30, 45, 60],
+      pageSize: Lockr.get('crmPageSizes') || 15,
+      pageSizes: [15, 30, 60, 100],
       total: 0,
       search: '', // 搜索内容
       /** 控制详情展示 */
@@ -110,6 +113,11 @@ export default {
       }
       if (this.scene_id) {
         params.scene_id = this.scene_id
+      }
+
+      if (this.sortData.order) {
+        params.order_field = this.sortData.prop
+        params.order_type = this.sortData.order == "ascending" ? 'asc' : 'desc'
       }
       for (var key in this.filterObj) {
         params[key] = this.filterObj[key]
@@ -246,7 +254,7 @@ export default {
                   type: 'crm',
                   formatter: fieldFormatter
                 }
-              } else if (element.field === 'status_id' || element.field === 'type_id' || element.field === 'category_id') {
+              } else if (element.field === 'status_id' || element.field === 'type_id' || element.field === 'category_id' || element.field === 'plan_id') {
                 function fieldFormatter(info) {
                   return info ? info : ''
                 }
@@ -433,6 +441,7 @@ export default {
           product: crmProductExcelExport
         }[this.crmType]
       }
+      let loading = Loading.service({ fullscreen: true, text: '导出中...' })
       request(params)
         .then(res => {
           var blob = new Blob([res.data], {
@@ -449,8 +458,11 @@ export default {
           downloadElement.click() //点击下载
           document.body.removeChild(downloadElement) //下载完成移除元素
           window.URL.revokeObjectURL(href) //释放掉blob对象
+          loading.close()
         })
-        .catch(() => { })
+        .catch(() => {
+          loading.close()
+        })
     },
     /** 筛选操作 */
     handleFilter(data) {
@@ -496,6 +508,14 @@ export default {
     handleTableSet() {
       this.showFieldSet = true
     },
+    /**
+     * 字段排序
+     */
+    sortChange(column, prop, order) {
+      this.sortData = column
+      this.getList()
+    },
+
     /** 勾选操作 */
     // 当选择项发生变化时会触发该事件
     handleSelectionChange(val) {
@@ -512,16 +532,13 @@ export default {
           width: newWidth
         })
           .then(res => {
-            this.$message({
-              type: 'success',
-              message: res.data
-            })
           })
           .catch(() => { })
       }
     },
     // 更改每页展示数量
     handleSizeChange(val) {
+      Lockr.set('crmPageSizes', val)
       this.pageSize = val
       this.getList()
     },

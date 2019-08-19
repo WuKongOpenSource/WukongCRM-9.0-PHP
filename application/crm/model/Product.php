@@ -38,9 +38,13 @@ class Product extends Common
 		$search = $request['search'];
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
+		$order_field = $request['order_field'];
+    	$order_type = $request['order_type'];       	
 		unset($request['scene_id']);
 		unset($request['search']);
-		unset($request['user_id']);   	
+		unset($request['user_id']); 
+		unset($request['order_field']);	
+		unset($request['order_type']);		  	
 
         $request = $this->fmtRequest($request);
         $requestMap = $request['map'] ? : [];
@@ -73,7 +77,14 @@ class Product extends Common
 		// foreach ($indexField as $k=>$v) {
 		// 	$newIndexField[] = 'crm_product.'.$v;
 		// }
-		// $indexField  = $newIndexField;			
+		// $indexField  = $newIndexField;
+					
+		//排序
+		if ($order_type && $order_field) {
+			$order = 'convert(product.'.trim($order_field).' using gbk) '.trim($order_type);
+		} else {
+			$order = 'product.update_time desc';
+		}		
 
 		$join = [
 			['__CRM_PRODUCT_CATEGORY__ product_category', 'product_category.category_id = product.category_id', 'LEFT'],
@@ -86,6 +97,7 @@ class Product extends Common
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		// ->field('product_id,'.implode(',',$indexField).',product_category.name as category_name')
         		->field('product.*,product_category.name as category_name')
+        		->orderRaw($order)
         		->select();
         $dataCount = db('crm_product')->alias('product')
 					 ->where($map)

@@ -732,8 +732,18 @@ class Field extends Model
 					'setting' => '待审核'.chr(10).'审核中'.chr(10).'审核通过'.chr(10).'审核失败'.chr(10).'已撤回'
 				]
 			];
-			$field_list = array_merge($field_list, $field_arr);
 		}
+		if (in_array($param['types'],['crm_customer'])) {
+			$field_arr = [
+				'0' => [
+					'field' => 'address',
+		            'name' => '地区定位',
+		            'form_type' => 'address',
+		            'setting' => []
+		        ]
+			];
+		}
+		if ($field_arr) $field_list = array_merge($field_list, $field_arr);	
 		foreach ($field_list as $k=>$v) {
 			//处理setting内容
 			$setting = [];
@@ -1041,9 +1051,7 @@ class Field extends Model
 			case 'user' : $val = ArrayToString($userModel->getUserNameByArr($val)); break;
 			case 'structure' : $val = ArrayToString($structureModel->getStructureNameByArr($val)); break;
 			case 'customer' : $val = db('crm_customer')->where(['customer_id' => $val])->value('name'); break;
-			case 'customer' : $val = db('crm_customer')->where(['customer_id' => $val])->value('name'); break;
 			case 'business' : $val = db('crm_business')->where(['business_id' => $val])->value('name'); break;
-			case 'category' : $val = db('crm_product_category')->where(['category_id' => $val])->value('name'); break;
 			case 'category' : $val = db('crm_product_category')->where(['category_id' => $val])->value('name'); break;
 			case 'business_type' : $val = db('crm_business_type')->where(['type_id' => $val])->value('name'); break;
 			case 'business_status' : $val = db('crm_business_status')->where(['status_id' => $val])->value('name'); break;
@@ -1073,4 +1081,27 @@ class Field extends Model
 		$arrFieldAtt = db('admin_field')->where(['types' => $types,'form_type' => ['in',$arrayFormType]])->column('field');
 		return $arrFieldAtt ? : [];		
 	}
+
+	/**
+     * 字段对照关系处理
+     * @author Michael_xu
+     * @param  $types 分类
+     * @param  $data 数据
+     * @return 
+     */	
+   	public function getRelevantData($types , $data = []) {
+		$types_arr = ['crm_leads'];
+		if (!in_array($types, $types_arr)) {
+			$this->error = '参数错误';
+			return false;
+		}
+		if (!$data) return $data;
+		$list = $this->where(['types' => $types,'relevant' => ['neq','']])->field('field,relevant')->select();
+		if (!$list) return $data;
+		$newData = $data;
+		foreach ($list as $k => $v) {
+			$newData[$v['relevant']] = $data[$v['field']];
+		}
+		return $newData ? : [];
+   	}	
 }

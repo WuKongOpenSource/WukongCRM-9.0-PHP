@@ -156,7 +156,7 @@ export default {
       { prop: 'contract_id', width: '200', label: '合同名称' },
       { prop: 'contract_money', width: '200', label: '合同金额' },
       { prop: 'money', width: '200', label: '回款金额' },
-      { prop: 'num', width: '200', label: '期数' },
+      { prop: 'plan_id', width: '200', label: '期数' },
       { prop: 'owner_user_id', width: '200', label: '负责人' },
       { prop: 'check_status_info', width: '200', label: '状态' },
       { prop: 'return_time', width: '200', label: '回款日期' }
@@ -314,6 +314,8 @@ export default {
         return timestampToFormatTime(row.customer_id_info.create_time)
       } else if (column.property === 'owner_user_id') {
         return row.owner_user_id_info.realname
+      } else if (column.property === 'plan_id') {
+        return row.plan_id_info
       }
       return row[column.property]
     },

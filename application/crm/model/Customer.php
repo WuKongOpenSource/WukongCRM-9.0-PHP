@@ -43,12 +43,16 @@ class Customer extends Common
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
     	$is_excel = $request['is_excel']; //导出
-    	$action = $request['action']; //导出
+    	$action = $request['action'];
+    	$order_field = $request['order_field'];
+    	$order_type = $request['order_type'];
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);	
 		unset($request['is_excel']);	
 		unset($request['action']);	
+		unset($request['order_field']);	
+		unset($request['order_type']);
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -100,6 +104,10 @@ class Customer extends Common
 			}		
 		} else {
 			$customerMap = $this->getWhereByCustomer(); //默认条件
+			//工作台仪表盘
+			if ($requestData['a'] == 'indexlist' && $requestData['c'] == 'index') {
+				$customerMap = [];
+			}
 			if (!$partMap) {
 				//权限
 				$a = 'index';
@@ -140,11 +148,13 @@ class Customer extends Common
 		$userField = $fieldModel->getFieldByFormType('crm_customer', 'user'); //人员类型
 		$structureField = $fieldModel->getFieldByFormType('crm_customer', 'structure'); //部门类型
 		//排序
-		if ($request['order_type'] && $request['order_field']) {
-			$order = 'customer.'.trim($request['order_field']).' '.trim($request['order_type']);
+		if ($order_type && $order_field) {
+			// $order = 'customer.'.trim($order_field).' '.trim($order_type);
+			$order = 'convert(customer.'.trim($order_field).' using gbk) '.trim($order_type);
 		} else {
 			$order = 'customer.update_time desc';
 		}
+		//置顶
 		$tops = Db::name('crm_top')->where(['module' => ['eq','customer'],'create_role_id' => ['eq',$user_id],'set_top' => ['eq',1]])->order('top_time asc')->column('module_id');
 		$top_ids = implode(",", $tops);
 		if ($tops) {
@@ -160,8 +170,8 @@ class Customer extends Common
 				->where($poolMap)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		// ->field('customer_id,'.implode(',',$indexField))
-        		->order($order_t) /*置顶  自定义排序置顶*/
-        		->order($order)
+        		->order($order_t) /*置顶*/
+        		->orderRaw($order)
         		->select();
         $dataCount = db('crm_customer')->alias('customer')->where($map)->where($searchMap)->where($customerMap)->where($authMap)->where($partMap)->where($poolMap)->count('customer_id');
 
@@ -188,13 +198,16 @@ class Customer extends Common
         	//商机数
         	$list[$k]['business_count'] = db('crm_business')->where(['customer_id' => $v['customer_id']])->count() ? : 0;
         	//距进入公海天数
+        	$poolData = [];
         	if ($paramPool['config'] == 1 && $requestData['a'] !== 'pool') {
 				$paramPool['update_time'] = $v['update_time'];
 				$paramPool['deal_time'] = $v['deal_time'];
 				$paramPool['is_lock'] = $v['is_lock'];
 				$paramPool['deal_status'] = $v['deal_status'];
-	        	$list[$k]['pool_day'] = $this->getPoolDay($paramPool);
+				$poolData = $this->getPoolDay($paramPool);
         	}
+        	$list[$k]['pool_day'] = $poolData ? $poolData['poolDay'] : '';
+        	$list[$k]['is_pool'] = $poolData ? $poolData['isPool'] : '';
         	//权限
         	$roPre = $userModel->rwPre($user_id, $v['ro_user_id'], $v['rw_user_id'], 'read');
         	$rwPre = $userModel->rwPre($user_id, $v['ro_user_id'], $v['rw_user_id'], 'update');
@@ -342,8 +355,7 @@ class Customer extends Common
      */	
    	public function getDataById($id = '')
    	{  
-   		$map['customer_id'] = $id;
-		$dataInfo = $this->where($map)->find();
+		$dataInfo = $this->get($id);
 		if (!$dataInfo) {
 			$this->error = '数据不存在或已删除';
 			return false;
@@ -351,6 +363,30 @@ class Customer extends Common
 		$userModel = new \app\admin\model\User();
 		$dataInfo['create_user_id_info'] = isset($dataInfo['create_user_id']) ? $userModel->getUserById($dataInfo['create_user_id']) : [];
 		$dataInfo['owner_user_id_info'] = isset($dataInfo['owner_user_id']) ? $userModel->getUserById($dataInfo['owner_user_id']) : []; 
+		
+		//保护规则
+		$configModel = new \app\crm\model\ConfigData();
+        $configInfo = $configModel->getData();
+        $paramPool = [];
+        $paramPool['config'] = $configInfo['config'] ? : 0;
+        $paramPool['follow_day'] = $configInfo['follow_day'] ? : 0;
+        $paramPool['deal_day'] = $configInfo['deal_day'] ? : 0;
+		//是否公海
+    	$poolData = [];
+    	if ($paramPool['config'] == 1) {
+			$paramPool['update_time'] = $dataInfo['update_time'];
+			$paramPool['deal_time'] = $dataInfo['deal_time'];
+			$paramPool['is_lock'] = $dataInfo['is_lock'];
+			$paramPool['deal_status'] = $dataInfo['deal_status'];
+			$paramPool['owner_user_id'] = $dataInfo['owner_user_id'];
+			$poolData = $this->getPoolDay($paramPool);
+    	} else {
+    		if (!$dataInfo['owner_user_id']) {
+		        $poolData['isPool'] = 1;
+		    }
+    	}
+    	$dataInfo['pool_day'] = $poolData ? $poolData['poolDay'] : '';
+    	$dataInfo['is_pool'] = $poolData ? $poolData['isPool'] : '';
 		return $dataInfo;
    	}
 
@@ -547,17 +583,31 @@ class Customer extends Common
     public function getPoolDay($param)
     {
     	$poolDay = '';
+    	$isPool = 0;
     	$is_lock = $param['is_lock'] ? : 0;
+    	$update_time = $param['update_time'];
+    	if (strtotime($param['update_time'])) {
+    		$update_time = strtotime($param['update_time']);
+    	}
     	if (!$is_lock && $param['deal_status'] !== '已成交') {
     		$follow_time = time()-$param['follow_day']*86400;
 	    	$deal_time = time()-$param['deal_day']*86400;
-    		$sub_follow_day = ceil(($param['update_time']-$follow_time)/86400);
+    		$sub_follow_day = ceil(($update_time-$follow_time)/86400);
 			$sub_deal_day = ceil(($param['deal_time']-$deal_time)/86400);
     		$poolDay = ($sub_deal_day > $sub_follow_day) ? $sub_follow_day : $sub_deal_day;
     		$poolDay = $poolDay ? : 0;
+    		if ($poolDay < 0) {
+    			$isPool = 1; //是公海
+    		}
     	} else {
     		$poolDay = '-1'; //锁定
     	}
-    	return $poolDay;
+    	if (!$param['owner_user_id']) {
+    		$isPool = 1; //是公海
+    	}
+    	$data = [];
+    	$data['poolDay'] = $poolDay;
+    	$data['isPool'] = $isPool;
+    	return $data;
     }
 }

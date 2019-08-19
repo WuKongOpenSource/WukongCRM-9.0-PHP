@@ -220,6 +220,6 @@ class Addresslist extends ApiCommon
         if ($asc >= -11055 && $asc <= -10247) {
             return 'Z';
         }
-        return null;
+        return '#';
     }
 }

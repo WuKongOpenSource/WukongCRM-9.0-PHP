@@ -10,6 +10,7 @@ namespace app\crm\controller;
 use app\admin\controller\ApiCommon;
 use think\Hook;
 use think\Request;
+use think\Db;
 
 class Receivables extends ApiCommon
 {
@@ -90,10 +91,13 @@ class Receivables extends ApiCommon
         $param['check_user_id'] = is_array($check_user_id) ? ','.implode(',',$check_user_id).',' : $check_user_id;
         //流程审批人
         // $flow_user_id = $examineFlowModel->getUserByFlow($examineFlowData['flow_id'], $param['owner_user_id']); 
-        // $param['flow_user_id'] = $flow_user_id ? arrayToString($flow_user_id) : '';                
-
+        // $param['flow_user_id'] = $flow_user_id ? arrayToString($flow_user_id) : '';
         $res = $receivablesModel->createData($param);
         if ($res) {
+            //回款计划关联
+            if ($param['plan_id']) {
+                db('crm_receivables_plan')->where(['plan_id' => $param['plan_id']])->update(['receivables_id' => $res['receivables_id']]);
+            }
             return resultArray(['data' => '添加成功']);
         } else {
             return resultArray(['error' => $receivablesModel->getError()]);

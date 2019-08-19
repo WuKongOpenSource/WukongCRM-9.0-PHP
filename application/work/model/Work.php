@@ -234,18 +234,13 @@ class Work extends Common
 	{
 		$workInfo = $this->get($param['work_id']);
 		$oldOwner = stringToArray($workInfo['owner_user_id']);
-		if (isset($param['is_open']) && empty($param['is_open'])) {
-			$newOwner = $param['owner_user_id'];
-		} else {
-			$newOwner = $oldOwner ? array_unique(array_filter(array_merge($oldOwner,$param['owner_user_id']))) : $param['owner_user_id'];
-		}
+		$owner_user = $newOwner = $param['owner_user_id'];
 		$resUpdate = $this->where(['work_id' => $param['work_id']])->update(['owner_user_id' => arrayToString($newOwner)]);
 		//差集，需删除的
-		$del_user_ids = array_diff($oldOwner, $param['owner_user_id']);
+		$del_user_ids = array_diff($oldOwner, $newOwner);
 
 		$create_user_id = $param['create_user_id'] ? : '';
 		unset($param['create_user_id']);
-		$owner_user = $param['owner_user_id'];
 		$owner_user_arr = db('work_user')->where(['work_id' => $param['work_id']])->column('user_id');
 		foreach ($owner_user as $k=>$v) {
 			$data = [];
@@ -391,7 +386,11 @@ class Work extends Common
         $workInfo = Db::name('Work')->where(['work_id' => $work_id])->find();
 		if (in_array(1,$adminTypes) || in_array(7,$adminTypes)) {
             return true;
-        }        
+        }
+        //创建人有管理权限
+		if ($workInfo['create_user_id'] == $user_id) {
+    		return true;
+    	}             
         if (empty($workInfo['is_open'])) {
         	//私有项目
         	$groupInfo = db('work_user')->where(['work_id' => $work_id,'user_id' => $user_id])->find();
@@ -406,10 +405,6 @@ class Work extends Common
 	        }	         	
         } else {
         	if ($m == 'work' && $c == 'work' && $a == 'update') {
-				//公开项目(创建人)
-	        	if ($workInfo['create_user_id'] == $user_id) {
-	        		return true;
-	        	}
 	        	return false;        		
         	}
         	return true;
@@ -490,4 +485,76 @@ class Work extends Common
         $authList = rulesListToArray($rulesList, $newRuleIds);
         return $authList ? : [];  	
     }
+
+	/**
+     * 任务列表统计
+     * @author yykun
+     * @return
+     */    
+    public function classList($work_id)
+    {
+		$classList = Db::name('WorkTaskClass')->where(['status' => 1,'work_id' => $work_id])->order('order_id asc')->select();
+        $taskarray = array();
+        foreach ($classList as $k => $v) {
+            $task_list = [];
+            $task_list = db('task')->where(['work_id' => $work_id,'class_id' => $v['class_id'],'is_archive' => 0,'ishidden' => 0])->field('is_archive,status')->select();
+            $allTask = 0;
+            $undoneTask = 0;
+            $doneTask = 0;
+            foreach ($task_list as $kk => $vv) {
+                $allTask += 1;
+                if ($vv['status'] == 1) {
+                    $undoneTask += 1; 
+                    continue;
+                }
+                if ($vv['status'] == 5) {
+                    $doneTask += 1; 
+                    continue;
+                }
+            }
+            $classList[$k]['allTask'] = $allTask ? : 0;
+            $classList[$k]['undoneTask'] = $undoneTask ? : 0;
+            $classList[$k]['doneTask'] = $doneTask ? : 0;
+        }
+        return $classList ? : [];	
+    } 
+
+	/**
+     * 任务标签统计
+     * @author yykun
+     * @return
+     */    
+    public function labelList($work_id,$labelIds = array())
+    {
+    	if ($labelIds) {
+    		$labelList = [];
+    		$i = 0;
+			foreach ($labelIds as $k => $v) {
+	            $labledet = [];
+	            $task_list = [];
+	            $labledet = Db::name('WorkTaskLable')->where(['lable_id' => $v])->find();
+	            $task_list = Db::name('Task')->where(['lable_id' => ['like','%,'.$v.',%'],'work_id' => $work_id,'is_archive' => 0,'ishidden' => 0])->field('status,task_id')->select();
+	            $allTask = 0;
+	            $undoneTask = 0;
+	            $doneTask = 0;
+	            foreach ($task_list as $kk => $vv) {
+	                if ($vv['status'] !== 3) $allTask += 1;
+	                if ($vv['status'] == 1) {
+	                    $undoneTask += 1;
+	                    continue;
+	                }
+	                if ($vv['status'] == 5) {
+	                    $doneTask += 1; 
+	                    continue;
+	                }
+	            }
+	            $labelList[$i]['allTask'] = $allTask ? : 0;
+	            $labelList[$i]['undoneTask'] = $undoneTask ? : 0;
+	            $labelList[$i]['doneTask'] = $doneTask ? : 0;                
+	            $labelList[$i]['lablename'] = $labledet['name'];
+	            $i++;
+	        }
+    	}
+        return $labelList ? : [];	
+    }          
 }

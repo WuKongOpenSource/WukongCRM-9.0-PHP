@@ -42,14 +42,26 @@ class Task extends Common
 		//权限项目判断
 		$workModel = model('Work');
 		$userModel = new \app\admin\model\User();
-		$ret = $workModel->checkWork($request['work_id'], $user_id);
+		$work_id = $request['work_id'];
+		$ret = $workModel->checkWork($work_id, $user_id);
 		if (!$ret) {
 			$this->error = $workModel->getError();
 			return false;
 		}
 		$classModel = model('WorkClass');
+		//删除还原的任务，归类至未分组列表下，此列表不可拖拽编辑
+		if ($this->where(['class_id' => 0,'ishidden' => 0,'work_id' => $work_id])->find()) {
+			$classArr = ['0' => ['name' => '未分组','class_id' => 0]];
+		}
+		$classList = $classModel->getDataList($work_id);
+		if ($classArr && $classList['list']) {
+			$newList = array_merge($classArr,$classList['list']);
+		} elseif ($classArr) {
+			$newList = $classArr;
+		} else {
+			$newList = $classList['list'];
+		}
 		
-		$list = $classModel->getDataList($request['work_id']);
 		if ($request['main_user_id']) {
 			$map['main_user_id'] = ['in',$request['main_user_id']];
 		}
@@ -92,7 +104,7 @@ class Task extends Common
 				$task_id = [];
 				$lableWhere = [];
 				$lableWhere['lable_id'] = ['like','%,'.$v.',%'];
-				$lableWhere['work_id'] = $request['work_id'];
+				$lableWhere['work_id'] = $work_id;
 				$lableWhere['status'] = ['in',['1','5']]; 	
 				$lableWhere['ishidden'] = 0;
 				$lableWhere['pid'] = 0;
@@ -107,8 +119,8 @@ class Task extends Common
 			$map['task_id'] = ['in',$task_ids];
 		}
 		$data = array();
-		foreach ($list['list'] as $key => $value) {
-			$data[$key]['class_id'] = $value['class_id'];	
+		foreach ($newList as $key => $value) {
+			$data[$key]['class_id'] = $value['class_id'] ? : -1;	
 			$data[$key]['class_name'] = $value['name'];
 
 			$map['status'] = $map['status'] ? : ['in',['1','5']];

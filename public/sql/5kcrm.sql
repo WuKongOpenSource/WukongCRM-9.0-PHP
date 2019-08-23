@@ -1254,7 +1254,7 @@ INSERT INTO `5kcrm_admin_rule` VALUES ('82', '2', '导出', 'excelExport', '3', 
 INSERT INTO `5kcrm_admin_rule` VALUES ('83', '2', '导入', 'excelImport', '3', '56', '1');
 INSERT INTO `5kcrm_admin_rule` VALUES ('84', '2', '导出', 'excelExport', '3', '56', '1');
 
-ALTER TABLE `5kcrm_oa_announcement` ADD `read_user_ids` TEXT  COMMENT '阅读人' AFTER `owner_user_ids`;
+ALTER TABLE `5kcrm_oa_announcement` ADD `read_user_ids` TEXT COMMENT '阅读人' AFTER `owner_user_ids`;
 
 CREATE TABLE `5kcrm_crm_top` (
   `top_id` int(10) NOT NULL AUTO_INCREMENT,
@@ -1265,3 +1265,57 @@ CREATE TABLE `5kcrm_crm_top` (
   `module` varchar(50) NOT NULL DEFAULT 'business' COMMENT '置顶模块',
   PRIMARY KEY (`top_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='置顶表';
+
+INSERT INTO `5kcrm_crm_config` (`id`, `name`, `value`, `description`) VALUES
+(NULL, 'record_type', '[\"\\u6253\\u7535\\u8bdd\",\"\\u53d1\\u90ae\\u4ef6\",\"\\u53d1\\u77ed\\u4fe1\",\"\\u89c1\\u9762\\u62dc\\u8bbf\",\"\\u6d3b\\u52a8\"]', '跟进记录类型');
+
+INSERT INTO `5kcrm_crm_config` (`id`, `name`, `value`, `description`) VALUES (NULL, 'contract_config', '1', '1开启');
+
+INSERT INTO `5kcrm_admin_rule` VALUES ('85', '2', '导出', 'poolExcelExport', '3', '29', '1');
+
+CREATE TABLE `5kcrm_crm_contacts_business` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `contacts_id` int(10) NOT NULL,
+  `business_id` int(10) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `5kcrm_admin_rule` VALUES ('86', '3', '项目管理', 'work', '1', '0', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('87', '3', '项目', 'work', '2', '86', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('88', '3', '任务', 'task', '2', '86', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('89', '3', '项目设置', 'update', '3', '87', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('90', '3', '任务列表', 'taskClass', '2', '86', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('91', '3', '新建任务列表', 'save', '3', '90', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('92', '3', '编辑任务列表', 'update', '3', '90', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('93', '3', '删除任务列表', 'delete', '3', '90', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('94', '3', '创建', 'save', '3', '88', '1');
+
+CREATE TABLE IF NOT EXISTS `5kcrm_work_user` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `work_id` int(11) NOT NULL COMMENT '项目ID',
+  `user_id` int(11) NOT NULL COMMENT '成员ID',
+  `types` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1管理员，0初始权限',
+  `group_id` int(11) NOT NULL COMMENT '角色ID',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='项目成员表';
+
+INSERT INTO `5kcrm_admin_group` (`id`, `pid`, `title`, `rules`, `remark`, `status`, `type`, `types`) VALUES (NULL, '1', '项目管理员', '', '项目管理员', '1', '1', '7');
+
+ALTER TABLE `5kcrm_admin_group` ADD `system` TINYINT(4) NOT NULL DEFAULT '0' COMMENT '系统角色' AFTER `types`;
+
+INSERT INTO `5kcrm_admin_group` (`id`, `pid`, `title`, `rules`, `remark`, `status`, `type`, `types`, `system`) VALUES (NULL, '5', '编辑', ',88,94,91,92,86,90,', '成员初始加入时默认享有的权限,可修改权限范围', '1', '0', '7', '1');
+
+INSERT INTO `5kcrm_admin_group` (`id`, `pid`, `title`, `rules`, `remark`, `status`, `type`, `types`, `system`) VALUES (NULL, '5', '只读', '', '项目只读角色', '1', '0', '0', '0');
+
+CREATE TABLE `5kcrm_admin_user_threeparty` (
+  `id` int(10) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` int(10) NOT NULL COMMENT '用户ID',
+  `ding_id` varchar(100) NOT NULL COMMENT '钉钉userID',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='关联第三方';
+
+ALTER TABLE `5kcrm_task` ADD `is_archive` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '1归档' AFTER `top_order_id`;
+
+ALTER TABLE `5kcrm_admin_field` ADD `relevant` VARCHAR(50) NULL DEFAULT NULL COMMENT '相关字段名' AFTER `type`;
+INSERT INTO `5kcrm_admin_rule` VALUES ('95', '6', '办公分析', 'oa', '2', '62', '1');
+INSERT INTO `5kcrm_admin_rule` VALUES ('96', '6', '查看', 'read', '3', '95', '1');

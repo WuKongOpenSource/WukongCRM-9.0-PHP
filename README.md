@@ -49,7 +49,7 @@ The framework used by the server is thinkphp5.0.2. Make sure to have the lamp/ln
 The setup mentioned here is actually putting the server framework into the WEB runtime environment and using port 80. Import the server root folder database file public/sql/5kcrm.sql and modify the config/database.php configuration file.
 
 ### Configuration requirements
-PHP >= 5.6.0 (not support for PHP7 and above) When accessing http://localhost/, "Wukong Software" appears, which represents the successful setup of the backend interface.
+PHP >= 5.6.0  When accessing http://localhost/, "Wukong Software" appears, which represents the successful setup of the backend interface.
 ### Front-end deployment
 
 Install the front-end part of node.js  based on node.js, so you must first install node.js with  version  6.0 or above.
@@ -133,7 +133,7 @@ UI框架：Element-UI 2.6.3
 导入服务端根文件夹数据库文件public/sql/5kcrm.sql，并修改config/database.php配置文件。
 
 ### 配置要求
-PHP >= 5.6.0 （暂不支持PHP7及以上版本）
+PHP >= 5.6.0 
 当访问 http://localhost/, 出现“悟空软件”即代表后端接口搭建成功。
 ### 前端部署
 安装node.js 前端部分是基于node.js上运行的，所以必须先安装`node.js`，版本要求为6.0以上

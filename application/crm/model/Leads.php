@@ -233,7 +233,7 @@ class Leads extends Common
 			$param[$v] = arrayToString($param[$v]);
 		}
 		$param['follow'] = '已跟进';
-		if ($this->save($param, ['leads_id' => $leads_id], true)) {
+		if ($this->update($param, ['leads_id' => $leads_id], true)) {
 			//修改记录
 			updateActionLog($param['user_id'], 'crm_leads', $leads_id, $dataInfo->data, $param);
 			$data = [];

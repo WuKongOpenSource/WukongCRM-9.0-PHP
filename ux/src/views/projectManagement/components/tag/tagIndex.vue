@@ -80,18 +80,20 @@
 </template>
 
 <script>
-import newTag from '@/views/projectManagement/components/tag/newTag'
-import editTag from '@/views/projectManagement/components/tag/editTag'
+import NewTag from './newTag'
+import EditTag from './editTag'
 import { workTasklableIndexAPI } from '@/api/projectManagement/tag'
+import { workTaskUpdateLableAPI } from '@/api/projectManagement/task'
 import {
-  workTaskUpdateLableAPI
-} from '@/api/projectManagement/task'
-import { workTasklableUpdateAPI, workTasklableDeleteAPI, workTasklableSaveAPI } from '@/api/projectManagement/tag'
+  workTasklableUpdateAPI,
+  workTasklableDeleteAPI,
+  workTasklableSaveAPI
+} from '@/api/projectManagement/tag'
 
 export default {
   components: {
-    newTag,
-    editTag
+    NewTag,
+    EditTag
   },
   data() {
     return {
@@ -102,7 +104,9 @@ export default {
       // 标签筛选框
       tagInputChange: '',
       // 标签数据
+      editTagList: [],
       particularsTagList: [],
+      particularsTagListCopy: [],
       // 新增、编辑标签标题
       newTagTitle: '',
       // 创建-编辑标签的输入框
@@ -114,9 +118,7 @@ export default {
       popoverWidth: '220'
     }
   },
-  mounted() {
-    this.tagListFun()
-  },
+  mounted() {},
   props: {
     taskData: {
       type: Object,
@@ -312,7 +314,9 @@ export default {
     },
     referenceFun() {
       this.tagContent = 0
-      this.tagListFun()
+      if (this.editTagList && !this.editTagList.length) {
+        this.tagListFun()
+      }
     }
   }
 }

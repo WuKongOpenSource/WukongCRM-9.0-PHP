@@ -24,7 +24,7 @@ class Addresslist extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index']            
+            'allow'=>['']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -48,7 +48,6 @@ class Addresslist extends ApiCommon
 				->where($where)
 				->alias('user')
 				->join('AdminStructure structure', 'structure.id = user.structure_id', 'LEFT')
-				->join('HrmUserDet hud','hud.user_id = user.id','LEFT')
 				->field('user.id,user.realname,user.thumb_img,user.post,user.structure_id,structure.name as structure_name,user.username,user.mobile,user.sex,user.email,user.status')
 				->select();
 				foreach( $datalist as $k=>$v){
@@ -60,17 +59,16 @@ class Addresslist extends ApiCommon
 			$structureList = Db::name('AdminStructure')->select();
 			foreach($structureList as $key=>$value){
 				$where['user.structure_id'] = $value['id'];
-				$temp = Db::name('AdminUser')
+				$userList = Db::name('AdminUser')
 					->where($where)
 					->alias('user')
-					->join('HrmUserDet hud','hud.user_id = user.id','LEFT')
 					->field('user.id,user.realname,user.username,user.thumb_img,user.post,user.structure_id,user.mobile,user.sex,user.email')
 					->order('realname asc')
 					->select();
-				foreach( $temp as $k=>$v){
-					$temp[$k]['thumb_img'] = $v['thumb_img'] ? getFullPath( $v['thumb_img'] ) : '';
+				foreach ($userList as $k=>$v){
+					$userList[$k]['thumb_img'] = $v['thumb_img'] ? getFullPath( $v['thumb_img'] ) : '';
 				}
-				$structureList[$key]['userList'] = $temp;
+				$structureList[$key]['userList'] = $userList;
 				$structureList[$key]['structure_name'] = $value['name'];
 			}
 			return resultArray(['data' => $structureList]);

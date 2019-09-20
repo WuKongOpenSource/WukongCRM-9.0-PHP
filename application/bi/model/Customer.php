@@ -18,17 +18,12 @@ class Customer extends Common
      * 我们约定每个模块的数据表都加上相同的前缀，比如CRM模块用crm作为数据表前缀
      */
 	protected $name = 'crm_customer';
-    protected $createTime = 'create_time';
-    protected $updateTime = 'update_time';
-	protected $autoWriteTimestamp = true;
 
-	protected $type = [
-		'next_time' => 'timestamp',
-	];
     /**
-     * 获取转化客户信息
-     * @param  [type] $whereArr [description]
-     * @return [type]           [description]
+     * 获取转化客户信息 
+     * @author zhi
+     * @param $whereArr 
+     * @return
      */
     function getWhereByList($whereArr)
     {
@@ -44,9 +39,9 @@ class Customer extends Common
             $list[$key]['contract_name'] = $contract['name'];
             $list[$key]['contract_money'] = $contract['money'];
             $list[$key]['order_time'] = $contract['order_date'];
-            $owner_user = $userModel->getDataById($value['owner_user_id']);
+            $owner_user = $userModel->getUserById($value['owner_user_id']);
             $list[$key]['owner_realname'] = $owner_user['realname'];
-            $create_user = $userModel->getDataById($value['create_user_id']);
+            $create_user = $userModel->getUserById($value['create_user_id']);
             $list[$key]['create_realname'] = $create_user['realname'];
             $where_c['contract_id'] = array('eq',$contract['contract_id']);
             $r_money = $receivables->getDataMoney($where_c);
@@ -54,12 +49,14 @@ class Customer extends Common
         }
         return $list;
     }
+
 	/**
 	 * 根据条件获取开始、结束时间
-	 * @param  [type] $type [description]
-	 * @param  [type] $year [description]
-	 * @param  [type] $i    [description]
-	 * @return [type]       [description]
+     * @author zhi
+	 * @param   $type 
+	 * @param   $year 
+	 * @param   $i    
+	 * @return        
 	 */
 	function getStartAndEnd($param,$year,$i)
     {
@@ -68,10 +65,10 @@ class Customer extends Common
             case 'year'://本年度
                 $timeArr['month'] = $i;
                 $timeArr['next_month'] = $i+1;
-                if($timeArr['next_month'] != 13){
+                if ($timeArr['next_month'] != 13) {
                     $timeArr['year'] = $year;
                     $timeArr['next_year'] = $year;
-                }else{
+                } else {
                     $timeArr['year'] = $year;
                     $timeArr['next_year'] = $year+1;
                     $timeArr['next_month'] = 1;
@@ -81,10 +78,10 @@ class Customer extends Common
             case 'lastYear'://上年度
                 $timeArr['month'] = $i;
                 $timeArr['next_month'] = $i+1;
-                if($timeArr['next_month'] != 13){
+                if ($timeArr['next_month'] != 13) {
                     $timeArr['year'] = $year;
                     $timeArr['next_year'] = $year;
-                }else{
+                } else {
                     $timeArr['year'] = $year;
                     $timeArr['next_year'] = $year+1;
                     $timeArr['next_month'] = 1;
@@ -97,16 +94,16 @@ class Customer extends Common
                 $month = date('m',$dates);
                 $timeArr['year'] = $year;
                 $timeArr['month'] = $month+$i-1;
-                if($month != 10){
+                if ($month != 10) {
                     $timeArr['next_year'] = $year;
                     $timeArr['next_month'] = $month+$i;
                     $timeArr['type'] = $year.'-'.($month+$i-1);
-                }else{
-                    if($month+$i <= 12){
+                } else {
+                    if ($month+$i <= 12) {
                         $timeArr['next_year'] = $year;
                         $timeArr['next_month'] = $month+$i;
                         $timeArr['type'] = $year.$month+$i;
-                    }else{
+                    } else {
                         $timeArr['next_year'] = $year+1;
                         $timeArr['next_month'] = 1;
                         $timeArr['type'] = ($year+1).'-'.'01';
@@ -117,21 +114,21 @@ class Customer extends Common
                 $season = ceil(date('n')/3);
                 $dates = mktime(0,0,0,($season-1)*3+1,1,date('Y'));
                 $month = date('m',$dates);
-                if($month > 3){
+                if ($month > 3) {
                     $timeArr['year'] = $year;
                     $month = $month-3;
                     $timeArr['month'] = $month+$i-1;
                     $timeArr['next_year'] = $year;
                     $timeArr['next_month'] = $month+$i;
                     $timeArr['type'] = $year.'-'.($month+$i-1);
-                }else{
+                } else {
                     $month = 10;
                     $timeArr['year'] = $year-1;
                     $timeArr['month'] = $month+$i-1;
-                    if($month+$i <= 12){
+                    if ($month+$i <= 12) {
                         $timeArr['next_year'] = $year-1;
                         $timeArr['next_month'] = $month+$i;
-                    }else{
+                    } else {
                         $timeArr['next_year'] = $year;
                         $timeArr['next_month'] = 1;
                     }
@@ -140,42 +137,42 @@ class Customer extends Common
             break;
             case 'month'://本月
                 $timeArr['year'] = $year;
-                $timeArr['month'] = $param['start_time'] ? date('m',$param['start_time']) : date('m');
+                $timeArr['month'] = date('m');
                 $timeArr['next_year'] = $year;
                 $timeArr['day'] = $i;
-                if($i != date("t")){
-                    $timeArr['next_month'] = $param['end_time'] ? date('m',$param['end_time']) : date('m');
+                if ($i != date("t")) {
+                    $timeArr['next_month'] = date('m');
                     $timeArr['next_day'] = $i+1;
-                }else{
-                    $timeArr['next_month'] = $param['end_time'] ? date('m',$param['end_time']) : date('m')+1;
+                } else {
+                    $timeArr['next_month'] = date('m')+1;
                     $timeArr['next_day'] = 1;
                 }  
-                $timeArr['type'] = $param['start_time'] ? $year.'-'.date('m',$param['start_time']).'-'.$i : $year.'-'.date('m').'-'.$i;                                                            
+                $timeArr['type'] = $year.'-'.date('m').'-'.$i;                                                            
             break;
             case 'lastMonth'://上月
                 $timeArr['year'] = $year;
                 $month = date('m');//当前月
-                if($month != 1){
+                if ($month != 1) {
                     $month = $month-1;//上月
                     $days = date('t', strtotime(date('Y').'-'.$month.'-1'));//上月天数
                     $timeArr['next_year'] = $year;
-                    if($i != $days){
+                    if ($i != $days) {
                         $timeArr['day'] = $i;
                         $timeArr['next_day'] = $i+1;
                         $timeArr['month'] = $month;
                         $timeArr['next_month'] = $month;
-                    }else{
+                    } else {
                         $timeArr['day'] = $i;
                         $timeArr['next_day'] = 1;
                         $timeArr['month'] = $month;
-                        if($month != 12){
+                        if ($month != 12) {
                             $timeArr['next_month'] = $month+1;
-                        }else{
+                        } else {
                             $timeArr['next_month'] = 1;
                             $timeArr['next_year'] = $year;
                         }
                     }
-                }else{
+                } else {
                     $month = 12;
                     $timeArr['year'] = $year-1;
                     $timeArr['next_year'] = $year;
@@ -235,11 +232,11 @@ class Customer extends Common
                 $timeArr['year'] = $start_time_y;
                 $timeArr['next_year'] = $start_time_y;   
                 $m = date('m',$param['start_time']);
-                if($i > 1){
+                if ($i > 1) {
                     $timeArr['month'] = $m+$i-1;
                     $timeArr['next_month'] = $m+$i;
                     $timeArr['type'] = '20'.$start_time_y.'-'.($m+$i-1);
-                }else{
+                } else {
                     $timeArr['month'] = $m;
                     $timeArr['next_month'] = $m+1;
                     $timeArr['type'] = '20'.$start_time_y.'-'.$m;
@@ -255,29 +252,29 @@ class Customer extends Common
 
                 $monthNum = $this->getMonthNum($start_time,$end_time);
                 $y = ceil(($start_m+$i-1)/12);
-                if(($start_m+$i-1)/12 <= $y){
-                    if($i == 1){
+                if (($start_m+$i-1)/12 <= $y) {
+                    if ($i == 1) {
                         $timeArr['day'] = $start_d;
                         $timeArr['end_d'] = 1;
                     }
                     $timeArr['year'] = $start_y+$y-1;                        
-                    if($start_m+$i-1 < 12){
+                    if ($start_m+$i-1 < 12) {
                         $timeArr['month'] = $start_m+$i-1;
                         $timeArr['next_year'] = $start_y+$y-1;
                         $timeArr['next_month'] = $start_m+$i;
                         $timeArr['type'] = '20'.($start_y+$y-1).'-'.($start_m+$i-1);
-                    }else{
-                        if(($start_m+$i-1)/12 == $y){
+                    } else {
+                        if (($start_m+$i-1)/12 == $y) {
                             $timeArr['month'] = 12;
                             $timeArr['next_year'] = $start_y+$y;
                             $timeArr['next_month'] = 1;
                             $timeArr['type'] = '20'.($start_y+$y-1).'-12';
-                        }else{
+                        } else {
                             $timeArr['month'] = ($start_m+$i-1)-12*($y-1);
                             $timeArr['next_year'] = $start_y+$y-1;
                             if ($monthNum+1 != $i) {
                                 $timeArr['next_month'] = ($start_m+$i)-12*($y-1);
-                            }else{
+                            } else {
                                 $end_d = date('d',$param['end_time']);
                                 $timeArr['next_day'] = $end_d;
                                 $timeArr['next_month'] = ($start_m+$i-1)-12*($y-1);
@@ -294,15 +291,15 @@ class Customer extends Common
                 $start_time_m = date('m',$start_time);
                 $end_time_y = date('y',$end_time);
                 $end_time_m = date('m',$end_time);
-                if($end_time_y-$start_time_y == 0){//不跨年
-                    if($end_time_m-$start_time_m > 0){
+                if ($end_time_y-$start_time_y == 0) {//不跨年
+                    if ($end_time_m-$start_time_m > 0) {
                         $param['type']='month_k';
                         $timeArr = $this->getStartAndEnd($param,$year,$i);
-                    }else{//不跨月
+                    } else {//不跨月
                         $param['type']='month';
                         $timeArr = $this->getStartAndEnd($param,$year,$i);
                     }
-                }else{//跨年
+                } else {//跨年
                     $start_time = date('Y-m-d',$start_time);
                     $end_time = date('Y-m-d',$end_time);
                     $monthNum = $this->getMonthNum($start_time,$end_time);
@@ -316,7 +313,9 @@ class Customer extends Common
     
     /**
      * 根据条件获取单位
-     * @return [type] [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     function getParamByCompany($param)
     {
@@ -340,9 +339,9 @@ class Customer extends Common
                 $company['j'] = date("t");
             break;
             case 'lastMonth'://上月
-                if(date('m') == 1){
+                if (date('m') == 1) {
                     $m = 12;
-                }else{
+                } else {
                     $m = date('m')-1;
                 }
                 $days = date('t', strtotime(date('Y').'-'.$m.'-1'));
@@ -367,16 +366,16 @@ class Customer extends Common
                 $start_time_m = date('m',$start_time);
                 $end_time_y = date('y',$end_time);
                 $end_time_m = date('m',$end_time);
-                if($end_time_y-$start_time_y == 0){//不跨年
-                    if($end_time_m-$start_time_m > 0){//跨月
+                if ($end_time_y-$start_time_y == 0) {//不跨年
+                    if ($end_time_m-$start_time_m > 0) {//跨月
                         $company['type']='month_k';
                         $company['time_unit'] = '月';
                         $company['j'] = $end_time_m-$start_time_m+1;
-                    }else{//不跨月
+                    } else {//不跨月
                         $company['type']='month';
                         $company['j'] = date("t");
                     }
-                }else{//跨年
+                } else {//跨年
                     $start_time = date('Y-m-d',$start_time);
                     $end_time = date('Y-m-d',$end_time);
                     $monthNum = $this->getMonthNum($start_time,$end_time);
@@ -387,39 +386,40 @@ class Customer extends Common
         }
         return $company;
     }
+
     function getMonthNum($start_m, $end_m){
         $date1 = explode('-',$start_m);
         $date2 = explode('-',$end_m);
-        if($date1[1]<$date2[1]){ //判断月份大小，进行相应加或减
+        if ($date1[1] < $date2[1]) { //判断月份大小，进行相应加或减
             $month_number= abs($date1[0] - $date2[0]) * 12 + abs($date1[1] - $date2[1]);
-        }else{
+        } else {
             $month_number= abs($date1[0] - $date2[0]) * 12 - abs($date1[1] - $date2[1]);
         }
         return $month_number;
     }
+
     /**
      * 根据数据获取查询条件
-     * @param  [type] $param [description]
-     * @return [type]       [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     function getParamByWhere($param,$type='')
     {
         $userModel = new \app\admin\model\User();
         $whereArr = array();
-        if(empty($param['type']) && empty($param['start_time'])){
+        if (empty($param['type']) && empty($param['start_time'])) {
             $param['type'] = 'month';
         }
         //时间戳：客户跟进分析 、客户转化率分析
-        if(!empty($param['start_time'])){
+        if (!empty($param['start_time'])) {
             $whereArr['create_time'] = array('between',array($param['start_time'],$param['end_time']));
-            // $whereArr['create_time'] = array('between',array(date('Y-m-d',$param['start_time']),date('Y-m-d',$param['end_time'])));
-        }else{
+        } else {
             $create_time = getTimeByType($param['type']);
             if ($create_time) {
                 $whereArr['create_time'] = array('between',array($create_time[0],$create_time[1]));
             }
         }
-
         $map_user_ids = [];
         if ($param['user_id']) {
             $map_user_ids = array($param['user_id']);
@@ -430,63 +430,73 @@ class Customer extends Common
         }
         $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
-        if($type && $type == 'record'){
+        if ($type && $type == 'record') {
             $whereArr['create_user_id'] = array('in',$userIds);
-        }else{
+        } else {
             $whereArr['owner_user_id'] = array('in',$userIds);
         }
         return $whereArr;
     }
+
     /**
      * 根据自定义字段获取 下拉框数据
+     * @author zhi
+     * @param 
+     * @return
      */
     function getOptionByField($whereArr)
     {
         $setting = db('admin_field')->where($whereArr)->field('setting')->find();
         return explode(chr(10),$setting['setting']);
     }
+
     /**
      * 根据新增客户数排序
-     * @param  [type] $whereArr [description]
-     * @return [type]           [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     function getSortByCount($whereArr)
     {
         $count = db('crm_customer')->group('owner_user_id')->field('owner_user_id,count(customer_id) as count')->order('count desc')->where($whereArr)->select();
         return $count;
     }
+
     /**
      * 获取成交周期
-     * @return [type] [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     function getWhereByCycle($whereArr)
     {
-        $customer_ids = db('crm_customer')->field('customer_id')->where($whereArr)->select();
+        $customerList = db('crm_customer')->field('customer_id,create_time,deal_time')->where($whereArr)->select();
         //首次成交
-        if(!empty($customer_ids)){
+        if (!empty($customerList)) {
             $cycle_num = 0;
             $customer_num = 0;
-            foreach ($customer_ids as $key => $value) {
+            foreach ($customerList as $key => $value) {
+                $cycle_time = 0;
                 $where = array();
-                $where['customer_id'] = array('eq',$value['customer_id']);
-                $create_time = db('crm_customer')->field('create_time')->where($where)->find();
-                $where['check_status'] = array('eq',2);
-                $order_date = db('crm_contract')->where($where)->order('order_date asc')->field('order_date')->find();
-                $cycle_time = ceil((strtotime($order_date['order_date'])-$create_time['create_time'])/86400);
-                if($cycle_time < 0){
-                    $cycle_num = $cycle_num+0;
-                    $customer_num = $customer_num+0;
-                }else{
+                $where['customer_id'] = $value['customer_id'];
+                $create_time = $value['create_time'];
+                $where['check_status'] = 2;
+                $contractInfo = db('crm_contract')->where($where)->field('order_date,create_time')->order('order_date asc')->find();
+                if ($contractInfo['order_date']) {
+                    $cycle_time = ceil((strtotime($order_date)-$create_time)/86400);
+                } else {
+                    $cycle_time = ceil(($value['deal_time']-$create_time)/86400);
+                }
+                if ($cycle_time > 0) {
                     $cycle_num += $cycle_time;
                     $customer_num ++;
                 }
             }
-            if($cycle_num==0 || $customer_num==0){
+            if ($cycle_num == 0 || $customer_num == 0) {
                 $cycle = 0;
-            }else{
+            } else {
                 $cycle = ceil($cycle_num/$customer_num);
             }
-            
         }
         return $cycle;
     }

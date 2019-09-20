@@ -1,6 +1,6 @@
 <?php
 // +----------------------------------------------------------------------
-// | Description: 客户
+// | Description: 客户跟进
 // +----------------------------------------------------------------------
 // | Author:  Michael_xu | gengxiaoxu@5kcrm.com
 // +----------------------------------------------------------------------
@@ -9,7 +9,6 @@ namespace app\bi\model;
 use think\Db;
 use app\admin\model\Common;
 use think\Request;
-use think\Validate;
 
 class Record extends Common
 {
@@ -18,10 +17,7 @@ class Record extends Common
      * 我们约定每个模块的数据表都加上相同的前缀，比如CRM模块用crm作为数据表前缀
      */
     protected $name = 'admin_record';
-    protected $createTime = 'create_time';
-    protected $updateTime = 'update_time';
-    protected $autoWriteTimestamp = true;
-    protected $types_arr = ['crm_leads','crm_customer','crm_contacts','crm_product','crm_business','crm_contract','oa_log','admin_record'];
+
     /**
      * [跟进统计]
      * @author Michael_xu
@@ -30,7 +26,6 @@ class Record extends Common
      */ 
     function getDataList($request){
         $userModel = new \app\admin\model\User();
-        
         //员工IDS
         $map_user_ids = [];
         if ($request['user_id']) {
@@ -63,41 +58,46 @@ class Record extends Common
         }
         return $userList ? : [];
     }
+
     /**
      * 根据条件获取跟进客户数
-     * @param  [type] $type [description]
-     * @param  [type] $year [description]
-     * @param  [type] $i    [description]
-     * @return [type]       [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     function getCustomerNum($whereArr){
         $dataCount = db('admin_record')->where($whereArr)->group('types_id')->count();
         return $dataCount;
     }
+
     /**
      * [根据条件获取跟进次数]
-     * @author Michael_xu
-     * @param
-     * @return                  
+     * @author zhi
+     * @param 
+     * @return
      */ 
     function getRecordNum($whereArr){
         $dataCount = db('admin_record')->where($whereArr)->count();
         return $dataCount;
     }
+
     /**
      * 跟进次数排行
-     * @param  [type] $whereArr [description]
-     * @return [type]           [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     function getSortByCount($whereArr)
     {
         $count = db('admin_record')->group('create_user_id')->field('create_user_id,count(record_id) as count')->order('count desc')->where($whereArr)->select();
         return $count;
     }
+
     /**
      * 跟进客户排行
-     * @param  [type] $whereArr [description]
-     * @return [type]           [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     function getSortByCustomer($whereArr)
     {

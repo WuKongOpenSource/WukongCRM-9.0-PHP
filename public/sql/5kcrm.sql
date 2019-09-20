@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS `5kcrm_admin_access`;
 CREATE TABLE `5kcrm_admin_access` (
   `user_id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL
@@ -6,7 +5,6 @@ CREATE TABLE `5kcrm_admin_access` (
 
 INSERT INTO `5kcrm_admin_access` VALUES ('1', '1');
 
-DROP TABLE IF EXISTS `5kcrm_admin_action_log`;
 CREATE TABLE `5kcrm_admin_action_log` (
   `log_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(10) NOT NULL COMMENT '操作人ID',
@@ -22,7 +20,6 @@ CREATE TABLE `5kcrm_admin_action_log` (
   PRIMARY KEY (`log_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='操作记录表';
 
-DROP TABLE IF EXISTS `5kcrm_admin_action_record`;
 CREATE TABLE `5kcrm_admin_action_record` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(10) NOT NULL COMMENT '用户ID',
@@ -33,7 +30,6 @@ CREATE TABLE `5kcrm_admin_action_record` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='字段操作记录表';
 
-DROP TABLE IF EXISTS `5kcrm_admin_comment`;
 CREATE TABLE `5kcrm_admin_comment` (
   `comment_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '评论表',
   `user_id` int(11) NOT NULL COMMENT '评论人ID',
@@ -51,7 +47,6 @@ CREATE TABLE `5kcrm_admin_comment` (
   PRIMARY KEY (`comment_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='任务评论表';
 
-DROP TABLE IF EXISTS `5kcrm_admin_config`;
 CREATE TABLE `5kcrm_admin_config` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL COMMENT '名字',
@@ -63,7 +58,6 @@ CREATE TABLE `5kcrm_admin_config` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 
-DROP TABLE IF EXISTS `5kcrm_admin_examine_flow`;
 CREATE TABLE `5kcrm_admin_examine_flow` (
   `flow_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT '审批流名称',
@@ -92,7 +86,6 @@ INSERT INTO `5kcrm_admin_examine_flow` VALUES ('6', '借款审批流程', '0', '
 INSERT INTO `5kcrm_admin_examine_flow` VALUES ('7', '合同审批流程', '0', 'crm_contract', '0', '', '', '', '1', '1549959653', '1549959653', '1', '0', '0', '0');
 INSERT INTO `5kcrm_admin_examine_flow` VALUES ('8', '回款审批流程', '0', 'crm_receivables', '0', '', '', '', '1', '1549959653', '1549959653', '1', '0', '0', '0');
 
-DROP TABLE IF EXISTS `5kcrm_admin_examine_record`;
 CREATE TABLE `5kcrm_admin_examine_record` (
   `record_id` int(11) NOT NULL AUTO_INCREMENT,
   `types` varchar(50) NOT NULL DEFAULT '' COMMENT '类型',
@@ -107,7 +100,6 @@ CREATE TABLE `5kcrm_admin_examine_record` (
   PRIMARY KEY (`record_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='审批记录表';
 
-DROP TABLE IF EXISTS `5kcrm_admin_examine_step`;
 CREATE TABLE `5kcrm_admin_examine_step` (
   `step_id` int(11) NOT NULL AUTO_INCREMENT,
   `flow_id` int(11) NOT NULL COMMENT '审批流程ID',
@@ -119,7 +111,6 @@ CREATE TABLE `5kcrm_admin_examine_step` (
   PRIMARY KEY (`step_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='审批步骤表';
 
-DROP TABLE IF EXISTS `5kcrm_admin_field`;
 CREATE TABLE `5kcrm_admin_field` (
   `field_id` int(11) NOT NULL AUTO_INCREMENT,
   `types` varchar(30) NOT NULL DEFAULT '' COMMENT '分类',
@@ -241,7 +232,6 @@ INSERT INTO `5kcrm_admin_field` VALUES ('97', 'crm_receivables_plan', '0', 'rema
 INSERT INTO `5kcrm_admin_field` VALUES ('98', 'crm_receivables_plan', '0', 'file', '附件', 'file', '', '0', '0', '0', '', '', '0', '1', '1553788800', '1553788800', '0');
 INSERT INTO `5kcrm_admin_field` VALUES ('99', 'crm_customer', '0', 'mobile', '手机', 'mobile', '', '0', '1', '0', '', '', '7', '1', '1553788800', '1553788800', '0');
 
-DROP TABLE IF EXISTS `5kcrm_admin_file`;
 CREATE TABLE `5kcrm_admin_file` (
   `file_id` int(11) NOT NULL AUTO_INCREMENT,
   `types` varchar(20) NOT NULL COMMENT '类型（file、img）',
@@ -255,7 +245,6 @@ CREATE TABLE `5kcrm_admin_file` (
   PRIMARY KEY (`file_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='附件表';
 
-DROP TABLE IF EXISTS `5kcrm_admin_group`;
 CREATE TABLE `5kcrm_admin_group` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `pid` tinyint(4) NOT NULL COMMENT '分类1管理角色2客户管理角色3人事角色4财务角色5项目角色0自定义角色',
@@ -279,7 +268,6 @@ INSERT INTO `5kcrm_admin_group` VALUES ('8', '2', '销售员角色', ',3,4,5,6,7
 INSERT INTO `5kcrm_admin_group` VALUES ('9', '4', '财务角色', ',43,44,45,46,48,51,52,53,54,1,42,50,67,68,62,', '', 1, 5, 0);
 INSERT INTO `5kcrm_admin_group` VALUES ('10', '2', '销售经理角色', ',1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,', '', 1, 2, 0);
 
-DROP TABLE IF EXISTS `5kcrm_admin_menu`;
 CREATE TABLE `5kcrm_admin_menu` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '菜单ID',
   `pid` int(11) DEFAULT '0' COMMENT '上级菜单ID',
@@ -304,7 +292,6 @@ INSERT INTO `5kcrm_admin_menu` VALUES ('7', '1', '合同', '', '', '0', '0', '1'
 INSERT INTO `5kcrm_admin_menu` VALUES ('8', '1', '回款', '', '', '0', '0', '1', '50', 'receivables');
 INSERT INTO `5kcrm_admin_menu` VALUES ('9', '1', '产品', '', '', '0', '0', '1', '56', 'product');
 
-DROP TABLE IF EXISTS `5kcrm_admin_message`;
 CREATE TABLE `5kcrm_admin_message` (
   `message_id` int(11) NOT NULL AUTO_INCREMENT,
   `to_user_id` int(10) NOT NULL COMMENT '接收人ID',
@@ -319,7 +306,6 @@ CREATE TABLE `5kcrm_admin_message` (
   PRIMARY KEY (`message_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='站内信';
 
-DROP TABLE IF EXISTS `5kcrm_admin_record`;
 CREATE TABLE `5kcrm_admin_record` (
   `record_id` int(11) NOT NULL AUTO_INCREMENT,
   `types` varchar(50) NOT NULL COMMENT '关联类型',
@@ -335,7 +321,6 @@ CREATE TABLE `5kcrm_admin_record` (
   UNIQUE KEY `record_id` (`record_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='跟进记录';
 
-DROP TABLE IF EXISTS `5kcrm_admin_record_file`;
 CREATE TABLE `5kcrm_admin_record_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `record_id` int(11) NOT NULL COMMENT '日志ID',
@@ -343,7 +328,6 @@ CREATE TABLE `5kcrm_admin_record_file` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='跟进记录附件关系表';
 
-DROP TABLE IF EXISTS `5kcrm_admin_rule`;
 CREATE TABLE `5kcrm_admin_rule` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `types` tinyint(2) NOT NULL DEFAULT '0' COMMENT '0系统设置1工作台2客户管理3项目管理4人力资源5财务管理6商业智能',
@@ -430,7 +414,6 @@ INSERT INTO `5kcrm_admin_rule` VALUES ('72', '6', '查看', 'read', '3', '71', '
 INSERT INTO `5kcrm_admin_rule` VALUES ('73', '2', '转移', 'transfer', '3', '2', '1');
 INSERT INTO `5kcrm_admin_rule` VALUES ('74', '2', '转化', 'transform', '3', '2', '1');
 
-DROP TABLE IF EXISTS `5kcrm_admin_scene`;
 CREATE TABLE `5kcrm_admin_scene` (
   `scene_id` int(10) NOT NULL AUTO_INCREMENT,
   `types` varchar(50) NOT NULL COMMENT '分类',
@@ -470,7 +453,6 @@ INSERT INTO `5kcrm_admin_scene` VALUES ('21', 'crm_receivables', '全部回款',
 INSERT INTO `5kcrm_admin_scene` VALUES ('22', 'crm_product', '全部产品', '0', '0', '', '0', '1', 'all', '1546272000', '1546272000');
 INSERT INTO `5kcrm_admin_scene` VALUES ('23', 'crm_leads', '已转化线索', '0', '0', '', '0', '1', 'is_transform', '1546272000', '1546272000');
 
-DROP TABLE IF EXISTS `5kcrm_admin_scene_default`;
 CREATE TABLE `5kcrm_admin_scene_default` (
   `default_id` int(11) NOT NULL AUTO_INCREMENT,
   `types` varchar(50) NOT NULL COMMENT '类型',
@@ -479,7 +461,6 @@ CREATE TABLE `5kcrm_admin_scene_default` (
   UNIQUE KEY `default_id` (`default_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='场景默认关系表';
 
-DROP TABLE IF EXISTS `5kcrm_admin_structure`;
 CREATE TABLE `5kcrm_admin_structure` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(200) NOT NULL DEFAULT '',
@@ -489,7 +470,6 @@ CREATE TABLE `5kcrm_admin_structure` (
 
 INSERT INTO `5kcrm_admin_structure` VALUES ('1', '办公室', '0');
 
-DROP TABLE IF EXISTS `5kcrm_admin_system`;
 CREATE TABLE `5kcrm_admin_system` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
@@ -498,10 +478,9 @@ CREATE TABLE `5kcrm_admin_system` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 
-INSERT INTO `5kcrm_admin_system` VALUES ('1', 'name', '悟空软件', '网站名称');
+INSERT INTO `5kcrm_admin_system` VALUES ('1', 'name', '悟空CRM', '网站名称');
 INSERT INTO `5kcrm_admin_system` VALUES ('2', 'logo', '', '企业logo');
 
-DROP TABLE IF EXISTS `5kcrm_admin_user`;
 CREATE TABLE `5kcrm_admin_user` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
   `username` varchar(100) NOT NULL COMMENT '管理后台账号',
@@ -525,7 +504,6 @@ CREATE TABLE `5kcrm_admin_user` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户表';
 
-DROP TABLE IF EXISTS `5kcrm_admin_user_field`;
 CREATE TABLE `5kcrm_admin_user_field` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
@@ -536,7 +514,6 @@ CREATE TABLE `5kcrm_admin_user_field` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='自定义字段展示排序关系表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_achievement`;
 CREATE TABLE `5kcrm_crm_achievement` (
   `achievement_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '' COMMENT '名字',
@@ -560,7 +537,6 @@ CREATE TABLE `5kcrm_crm_achievement` (
   PRIMARY KEY (`achievement_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 
-DROP TABLE IF EXISTS `5kcrm_crm_business`;
 CREATE TABLE `5kcrm_crm_business` (
   `business_id` int(11) NOT NULL AUTO_INCREMENT,
   `customer_id` int(11) NOT NULL COMMENT '客户ID',
@@ -584,7 +560,6 @@ CREATE TABLE `5kcrm_crm_business` (
   PRIMARY KEY (`business_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='商机表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_business_file`;
 CREATE TABLE `5kcrm_crm_business_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `business_id` int(11) NOT NULL COMMENT '商机ID',
@@ -592,7 +567,6 @@ CREATE TABLE `5kcrm_crm_business_file` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='商机附件关系表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_business_log`;
 CREATE TABLE `5kcrm_crm_business_log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `business_id` int(11) NOT NULL COMMENT '商机id',
@@ -604,7 +578,6 @@ CREATE TABLE `5kcrm_crm_business_log` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='商机推进日志';
 
-DROP TABLE IF EXISTS `5kcrm_crm_business_product`;
 CREATE TABLE `5kcrm_crm_business_product` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `business_id` int(11) NOT NULL COMMENT '商机ID',
@@ -618,7 +591,6 @@ CREATE TABLE `5kcrm_crm_business_product` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='商机产品关系表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_business_status`;
 CREATE TABLE `5kcrm_crm_business_status` (
   `status_id` int(11) NOT NULL AUTO_INCREMENT,
   `type_id` int(11) NOT NULL COMMENT '商机状态类别ID',
@@ -636,7 +608,6 @@ INSERT INTO `5kcrm_crm_business_status` VALUES ('5', '1', '需求分析', '15', 
 INSERT INTO `5kcrm_crm_business_status` VALUES ('6', '1', '方案/报价', '30', '3');
 INSERT INTO `5kcrm_crm_business_status` VALUES ('7', '1', '谈判审核', '30', '4');
 
-DROP TABLE IF EXISTS `5kcrm_crm_business_type`;
 CREATE TABLE `5kcrm_crm_business_type` (
   `type_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT '标识',
@@ -650,7 +621,6 @@ CREATE TABLE `5kcrm_crm_business_type` (
 
 INSERT INTO `5kcrm_crm_business_type` VALUES ('1', '系统默认', '', '1', '1540973371', '1540973371', '1');
 
-DROP TABLE IF EXISTS `5kcrm_crm_config`;
 CREATE TABLE `5kcrm_crm_config` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL COMMENT '标识',
@@ -663,7 +633,6 @@ INSERT INTO `5kcrm_crm_config` VALUES ('1', 'follow_day', '7', '距跟进天数'
 INSERT INTO `5kcrm_crm_config` VALUES ('2', 'deal_day', '30', '距成交天数');
 INSERT INTO `5kcrm_crm_config` VALUES ('3', 'config', '0', '1启用规则');
 
-DROP TABLE IF EXISTS `5kcrm_crm_contacts`;
 CREATE TABLE `5kcrm_crm_contacts` (
   `contacts_id` int(11) NOT NULL AUTO_INCREMENT,
   `customer_id` int(11) NOT NULL COMMENT '客户ID',
@@ -686,7 +655,6 @@ CREATE TABLE `5kcrm_crm_contacts` (
   PRIMARY KEY (`contacts_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='联系人表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_contacts_file`;
 CREATE TABLE `5kcrm_crm_contacts_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `contacts_id` int(11) NOT NULL COMMENT '联系人ID',
@@ -694,7 +662,6 @@ CREATE TABLE `5kcrm_crm_contacts_file` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='联系人附件关系表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_contract`;
 CREATE TABLE `5kcrm_crm_contract` (
   `contract_id` int(11) NOT NULL AUTO_INCREMENT,
   `customer_id` int(11) NOT NULL COMMENT '客户ID',
@@ -725,7 +692,6 @@ CREATE TABLE `5kcrm_crm_contract` (
   PRIMARY KEY (`contract_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='合同表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_contract_file`;
 CREATE TABLE `5kcrm_crm_contract_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `contract_id` int(11) NOT NULL COMMENT '合同ID',
@@ -733,7 +699,6 @@ CREATE TABLE `5kcrm_crm_contract_file` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='合同附件关系表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_contract_product`;
 CREATE TABLE `5kcrm_crm_contract_product` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `contract_id` int(11) NOT NULL COMMENT '合同ID',
@@ -747,7 +712,6 @@ CREATE TABLE `5kcrm_crm_contract_product` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='合同产品关系表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_customer`;
 CREATE TABLE `5kcrm_crm_customer` (
   `customer_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '' COMMENT '客户名称',
@@ -776,7 +740,6 @@ CREATE TABLE `5kcrm_crm_customer` (
   PRIMARY KEY (`customer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='客户表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_customer_file`;
 CREATE TABLE `5kcrm_crm_customer_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `customer_id` int(11) NOT NULL COMMENT '客户ID',
@@ -784,7 +747,6 @@ CREATE TABLE `5kcrm_crm_customer_file` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='客户附件关系表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_leads`;
 CREATE TABLE `5kcrm_crm_leads` (
   `leads_id` int(11) NOT NULL AUTO_INCREMENT,
   `customer_id` int(11) NOT NULL DEFAULT '0' COMMENT '线索转化为客户ID',
@@ -805,7 +767,6 @@ CREATE TABLE `5kcrm_crm_leads` (
   PRIMARY KEY (`leads_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='线索表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_leads_file`;
 CREATE TABLE `5kcrm_crm_leads_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `leads_id` int(11) NOT NULL COMMENT '线索ID',
@@ -813,7 +774,6 @@ CREATE TABLE `5kcrm_crm_leads_file` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='线索附件关系表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_product`;
 CREATE TABLE `5kcrm_crm_product` (
   `product_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '' COMMENT '产品名称',
@@ -831,7 +791,6 @@ CREATE TABLE `5kcrm_crm_product` (
   PRIMARY KEY (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='产品表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_product_category`;
 CREATE TABLE `5kcrm_crm_product_category` (
   `category_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(200) NOT NULL DEFAULT '',
@@ -841,7 +800,6 @@ CREATE TABLE `5kcrm_crm_product_category` (
 
 INSERT INTO `5kcrm_crm_product_category` VALUES ('1', '默认', '0');
 
-DROP TABLE IF EXISTS `5kcrm_crm_product_file`;
 CREATE TABLE `5kcrm_crm_product_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `product_id` int(11) NOT NULL COMMENT '产品ID',
@@ -849,7 +807,6 @@ CREATE TABLE `5kcrm_crm_product_file` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='产品附件关系表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_receivables`;
 CREATE TABLE `5kcrm_crm_receivables` (
   `receivables_id` int(11) NOT NULL AUTO_INCREMENT,
   `plan_id` int(11) NOT NULL COMMENT '回款计划ID',
@@ -872,7 +829,6 @@ CREATE TABLE `5kcrm_crm_receivables` (
   PRIMARY KEY (`receivables_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='回款表';
 
-DROP TABLE IF EXISTS `5kcrm_crm_receivables_plan`;
 CREATE TABLE `5kcrm_crm_receivables_plan` (
   `plan_id` int(11) NOT NULL AUTO_INCREMENT,
   `num` varchar(100) NOT NULL DEFAULT '' COMMENT '期数',
@@ -894,7 +850,6 @@ CREATE TABLE `5kcrm_crm_receivables_plan` (
   PRIMARY KEY (`plan_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='回款计划表';
 
-DROP TABLE IF EXISTS `5kcrm_hrm_user_det`;
 CREATE TABLE `5kcrm_hrm_user_det` (
   `userdet_id` int(9) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL COMMENT '员工id',
@@ -922,7 +877,6 @@ CREATE TABLE `5kcrm_hrm_user_det` (
   PRIMARY KEY (`userdet_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='员工档案表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_announcement`;
 CREATE TABLE `5kcrm_oa_announcement` (
   `announcement_id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(50) NOT NULL COMMENT '标题',
@@ -937,7 +891,6 @@ CREATE TABLE `5kcrm_oa_announcement` (
   PRIMARY KEY (`announcement_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='公告表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_event`;
 CREATE TABLE `5kcrm_oa_event` (
   `event_id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(255) NOT NULL COMMENT '日程标题',
@@ -954,7 +907,6 @@ CREATE TABLE `5kcrm_oa_event` (
   PRIMARY KEY (`event_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='日程表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_event_notice`;
 CREATE TABLE `5kcrm_oa_event_notice` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `event_id` int(11) NOT NULL COMMENT '日程ID',
@@ -965,7 +917,6 @@ CREATE TABLE `5kcrm_oa_event_notice` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='日程提醒设置表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_event_relation`;
 CREATE TABLE `5kcrm_oa_event_relation` (
   `eventrelation_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '日程关联业务表',
   `event_id` int(11) NOT NULL COMMENT '日程ID',
@@ -978,7 +929,6 @@ CREATE TABLE `5kcrm_oa_event_relation` (
   PRIMARY KEY (`eventrelation_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='日程关联业务表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_examine`;
 CREATE TABLE `5kcrm_oa_examine` (
   `examine_id` int(11) NOT NULL AUTO_INCREMENT,
   `category_id` int(11) NOT NULL DEFAULT '1' COMMENT '审批类型',
@@ -999,7 +949,6 @@ CREATE TABLE `5kcrm_oa_examine` (
   PRIMARY KEY (`examine_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='审批表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_examine_category`;
 CREATE TABLE `5kcrm_oa_examine_category` (
   `category_id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(50) NOT NULL COMMENT '名称',
@@ -1025,7 +974,6 @@ INSERT INTO `5kcrm_oa_examine_category` VALUES ('4', '加班审批', '加班审�
 INSERT INTO `5kcrm_oa_examine_category` VALUES ('5', '差旅报销', '差旅报销', '1', '1', '1', '', '', '1548911542', '1548911542', '0', '0', '0', '1');
 INSERT INTO `5kcrm_oa_examine_category` VALUES ('6', '借款申请', '借款申请', '1', '1', '1', '', '', '1548911542', '1548911542', '0', '0', '0', '1');
 
-DROP TABLE IF EXISTS `5kcrm_oa_examine_data`;
 CREATE TABLE `5kcrm_oa_examine_data` (
   `data_id` int(11) NOT NULL AUTO_INCREMENT,
   `examine_id` int(11) NOT NULL COMMENT '审批ID',
@@ -1034,7 +982,6 @@ CREATE TABLE `5kcrm_oa_examine_data` (
   PRIMARY KEY (`data_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='审批数据扩展表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_examine_file`;
 CREATE TABLE `5kcrm_oa_examine_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `examine_id` int(11) NOT NULL COMMENT '审批ID',
@@ -1042,7 +989,6 @@ CREATE TABLE `5kcrm_oa_examine_file` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='审批附件关系表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_examine_relation`;
 CREATE TABLE `5kcrm_oa_examine_relation` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '审批关联业务表',
   `examine_id` int(11) NOT NULL COMMENT '审批ID',
@@ -1055,7 +1001,6 @@ CREATE TABLE `5kcrm_oa_examine_relation` (
   PRIMARY KEY (`r_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='审批关联业务表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_examine_travel`;
 CREATE TABLE `5kcrm_oa_examine_travel` (
   `travel_id` int(11) NOT NULL AUTO_INCREMENT,
   `examine_id` int(11) NOT NULL COMMENT '审批ID',
@@ -1075,7 +1020,6 @@ CREATE TABLE `5kcrm_oa_examine_travel` (
   PRIMARY KEY (`travel_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='差旅行程表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_examine_travel_file`;
 CREATE TABLE `5kcrm_oa_examine_travel_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `travel_id` int(11) NOT NULL COMMENT '差旅id',
@@ -1083,7 +1027,6 @@ CREATE TABLE `5kcrm_oa_examine_travel_file` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='差旅附件关系表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_log`;
 CREATE TABLE `5kcrm_oa_log` (
   `log_id` int(11) NOT NULL AUTO_INCREMENT,
   `category_id` tinyint(2) NOT NULL DEFAULT '1' COMMENT '日志类型（1日报，2周报，3月报）',
@@ -1100,7 +1043,6 @@ CREATE TABLE `5kcrm_oa_log` (
   PRIMARY KEY (`log_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='工作日志表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_log_file`;
 CREATE TABLE `5kcrm_oa_log_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `log_id` int(11) NOT NULL COMMENT '日志ID',
@@ -1108,7 +1050,6 @@ CREATE TABLE `5kcrm_oa_log_file` (
   PRIMARY KEY (`r_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='日志附件关系表';
 
-DROP TABLE IF EXISTS `5kcrm_oa_log_relation`;
 CREATE TABLE `5kcrm_oa_log_relation` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '日志关联业务表',
   `log_id` int(11) NOT NULL COMMENT '日志ID',
@@ -1121,7 +1062,6 @@ CREATE TABLE `5kcrm_oa_log_relation` (
   PRIMARY KEY (`r_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='日志关联业务表';
 
-DROP TABLE IF EXISTS `5kcrm_task`;
 CREATE TABLE `5kcrm_task` (
   `task_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '任务表',
   `name` varchar(50) NOT NULL COMMENT '任务名称',
@@ -1150,7 +1090,6 @@ CREATE TABLE `5kcrm_task` (
   PRIMARY KEY (`task_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='任务表';
 
-DROP TABLE IF EXISTS `5kcrm_task_relation`;
 CREATE TABLE `5kcrm_task_relation` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '任务关联业务表',
   `task_id` int(11) NOT NULL COMMENT '任务ID',
@@ -1163,7 +1102,6 @@ CREATE TABLE `5kcrm_task_relation` (
   PRIMARY KEY (`r_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='任务关联业务表';
 
-DROP TABLE IF EXISTS `5kcrm_work`;
 CREATE TABLE `5kcrm_work` (
   `work_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT '项目名字',
@@ -1179,7 +1117,6 @@ CREATE TABLE `5kcrm_work` (
   PRIMARY KEY (`work_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='项目表';
 
-DROP TABLE IF EXISTS `5kcrm_work_relation`;
 CREATE TABLE `5kcrm_work_relation` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '日志关联业务表',
   `work_id` int(11) NOT NULL COMMENT '项目ID',
@@ -1192,7 +1129,6 @@ CREATE TABLE `5kcrm_work_relation` (
   PRIMARY KEY (`r_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='项目关联业务表';
 
-DROP TABLE IF EXISTS `5kcrm_work_task_class`;
 CREATE TABLE `5kcrm_work_task_class` (
   `class_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '任务分类表',
   `name` varchar(50) NOT NULL COMMENT '分类名',
@@ -1204,7 +1140,6 @@ CREATE TABLE `5kcrm_work_task_class` (
   PRIMARY KEY (`class_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='任务分类表';
 
-DROP TABLE IF EXISTS `5kcrm_work_task_file`;
 CREATE TABLE `5kcrm_work_task_file` (
   `r_id` int(11) NOT NULL AUTO_INCREMENT,
   `file_id` int(11) NOT NULL COMMENT '文件ID',
@@ -1212,7 +1147,6 @@ CREATE TABLE `5kcrm_work_task_file` (
   PRIMARY KEY (`r_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 
-DROP TABLE IF EXISTS `5kcrm_work_task_lable`;
 CREATE TABLE `5kcrm_work_task_lable` (
   `lable_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL COMMENT '标签名',
@@ -1223,7 +1157,6 @@ CREATE TABLE `5kcrm_work_task_lable` (
   PRIMARY KEY (`lable_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='任务标签表';
 
-DROP TABLE IF EXISTS `5kcrm_work_task_log`;
 CREATE TABLE `5kcrm_work_task_log` (
   `log_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '项目日志表',
   `user_id` int(11) NOT NULL COMMENT '操作人ID',
@@ -1310,7 +1243,8 @@ INSERT INTO `5kcrm_admin_group` (`id`, `pid`, `title`, `rules`, `remark`, `statu
 CREATE TABLE `5kcrm_admin_user_threeparty` (
   `id` int(10) NOT NULL AUTO_INCREMENT COMMENT '主键',
   `user_id` int(10) NOT NULL COMMENT '用户ID',
-  `ding_id` varchar(100) NOT NULL COMMENT '钉钉userID',
+  `key` varchar(100) NOT NULL COMMENT '关联模块',
+  `value` varchar(512) NOT NULL COMMENT '关联内容',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='关联第三方';
 
@@ -1319,3 +1253,114 @@ ALTER TABLE `5kcrm_task` ADD `is_archive` TINYINT(1) NOT NULL DEFAULT '0' COMMEN
 ALTER TABLE `5kcrm_admin_field` ADD `relevant` VARCHAR(50) NULL DEFAULT NULL COMMENT '相关字段名' AFTER `type`;
 INSERT INTO `5kcrm_admin_rule` VALUES ('95', '6', '办公分析', 'oa', '2', '62', '1');
 INSERT INTO `5kcrm_admin_rule` VALUES ('96', '6', '查看', 'read', '3', '95', '1');
+
+ALTER TABLE `5kcrm_crm_contract` CHANGE `check_status` `check_status` TINYINT(4) NOT NULL DEFAULT '0' COMMENT '0待审核、1审核中、2审核通过、3审核未通过、4撤销、5草稿(未提交)';
+
+ALTER TABLE `5kcrm_crm_receivables` CHANGE `check_status` `check_status` TINYINT(4) NOT NULL DEFAULT '0' COMMENT '0待审核、1审核中、2审核通过、3审核未通过、4撤销、5草稿(未提交)';
+
+INSERT INTO `5kcrm_admin_scene` (`scene_id`, `types`, `name`, `user_id`, `order_id`, `data`, `is_hide`, `type`, `bydata`, `create_time`, `update_time`) VALUES (NULL, 'crm_customer_pool', '今日进入公海的客户', '0', '0', '', '0', '1', 'pool', '1566748800', '1566748800');
+
+ALTER TABLE `5kcrm_crm_customer` CHANGE `deal_time` `deal_time` INT(11) NOT NULL COMMENT '领取，分配，创建时间';
+
+CREATE TABLE IF NOT EXISTS `5kcrm_crm_customer_config` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_ids` varchar(255) NOT NULL COMMENT '员工',
+  `structure_ids` varchar(255) NOT NULL COMMENT '部门',
+  `types` tinyint(4) NOT NULL DEFAULT '1' COMMENT '1拥有客户上限2锁定客户上限',
+  `value` int(10) NOT NULL COMMENT '数值',
+  `is_deal` tinyint(4) NOT NULL COMMENT '1成交客户',
+  `create_time` int(11) NOT NULL COMMENT '创建时间',
+  `update_time` int(11) NOT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='客户配置表（锁定、拥有）';
+
+ALTER TABLE `5kcrm_task` CHANGE `status` `status` TINYINT(2) NOT NULL DEFAULT '1' COMMENT '完成状态 1正在进行,2延期,5结束';
+
+INSERT INTO `5kcrm_admin_rule`(`id`, `types`, `title`, `name`, `level`, `pid`, `status`) VALUES
+(104, 2, '成交状态', 'deal_status', 3, 10, 1);
+
+INSERT INTO `5kcrm_admin_rule`(`id`, `types`, `title`, `name`, `level`, `pid`, `status`) VALUES
+(105, 0, '全部', 'admin', 1, 0, 1),
+(106, 0, '企业首页', 'system', 2, 105, 1),
+(107, 0, '查看', 'index', 3, 106, 1),
+(108, 0, '编辑', 'save', 3, 106, 1),
+(109, 0, '应用管理', 'configset', 2, 105, 1),
+(110, 0, '查看', 'index', 3, 109, 1),
+(111, 0, '停用/启用', 'update', 3, 109, 1),
+(112, 0, '员工与部门管理', 'users', 2, 105, 1),
+(113, 0, '部门/员工查看', 'index', 3, 112, 1),
+(114, 0, '员工新建', 'save', 3, 112, 1),
+(115, 0, '员工禁用/激活', 'enables', 3, 112, 1),
+(116, 0, '员工操作', 'update', 3, 112, 1),
+(117, 0, '部门新建', 'structures_save', 3, 112, 1),
+(118, 0, '部门编辑', 'structures_update', 3, 112, 1),
+(119, 0, '部门删除', 'structures_delete', 3, 112, 1),
+(120, 0, '角色权限管理', 'groups', 2, 105, 1),
+(121, 0, '角色权限设置', 'update', 3, 120, 1),
+(122, 0, '工作台设置', 'oa', 2, 105, 1),
+(123, 0, '办公审批管理', 'examine', 3, 122, 1),
+(124, 0, '审批流程管理', 'examine_flow', 2, 105, 1),
+(125, 0, '审批流程管理', 'index', 3, 124, 1),
+(126, 0, '客户管理设置', 'crm', 2, 105, 1),
+(127, 0, '自定义字段设置', 'field', 3, 126, 1),
+(128, 0, '客户公海规则', 'pool', 3, 126, 1),
+(129, 0, '业务参数设置', 'setting', 3, 126, 1),
+(130, 0, '业绩目标设置', 'achievement', 3, 126, 1);
+
+ALTER TABLE `5kcrm_admin_config` CHANGE `type` `type` TINYINT(2) NOT NULL COMMENT '类型：1已发布，2未发布，3增值';
+
+ALTER TABLE `5kcrm_admin_config` CHANGE `typestatus` `pid` TINYINT(4) NOT NULL COMMENT '父级ID';
+
+INSERT INTO `5kcrm_admin_rule`(`id`, `types`, `title`, `name`, `level`, `pid`, `status`) VALUES
+(131, 1, '全部', 'oa', 1, 0, 1),
+(132, 1, '通讯录', 'addresslist', 2, 131, 1),
+(133, 1, '查看列表', 'index', 3, 132, 1),
+(134, 1, '公告', 'announcement', 2, 131, 1),
+(135, 1, '新建', 'save', 3, 134, 1),
+(136, 1, '编辑', 'update', 3, 134, 1),
+(137, 1, '删除', 'delete', 3, 134, 1);
+
+ALTER TABLE `5kcrm_admin_group` CHANGE `pid` `pid` TINYINT(4) NOT NULL COMMENT '分类：0客户自定义角色,1系统默认管理角色,2客户管理角色,3人力资源管理角色,4财务管理角色,5项目管理角色,6办公管理角色';
+
+ALTER TABLE `5kcrm_admin_rule` CHANGE `types` `types` TINYINT(2) NOT NULL DEFAULT '0' COMMENT '0系统设置1工作台2客户管理3项目管理4人力资源5财务管理6商业智能(客戶)7商业智能(办公)';
+
+INSERT INTO `5kcrm_crm_config` (`id`, `name`, `value`, `description`) VALUES (NULL, 'remind_day', '7', '公海提前提醒天数');
+
+INSERT INTO `5kcrm_crm_config` (`id`, `name`, `value`, `description`) VALUES (NULL, 'remind_config', '0', '1开启(公海提前提醒天数)');
+
+INSERT INTO `5kcrm_admin_rule`(`id`, `types`, `title`, `name`, `level`, `pid`, `status`) VALUES
+(138, 0, '项目管理设置', 'work', 2, 105, 1),
+(139, 0, '项目管理', 'work', 3, 138, 1);
+
+UPDATE `5kcrm_admin_group` SET `rules` = ',105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,138,139,' WHERE `pid` = 1 AND `types` = 2;
+
+UPDATE `5kcrm_admin_group` SET `rules` = ',112,113,114,115,116,117,118,119,105,' WHERE `pid` = 1 AND `types` = 3;
+UPDATE `5kcrm_admin_group` SET `rules` = ',124,125,105,' WHERE `pid` = 1 AND `types` = 4;
+UPDATE `5kcrm_admin_group` SET `rules` = ',122,123,105,' WHERE `pid` = 1 AND `types` = 5;
+UPDATE `5kcrm_admin_group` SET `rules` = ',126,127,128,129,130,105,' WHERE `pid` = 1 AND `types` = 6;
+UPDATE `5kcrm_admin_group` SET `rules` = ',141,142,143,' WHERE `pid` = 1 AND `types` = 7;
+
+INSERT INTO `5kcrm_admin_rule` (`id`, `types`, `title`, `name`, `level`, `pid`, `status`) VALUES (140, '7', '商业智能', 'bi', '1', '0', '1');
+
+UPDATE `5kcrm_admin_rule` SET `pid` = 140 WHERE `name` = 'oa' AND `level` = 2 AND `pid` = 62;
+UPDATE `5kcrm_admin_rule` SET `types` = '7' WHERE `types` = 6 AND `id` > 85;
+
+INSERT INTO `5kcrm_admin_rule`(`id`, `types`, `title`, `name`, `level`, `pid`, `status`) VALUES
+(141, 9, '全部', 'work', 1, 0, 1),
+(142, 9, '项目管理', 'work', 2, 141, 1),
+(143, 9, '项目创建', 'save', 3, 142, 1);
+
+ALTER TABLE `5kcrm_task` CHANGE `name` `name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '任务名称';
+
+INSERT INTO `5kcrm_admin_rule` (`id`, `types`, `title`, `name`, `level`, `pid`, `status`) VALUES (144, '2', '跟进记录管理', 'record', '2', '1', '1');
+INSERT INTO `5kcrm_admin_rule` (`id`, `types`, `title`, `name`, `level`, `pid`, `status`) VALUES (145, '2', '查看列表', 'index', '3', '144', '1');
+
+INSERT INTO `5kcrm_admin_config` (`id`, `name`, `status`, `module`, `controller`, `type`, `pid`) VALUES
+(1, '办公管理', 1, 'oa', '', 1, 0),
+(2, '客户关系管理', 1, 'crm', '', 1, 0),
+(3, '项目管理', 1, 'work', '', 1, 0),
+(4, '人力资源管理', 0, 'hrm', '', 2, 0),
+(5, '进销存管理', 0, 'jxc', '', 2, 0),
+(6, '呼叫中心功能', 0, 'call', '', 3, 0);
+
+UPDATE `5kcrm_admin_group` SET `rules` = ',92,98,90,', `remark` = '成员初始加入时默认享有的权限：默认只有新建任务，查看任务权限' WHERE `pid` = 5 AND `system` = 1;

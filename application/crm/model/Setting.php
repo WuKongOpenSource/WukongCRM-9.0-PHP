@@ -35,7 +35,7 @@ class Setting extends Common
     	}
         if (!is_array($param['types_id'])) {
             $param['types_id'] = [intval($param['types_id'])];
-        }   
+        }
         $res = teamUserId($param['types'], $param['types_id'], $param['type'], $param['user_id'], $param['is_del'], $param['owner_user_id']);
 		if ($res == '1') {
             //同时关联其他模块(仅限客户模块)

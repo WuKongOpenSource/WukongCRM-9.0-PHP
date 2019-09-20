@@ -19,10 +19,12 @@ const user = {
   state: {
     userInfo: null, // 用户信息
     // 权限信息
-    allAuth: null, //总权限信息 默认空 调整动态路由
+    allAuth: null, // 总权限信息 默认空 调整动态路由
     crm: {}, // 客户管理
     bi: {}, // 商业智能
-    manage: {} // 管理后台
+    admin: {}, // 管理后台
+    oa: {}, // 办公
+    work: {} // 项目管理
   },
 
   mutations: {
@@ -38,8 +40,14 @@ const user = {
     SET_BI: (state, bi) => {
       state.bi = bi
     },
-    SET_MANAGE: (state, manage) => {
-      state.manage = manage
+    SET_ADMIN: (state, admin) => {
+      state.admin = admin
+    },
+    SET_OA: (state, oa) => {
+      state.oa = oa
+    },
+    SET_WORK: (state, work) => {
+      state.work = work
     }
   },
 
@@ -61,10 +69,12 @@ const user = {
           addAuth(data.authKey, data.sessionId)
           commit('SET_USERINFO', data.userInfo)
           // 权限
-
+          commit('SET_ALLAUTH', data.authList)
           commit('SET_CRM', data.authList.crm)
           commit('SET_BI', data.authList.bi)
-          commit('SET_MANAGE', data.authList.manage)
+          commit('SET_ADMIN', data.authList.admin)
+          commit('SET_OA', data.authList.oa)
+          commit('SET_WORK', data.authList.work)
           resolve(data)
         }).catch(error => {
           reject(error)
@@ -84,7 +94,9 @@ const user = {
           commit('SET_ALLAUTH', data)
           commit('SET_CRM', data.crm)
           commit('SET_BI', data.bi)
-          commit('SET_MANAGE', data.manage)
+          commit('SET_ADMIN', data.admin)
+          commit('SET_OA', data.oa)
+          commit('SET_WORK', data.work)
 
           resolve(response)
         }).catch(error => {

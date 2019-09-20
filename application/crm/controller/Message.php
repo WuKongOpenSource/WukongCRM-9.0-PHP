@@ -23,7 +23,7 @@ class Message extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['num','todaycustomer','followleads','followcustomer','checkcontract','checkreceivables','remindreceivablesplan','endcontract']            
+            'allow'=>['num','todaycustomer','followleads','followcustomer','checkcontract','checkreceivables','remindreceivablesplan','endcontract','remindcustomer']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -77,7 +77,12 @@ class Message extends ApiCommon
         if ($configData['contract_config'] == 1) {
             $endContract = $this->endContract();
             $data['endContract'] = $endContract['dataCount'] ? : '';  
-        }                                   
+        }
+        //待进入公海提醒
+        if ($configData['remind_config'] == 1) {
+            $remindCustomer = $this->remindCustomer();
+            $data['remindCustomer'] = $remindCustomer['dataCount'] ? : '';            
+        }                                          
         return resultArray(['data' => $data]);
     }
 
@@ -208,12 +213,16 @@ class Message extends ApiCommon
         // $param['owner_user_id'] = $userInfo['id'];
         if ($isSub) {
             $param['owner_user_id'] = array('in',getSubUserId(false));
-        } else {
-            $param['check_user_id'] = ['like','%,'.$userInfo['id'].',%'];
         }
         switch ($type) {
-            case '1' : $param['check_status'] = ['lt','2']; break;
-            case '2' : $param['check_status'] = ['egt','2']; break;
+            case '1' : 
+                $param['check_status'] = ['lt','2']; 
+                $param['check_user_id'] = ['like','%,'.$userInfo['id'].',%'];
+                break;
+            case '2' : 
+                // $param['check_status'] = ['egt','2']; 
+                $param['flow_user_id'] = ['like','%,'.$userInfo['id'].',%'];
+                break;
         }
         $data = $contractModel->getDataList($param);
         if ($types == 'list') {
@@ -242,12 +251,16 @@ class Message extends ApiCommon
         // $param['owner_user_id'] = $userInfo['id'];
         if ($isSub) {
             $param['owner_user_id'] = array('in',getSubUserId(false));
-        } else {
-            $param['check_user_id'] = ['like','%,'.$userInfo['id'].',%'];
-        }          
+        }
         switch ($type) {
-            case '1' : $param['check_status'] = ['lt','2']; break;
-            case '2' : $param['check_status'] = ['egt','2']; break;
+            case '1' : 
+                $param['check_status'] = ['lt','2']; 
+                $param['check_user_id'] = ['like','%,'.$userInfo['id'].',%'];
+                break;
+            case '2' : 
+                // $param['check_status'] = ['egt','2']; 
+                $param['flow_user_id'] = ['like','%,'.$userInfo['id'].',%'];
+                break;
         }
         $data = $receivablesModel->getDataList($param);
         if ($types == 'list') {
@@ -330,5 +343,37 @@ class Message extends ApiCommon
             return resultArray(['data' => $data]);
         }
         return $data;
-    }          
+    }  
+
+    /**
+     * 待进入客户池（默认5天）
+     * @author Michael_xu
+     * @return 
+     */
+    public function remindCustomer()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $types = $param['types'];
+        $isSub = $param['isSub'] ? : '';
+        unset($param['types']);
+        unset($param['type']);
+        unset($param['isSub']);
+        unset($param['deal_status']);
+        unset($param['owner_user_id']);
+        $customerModel = model('Customer');
+        
+        $whereData = $param ? : [];
+        $whereData['is_remind'] = 1;
+        $whereData['user_id'] = $userInfo['id'];
+        $whereData['scene_id'] = db('admin_scene')->where(['types' => 'crm_customer','bydata' => 'me'])->value('scene_id');
+        if ($isSub) {
+            $whereData['scene_id'] = db('admin_scene')->where(['types' => 'crm_customer','bydata' => 'sub'])->value('scene_id');
+        }
+        $data = $customerModel->getDataList($whereData);
+        if ($types == 'list') {
+            return resultArray(['data' => $data]);
+        }
+        return $data;
+    }             
 }

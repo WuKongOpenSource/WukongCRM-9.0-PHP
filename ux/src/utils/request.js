@@ -62,18 +62,18 @@ service.interceptors.response.use(
               showClose: false,
               confirmButtonText: '重新登录',
               type: 'warning',
-              callback: () => {
+              callback: action => {
                 showLoginMessageBox = false
+                if (action === 'confirm') {
+                  removeAuth().then(() => {
+                    location.reload() // 为了重新实例化vue-router对象 避免bug
+                  }).catch(() => {
+                    location.reload()
+                  })
+                }
               }
             }
-          ).then(() => {
-            showLoginMessageBox = false
-            removeAuth().then(() => {
-              location.reload() // 为了重新实例化vue-router对象 避免bug
-            }).catch(() => {
-              location.reload()
-            })
-          })
+          )
         }
       } else if (res.code === 402) {
         if (res.error && Object.prototype.toString.call(res.error) === '[object Array]') {
@@ -96,7 +96,7 @@ service.interceptors.response.use(
           })
         }
       }
-      return Promise.reject(res.error)
+      return Promise.reject(res)
     } else {
       return res
     }

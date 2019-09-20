@@ -30,22 +30,19 @@ class Field extends ApiCommon
         $a = strtolower($request->action());        
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
-        }
-        $userInfo = $this->userInfo;
-        //权限判断
-        $unAction = ['getfield','read','config','validates','configindex','columnwidth','uniquefield'];
-        $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(6,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }         
+        }        
     }
     
     /**
      * 自定义字段列表
      */
     public function index()
-    {       
+    {  
+        //权限判断
+        if (!checkPerByAction('admin', 'crm', 'field')) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }         
         $param = $this->param;
         $types_arr = [
             '0' => ['types' => 'crm_leads','name' => '线索管理'],
@@ -88,6 +85,11 @@ class Field extends ApiCommon
      */
     public function update()
     {
+        //权限判断
+        if (!checkPerByAction('admin', 'crm', 'field')) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }        
         $fieldModel = model('Field');
         $param = $this->param;
         $types = $data['types'] = $param['types'];

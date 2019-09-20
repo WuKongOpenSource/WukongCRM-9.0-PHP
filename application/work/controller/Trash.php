@@ -67,6 +67,8 @@ class Trash extends ApiCommon
         if (!$param['task_id']) return resultArray(['error'=>'参数错误']);
         $flag = Db::name('Task')->where(['ishidden' => 1,'task_id' => $param['task_id']])->delete();
         if ($flag) {
+            //删除附件
+            
             return resultArray(['data'=>'删除成功']);
         } else {
             return resultArray(['error'=>'删除失败']);

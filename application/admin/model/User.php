@@ -169,6 +169,7 @@ class User extends Common
 			return false;
 		}
 		unset($data['password']);
+		unset($data['authkey']);
 
 		if($data['structure_id']) {
 			$structureDet = Db::name('AdminStructure')->field('id,name')->where('id = '.$data['structure_id'].'')->find();
@@ -308,8 +309,9 @@ class User extends Common
 			// 	$this->error = '非法操作';
 			// 	return false;
 			// }
-			$userInfo = $this->get($id);
-			if (!$userInfo) {
+			$checkData = $this->get($id);
+			$userInfo = $checkData->data;
+			if (!$checkData) {
 				$this->error = '暂无此数据';
 				return false;
 			}
@@ -317,25 +319,14 @@ class User extends Common
 				$this->error = '请至少勾选一个用户组';
 				return false;
 			}
-			$unUserId = [];
-			if ($param['parent_id'] == $userInfo['id']) {
+			$subUserId = getSubUserId(true, 0, $id);
+			if ((int)$param['parent_id'] == (int)$id) {
 				$this->error = '直属上级不能是自己';
 				return false;				
 			}
-			if ($param['parent_id']) {
-				if ($userInfo['id'] == 1) {
-					$this->error = '超级管理员不能设置上级';
-					return false;
-				} else {
-					$unUserId[] = $id;
-					$subUserId = getSubUser($id);
-					$unUserId = $subUserId ? array_merge($subUserId,$unUserId) : $unUserId;
-				}
-				$parentInfo = $this->get($param['parent_id']);
-				if (in_array($param['parent_id'],$unUserId) && $parentInfo['parent_id']) {
-					$this->error = '直属上级不能是自己或下属';
-					return false;					
-				}				
+			if ((int)$param['parent_id'] !== 1 && in_array($param['parent_id'],$subUserId)) {
+				$this->error = '直属上级不能是自己或下属';
+				return false;
 			}
 			if (db('admin_user')->where(['id' => ['neq',$id],'username' => $param['username']])->find()) {
 				$this->error = '手机号已存在';
@@ -550,7 +541,7 @@ class User extends Common
 	 * 获取菜单和权限 protected
 	 * @param  array   $param  [description]
 	 */
-    protected function getMenuAndRule($u_id)
+    public function getMenuAndRule($u_id)
     {
     	$menusList = [];
     	$ruleMap = [];
@@ -561,7 +552,7 @@ class User extends Common
         } else {
 			$groups = $this->get($u_id)->groups;
 	        $ruleIds = [];
-			foreach($groups as $k => $v) {
+			foreach ($groups as $k => $v) {
 				if (stringToArray($v['rules'])) {
 					$ruleIds = array_merge($ruleIds, stringToArray($v['rules']));
 				}
@@ -577,9 +568,11 @@ class User extends Common
         	$newRuleIds[] = $v['id'];
         	$rules[$k]['name'] = strtolower($v['name']);
         }
+        //菜单管理(弃用)
 		// $menuMap['status'] = 1;
         // $menuMap['rule_id'] = array('in',$newRuleIds);
         // $menusList = Db::name('admin_menu')->where($menuMap)->order('sort asc')->select();
+        
         $ret = [];
         //处理菜单成树状
         $tree = new \com\Tree();
@@ -587,31 +580,49 @@ class User extends Common
         $rulesList = $tree->list_to_tree($rules, 'id', 'pid', 'child', 0, true, array('pid'));
         //权限数组
         $authList = rulesListToArray($rulesList, $newRuleIds);
-		//系统设置权限（1超级管理员2系统设置管理员3部门与员工管理员4审批流管理员5工作台管理员6客户管理员7项目管理员8公告管理员）
-		$settingList = ['0' => 'system','1' => 'user','2' => 'permission','3' => 'examineFlow','4' => 'oa','5' => 'crm'];
-	    $adminTypes = adminGroupTypes($u_id);
-	    $newSetting = [];
-	    foreach ($settingList as $k=>$v) {
-	    	$check = false;  	
-	    	if (in_array('1', $adminTypes) || in_array('2', $adminTypes)) {
-	    		$check = true;
-	    	} else {
-				if ($v == 'user' && in_array('3', $adminTypes)) $check = true;	    		
-				if ($v == 'permission' && in_array('3', $adminTypes)) $check = true;	    		
-				if ($v == 'examineFlow' && in_array('4', $adminTypes)) $check = true;	    		
-				if ($v == 'oa' && in_array('5', $adminTypes)) $check = true;	    		
-				if ($v == 'crm' && in_array('6', $adminTypes)) $check = true;	    		
-	    	}
-	    	if ($check == true) {
-	    		$newSetting['manage'][$v] = $check;
-	    	}
-	    }
-	    if ($authList && $newSetting) {
-	    	$authList = array_merge($authList, $newSetting);
-	    } elseif ($newSetting) {
-			$authList = $newSetting;
-	    }
-
+		//应用控制
+        $adminConfig = db('admin_config')->where(['pid' => 0,'status' => 1])->column('module');
+        $adminConfig = $adminConfig ? array_merge($adminConfig,['bi','admin']) : ['bi','admin'];        
+		foreach ($authList as $k=>$v) {
+			if (!in_array($k,$adminConfig)) {
+				unset($authList[$k]);
+			}
+			//商业智能权限细化
+			if ($authList['bi']) {
+				if (!in_array('oa',$adminConfig) && !in_array('crm',$adminConfig)) {
+					unset($authList['bi']);
+				} else {
+					foreach ($authList['bi'] as $key=>$val) {
+						if (!in_array('oa',$adminConfig)) {
+							unset($authList['bi']['oa']);
+						}
+						if (!in_array('crm',$adminConfig)) {
+							unset($authList['bi']['customer']);
+							unset($authList['bi']['business']);
+							unset($authList['bi']['product']);
+							unset($authList['bi']['achievement']);
+							unset($authList['bi']['contract']);
+							unset($authList['bi']['portrait']);
+							unset($authList['bi']['ranking']);
+						}					
+					}					
+				}
+			} else {
+				unset($authList['bi']);
+			}	
+			if (in_array('oa',$adminConfig) && !$authList['oa']) {
+				// $authList['oa'] = (object)array();
+				$oaAuth =[]; //办公默认权限
+				$oaAuth = ['announcement' => 'read'];
+				$authList['oa'] = $oaAuth;
+			}
+			if (in_array('work',$adminConfig) && !$authList['work']) {
+				// $authList['oa'] = (object)array();
+				$oaAuth =[]; //项目默认权限
+				$oaAuth = ['work' => 'read'];
+				$authList['work'] = $oaAuth;
+			}			
+		}
 	    $ret['authList'] = $authList;    
         return $ret;
     }
@@ -883,5 +894,17 @@ class User extends Common
  			}			
 		}
 		return true;
-	}		
+	}
+
+	/**
+     * [getUserThree 员工第三方扩展信息]
+     * @param  key 分类
+     * @author Michael_xu
+     * @return    [array]
+     */	
+    public function getUserThree($key, $user_id)
+    {
+    	$resValue = db('admin_user_threeparty')->where(['key' => $key,'user_id' => $user_id])->value('value');
+    	return $resValue ? : '';
+    }			
 }

@@ -24,6 +24,6 @@ class Index extends Common
 	{
 		$where = array();
 		$start_time = $param['start_time'];
-		$where['create_time'] = Time::today()	
+		$where['create_time'] = Time::today();
 	}
 } 		

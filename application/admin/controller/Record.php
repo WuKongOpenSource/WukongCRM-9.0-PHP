@@ -114,8 +114,13 @@ class Record extends ApiCommon
         }
         //自己(24小时)或者管理员
         $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(1,$adminTypes) && ($dataInfo['create_user_id'] !== $userInfo['id'] && ((time()-$dataInfo['create_time']) > 86400))) {
-            return resultArray(['error' => '超过24小时，不能删除']);
+        if(!in_array(1,$adminTypes)){
+            if((time()-$dataInfo['create_time']) > 86400){
+                return resultArray(['error' => '超过24小时，不能删除']);
+            }
+            if ($dataInfo['create_user_id'] !== $userInfo['id']){
+                return resultArray(['error' => '无权操作']);
+            }
         }
         $resData = $recordModel->delDataById($param['id']);
         if (!$resData) {

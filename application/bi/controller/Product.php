@@ -31,6 +31,10 @@ class Product extends ApiCommon
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
+        if (!checkPerByAction('bi', 'product' , 'read')) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }         
     } 
   
     /**
@@ -41,10 +45,6 @@ class Product extends ApiCommon
      */
     public function statistics()
     {
-        if (!checkPerByAction('bi', 'product' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
         $productModel = new \app\crm\model\Product();
         $param = $this->param;
         $list = $productModel->getStatistics($param);
@@ -56,11 +56,7 @@ class Product extends ApiCommon
      * @return [type] [description]
      */
     public function productCategory()
-    {
-        if (!checkPerByAction('bi', 'product' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
+    {       
         $productModel = new \app\bi\model\Product();
         $param = $this->param;
         $list = $productModel->getStatistics($param);

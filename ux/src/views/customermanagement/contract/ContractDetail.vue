@@ -1,5 +1,7 @@
 <template>
   <slide-view v-empty="!canShowDetail"
+              xs-empty-icon="nopermission"
+              xs-empty-text="暂无权限"
               :listenerIDs="listenerIDs"
               :noListenerIDs="noListenerIDs"
               :noListenerClass="noListenerClass"
@@ -7,8 +9,6 @@
               :body-style="{padding: 0, height: '100%'}">
     <flexbox v-if="canShowDetail"
              v-loading="loading"
-             xs-empty-icon="nopermission"
-             xs-empty-text="暂无权限"
              direction="column"
              align="stretch"
              class="d-container">
@@ -185,7 +185,8 @@ export default {
             ? res.data.customer_id_info.name
             : ''
           this.headDetails[2].value = res.data.money
-          this.headDetails[3].value = res.data.order_date == '0000-00-00' ? '' : res.data.order_date
+          this.headDetails[3].value =
+            res.data.order_date == '0000-00-00' ? '' : res.data.order_date
           this.headDetails[4].value = res.data.receivablesMoney
             ? res.data.receivablesMoney.doneMoney
             : ''
@@ -193,7 +194,10 @@ export default {
             ? res.data.owner_user_id_info.realname
             : ''
         })
-        .catch(() => {
+        .catch(err => {
+          if (err && err.code == 102) {
+            this.hasRequestAuth = false
+          }
           this.loading = false
         })
     },

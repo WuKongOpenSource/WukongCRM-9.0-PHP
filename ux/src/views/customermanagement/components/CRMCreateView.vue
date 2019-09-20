@@ -68,9 +68,14 @@
                    class="handle-button"
                    type="primary"
                    @click.native="saveField(true)">保存并新建联系人</el-button>
+        <el-button v-if="showDraft"
+                   class="handle-button"
+                   type="primary"
+                   plain
+                   @click.native="saveDraftField()">保存草稿</el-button>
         <el-button class="handle-button"
                    type="primary"
-                   @click.native="saveField(false)">保存</el-button>
+                   @click.native="saveField(false)">{{sureBtnTitle}}</el-button>
       </div>
     </flexbox>
   </create-view>
@@ -169,6 +174,19 @@ export default {
         return true
       }
       return false
+    },
+    // 草稿按钮
+    showDraft() {
+      if (this.crmType === 'contract' || this.crmType === 'receivables') {
+        return true
+      }
+      return false
+    },
+    sureBtnTitle() {
+      if (this.crmType === 'contract' || this.crmType === 'receivables') {
+        return '提交审核'
+      }
+      return '保存'
     }
   },
   watch: {
@@ -775,20 +793,38 @@ export default {
       }
       return tempList
     },
+    // 保存草稿
+    saveDraftField() {
+      this.saveField(false, true)
+    },
     // 保存数据
-    saveField(saveAndCreate) {
+    saveField(saveAndCreate, isDraft = false) {
       this.saveAndCreate = saveAndCreate
       this.$refs.crmForm.validate(valid => {
         if (valid) {
           if (this.showExamine) {
             /** 验证审批数据 */
-            this.$refs.examineInfo.validateField(() => {
+            if (isDraft) {
+              // 不验证数据
               var params = this.getSubmiteParams(this.crmForm.crmFields)
-              if (this.examineInfo.config === 0) {
+              if (
+                this.examineInfo.config === 0 &&
+                this.examineInfo.hasOwnProperty('value') &&
+                this.examineInfo.value.length
+              ) {
                 params['check_user_id'] = this.examineInfo.value[0].id
               }
+              params.is_draft = 1
               this.submiteParams(params)
-            })
+            } else {
+              this.$refs.examineInfo.validateField(() => {
+                var params = this.getSubmiteParams(this.crmForm.crmFields)
+                if (this.examineInfo.config === 0) {
+                  params['check_user_id'] = this.examineInfo.value[0].id
+                }
+                this.submiteParams(params)
+              })
+            }
           } else {
             var params = this.getSubmiteParams(this.crmForm.crmFields)
             this.submiteParams(params)
@@ -1064,6 +1100,10 @@ export default {
     margin-top: 5px;
     margin-right: 20px;
   }
+}
+
+.el-button + .el-button {
+  margin-left: 0;
 }
 
 // 审核信息 里的审核类型

@@ -99,6 +99,11 @@ export default {
         by: 'task' // 类型（record 跟进记录，log 日志、examine审批、task 任务、event日程、默认是全部）
       })
         .then(res => {
+          for (let item of res.data.list) {
+            if (item.dataInfo.status == 5) {
+              item.dataInfo.checked = true
+            }
+          }
           this.list = this.list.concat(res.data.list)
           if (res.data.list.length < 10) {
             this.loadMoreLoading = false

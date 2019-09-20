@@ -3,6 +3,7 @@
 \think\Hook::add('check_auth','app\\common\\behavior\\AuthenticateBehavior');
 
 use think\Db;
+use app\crm\model\Leads;
 
 //添加关联关系  数据表名+业务ID+数组
 function addRelation( $moudle ='',$id='',$param = array() ){

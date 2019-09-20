@@ -60,13 +60,13 @@ class Index extends ApiCommon
      */
     public function index()
     {
-        $model = new Comment();
+        $commentModel = new Comment();
         $param['task_id'] =2;
-        $list = $model->read($param);
+        $list = $commentModel->read($param);
         if ($list) {
              return resultArray(['data' => $list ]);
         } else {
-             return resultArray(['error'=> $model->getError()]);
+             return resultArray(['error'=> $commentModel->getError()]);
         }
     }
 }

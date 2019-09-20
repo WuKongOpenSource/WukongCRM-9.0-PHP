@@ -57,7 +57,7 @@ class Announcement extends Common
 		} else {
 			$time = '';
 		}
-		$userDet = $userModel->getDataById($user_id);
+		$userDet = $userModel->getUserById($user_id);
 			
 		$list = Db::name('OaAnnouncement')
 				->alias('announcement')
@@ -70,18 +70,9 @@ class Announcement extends Common
         		->select();
         $adminTypes = adminGroupTypes($user_id);
 		foreach ($list as $k=>$v) {
-			$list[$k]['thumb_img'] = $v['thumb_img']?getFullPath($v['thumb_img']):'';
+			$list[$k]['thumb_img'] = $v['thumb_img'] ? getFullPath($v['thumb_img']) : '';
 			$list[$k]['structureList'] = $structureModel->getDataByStr($v['structure_ids']) ? : array();
 			$list[$k]['ownerList'] = $userModel->getDataByStr($v['owner_user_ids']) ? : array();
-			$is_update = 0;
-			$is_delete = 0;
-			if (in_array(8,$adminTypes) || in_array(1,$adminTypes)) {
-		        $is_update = 1;
-		        $is_delete = 1;
-			}
-			$permission['is_update'] = $is_update;
-			$permission['is_delete'] = $is_delete;
-			$list[$k]['permission']  = $permission;
 		}
 		
         $dataCount = Db::name('OaAnnouncement')->alias('announcement')
@@ -128,8 +119,8 @@ class Announcement extends Common
 			} else {
 				$send_user_id = getSubUserId(true, 1); 
 			}
-            $createUserInfo = $userModel->getDataById($param['create_user_id']);
-            $sendContent = $createUserInfo['realname'].'创建了公告【'.$param['title'].'】,请及时查看';
+            $createUserInfo = $userModel->getUserById($param['create_user_id']);
+            $sendContent = $createUserInfo['realname'].'创建了公告《'.$param['title'].'》,请及时查看';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $this->announcement_id, 1);
             }		
@@ -175,7 +166,7 @@ class Announcement extends Common
 			} else {
 				$send_user_id = getSubUserId(true, 1); 
 			}
-            $createUserInfo = $userModel->getDataById($param['create_user_id']);
+            $createUserInfo = $userModel->getUserById($param['create_user_id']);
             $sendContent = $createUserInfo['realname'].'修改了公告《'.$param['title'].'》,请及时查看';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $announcement_id, 1);

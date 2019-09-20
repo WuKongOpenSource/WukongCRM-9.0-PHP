@@ -167,6 +167,7 @@ export default {
       })
         .then(res => {
           this.list = res.data.list
+          this.total = res.data.dataCount
           this.loading = false
         })
         .catch(() => {

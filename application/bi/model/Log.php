@@ -17,12 +17,10 @@ class Log extends Common
      * 我们约定每个模块的数据表都加上相同的前缀，比如CRM模块用crm作为数据表前缀
      */
 	protected $name = 'oa_log';
-    protected $createTime = 'create_time';
-    protected $updateTime = 'update_time';
 
     /**
      * [getDataList 日志统计]
-     * @author zhi
+     * @author Michael_xu
      * @param 
      * @return 
      */
@@ -30,25 +28,18 @@ class Log extends Common
     {
         $userModel = new \app\admin\model\User();
         $commentModel = new \app\admin\model\Comment();
-        $where = [];
-        
-        //员工IDS
-        $map_user_ids = [];
-        if ($param['user_id']) {
-            $map_user_ids = array($param['user_id']);
-        } else {
-            if ($param['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($param['structure_id'], 2);
-            }
-        }
-        $perUserIds = $userModel->getUserByPer('bi', 'oa', 'read'); //权限范围内userIds
-        $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集    
+        // $adminModel = new \app\admin\model\Admin(); 
+        // $perUserIds = $userModel->getUserByPer('bi', 'oa', 'read'); //权限范围内userIds
+        // $whereData = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        // $userIds = $whereData['userIds'];        
+        $where = [];  
+          
         //时间
         $start_time = $param['start_time'] ? : strtotime(date('Y-m-d',time()));
         $end_time = $param['end_time'] ? : strtotime(date('Y-m-d',time()))+86399;
         $create_time = array('between',array($start_time,$end_time));
 
-        $where['id'] = array('in',$userIds);
+        // $where['id'] = array('in',$userIds);
         $where['type'] = 1;
         $userList = db('admin_user')->where($where)->field('id,username,thumb_img,realname')->select();
         foreach ($userList as $k=>$v) {

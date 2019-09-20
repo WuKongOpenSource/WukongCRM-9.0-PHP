@@ -123,17 +123,16 @@ class Leads extends ApiCommon
     public function update()
     {    
         $leadsModel = model('Leads');
-        $userModel = new \app\admin\model\User();
         $param = $this->param;
         $userInfo = $this->userInfo;
         $param['user_id'] = $userInfo['id'];
-        //判断权限
-        $data = $leadsModel->getDataById($param['id']);
-        $auth_user_ids = $userModel->getUserByPer('crm', 'leads', 'update');
-        if (!in_array($data['owner_user_id'],$auth_user_ids)) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }         
+        // //判断权限
+        // $data = $leadsModel->getDataById($param['id']);
+        // $auth_user_ids = $userModel->getUserByPer('crm', 'leads', 'update');
+        // if (!in_array($data['owner_user_id'],$auth_user_ids)) {
+        //     header('Content-Type:application/json; charset=utf-8');
+        //     exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        // }         
         if ($leadsModel->updateDataById($param, $param['id'])) {
             return resultArray(['data' => '编辑成功']);
         } else {
@@ -149,9 +148,9 @@ class Leads extends ApiCommon
      */
     public function delete()
     {
+        $param = $this->param; 
         $leadsModel = model('Leads');
-        $param = $this->param;        
-
+        $recordModel = new \app\admin\model\Record();
         if (!is_array($param['id'])) {
             $leads_id[] = $param['id'];
         } else {
@@ -184,6 +183,8 @@ class Leads extends ApiCommon
             if (!$data) {
                 return resultArray(['error' => $leadsModel->getError()]);
             } 
+            //删除跟进记录
+            $recordModel->delDataByTypes('crm_leads',$delIds);            
             actionLog($delIds,'','','');           
         }
         if ($errorMessage) {
@@ -226,16 +227,16 @@ class Leads extends ApiCommon
             $data['update_time'] = time();            
             //权限判断
             if (!$leadsInfo) {
-                $errorMessage[] = 'id:为'.$leads_id.'的线索转化失败，错误原因：数据不存在；';
+                $errorMessage[] = '线索《'.$leadsInfo['name'].'》转化失败，错误原因：数据不存在；';
                 continue;                
             }
             if (!in_array($leadsInfo['owner_user_id'],$authIds)) {
-                $errorMessage[] = $leadsInfo['name'].'"转化失败，错误原因：无权限；';
+                $errorMessage[] = '线索《'.$leadsInfo['name'].'》转化失败，错误原因：无权限；';
                 continue;
             }
             $resCustomer = $customerModel->createData($data);
             if (!$resCustomer) {
-                $errorMessage[] = $leadsInfo['name'].'"转化失败，错误原因：数据出错；';
+                $errorMessage[] = '线索《'.$leadsInfo['name'].'》转化失败，错误原因：'.$customerModel->getError();
                 continue;
             }
             $leadsData = [];
@@ -243,7 +244,7 @@ class Leads extends ApiCommon
             $leadsData['customer_id'] = $resCustomer['customer_id'];
             db('crm_leads')->where(['leads_id' => $leads_id])->update($leadsData);
             //修改记录
-            updateActionLog($userInfo['id'], 'crm_customer', $resCustomer['customer_id'], '', '', '将线索"'.$leadsInfo['name'].'"转化为客户');               
+            updateActionLog($userInfo['id'], 'crm_customer', $resCustomer['customer_id'], '', '', '将线索"'.$leadsInfo['name'].'转化为客户');               
         }
         if (!$errorMessage) {
             return resultArray(['data' => '转化成功']);
@@ -289,7 +290,7 @@ class Leads extends ApiCommon
         foreach ($param['leads_id'] as $leads_id) {
             $leadsInfo = $leadsModel->getDataById($leads_id);
             if (!$leadsInfo) {
-                $errorMessage[] = 'id:为'.$leads_id.'的线索转移失败，错误原因：数据不存在；';
+                $errorMessage[] = '名称:为《'.$leadsInfo['name'].'》的线索转移失败，错误原因：数据不存在；';
                 continue;
             }
             //权限判断
@@ -381,7 +382,7 @@ class Leads extends ApiCommon
         if (!$res) {
             return resultArray(['error'=>$excelModel->getError()]);
         }
-        return resultArray(['data'=>'导入成功']);
+        return resultArray(['data'=>'导入成功,请手动刷新页面']);
     }
 
     /**

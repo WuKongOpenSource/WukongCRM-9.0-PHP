@@ -28,6 +28,7 @@ class ReceivablesPlan extends Common
      * @param     [string]                   $map [查询条件]
      * @param     [number]                   $page     [当前页数]
      * @param     [number]                   $limit    [每页数量]
+     * @param     [string]                   $types    1 未使用的回款计划
      * @return    [array]                    [description]
      */		
 	public function getDataList($request)
@@ -37,10 +38,12 @@ class ReceivablesPlan extends Common
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
     	$check_status = $request['check_status'];
+    	$types = $request['types'];
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);	    	
 		unset($request['check_status']);	    	
+		unset($request['types']);	    	
 
         $request = $this->fmtRequest( $request );
         $map = $request['map'] ? : [];
@@ -67,8 +70,11 @@ class ReceivablesPlan extends Common
 				$whereData = function($query) use ($data){
 					        	$query->where(['receivables_plan.receivables_id'=> ['eq',0]])
 						        	->whereOr(['receivables.check_status' => $data['check_status']]);					
-								};			
+								};
 			}
+		}
+		if ($types == 1) {
+			$map['receivables_plan.receivables_id']  = ['eq',0];
 		}
 		$list = db('crm_receivables_plan')
 				->alias('receivables_plan')
@@ -80,7 +86,6 @@ class ReceivablesPlan extends Common
 				->where($map)
 				->where($whereData)				
 				->select();
-			// echo db()->getLastSql();die();
 		$dataCount = db('crm_receivables_plan')
 					->alias('receivables_plan')
 					->join('__CRM_CONTRACT__ contract','receivables_plan.contract_id = contract.contract_id','LEFT')

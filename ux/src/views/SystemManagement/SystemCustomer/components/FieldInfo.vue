@@ -106,6 +106,7 @@
         转化客户字段
       </div>
       <el-select v-model="field.relevant"
+                 clearable
                  placeholder="请选择">
         <el-option v-for="item in transformData[field.form_type]"
                    :key="item.value"
@@ -348,8 +349,8 @@ export default {
 .radio {
   margin-top: 5px;
   margin-left: 0;
-  /deep/.el-radio {
-    margin-right: 10px;
+  /deep/ .el-radio {
+    margin-right: 10px !important;
   }
   .input {
     display: inline-block;

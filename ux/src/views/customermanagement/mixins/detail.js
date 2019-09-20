@@ -3,7 +3,9 @@ import {
 } from 'vuex'
 export default {
   data() {
-    return {}
+    return {
+      hasRequestAuth: true // 请求是返回的权限
+    }
   },
   props: {
     /** 是公海 默认是客户 */
@@ -17,6 +19,9 @@ export default {
     ...mapGetters(['crm']),
     // 能否查看详情
     canShowDetail() {
+      if (!this.hasRequestAuth) {
+        return false
+      }
       return this.crm && this.crm[this.crmType] && this.crm[this.crmType].read
     }
   },
@@ -47,6 +52,6 @@ export default {
     }
   },
 
-  deactivated: function () {}
+  deactivated: function () { }
 
 }

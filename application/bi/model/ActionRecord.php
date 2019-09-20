@@ -1,6 +1,6 @@
 <?php
 // +----------------------------------------------------------------------
-// | Description: 字段修改记录
+// | Description: 操作记录
 // +----------------------------------------------------------------------
 // | Author:  Michael_xu | gengxiaoxu@5kcrm.com 
 // +----------------------------------------------------------------------
@@ -19,13 +19,12 @@ class ActionRecord extends Common
      * 我们约定每个模块的数据表都加上相同的前缀，比如CRM模块用crm作为数据表前缀
      */
 	protected $name = 'admin_action_record';
-	public $typesArr = ['crm_leads','crm_customer','crm_contacts','crm_product','crm_business','crm_contract','crm_receivables'];
 
 	/**
 	 * [getDataList 获取列表]
 	 * @return    [array]                         
 	 */
-	public function getDataList($request)
+	public function getDataCount($request)
 	{
 		$dataCount = db('admin_action_record')->where($request)->count();
 		return $dataCount;

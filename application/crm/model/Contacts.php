@@ -104,13 +104,13 @@ class Contacts extends Common
 		    }
 		}	    
 		//列表展示字段
-		// $indexField = $fieldModel->getIndexField('crm_contacts', $user_id); 
+		$indexField = $fieldModel->getIndexField('crm_contacts', $user_id, 1) ? : array('name');
 		$userField = $fieldModel->getFieldByFormType('crm_contacts', 'user'); //人员类型
 		$structureField = $fieldModel->getFieldByFormType('crm_contacts', 'structure');  //部门类型			
 
 		//排序
 		if ($order_type && $order_field) {
-			$order = 'convert(contacts.'.trim($order_field).' using gbk) '.trim($order_type);
+			$order = $fieldModel->getOrderByFormtype('crm_contacts','contacts',$order_field,$order_type);
 		} else {
 			$order = 'contacts.update_time desc';
 		}
@@ -125,7 +125,7 @@ class Contacts extends Common
 				->where($authMap)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		->field('contacts.*,customer.name as customer_name')
-        		// ->field('contacts_id,'.implode(',',$indexField)
+        		->field(implode(',',$indexField).',customer.name as customer_name')
         		->orderRaw($order)
         		->select();	
         $dataCount = db('crm_contacts')
@@ -215,11 +215,19 @@ class Contacts extends Common
 	 */	
 	public function updateDataById($param, $contacts_id = '')
 	{
+		$userModel = new \app\admin\model\User();
 		$dataInfo = $this->getDataById($contacts_id);
 		if (!$dataInfo) {
 			$this->error = '数据不存在或已删除';
 			return false;
 		}
+		//判断权限
+        $auth_user_ids = $userModel->getUserByPer('crm', 'contacts', 'update');
+        if (!in_array($dataInfo['owner_user_id'],$auth_user_ids)) {
+            $this->error = '无权操作';
+            return false;
+        } 		
+
 		$param['contacts_id'] = $contacts_id;
 		//过滤不能修改的字段
 		$unUpdateField = ['create_user_id','is_deleted','delete_time'];
@@ -243,7 +251,7 @@ class Contacts extends Common
 			$param[$v] = arrayToString($param[$v]);
 		}
 
-		if ($this->allowField(true)->save($param, ['contacts_id' => $contacts_id])) {
+		if ($this->update($param, ['contacts_id' => $contacts_id], true)) {
 			//修改记录
 			updateActionLog($param['user_id'], 'crm_contacts', $contacts_id, $dataInfo->data, $param);
 			$data = [];

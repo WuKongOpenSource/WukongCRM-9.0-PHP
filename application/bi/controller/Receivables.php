@@ -31,15 +31,15 @@ class Receivables extends ApiCommon
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
+        if (!checkPerByAction('bi', 'receivables' , 'read')) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }         
     } 
   
     //回款统计列表
     public function statisticList()
     {
-        if (!checkPerByAction('bi', 'receivables' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
         $receivablesModel = new \app\crm\model\Receivables();
         $param = $this->param;
         $ret = $receivablesModel->getstatisticsData($param);
@@ -53,25 +53,14 @@ class Receivables extends ApiCommon
      * @return
      */
     public function statistics()
-    {
-        if (!checkPerByAction('bi', 'receivables' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }         
+    {        
         $receivablesModel = new \app\crm\model\Receivables();
         $userModel = new \app\admin\model\User();
         $param = $this->param;
-        //员工IDS
-        $map_user_ids = [];
-        if ($param['user_id']) {
-            $map_user_ids = [$param['user_id']];
-        } else {
-            if ($param['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($param['structure_id'], 2);
-            }
-        }
+        $adminModel = new \app\admin\model\Admin(); 
         $perUserIds = $userModel->getUserByPer('bi', 'receivables', 'read'); //权限范围内userIds
-        $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集        
+        $whereData = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereData['userIds'];       
 
         $year = $param['year'];
         //时间段

@@ -305,7 +305,7 @@ class Record extends Common
 					//$userlist =$userModel->getDataByStr($value['owner_user_id']);
 					//$dataInfo['own_list'] = $userlist?$userlist: array(); 
 					//负责人信息
-					$dataInfo['main_user'] = $dataInfo['main_user_id'] ? $userModel->getDataById($dataInfo['main_user_id']) : array();
+					$dataInfo['main_user'] = $dataInfo['main_user_id'] ? $userModel->getUserById($dataInfo['main_user_id']) : array();
 					$dataInfo['relationCount'] = $taskModel->getRelationCount($dataInfo['task_id']);					
 					break;					
 				case '5' : 
@@ -313,7 +313,7 @@ class Record extends Common
 					$relation_list = $this->getListByRelationId('event', $v['id']);
 
 					$dataInfo = db('oa_event')->where(['event_id' => $v['id']])->find();
-					$dataInfo['create_user_info'] = $userModel->getDataById($dataInfo['create_user_id']);
+					$dataInfo['create_user_info'] = $userModel->getUserById($dataInfo['create_user_id']);
 					$dataInfo['ownerList'] = $userModel->getDataByStr($dataInfo['owner_user_ids']) ? : [];
 					$dataInfo['remindtype'] = (int)$dataInfo['remindtype'];
 					$noticeList = Db::name('OaEventNotice')->where('event_id = '.$dataInfo['event_id'])->find();
@@ -500,10 +500,34 @@ class Record extends Common
 			return true;
 		}
 		$data = [];
-		if ($next_time) $data['next_time'] = $next_time;
+		if ($next_time) {
+	      	$data['next_time'] = $next_time;
+	    } else {
+			// 如果未填写下次联系时间，并且 原下次联系时间为当天，则把下次联系时间置空
+			$next_time = $dbName->where([$dbId => $types_id])->value('next_time');
+			list($start, $end) = getTimeByType();
+			if ($next_time >= $start && $next_time <= $end) {
+				$data['next_time'] = 0;
+			}
+	    }
 		$data['update_time'] = time();
 		if (in_array($types,['crm_customer','crm_leads'])) $data['follow'] = '已跟进';
 		$dbName->where([$dbId => $types_id])->update($data);
 		return true;
 	}
+
+	/**
+	 * 跟进记录删除
+	 * @param types 类型
+	 * @param types 类型ID数组
+	 * @param 
+	 */ 
+	public function delDataByTypes($types, $types_id)
+	{
+		if (!is_array($types_id)) {
+			$types_id[] = $types_id;
+		}
+		$this->where(['types' => $types,'types_id' => ['in',$types_id]])->delete();
+		return true;
+	}	
 }

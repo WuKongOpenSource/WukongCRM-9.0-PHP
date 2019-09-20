@@ -35,7 +35,7 @@ class ApiCommon extends Common
         }
         //登录有效时间
         $cacheConfig = config('cache');
-        $loginExpire = $cacheConfig['expire'] ? : '86400*7';
+        $loginExpire = $cacheConfig['expire'] ? : 86400*3;
 
         // 检查账号有效性
         $userInfo = $cache['userInfo'];

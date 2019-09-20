@@ -25,7 +25,7 @@ class work extends ApiCommon
     {
         $action = [
             'permission'=>[''],  
-            'allow'=>['index','filelist','save','delete','read','archive','owneradd','ownerdel','ownerlist','leave','archivelist','arrecover','statistic','grouplist','addusergroup']            
+            'allow'=>['index','filelist','delete','read','archive','owneradd','ownerdel','ownerlist','leave','archivelist','arrecover','statistic','grouplist','addusergroup','update']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -47,13 +47,7 @@ class work extends ApiCommon
         if (!$param['name']) {
             return resultArray(['error'=>'项目名称不能为空']);
         }
-        $userInfo = $this->userInfo;
-		//权限判断
-		$adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(1,$adminTypes) && !in_array(7,$adminTypes)) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作'])); 
-        }       
+        $userInfo = $this->userInfo;      
 		$param['create_user_id'] = $userInfo['id'];
         $owner_user_id = $param['owner_user_id'] ? : [$userInfo['id']]; //项目成员
         if (!in_array($userInfo['id'],$owner_user_id)) {

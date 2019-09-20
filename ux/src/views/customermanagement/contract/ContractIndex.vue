@@ -63,7 +63,7 @@
           <template slot-scope="scope">
             <div class="status_button"
                  :style="getStatusStyle(scope.row.check_status)">
-              {{scope.row.check_status_info}}
+              {{getStatusName(scope.row.check_status)}}
             </div>
           </template>
         </el-table-column>

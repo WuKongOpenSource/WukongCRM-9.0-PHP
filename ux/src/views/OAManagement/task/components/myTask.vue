@@ -117,7 +117,7 @@ export default {
     return {
       fromData: {
         type: '',
-        status: '',
+        status: '1',
         priority: 'all',
         time: '',
         subUser: ''

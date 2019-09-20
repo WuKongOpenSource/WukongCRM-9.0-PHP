@@ -276,6 +276,7 @@ class Index extends ApiCommon
 	{
 		$param = $this->param;
 		$userInfo = $this->userInfo;
+		$userModel = new \app\admin\model\User();
 		if ($param['start_time']){
 			$where['start_time'] = ['<=',$param['start_time']+3600*24 ];
 			$where['end_time'] = ['>=',$param['start_time']];
@@ -285,13 +286,11 @@ class Index extends ApiCommon
 					$query->where(['owner_user_ids' => ['like','%,'.$userInfo['id'].',%']])
 					->whereOr(['create_user_id' => $userInfo['id']]);
 				})->select(); 
+			$eventList = [];
 			if (count($eventList)) {
-				$userModel = new \app\admin\model\User();
 				foreach ($eventList as $k=>$v){
 					$eventList[$k]['ownList']= $userModel->getDataByStr($v['owner_user_ids']);
 				}
-			} else {
-				return resultArray(['data' => array()]);
 			}
 			return resultArray(['data' => $eventList]);
 		} else {

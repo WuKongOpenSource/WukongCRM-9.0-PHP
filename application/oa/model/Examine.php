@@ -36,10 +36,7 @@ class Examine extends Common
     {  	
     	$userModel = new \app\admin\model\User();
     	$fileModel = new \app\admin\model\File();
-		$businessModel = new \app\crm\model\Business();
-        $contactsModel = new \app\crm\model\Contacts();
-        $contractModel = new \app\crm\model\Contract();
-        $customerModel = new \app\crm\model\Customer();    	
+		$recordModel = new \app\admin\model\Record();    	
 
     	$by = $request['by'] ? : 'my'; //my我发起的,examine我审批的,all全部(下属发起的)
     	$user_id = $request['user_id'];
@@ -102,6 +99,11 @@ class Examine extends Common
         		->field('examine.*,user.realname,user.thumb_img,examine_category.title as category_name')
         		->order($order)
         		->select();
+		$dataCount = $this->alias('examine')
+					 ->where($map_str)
+					 ->where($map)
+				     ->join($join)
+				     ->count('examine_id');       	
         $admin_user_ids = $userModel->getAdminId();
        	foreach ($list as $k=>$v) {
        		$list[$k]['create_user_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
@@ -117,12 +119,12 @@ class Examine extends Common
        		$list[$k]['causeTitle'] = $causeTitle;
        		$list[$k]['causeCount'] = $causeCount ? : 0;
 			//关联业务
-			$relation = [];
-			$relation = db('oa_examine_relation')->where(['examine_id' => $v['examine_id']])->find();
-			$list[$k]['businessList'] = $relation['business_ids'] ? $businessModel->getDataByStr($relation['business_ids']) : []; //商机
-			$list[$k]['contactsList'] = $relation['contacts_ids'] ? $contactsModel->getDataByStr($relation['contacts_ids']) : []; //联系人
-			$list[$k]['contractList'] = $relation['contract_ids'] ? $contractModel->getDataByStr($relation['contract_ids']) : []; //合同
-			$list[$k]['customerList'] = $relation['customer_ids'] ? $customerModel->getDataByStr($relation['customer_ids']) : []; //客户
+			$relationArr= [];
+			$relationArr = $recordModel->getListByRelationId('examine', $v['examine_id']); 
+			$$relationArr['businessList'] = $relationArr['businessList'];
+			$$relationArr['contactsList'] = $relationArr['contactsList'];
+			$$relationArr['contractList'] = $relationArr['contractList'];
+			$$relationArr['customerList'] = $relationArr['customerList'];			
 
 			//附件
 			$fileList = [];
@@ -163,12 +165,7 @@ class Examine extends Common
 	        $permission['is_delete'] = $is_delete;
 	        $list[$k]['permission']	= $permission;
 	        $list[$k]['check_status_info'] = $this->statusArr[$v['check_status']];   		
-       	}
-        $dataCount = $this->alias('examine')
-					 ->where($map_str)
-					 ->where($map)
-				     ->join($join)
-				     ->count('examine_id');  
+       	}  
         $data = [];
         $data['list'] = $list;
         $data['dataCount'] = $dataCount ? : 0;
@@ -240,7 +237,7 @@ class Examine extends Common
 				//站内信
 	            $createUserInfo = $userModel->getDataById($param['create_user_id']);
 	            $send_user_id = stringToArray($param['check_user_id']);
-	            $sendContent = $createUserInfo['realname'].'提交的【'.$categoryInfo['title'].'】,需要您审批';
+	            $sendContent = $createUserInfo['realname'].'提交的《'.$categoryInfo['title'].'》,需要您审批';
 	            if ($send_user_id) {
 	            	sendMessage($send_user_id, $sendContent, $this->examine_id, 1);
 	            }            
@@ -309,7 +306,7 @@ class Examine extends Common
 			//站内信
             $createUserInfo = $userModel->getDataById($param['user_id']);
             $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交了【'.$categoryInfo['title'].'】,需要您审批';
+            $sendContent = $createUserInfo['realname'].'提交了《'.$categoryInfo['title'].'》,需要您审批';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $examine_id, 1);
             }
@@ -334,7 +331,7 @@ class Examine extends Common
 			//站内信
             $createUserInfo = $userModel->getDataById($dataInfo['create_user_id']);
             $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交的【'.$categoryInfo['title'].'】,需要您审批';
+            $sendContent = $createUserInfo['realname'].'提交的《'.$categoryInfo['title'].'》,需要您审批';
             if ($send_user_id) {
             	sendMessage($send_user_id, $sendContent, $examine_id, 1);
             }             		       		
@@ -357,7 +354,9 @@ class Examine extends Common
    	{   
    		$examineData = new \app\oa\model\ExamineData();
    		$fieldModel = new \app\admin\model\Field();		
-   		$fileModel = new \app\admin\model\File();		
+   		$fileModel = new \app\admin\model\File();
+   		$userModel = new \app\admin\model\User();
+   		$recordModel = new \app\admin\model\Record();		
    		$map['examine.examine_id'] = $id;
 		$data_view = db('oa_examine')
 					 ->where($map)
@@ -381,15 +380,12 @@ class Examine extends Common
         // }
 
         //关联业务
-        $businessModel = new \app\crm\model\Business();
-        $contactsModel = new \app\crm\model\Contacts();
-        $contractModel = new \app\crm\model\Contract();
-        $customerModel = new \app\crm\model\Customer();
-		$relation = Db::name('OaExamineRelation')->where('examine_id ='.$id)->find();
-		$dataInfo['businessList'] = $relation['business_ids'] ? $businessModel->getDataByStr($relation['business_ids']) : []; //商机
-		$dataInfo['contactsList'] = $relation['contacts_ids'] ? $contactsModel->getDataByStr($relation['contacts_ids']) : []; //联系人
-		$dataInfo['contractList'] = $relation['contract_ids'] ? $contractModel->getDataByStr($relation['contract_ids']) : []; //合同
-		$dataInfo['customerList'] = $relation['customer_ids'] ? $customerModel->getDataByStr($relation['customer_ids']) : []; //客户  
+		$relationArr= [];
+		$relationArr = $recordModel->getListByRelationId('examine', $id);     
+		$dataInfo['businessList'] = $relationArr['businessList'];
+		$dataInfo['contactsList'] = $relationArr['contactsList'];
+		$dataInfo['contractList'] = $relationArr['contractList'];
+		$dataInfo['customerList'] = $relationArr['customerList']; 
 
 		$travelList = [];
 		if (in_array($dataInfo['category_id'],['3','5'])) {
@@ -437,9 +433,8 @@ class Examine extends Common
 			}
 		}
 		$dataInfo['fileList'] = $fileList ? : [];
-		$dataInfo['imgList'] = $imgList ? : [];				   
-
-		$userModel = new \app\admin\model\User();
+		$dataInfo['imgList'] = $imgList ? : [];	
+		
 		$dataInfo['create_user_info'] = $userModel->getUserById($dataInfo['create_user_id']);
 		$dataInfo['examine_id'] = $id;
 		return $dataInfo;

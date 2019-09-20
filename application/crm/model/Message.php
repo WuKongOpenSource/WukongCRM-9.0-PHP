@@ -54,7 +54,7 @@ class Message extends Common
                 ->order($order)
                 ->select(); 
         foreach ($list as $k=>$v) {
-            $list[$k]['']
+            // $list[$k]['']
         }
         $dataCount = $this->where($map)->count('message_id');
         $data = [];

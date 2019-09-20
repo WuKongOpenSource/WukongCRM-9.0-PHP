@@ -30,7 +30,6 @@ class Product extends Common
      */		
 	public function getStatistics($request)
     {
-    	// $userModel = new \app\admin\model\User();
     	$where = $this->getWhere($request);
 		$join = [
 			['__CRM_CONTRACT__ contract', 'contract.contract_id = a.contract_id', 'LEFT'],
@@ -40,18 +39,19 @@ class Product extends Common
 		];
 
 		$list = db('crm_contract_product')
-		 ->alias('a')
-		 ->where($where)
-	     ->join($join)
-	     ->group('a.product_id')
-	     ->field('a.product_id,sum(a.num) as num,product.name as product_name,product_category.name as category_id_info,product_category.category_id')
-	     ->select();
+				->alias('a')
+				->where($where)
+				->join($join)
+				->group('a.product_id')
+				->field('a.product_id,sum(a.num) as num,product.name as product_name,product_category.name as category_id_info,product_category.category_id')
+				->select();
         return $list;
     }
+
     /**
      * 产品成交客户数
-     * @param  [type] $request [description]
-     * @return [type]          [description]
+     * @param  
+     * @return 
      */
     function getDealByProduct($request)
     {
@@ -66,18 +66,19 @@ class Product extends Common
 		];
 
 		$list = db('crm_contract_product')
-		 ->alias('a')
-		 ->where($where)
-	     ->join($join)
-	     ->group('a.product_id')
-	     ->field('a.product_id,count(customer.customer_id) as num,product.name as product_name,product_category.name as category_id_info,product_category.category_id')
-	     ->select();
+				->alias('a')
+				->where($where)
+				->join($join)
+				->group('a.product_id')
+				->field('a.product_id,count(customer.customer_id) as num,product.name as product_name,product_category.name as category_id_info,product_category.category_id')
+				->select();
         return $list;
     }
+
     /**
      * 产品成交周期
-     * @param  [type] $request [description]
-     * @return [type]          [description]
+     * @param  
+     * @return 
      */
     function getCycleByProduct($request,$product_id)
     {
@@ -93,23 +94,24 @@ class Product extends Common
 		];
 
 		$list = db('crm_contract_product')
-		 ->alias('a')
-		 ->where($where)
-	     ->join($join)
-	     ->order('order_date')
-	     ->group('customer.customer_id')
-	     ->field('customer.customer_id')
-	     ->select();
+				->alias('a')
+				->where($where)
+				->join($join)
+				->order('order_date')
+				->group('customer.customer_id')
+				->field('customer.customer_id')
+				->select();
 	    $customer_ids = array();
 	    foreach ($list as $key => $value) {
 	    	$customer_ids[] = $value['customer_id'];
 	    }
         return $customer_ids;
     }
+
     /**
      * 产品销量排行
-     * @param  [type] $whereArr [description]
-     * @return [type]           [description]
+     * @param  
+     * @return 
      */
     function getSortByProduct($request)
     {
@@ -123,52 +125,36 @@ class Product extends Common
 		];
 
 		$list = db('crm_contract_product')
-		 ->alias('a')
-		 ->where($where)
-	     ->join($join)
-	     ->order('num desc')
-	     ->group('contract.owner_user_id')
-	     ->field('sum(a.num) as num,contract.owner_user_id')
-	     ->select();
+				->alias('a')
+				->where($where)
+				->join($join)
+				->order('num desc')
+				->group('contract.owner_user_id')
+				->field('sum(a.num) as num,contract.owner_user_id')
+				->select();
         return $list;
     }
+
     /**
      * 获取条件
-     * @param  [type] $request [description]
-     * @return [type]          [description]
+     * @param  
+     * @return 
      */
-    function getWhere($request)
-    {
-    	$userModel = new \app\admin\model\User();
-		$where = [];
-		//时间段
-		if(empty($request['type']) && empty($request['start_time'])){
-            $request['type'] = 'month';
+    function getWhere($param)
+    {   	
+		$adminModel = new \app\admin\model\Admin();
+		$userModel = new \app\admin\model\User();
+        $perUserIds = $userModel->getUserByPer('bi', 'product', 'read'); //权限范围内userIds
+        $whereData = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereData['userIds'];        
+        $between_time = $whereData['between_time']; 
+        $where = [];
+		if(!empty($param['category_id'])){
+        	$where['product_category.category_id'] = array('eq',$param['category_id']);
         }
-        if(!empty($request['start_time'])){
-        	$where['contract.order_date'] = array('between',array($request['start_time'],$request['end_time']));
-        }else{
-        	$create_time = getTimeByType($request['type']);
-			if ($create_time) {
-	            $where['contract.create_time'] = array('between',array($create_time[0],$create_time[1]));
-	        }
-        }
-        if(!empty($request['category_id'])){
-        	$where['product_category.category_id'] = array('eq',$request['category_id']);
-        }
-        $where['contract.check_status'] = array('eq',2);
-		//员工IDS
-		$map_user_ids = [];	
-		if ($request['user_id']) {
-			$map_user_ids = [$request['user_id']];
-		} else {
-			if ($request['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($request['structure_id'], 2);
-            }
-		}
-		$perUserIds = $userModel->getUserByPer('bi', 'product', 'read'); //权限范围内userIds
-		$userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
-		$where['contract.owner_user_id'] = array('in',$userIds);
+        $where['contract.check_status'] = array('eq',2);                
+        $where['contract.owner_user_id'] = array('in',$userIds);
+        $where['contract.create_time'] = array('between',$between_time);
 		return $where;
     } 	
 }

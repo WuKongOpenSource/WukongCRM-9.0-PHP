@@ -87,6 +87,11 @@ class Comment extends Model
      */	 
 	public function createData($param)
 	{
+		if (!$param['content']) {
+			$this->error = '评论内容不能为空';
+			return false;
+		}
+		$userModel = new \app\admin\model\User();
 		$param['reply_content'] = $param['reply_content'] ? : '';  //内容拼接保存
 		$param['isreply'] = $param['reply_comment_id'] ? 1 : 0; //是否是回复评论
 		$param['reply_id'] = $param['reply_comment_id'] ? $param['reply_comment_id'] : 0;  //回复消息id
@@ -94,6 +99,25 @@ class Comment extends Model
 		$param['reply_user_id'] = $param['reply_user_id'] ? : ''; //回复别人ID
 		$param['status'] = 1; 
 		if ($this->data($param)->allowField(true)->save()) {
+			$userInfo = $userModel->getUserById($param['user_id']);
+			//发送站内信
+			switch ($param['type']) {
+				case 'task' : 
+					$taskInfo = db('task')->where(['task_id' => $param['type_id']])->field('name,create_user_id,main_user_id,owner_user_id')->find();
+					$user_ids[] = $taskInfo['create_user_id'];
+					if ($taskInfo['main_user_id']) {
+						$user_ids = array_merge($user_ids,array($taskInfo['main_user_id']));
+					}
+					if (stringToArray($taskInfo['owner_user_id'])) {
+						$user_ids = array_merge($user_ids,stringToArray($taskInfo['owner_user_id']));
+					}
+					$user_ids = array_filter(array_unique($user_ids));
+					$sendContent = $userInfo['realname'].',评论了任务《'.$taskInfo['name'].'》:'.$param['content'];
+					break;
+			}
+			if ($user_ids && $sendContent) {
+				$resMessage = sendMessage($user_ids, $sendContent, $param['type_id'], 1);
+			}
 			return $this->comment_id;
 		} else {
 			$this->error = '回复失败';

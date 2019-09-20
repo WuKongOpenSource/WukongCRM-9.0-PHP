@@ -246,10 +246,9 @@ INFO;
         // 判断写入是否成功
         $config = include CONF_PATH.'database.php';
         if (empty($config['database']) || $config['database'] != $data['database']) {
-            return $this->error('[config/database.php]数据库配置写入失败！');
-            exit;
+            return resultArray(['error' => '[config/database.php]数据库配置写入失败！']);
         }
-        return 1;
+        return true;
     }
 
     //检查目录权限
@@ -314,22 +313,34 @@ INFO;
     private function checkNnv()
     {
         $items = [
-            'os'      => ['操作系统', '不限制', '类Unix', PHP_OS, 'ok'],
-            'php'     => ['PHP版本', '5.6', '5.6.x', PHP_VERSION, 'ok'],
+            'os'      => ['操作系统', PHP_OS, '类Unix', 'ok'],
+            'php'     => ['PHP版本', PHP_VERSION, '7.2 ( <em style="color: #888; font-size: 12px;">>= 5.6</em> )', 'ok','性能更佳'],
+            'gd'      => ['gd', '开启', '开启', 'ok'],
+            'openssl' => ['openssl', '开启', '开启', 'ok'],
+            'pdo' => ['pdo', '开启', '开启', 'ok'],
         ];
-		session('install_error','');
-        if (substr($items['php'][3],0,3) < $items['php'][1]) {
-            $items['php'][4] = 'no';
+        session('install_error','');
+        if (substr($items['php'][1],0,3) < '5.6') {
+            $items['php'][3] = 'error';
             session('install_error', true);
         }
-        $tmp = function_exists('gd_info') ? gd_info() : [];
-        if (empty($tmp['GD Version'])) {
-            $items['gd'][3] = '未安装';
-            $items['gd'][4] = 'no';
+        
+        if (!extension_loaded('gd')) {
+            $items['gd'][1] = '未开启';
+            $items['gd'][3] = 'error';
             session('install_error', true);
-        } else {
-            $items['gd'][3] = $tmp['GD Version'];
         }
+        if (!extension_loaded('openssl')) {
+            $items['openssl'][1] = '未开启';
+            $items['openssl'][3] = 'error';
+            session('install_error', true);
+        }
+        if (!extension_loaded('pdo')) {
+            $items['pdo'][1] = '未开启';
+            $items['pdo'][3] = 'error';
+            session('install_error', true);
+        }
+        // dump($items);die;
         return $items;
     }
     

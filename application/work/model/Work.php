@@ -208,13 +208,19 @@ class Work extends Common
 			$this->error = '项目创建人不可以退出';
 			return false;
 		}
+		//从项目成员中移除
+		db('work_user')->where(['work_id' => $work_id,'user_id' => $user_id])->delete();
+		$str = ','.$user_id.',';
+		if (in_array($user_id,stringToArray($workInfo['owner_user_id']))) {
+			$owner_user_id = str_replace($str,',',$workInfo['owner_user_id']);
+			$this->where(['work_id' => $work_id])->update(['owner_user_id' => $owner_user_id]);
+		}
 		$list = Db::name('Task')->where(['work_id' => $work_id])->select();
 		foreach ($list as $key => $value) {
 			$data = [];
-			$str = ','.$user_id.',';
-			if (strstr($str,$value['own_user_id'])) {
-				$new_own_user_id = str_replace($str,',',$value['own_user_id']);
-				$data['own_user_id'] = $new_own_user_id;
+			if (in_array($user_id,stringToArray($value['owner_user_id']))) {
+				$new_own_user_id = str_replace($str,',',$value['owner_user_id']);
+				$data['owner_user_id'] = $new_own_user_id;
 			}
 			if ($value['main_user_id'] == $param['create_user_id']) {
 				$data['main_user_id'] = '';
@@ -467,7 +473,7 @@ class Work extends Common
         			if ($ruleIds) {
 						$ruleMap['id'] = array('in', $ruleIds);
         			} else {
-        				$ruleMap['types'] = ['neq',3];
+        				$ruleMap['id'] = ['eq',3];
         			}
         		}
         	}    

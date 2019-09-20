@@ -196,3 +196,16 @@ export function crmCustomerSetFollowAPI(data) {
     data: data
   })
 }
+
+/**
+ * 客户成交状态修改
+ * @param {*} data
+ * id 客户IDs
+ */
+export function crmCustomerDealStatusAPI(data) {
+  return request({
+    url: 'crm/customer/deal_status',
+    method: 'post',
+    data: data
+  })
+}

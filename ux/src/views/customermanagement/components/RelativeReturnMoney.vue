@@ -158,7 +158,7 @@ export default {
       { prop: 'money', width: '200', label: '回款金额' },
       { prop: 'plan_id', width: '200', label: '期数' },
       { prop: 'owner_user_id', width: '200', label: '负责人' },
-      { prop: 'check_status_info', width: '200', label: '状态' },
+      { prop: 'check_status', width: '200', label: '状态' },
       { prop: 'return_time', width: '200', label: '回款日期' }
     ]
     this.getList()
@@ -316,8 +316,22 @@ export default {
         return row.owner_user_id_info.realname
       } else if (column.property === 'plan_id') {
         return row.plan_id_info
+      } else if (column.property === 'check_status') {
+        return this.getStatusName(row.check_status)
       }
       return row[column.property]
+    },
+
+    /**
+     * 对应的状态名
+     */
+    getStatusName(status) {
+      if (status > 5) {
+        return ''
+      }
+      return ['待审核', '审核中', '审核通过', '已拒绝', '已撤回', '未提交'][
+        status
+      ]
     },
 
     /**

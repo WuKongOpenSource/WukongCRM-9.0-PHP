@@ -35,17 +35,10 @@ export const constantRouterMap = [{
     component: () => import('@/views/404'),
     hidden: true
   },
-  {
-    path: '/401',
-    component: () => import('@/views/401'),
-    hidden: true
-  },
-  workbenchRouter,
-  projectRouter,
   personRouter,
   {
-    path: '/',
-    redirect: '/workbench/index',
+    path: '*',
+    redirect: '/404',
     hidden: true
   }
 ]
@@ -59,12 +52,9 @@ export default new Router({
 })
 
 export const asyncRouterMap = [
+  workbenchRouter,
   customerRouter,
   biRouter,
-  managerRouter,
-  {
-    path: '*',
-    redirect: '/404',
-    hidden: true
-  }
+  projectRouter,
+  managerRouter
 ]

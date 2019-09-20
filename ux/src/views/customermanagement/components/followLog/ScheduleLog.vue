@@ -31,7 +31,7 @@ import { crmRecordIndex } from '@/api/customermanagement/common'
 import FollowScheduleCell from './components/FollowScheduleCell'
 import { scheduleDelete } from '@/api/oamanagement/schedule'
 import CreateSchedule from '@/views/OAManagement/schedule/components/createSchedule'
-import { formatTimeToTimestamp } from '@/utils'
+import { getDateFromTimestamp } from '@/utils'
 
 export default {
   /** 日程 跟进记录*/
@@ -132,8 +132,8 @@ export default {
       if (data.type == 'edit') {
         this.newText = '编辑日程'
         let val = data.data.item
-        val.start_time = val.start_time * 1000
-        val.end_time = val.end_time * 1000
+        val.start_time = getDateFromTimestamp(val.start_time)
+        val.end_time = getDateFromTimestamp(val.end_time)
         val.owner_user_ids = []
         for (let k of val.ownerList) {
           val.owner_user_ids.push(k.owner_id)

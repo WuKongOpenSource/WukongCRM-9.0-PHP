@@ -1,5 +1,5 @@
 var form = {
-  databaseUrl: 'localhost',
+  databaseUrl: '127.0.0.1',
   databasePort: '3306',
   databaseTable: '5kcrm_',
   databasePwd: '',

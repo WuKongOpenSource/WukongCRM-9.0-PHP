@@ -10,7 +10,8 @@
     </div>
     <div class="option-bar">
       <div v-if="selectionList.length == 0">
-        <el-select v-model="optionsType"
+        <el-select v-if="showOptions"
+                   v-model="optionsType"
                    @change="refreshList"
                    placeholder="请选择">
           <el-option v-for="item in options"
@@ -19,9 +20,11 @@
                      :value="item.value">
           </el-option>
         </el-select>
-        <el-select v-model="isSubType"
+        <el-select v-if="showSubType"
+                   v-model="isSubType"
                    @change="refreshList"
-                   style="width: 120px; margin-left: 10px;"
+                   :style="{'margin-left': showOptions ? '10px' : 0}"
+                   style="width: 120px;"
                    placeholder="请选择">
           <el-option v-for="item in [{name: '我的', value: 0}, {name: '我下属的', value: 1}]"
                      :key="item.value"
@@ -89,6 +92,18 @@
                        :width="item.width"
                        :formatter="fieldFormatter">
       </el-table-column>
+      <el-table-column v-if="showPoolDay && CRMConfig.config == 1"
+                       prop="pool_day"
+                       show-overflow-tooltip
+                       :resizable='false'
+                       label="距进入公海天数"
+                       width="120">
+        <template slot-scope="scope">
+          <div v-if="scope.row.pool_day != -1">{{scope.row.pool_day}}</div>
+          <i v-else
+             class="wukong wukong-lock customer-lock"></i>
+        </template>
+      </el-table-column>
       <el-table-column :resizable="false">
       </el-table-column>
       <el-table-column v-if="showCheckStatus"
@@ -106,7 +121,7 @@
         <template slot-scope="scope">
           <div class="status_button"
                :style="getStatusStyle(scope.row.check_status)">
-            {{scope.row.check_status_info}}
+            {{getStatusName(scope.row.check_status)}}
           </div>
         </template>
       </el-table-column>
@@ -132,6 +147,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import { filterIndexfields } from '@/api/customermanagement/common'
 import { crmLeadsSetFollowAPI } from '@/api/customermanagement/clue'
 import { crmCustomerSetFollowAPI } from '@/api/customermanagement/customer'
@@ -209,6 +225,8 @@ export default {
   },
 
   computed: {
+    ...mapGetters(['CRMConfig']),
+
     // 展示勾选框
     showSelection() {
       if (this.infoType == 'followLeads' || this.infoType == 'followCustomer') {
@@ -229,6 +247,25 @@ export default {
     // 展示审核状态
     showCheckStatus() {
       if (this.crmType == 'contract' || this.crmType == 'receivables') {
+        return true
+      }
+      return false
+    },
+
+    // 展示客户池天数
+    showPoolDay() {
+      if (this.crmType == 'customer') {
+        return true
+      }
+      return false
+    },
+
+    // 展示我的/下属筛选
+    showSubType() {
+      if (
+        this.infoType == 'todayCustomer' ||
+        this.infoType == 'remindCustomer'
+      ) {
         return true
       }
       return false
@@ -267,7 +304,7 @@ export default {
   },
 
   mounted() {
-    if (this.options.length > 0) {
+    if (this.showOptions && this.options.length > 0) {
       this.optionsType = this.options[0].value
     }
 
@@ -372,7 +409,7 @@ export default {
      * 删除筛选字段
      */
     handleDeleteField(data) {
-      this.filterObj = data.obj.obj
+      this.filterObj = data.obj
       this.updateTableHeight()
       this.refreshList()
     },

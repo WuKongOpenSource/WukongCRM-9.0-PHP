@@ -23,7 +23,7 @@ class Setting extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['configupdate','config']            
+            'allow'=>['']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -39,37 +39,5 @@ class Setting extends ApiCommon
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
         }           
-    } 
-
-    /**
-     * 应用相关配置
-     * @author Michael_xu
-     * @param
-     * @return 
-     */
-    public function configUpdate()
-    {
-    	$configModel = model('Config','config');
-		$param = $this->param;
-
-        $res = $configModel->updateConfig($param);
-        if ($res) {
-            return resultArray(['data' => '设置成功']);
-        } else {
-        	return resultArray(['error' => $configModel->getError()]);
-        }    	
-    }
-
-    /**
-     * 应用相关配置信息
-     * @author Michael_xu
-     * @param
-     * @return 
-     */
-    public function config()
-    {
-        $configModel = model('Config');
-        $data = $configModel->getDataList('tree');
-        return resultArray(['data' => $data]);
     }
 }

@@ -24,7 +24,7 @@ class Announcement extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','read','save','update','delete']            
+            'allow'=>['index','read']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -32,16 +32,6 @@ class Announcement extends ApiCommon
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
-
-        $userInfo = $this->userInfo;
-        $unAction = ['index','read'];
-        $userInfo = $this->userInfo;
-        $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(8,$adminTypes) && !in_array(1,$adminTypes) && !in_array($a, $unAction)) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }  
-
     }
 
     /**
@@ -54,16 +44,14 @@ class Announcement extends ApiCommon
         $announcementModel = model('Announcement');
         $param = $this->param;
         $userInfo = $this->userInfo;
-        //公告列表权限
-		$adminTypes = adminGroupTypes($userInfo['id']);
 		
 		$param['user_id'] = $userInfo['id'];
         $data = $announcementModel->getDataList($param);
-		if( !in_array(8,$adminTypes) && !in_array(1,$adminTypes) ){
-			$data['is_create'] = 0;
-		} else {
-			$data['is_create'] = 1;
-		}
+        $data['is_create'] = 0;
+        //权限判断
+        if (checkPerByAction('oa', 'announcement', 'save')) {
+            $data['is_create'] = 1;
+        }
         return resultArray(['data' => $data]);
     }
 	
@@ -78,12 +66,6 @@ class Announcement extends ApiCommon
         $param = $this->param;
         $userInfo = $this->userInfo;
         $param['create_user_id'] = $userInfo['id'];
-        //权限判断
-        $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(8,$adminTypes) && !in_array(1,$adminTypes)) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         //开始时间不能小于结束时间
         if ($param['start_time'] && $param['end_time']) {
             if ($param['start_time'] > $param['end_time']) resultArray(['error' => '开始时间不能大于结束时间']);
@@ -160,13 +142,7 @@ class Announcement extends ApiCommon
         $announcementModel = model('Announcement');
         $param = $this->param;
 		$userInfo = $this->userInfo;
-		$param['user_id'] = $userInfo['id'];
-        //权限判断
-        $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(8,$adminTypes) && !in_array(1,$adminTypes)) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }         
+		$param['user_id'] = $userInfo['id'];        
         $data = $announcementModel->delDataById($param);
         if (!$data) {
             return resultArray(['error' => $announcementModel->getError()]);

@@ -24,17 +24,20 @@
                  src="@/assets/img/unfold.png">
             <div class="node-label">{{ node.label }}</div>
             <div class="node-label-set">
-              <el-button type="text"
+              <el-button v-if="strucSaveAuth"
+                         type="text"
                          size="mini"
                          @click.stop="() => append(data)">
                 <i class="el-icon-plus"></i>
               </el-button>
-              <el-button type="text"
+              <el-button v-if="strucUpdateAuth"
+                         type="text"
                          size="mini"
                          @click.stop="() => edit(node, data)">
                 <i class="el-icon-edit"></i>
               </el-button>
-              <el-button type="text"
+              <el-button v-if="strucDeleteAuth"
+                         type="text"
                          size="mini"
                          @click.stop="() => remove(node, data)">
                 <i class="el-icon-close"></i>
@@ -68,7 +71,8 @@
               </el-option>
             </el-select>
           </div>
-          <el-button type="primary"
+          <el-button v-if="userSaveAuth"
+                     type="primary"
                      class="rt"
                      @click="newBtn">新建员工</el-button>
         </div>
@@ -93,7 +97,8 @@
                     v-loading="loading"
                     @selection-change="handleSelectionChange"
                     @row-click="rowClick">
-            <el-table-column type="selection"
+            <el-table-column v-if="tableUpdateAuth"
+                             type="selection"
                              width="55"></el-table-column>
             <el-table-column prop="realname"
                              width="100"
@@ -333,6 +338,7 @@ import {
 } from '@/api/systemManagement/EmployeeDepManagement'
 import { usersList as selectUsersList, depList } from '@/api/common' // 直属上级接口
 import EmployeeDetail from './components/employeeDetail'
+import { mapGetters } from 'vuex'
 
 export default {
   /** 系统管理 的 员工部门管理 */
@@ -459,9 +465,43 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['admin']),
+    // 员工创建权限
+    userSaveAuth() {
+      return this.admin && this.admin.users && this.admin.users.save
+    },
+    // 员工编辑操作权限
+    userUpdateAuth() {
+      return this.admin && this.admin.users && this.admin.users.update
+    },
+    // 员工禁用启用权限
+    userEnablesAuth() {
+      return this.admin && this.admin.users && this.admin.users.enables
+    },
+    // 员工列表的勾选编辑
+    tableUpdateAuth() {
+      return this.userEnablesAuth && this.userUpdateAuth
+    },
+    // 部门编辑权限
+    strucSaveAuth() {
+      return this.admin && this.admin.users && this.admin.users.structures_save
+    },
+    // 部门编辑权限
+    strucUpdateAuth() {
+      return (
+        this.admin && this.admin.users && this.admin.users.structures_update
+      )
+    },
+    // 部门编辑权限
+    strucDeleteAuth() {
+      return (
+        this.admin && this.admin.users && this.admin.users.structures_delete
+      )
+    },
     selectionInfo: function() {
-      if (this.selectionList.length === 1) {
-        return [
+      let temps = []
+      if (this.userEnablesAuth) {
+        temps = [
           {
             name: '禁用',
             type: 'lock',
@@ -471,41 +511,40 @@ export default {
             name: '激活',
             type: 'unlock',
             icon: require('@/assets/img/selection_start.png')
-          },
-          {
-            name: '编辑',
-            type: 'edit',
-            icon: require('@/assets/img/selection_edit.png')
-          },
-          {
-            name: '重置密码',
-            type: 'reset',
-            icon: require('@/assets/img/selection_reset.png')
-          },
-          {
-            name: '重置登录账号',
-            type: 'resetName',
-            icon: require('@/assets/img/section_reset_name.png')
           }
         ]
       }
-      return [
-        {
-          name: '禁用',
-          type: 'lock',
-          icon: require('@/assets/img/selection_disable.png')
-        },
-        {
-          name: '激活',
-          type: 'unlock',
-          icon: require('@/assets/img/selection_start.png')
-        },
-        {
-          name: '重置密码',
-          type: 'reset',
-          icon: require('@/assets/img/selection_reset.png')
+      if (this.userUpdateAuth) {
+        if (this.selectionList.length === 1) {
+          temps = temps.concat([
+            {
+              name: '编辑',
+              type: 'edit',
+              icon: require('@/assets/img/selection_edit.png')
+            },
+            {
+              name: '重置密码',
+              type: 'reset',
+              icon: require('@/assets/img/selection_reset.png')
+            },
+            {
+              name: '重置登录账号',
+              type: 'resetName',
+              icon: require('@/assets/img/section_reset_name.png')
+            }
+          ])
+        } else {
+          temps = temps.concat([
+            {
+              name: '重置密码',
+              type: 'reset',
+              icon: require('@/assets/img/selection_reset.png')
+            }
+          ])
         }
-      ]
+      }
+
+      return temps
     },
     /** 添加列表 */
     tableList: function() {
@@ -994,9 +1033,10 @@ export default {
 }
 .system-content {
   position: relative;
-  /* height: 100%; */
+  height: 100%;
   flex: 1;
   display: flex;
+  overflow: hidden;
 }
 .system-view-nav {
   width: 200px;

@@ -167,6 +167,7 @@ class Task extends Common
 		//读取参与人
 		$userModel = new UserModel();
 		$structModel = new StructureModel();
+		$recordModel = new \app\admin\model\Record();
 		$taskInfo = $this->where(['task_id' => $id])->find();
 		if (!$taskInfo) {
 			$this->error = '任务不存在或已删除';
@@ -212,16 +213,12 @@ class Task extends Common
 			$subTaskList[$key]['thumb_img'] = $value['thumb_img'] ? getFullPath($value['thumb_img']) : '';
 		}
 		$taskInfo['subTaskList'] = $subTaskList;
-
-		$relation = Db::name('TaskRelation')->where(['task_id' => $id])->find();
-		$BusinessModel = new \app\crm\model\Business();
-		$taskInfo['businessList'] = $relation['business_ids'] ? $BusinessModel->getDataByStr($relation['business_ids']) : ''; //商机
-		$ContactsModel = new \app\crm\model\Contacts();
-		$taskInfo['contactsList'] = $relation['contacts_ids'] ? $ContactsModel->getDataByStr($relation['contacts_ids']) : ''; //联系人
-		$ContractModel = new \app\crm\model\Contract();
-		$taskInfo['contractList'] = $relation['contract_ids'] ? $ContractModel->getDataByStr($relation['contract_ids']) : ''; //合同
-		$CustomerModel = new \app\crm\model\Customer();
-		$taskInfo['customerList'] = $relation['customer_ids'] ? $CustomerModel->getDataByStr($relation['customer_ids']) : ''; //客户
+		//相关业务
+		$relationArr = $recordModel->getListByRelationId('task', $id);
+		$taskInfo['businessList'] = $relationArr['businessList'];
+		$taskInfo['contactsList'] = $relationArr['contactsList'];
+		$taskInfo['contractList'] = $relationArr['contractList'];
+		$taskInfo['customerList'] = $relationArr['customerList'];
 
 		$createUserInfo = $userModel->getDataById($taskInfo['create_user_id']);
 		$createUserInfo['thumb_img'] = $createUserInfo['thumb_img'] ? getFullPath($createUserInfo['thumb_img']) : '';

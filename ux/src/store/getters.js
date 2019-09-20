@@ -19,7 +19,9 @@ const getters = {
   allAuth: state => state.user.allAuth,
   crm: state => state.user.crm,
   bi: state => state.user.bi,
-  manage: state => state.user.manage,
+  admin: state => state.user.admin,
+  oa: state => state.user.oa,
+  work: state => state.user.work,
   // 路由
   addRouters: state => state.permission.addRouters,
   oaRouters: state => state.permission.oaRouters,

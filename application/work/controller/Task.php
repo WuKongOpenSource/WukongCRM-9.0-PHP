@@ -25,7 +25,7 @@ class Task extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','mytask','updatetop','updateorder','read','update','readloglist','updatepriority','updateowner','delownerbyid','delstruceurebyid','updatestoptime','updatelable','updatename','taskover','datelist','save','delmainuserid','rename','delete','archive','recover','archlist','archivetask','setover']        
+            'allow'=>['index','mytask','updatetop','updateorder','read','update','readloglist','updatepriority','updateowner','delownerbyid','delstruceurebyid','updatestoptime','updatelable','updatename','taskover','datelist','save','delmainuserid','rename','delete','archive','recover','archlist','archivetask','setover','updateclassorder']        
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -59,11 +59,7 @@ class Task extends ApiCommon
             return resultArray(['error' => '参数错误']);
         }
         $list = $taskModel->getDataList($param, $userInfo['id']);    
-        if ($list) {
-            return resultArray(['data' => $list]);
-        } else {
-            return resultArray(['error' => $taskModel->getError()]);
-        }
+        return resultArray(['data' => $list]);
     }  
 
     /**
@@ -75,7 +71,7 @@ class Task extends ApiCommon
     {
         $lableModel = model('WorkLable');
 		$userModel = new \app\admin\model\User();
-		$taskModel = new \app\work\model\Task();
+		$taskModel = model('Task');
         $userInfo = $this->userInfo;
         $str = ','.$userInfo['id'].',';
 		
@@ -142,7 +138,7 @@ class Task extends ApiCommon
     public function updateOrder()
     {
         $param = $this->param;
-        if( $param['tolist'] ){
+        if ($param['tolist']) {
             $tolist = $param['tolist'];
             foreach ($tolist as $k1 => $v1) {
                 $toData = [];
@@ -151,7 +147,7 @@ class Task extends ApiCommon
                 Db::name('Task')->where(['task_id' => $v1])->update($toData);
             }
         }
-        if( $param['fromlist'] ){
+        if ($param['fromlist']) {
             $fromlist = $param['fromlist'];
             foreach ($fromlist as $k2 => $v2) {
                 $fromData = [];
@@ -172,15 +168,13 @@ class Task extends ApiCommon
 	{
 		$param = $this->param;
         $classlist = $param['class_ids'];
-		if ($param['work_id'] && $param['class_ids']) {
-            foreach ($classlist as $k => $v) {
-                $temp = [];
-				$temp['order_id'] = $k+1;
-                Db::name('WorkTaskClass')->where(['work_id' => $param['work_id'],'class_id' => $v])->update($temp);
-			}
-			return resultArray(['data' => true ]);
-		} else {
-			return resultArray(['error'=>'参数错误']);
+		if (!$param['work_id'] || !$param['class_ids']) {
+           return resultArray(['error'=>'参数错误']); 
+        }
+        foreach ($classlist as $k => $v) {
+            $temp = [];
+			$temp['order_id'] = $k+1;
+            Db::name('WorkTaskClass')->where(['work_id' => $param['work_id'],'class_id' => $v])->update($temp);
 		}
 	}
 
@@ -273,7 +267,8 @@ class Task extends ApiCommon
         $userInfo = $this->userInfo;
         $task_id = $param['task_id'] ? : '';
         $param['create_user_id'] = $userInfo['id'];
-        if (!$param['task_id']) {
+        $taskInfo = db('task')->where(['task_id' => $param['task_id']])->find();
+        if (!$taskInfo) {
             return resultArray(['error'=>'参数错误']);
         }
         $data = [];
@@ -285,7 +280,16 @@ class Task extends ApiCommon
         $owner_user_id = '';
         if ($param['owner_userids']) {
             $owner_user_id = arrayToString($param['owner_userids']);
-            actionLog( $param['task_id'],$param['owner_user_id'],$param['structure_ids'],'修改了参与人');
+            //站内信
+            $sendUserArr = [];
+            foreach ($param['owner_userids'] as $k=>$v) {
+                if (!in_array($v,stringToArray($taskInfo['owner_user_id']))) {
+                    $sendUserArr[] = $v;
+                } 
+            }
+            $content = $userInfo['realname'].'邀请您参与《'.$taskInfo['name'].'》项目，请及时查看';
+            if ($sendUserArr) sendMessage($sendUserArr,$content,1);
+            actionLog($param['task_id'],$param['owner_user_id'],$param['structure_ids'],'修改了参与人');
         }        
         $data['structure_ids'] = $structure_ids;
         $data['owner_user_id'] = $owner_user_id;

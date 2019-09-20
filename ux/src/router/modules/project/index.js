@@ -10,7 +10,10 @@ const workbenchRouter = {
   name: 'project',
   meta: {
     icon: 'workbench',
-    title: '项目管理'
+    title: '项目管理',
+    requiresAuth: true,
+    index: 0,
+    type: 'work'
   },
   children: children
 }

@@ -32,6 +32,10 @@ class Customer extends ApiCommon
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
+        if (!checkPerByAction('bi', 'customer' , 'read')) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }        
     }
 
     /**
@@ -41,11 +45,7 @@ class Customer extends ApiCommon
      * @return
      */
     public function statistics()
-    {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
+    {        
         $customerModel = new \app\crm\model\Customer();
         $param = $this->param;
         if ($param['type']) {
@@ -59,33 +59,24 @@ class Customer extends ApiCommon
 
     /**
      * 员工客户总量分析
-     * @author 
+     * @author zhi
      * @param 
      * @return
      */
     public function total()
     {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $customerModel = new \app\crm\model\Customer();
         $userModel = new \app\admin\model\User();
         $biCustomerModel = new \app\bi\model\Customer();
+        $adminModel = new \app\admin\model\Admin(); 
         $param = $this->param;
+        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
+        $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereArr['userIds'];
+
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
         }
-        $map_user_ids = [];
-        if ($param['user_id']) {
-            $map_user_ids = array($param['user_id']);
-        } else {
-            if ($param['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($param['structure_id'], 2);
-            }
-        }
-        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
-        $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
 
         $company = $biCustomerModel->getParamByCompany($param);
         $datas = array();
@@ -117,34 +108,24 @@ class Customer extends ApiCommon
 
     /**
      * 员工客户跟进次数分析
-     * @author 
+     * @author zhi
      * @param 
      * @return
      */
     public function recordTimes()
     {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $biCustomerModel = new \app\bi\model\Customer();
         $biRecordModel = new \app\bi\model\Record();
         $userModel = new \app\admin\model\User();
+        $adminModel = new \app\admin\model\Admin(); 
         $param = $this->param;
+        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
+        $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereArr['userIds'];
         
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
         }
-        $map_user_ids = [];
-        if ($param['user_id']) {
-            $map_user_ids = array($param['user_id']);
-        } else {
-            if ($param['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($param['structure_id'], 2);
-            }
-        }
-        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
-        $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
         
         $company = $biCustomerModel->getParamByCompany($param);
         $datas = array();
@@ -177,16 +158,12 @@ class Customer extends ApiCommon
 
     /**
      * 员工客户跟进次数分析 具体员工列表
-     * @author 
+     * @author zhi
      * @param 
      * @return
      */
     public function recordList()
     {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $biRecordModel = new \app\bi\model\Record();
         $param = $this->param;
         if ($param['type']) {
@@ -200,16 +177,12 @@ class Customer extends ApiCommon
 
     /**
      * 员工跟进方式分析
-     * @author 
+     * @author zhi
      * @param 
      * @return
      */
     public function recordMode()
     {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $biCustomerModel = new \app\bi\model\Customer();
         $biRecordModel = new \app\bi\model\Record();
         $param = $this->param;
@@ -242,34 +215,24 @@ class Customer extends ApiCommon
 
     /**
      * 客户转化率分析
-     * @author 
+     * @author zhi
      * @param 
      * @return
      */
     public function conversion()
     {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $customerModel = new \app\crm\model\Customer();
         $userModel = new \app\admin\model\User();
         $biCustomerModel = new \app\bi\model\Customer();
+        $adminModel = new \app\admin\model\Admin(); 
         $param = $this->param;
+        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
+        $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereArr['userIds'];
         
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
         }
-        $map_user_ids = [];
-        if ($param['user_id']) {
-            $map_user_ids = array($param['user_id']);
-        } else {
-            if ($param['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($param['structure_id'], 2);
-            }
-        }
-        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
-        $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
 
         $company = $biCustomerModel->getParamByCompany($param);
         $datas = array();
@@ -306,14 +269,12 @@ class Customer extends ApiCommon
 
     /**
      * 客户转化率分析具体数据
-     * @return [type] [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     public function conversionInfo()
     {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $customerModel = new \app\bi\model\Customer();
         $userModel = new \app\admin\model\User();
         $param = $this->param;
@@ -325,32 +286,24 @@ class Customer extends ApiCommon
 
     /**
      * 公海客户分析
-     * @return [type] [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     public function pool()
     {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $actionRecordModel = new \app\bi\model\ActionRecord();
         $userModel = new \app\admin\model\User();
         $biCustomerModel = new \app\bi\model\Customer();
+        $adminModel = new \app\admin\model\Admin(); 
         $param = $this->param;
+        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
+        $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereArr['userIds'];
         
         if (empty($param['type']) && empty($param['start_time'])) {
             $param['type'] = 'month';
         }
-        $map_user_ids = [];
-        if ($param['user_id']) {
-            $map_user_ids = array($param['user_id']);
-        } else {
-            if ($param['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($param['structure_id'], 2);
-            }
-        }
-        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
-        $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
 
         $company = $biCustomerModel->getParamByCompany($param);
         $datas = array();
@@ -371,9 +324,9 @@ class Customer extends ApiCommon
             }
             $whereArr['create_time'] = $create_time;
             $whereArr['content'] = '将客户放入公海';
-            $item['put_in'] = $actionRecordModel->getDataList($whereArr);
+            $item['put_in'] = $actionRecordModel->getDataCount($whereArr);
             $whereArr['content'] = '领取了客户';
-            $item['receive'] = $actionRecordModel->getDataList($whereArr);
+            $item['receive'] = $actionRecordModel->getDataCount($whereArr);
             $item['start_time'] = $start_time;
             $item['end_time'] = $end_time;
             $datas[] = $item;
@@ -383,52 +336,37 @@ class Customer extends ApiCommon
 
     /**
      * 公海客户分析 具体列表
-     * @return [type] [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     public function poolList()
     {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
-        $param = $this->param;
         $userModel = new \app\admin\model\User();
         $actionRecordModel = new \app\bi\model\ActionRecord();
         $customerModel = new \app\crm\model\Customer();
         $structureModel = new \app\admin\model\Structure();
-        //员工IDS
-        $map_user_ids = [];
-        if ($param['user_id']) {
-            $map_user_ids = array($param['user_id']);
-        } else {
-            if ($param['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($param['structure_id'], 2);
-            }
-        }
+        $adminModel = new \app\admin\model\Admin(); 
+        $param = $this->param;
         $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
-        $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
+        $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereArr['userIds'];
+        $between_time = $whereArr['between_time'];
+
         $where['id'] = array('in',$userIds);
         $where['type'] = 1;
         $userList = db('admin_user')->where($where)->field('id,username,structure_id,realname')->select();
-        if ($param['type']) {
-            $timeArr = getTimeByType($param['type']);
-            $param['start_time'] = $timeArr[0];
-            $param['end_time'] = $timeArr[1];
-        }        
-        if ($param['start_time'] && $param['end_time']) {
-            $create_time = array('between',array($param['start_time'],$param['end_time']));
-        }
-        $whereArr['create_time'] = $create_time;
+        $whereData['create_time'] = array('between',$between_time);
         foreach ($userList as $k=>$v) {
             $structure_info = $structureModel->getDataByID($v['structure_id']);
             $customer_num = 0;
-            $whereArr['user_id'] = $v['id'];
-            $whereArr['content'] = '将客户放入公海';
-            $userList[$k]['put_in'] = $actionRecordModel->getDataList($whereArr);
-            $whereArr['content'] = '领取了客户';
-            $userList[$k]['receive'] = $actionRecordModel->getDataList($whereArr);
+            $whereData['user_id'] = $v['id'];
+            $whereData['content'] = '将客户放入公海';
+            $userList[$k]['put_in'] = $actionRecordModel->getDataCount($whereData);
+            $whereData['content'] = '领取了客户';
+            $userList[$k]['receive'] = $actionRecordModel->getDataCount($whereData);
 
-            $where_c['create_time'] = $create_time;
+            $where_c['create_time'] = array('between',$between_time);
             $where_c['owner_user_id'] = $v['id'];
             $customer_num = $customerModel->getDataCount($where_c);
             $userList[$k]['customer_num'] = $customer_num;
@@ -439,42 +377,37 @@ class Customer extends ApiCommon
 
     /**
      * 员工客户成交周期 
-     * @return [type] [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     public function userCycle()
     {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $customerModel = new \app\crm\model\Customer();
         $userModel = new \app\admin\model\User();
         $biCustomerModel = new \app\bi\model\Customer();
+        $adminModel = new \app\admin\model\Admin(); 
         $param = $this->param;
-        if(empty($param['type']) && empty($param['start_time'])){
+        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
+        $whereData = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereData['userIds'];
+        $between_time = $whereData['between_time'];
+
+        if (empty($param['type']) && empty($param['start_time'])) {
             $param['type'] = 'month';
         }
-        $map_user_ids = [];
-        if ($param['user_id']) {
-            $map_user_ids = array($param['user_id']);
-        } else {
-            if ($param['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($param['structure_id'], 2);
-            }
-        }
-        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
-        $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
         $company = $biCustomerModel->getParamByCompany($param);
         $datas = array();
         for ($i=1; $i <= $company['j']; $i++) { 
+            $whereArr = [];
             $whereArr['owner_user_id'] = array('in',$userIds);
             $item = array();
             //时间段
             $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
             $item['type'] = $timeArr['type'];
-            $day = $timeArr['day']?$timeArr['day']:'1';
+            $day = $timeArr['day'] ? $timeArr['day'] : '1';
             $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
-            $next_day = $timeArr['next_day']?$timeArr['next_day']:'1';
+            $next_day = $timeArr['next_day'] ? $timeArr['next_day'] : '1';
             $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
             $create_time = [];
             if ($start_time && $end_time) {
@@ -493,15 +426,7 @@ class Customer extends ApiCommon
         $where['id'] = array('in',$userIds);
         $where['type'] = 1;
         $userList = db('admin_user')->where($where)->field('id,username,realname')->select();
-        $create_time = [];
-        if (!empty($param['start_time'])) {
-            $where_c['create_time'] = array('between',array($param['start_time'],$param['end_time']));
-        } else {
-            $create_time = getTimeByType($param['type']);
-            if ($create_time) {
-                $where_c['create_time'] = array('between',array($create_time[0],$create_time[1]));
-            }
-        }
+        $where_c['create_time'] = array('between',$between_time);
         foreach ($userList as $k=>$v) {
             $customer_num = 0;
             $where_c['owner_user_id'] = array('eq',$v['id']);
@@ -517,14 +442,12 @@ class Customer extends ApiCommon
 
     /**
      * 产品成交周期
-     * @return [type] [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     public function productCycle()
-    {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }      
+    {     
         $biCustomerModel = new \app\bi\model\Customer(); 
         $productModel = new \app\bi\model\Product();
         $param = $this->param;
@@ -547,14 +470,12 @@ class Customer extends ApiCommon
 
     /**
      * 地区成交周期
-     * @return [type] [description]
+     * @author zhi
+     * @param 
+     * @return
      */
     public function addressCycle()
     {
-        if (!checkPerByAction('bi', 'customer' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $userModel = new \app\admin\model\User();
         $customerModel = new \app\crm\model\Customer();
         $biCustomerModel = new \app\bi\model\Customer();
@@ -605,16 +526,12 @@ class Customer extends ApiCommon
 
     /**
      * 客户所在城市分析
-     * @author 
+     * @author zhi
      * @param 
      * @return
      */
     public function addressAnalyse()
     {
-        if (!checkPerByAction('bi', 'portrait' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $customerModel = new \app\crm\model\Customer();
         $userModel = new \app\admin\model\User();
         $address_arr = array('北京','上海','天津','广东','浙江','海南','福建','湖南','湖北','重庆','辽宁','吉林','黑龙江','河北','河南','山东','陕西','甘肃','青海','新疆','山西','四川','贵州','安徽','江西','江苏','云南','内蒙古','广西','西藏','宁夏',
@@ -646,16 +563,12 @@ class Customer extends ApiCommon
     
     /**
      * 客户行业/级别/来源分析
-     * @author 
+     * @author zhi
      * @param 
      * @return
      */
     public function portrait()
     {
-        if (!checkPerByAction('bi', 'portrait' , 'read')) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
         $biCustomerModel = new \app\bi\model\Customer();
         $customerModel = new \app\crm\model\Customer();
         $param = $this->param;

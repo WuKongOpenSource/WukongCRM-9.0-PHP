@@ -125,7 +125,7 @@ export default {
         return require('@/assets/img/check_revoke.png')
       } else if (status == 3) {
         return require('@/assets/img/check_create.png')
-      } else if (status == 4) {
+      } else if (status == 4 || status == 5) {
         return require('@/assets/img/check_wait.png')
       }
       return ''
@@ -220,7 +220,7 @@ export default {
     },
     // 获取状态名称
     getStatusName(status) {
-      // 0拒绝，1通过，2撤回，3创建，4待审核
+      // 0拒绝，1通过，2撤回，3创建，4待审核 5待提交
       if (status == 0) {
         return '拒绝'
       } else if (status == 1) {
@@ -232,7 +232,7 @@ export default {
       } else if (status == 4) {
         return '待审核'
       } else if (status == 5) {
-        return '审核中'
+        return '待提交'
       }
       return ''
     },

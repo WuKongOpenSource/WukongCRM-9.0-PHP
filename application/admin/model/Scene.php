@@ -109,7 +109,7 @@ class Scene extends Common
 					$setting = $newFieldList[$key]['setting'];
 	    			$data[$key]['setting'] = $setting;
 	    			if ($val['form_type'] == 'user' && $val['value']) {
-	    				$userInfo = $userModel->getDataById($val['value']);
+	    				$userInfo = $userModel->getUserById($val['value']);
 	    				$data[$key]['setting']['realname'] = $userInfo['realname'];
 	    				$data[$key]['setting']['id'] = $userInfo['id'];
 	    			} 
@@ -407,6 +407,9 @@ class Scene extends Common
     		case 'all' : $auth_user_ids = ''; break; //全部
     		case 'is_transform' : $map['is_transform'] = ['condition' => 'eq','value' => 1,'form_type' => 'text','name' => '']; break; //已转化线索
     		// default : $auth_user_ids = $userModel->getUserByPer('crm', $types, 'index'); break;
+    		case 'pool' : 
+    				$customerModel = new \app\crm\model\Customer();
+    				$map = $customerModel->getWhereByToday();
     		default : $auth_user_ids = ''; break; //全部
     	}
     	$auth_user_ids = $auth_user_ids ? : [];

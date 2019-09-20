@@ -131,10 +131,11 @@ export default {
     getRulesList() {
       this.loading = true
       rulesList({
-        type: 'tree'
+        type: 'tree',
+        pid: 5
       })
         .then(res => {
-          this.showTreeData = [res.data.work]
+          this.showTreeData = res.data
           this.checkTreeByUpdateInfo()
           this.loading = false
         })
@@ -218,9 +219,14 @@ export default {
         firstIndex++
       ) {
         const firstItem = firstTree.children[firstIndex]
-        if (!firstItem.children) {
-          firstItem.children = []
+
+        if (!firstItem.hasOwnProperty('children')) {
+          if (firstItem.length + 1 != copyArray.length) {
+            this.removeItem(copyArray, firstTree.id)
+          }
+          return copyArray
         }
+
         for (let index = 0; index < array.length; index++) {
           const element = array[index]
           var temps = []
@@ -252,7 +258,6 @@ export default {
           checkedKey.push(parseInt(element))
         }
       }
-
       return checkedKey
     },
     copyItem(array) {

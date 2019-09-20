@@ -69,19 +69,13 @@ class Product extends Common
 			$map['product.status'] = '上架';
 		}
 		//列表展示字段
-		// $indexField = $fieldModel->getIndexField('crm_product', $user_id) ? : ['name'];
+		$indexField = $fieldModel->getIndexField('crm_product', $user_id, 1) ? : ['name'];
 		$userField = $fieldModel->getFieldByFormType('crm_product', 'user'); //人员类型
-		$structureField = $fieldModel->getFieldByFormType('crm_product', 'structure');  //部门类型		
-
-		// $newIndexField = [];
-		// foreach ($indexField as $k=>$v) {
-		// 	$newIndexField[] = 'crm_product.'.$v;
-		// }
-		// $indexField  = $newIndexField;
+		$structureField = $fieldModel->getFieldByFormType('crm_product', 'structure');  //部门类型
 					
 		//排序
 		if ($order_type && $order_field) {
-			$order = 'convert(product.'.trim($order_field).' using gbk) '.trim($order_type);
+			$order = $fieldModel->getOrderByFormtype('crm_product','product',$order_field,$order_type);
 		} else {
 			$order = 'product.update_time desc';
 		}		
@@ -95,8 +89,7 @@ class Product extends Common
 				     ->join($join);
 		$list = $list_view
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
-        		// ->field('product_id,'.implode(',',$indexField).',product_category.name as category_name')
-        		->field('product.*,product_category.name as category_name')
+        		->field(implode(',',$indexField).',product_category.name as category_name')
         		->orderRaw($order)
         		->select();
         $dataCount = db('crm_product')->alias('product')
@@ -113,7 +106,7 @@ class Product extends Common
         		$list[$k][$val.'_info'] = isset($v[$val]) ? $structureModel->getDataByStr($v[$val]) : [];
         	}
         	//产品类型
-        	$list[$k]['category_id_info'] = db('crm_product_category')->where(['category_id' => $v['category_id']])->value('name');
+        	$list[$k]['category_id_info'] = $v['category_name'];
         }    
         $data = [];
         $data['list'] = $list;
@@ -210,7 +203,7 @@ class Product extends Common
 			$param['category_str'] = arrayToString($category_id);
 		}	
 
-		if ($this->allowField(true)->save($param, ['product_id' => $product_id])) {
+		if ($this->update($param, ['product_id' => $product_id], true)) {
 			//修改记录
 			updateActionLog($param['user_id'], 'crm_product', $product_id, $dataInfo->data, $param);
 			$data = [];
@@ -317,28 +310,17 @@ class Product extends Common
      * @param     [string]                   $request [查询条件]
      * @return    [array]                    
      */		
-	public function getStatistics($request)
+	public function getStatistics($param)
     {
     	$userModel = new \app\admin\model\User();
-		$where = [];
+		$adminModel = new \app\admin\model\Admin(); 
+        $perUserIds = $userModel->getUserByPer('bi', 'product', 'read'); //权限范围内userIds
+        $whereData = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereData['userIds'];        
+        $between_time = $whereData['between_time'];     
+        $where = [];
 		//时间段
-		$start_time = $request['start_time'];
-		$end_time = $request['end_time'] ? $request['end_time']+86399 : '';
-		if ($start_time && $end_time) {
-			$where['contract.create_time'] = array('between',array($start_time,$end_time));
-		}
-
-		//员工IDS
-		$map_user_ids = [];	
-		if ($request['user_id']) {
-			$map_user_ids = [$request['user_id']];
-		} else {
-			if ($request['structure_id']) {
-                $map_user_ids = $userModel->getSubUserByStr($request['structure_id'], 2);
-            }
-		}
-		$perUserIds = $userModel->getUserByPer('bi', 'product', 'read'); //权限范围内userIds
-		$userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
+		$where['contract.create_time'] = array('between',$between_time);
 		$where['contract.owner_user_id'] = array('in',$userIds);
 
 		$join = [
@@ -352,18 +334,26 @@ class Product extends Common
 					 ->alias('a')
 					 ->where($where)
 				     ->join($join)
-				     ->field('a.*,product.name as product_name,contract.customer_id,contract.owner_user_id,contract.name as contract_name,product_category.name as category_id_info,user.realname,product_category.category_id')
+				     ->field('a.*,product.name as product_name,contract.customer_id,contract.owner_user_id,contract.name as contract_name,contract.num as contract_num,product_category.name as category_id_info,user.realname,product_category.category_id')
 					 ->order('category_id,product_name')
 				     ->select();
 		foreach ($list as $k=>$v) {
 			$customer_info = Db::name('CrmCustomer')->field('customer_id,name')->where('customer_id = '.$v['customer_id'])->field('customer_id,name')->find(); //客户
 			$list[$k]['customer_id_info'] = $customer_info ? : array();
-			$contract_info = Db::name('CrmContract')->field('contract_id,name,num')->where('contract_id = '.$v['contract_id'])->field('contract_id,name')->find(); //合同
+			//合同
+			$contract_info  = [];
+			$contract_info['contract_id'] = $v['contract_id'];
+			$contract_info['name'] = $v['contract_name'];
 			$list[$k]['contract_id_info'] = $contract_info ? : array();
-			$product_info = Db::name('CrmProduct')->field('product_id,name')->where('product_id = '.$v['product_id'])->field('product_id,name')->find(); //产品
-			$list[$k]['product_id_info'] = $product_info?:array();
-			$owner_user_info = Db::name('AdminUser')->field('id,realname as name')->where('id = '.$v['owner_user_id'])->find(); //负责人
-			$list[$k]['owner_user_id_info'] = $owner_user_info ? : array();
+			//产品
+			$product_info = [];
+			$product_info['name'] = $v['product_name']; 
+			$product_info['product_id'] = $v['product_id'];
+			$list[$k]['product_id_info'] = $product_info ? : array();
+			//负责人
+			$owner_user_id_info = [];
+			$owner_user_id_info['realname'] = $v['realname'];
+			$list[$k]['owner_user_id_info'] = $owner_user_id_info;
 		}
         return $list;
     }  

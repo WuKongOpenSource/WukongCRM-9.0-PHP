@@ -40,6 +40,8 @@ return [
 
 	// 【角色】列表
 	'admin/groups/index' => ['admin/groups/index', ['method' => 'POST']],
+	// 【角色】分类列表
+	'admin/groups/typeList' => ['admin/groups/typeList', ['method' => 'POST']],	
 	// 【角色】添加
 	'admin/groups/save' => ['admin/groups/save', ['method' => 'POST']],	
 	// 【角色】编辑
@@ -60,11 +62,8 @@ return [
 	'admin/rules/getSublist' => ['admin/rules/getSublist', ['method' => 'POST']],		
 
 	//应用配置
-	'admin/configset/index' => ['admin/configset/index', ['method' => 'POST']],		
-	'admin/configset/update' => ['admin/configset/update', ['method' => 'POST']],		
-	'admin/configset/updatetype' => ['admin/configset/updatetype', ['method' => 'POST']],		
-	'admin/configset/read' => ['admin/configset/read', ['method' => 'POST']],	
-	'admin/configset/typelist' => ['admin/configset/typelist', ['method' => 'POST']],	
+	'admin/config_set/index' => ['admin/config_set/index', ['method' => 'POST']],		
+	'admin/config_set/update' => ['admin/config_set/update', ['method' => 'POST']],
 
 	// 【用户】列表
 	'admin/users/index' => ['admin/users/index', ['method' => 'POST']],	

@@ -31,11 +31,9 @@ class ExamineFlow extends ApiCommon
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
-        $userInfo = $this->userInfo;
         //权限判断
         $unAction = ['steplist','userlist','recordlist'];
-        $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(4,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
+        if (!in_array($a, $unAction) && !checkPerByAction('admin', 'examine_flow', 'index')) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
         }        
@@ -238,14 +236,14 @@ class ExamineFlow extends ApiCommon
         }
         if ($types == 'oa_examine') {
             $category_id = db('oa_examine')->where(['examine_id' => $types_id])->value('category_id');
-        }        
+        }  
         //自选还是流程(1固定,0自选)
         if ($examineFlowData['config'] == 1) {
             //获取审批流程
             $stepInfo = $examineStepModel->getStepList($flow_id, $user_id, $types, $types_id, $check_user_id, $param['action'], $category_id);
             $stepList = $stepInfo['steplist'];          
         } else {
-            $stepInfo = $examineStepModel->getPerStepList($types, $types_id, $user_id, $check_user_id);
+            $stepInfo = $examineStepModel->getPerStepList($types, $types_id, $user_id, $check_user_id, $param['action']);
             $stepList = $stepInfo['steplist'];           
         }
         $data = [];

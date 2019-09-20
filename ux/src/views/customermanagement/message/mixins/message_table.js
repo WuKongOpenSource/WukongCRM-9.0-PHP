@@ -9,7 +9,8 @@ import {
   crmMessageFollowLeadsAPI,
   crmMessageFollowCustomerAPI,
   crmMessagEndContractAPI,
-  crmMessagRemindreceivablesplanAPI
+  crmMessagRemindreceivablesplanAPI,
+  crmMessagRemindCustomerAPI
 } from '@/api/customermanagement/message'
 
 import {
@@ -32,6 +33,16 @@ export default {
 
       /** 格式化规则 */
       formatterRules: {}
+    }
+  },
+
+  computed: {
+    // 展示options下拉选择
+    showOptions() {
+      if (this.infoType == 'remindCustomer') {
+        return false
+      }
+      return true
     }
   },
 
@@ -134,8 +145,11 @@ export default {
         page: this.currentPage,
         limit: this.pageSize,
         types: 'list',
-        type: this.optionsType,
         isSub: this.isSubType
+      }
+
+      if (this.showOptions) {
+        params.type = this.optionsType
       }
 
       for (var key in this.filterObj.obj) {
@@ -164,63 +178,64 @@ export default {
         'checkReceivables': crmMessageCheckReceivablesAPI,
         'remindReceivablesPlan': crmMessagRemindreceivablesplanAPI,
         'endContract': crmMessagEndContractAPI,
-      } [this.infoType]
+        'remindCustomer': crmMessagRemindCustomerAPI,
+      }[this.infoType]
     },
 
     /** 获取字段 */
     getFieldList() {
       if (this.crmType == 'receivables_plan') {
         let list = [{
-            field: 'num',
-            form_type: 'text',
-            name: '期数'
-          },
-          {
-            field: 'customer_id',
-            form_type: 'customer_id',
-            name: '客户名称'
-          },
-          {
-            field: 'contract_id',
-            form_type: 'contract_id',
-            name: '合同编号'
-          },
-          {
-            field: 'money',
-            form_type: 'text',
-            name: '计划回款金额'
-          },
-          {
-            field: 'return_date',
-            form_type: 'text',
-            name: '计划回款日期'
-          },
-          {
-            field: 'return_type',
-            form_type: 'text',
-            name: '计划回款方式'
-          },
-          {
-            field: 'remind',
-            form_type: 'text',
-            name: '提前几日提醒'
-          },
-          {
-            field: 'remark',
-            form_type: 'text',
-            name: '备注'
-          }
+          field: 'num',
+          form_type: 'text',
+          name: '期数'
+        },
+        {
+          field: 'customer_id',
+          form_type: 'customer_id',
+          name: '客户名称'
+        },
+        {
+          field: 'contract_id',
+          form_type: 'contract_id',
+          name: '合同编号'
+        },
+        {
+          field: 'money',
+          form_type: 'text',
+          name: '计划回款金额'
+        },
+        {
+          field: 'return_date',
+          form_type: 'text',
+          name: '计划回款日期'
+        },
+        {
+          field: 'return_type',
+          form_type: 'text',
+          name: '计划回款方式'
+        },
+        {
+          field: 'remind',
+          form_type: 'text',
+          name: '提前几日提醒'
+        },
+        {
+          field: 'remark',
+          form_type: 'text',
+          name: '备注'
+        }
         ]
         this.handelFieldList(list)
         return
       }
 
       filedGetField({
-          types: 'crm_' + this.crmType,
-          module: 'crm',
-          controller: this.crmType,
-          action: 'index'
-        })
+        types: 'crm_' + this.crmType,
+        module: 'crm',
+        controller: this.crmType,
+        action: 'index'
+      })
         .then(res => {
           this.handelFieldList(res.data)
         })
@@ -392,11 +407,18 @@ export default {
           'background-color': '#FEF0F0',
           'color': '#F56C6B'
         }
-      } else if (status == 4) {
+      } else if (status == 4 || status == 5) {
         return {
           'background-color': '#FFFFFF'
         }
       }
+    },
+
+    getStatusName(status) {
+      if (status > 5) {
+        return ''
+      }
+      return ['待审核', '审核中', '审核通过', '已拒绝', '已撤回', '未提交'][status]
     },
 
     /**

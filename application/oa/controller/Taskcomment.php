@@ -41,19 +41,17 @@ class Taskcomment extends ApiCommon
     {
         $param = $this->param;
         $commentModel = new \app\admin\model\Comment();
-        if ($param['task_id']) {
-            $userInfo = $this->userInfo;
-			$param['user_id'] = $userInfo['id'];
-            $param['type'] = 'task';
-            $param['type_id'] = $param['task_id'];
-            $flag = $commentModel->createData($param);
-            if ($flag) {
-                return resultArray(['data'=>$flag]);
-            } else {
-                return resultArray(['error'=>$commentModel->getError()]);
-            }
-        } else {
+        if (!$param['task_id']) {
             return resultArray(['error'=>'参数错误']);
+        }
+        $userInfo = $this->userInfo;
+		$param['user_id'] = $userInfo['id'];
+        $param['type'] = 'task';
+        $param['type_id'] = $param['task_id'];
+        if ($commentModel->createData($param)) {
+            return resultArray(['data'=>$flag]);
+        } else {
+            return resultArray(['error'=>$commentModel->getError()]);
         }
     }
 
@@ -64,19 +62,16 @@ class Taskcomment extends ApiCommon
     {
         $param = $this->param;
         $commentModel = new \app\admin\model\Comment();
-        if ($param['comment_id']) {
-            $userInfo   			 = $this->userInfo;
-			$param['create_user_id'] = $userInfo['id']; 
-            $flag = $commentModel->delDataById($param);
-            if ( $flag ) {
-                return resultArray(['data'=>'删除成功']);
-            } else {
-                return resultArray(['error'=>$commentModel->getError()]);
-            }
-        } else {
+        if (!$param['comment_id']) {
             return resultArray(['error'=>'参数错误']);
         }
+        $userInfo = $this->userInfo;
+		$param['create_user_id'] = $userInfo['id'];
+        if ($commentModel->delDataById($param)) {
+            return resultArray(['data'=>'删除成功']);
+        } else {
+            return resultArray(['error'=>$commentModel->getError()]);
+        }
     }
-    
 }
  

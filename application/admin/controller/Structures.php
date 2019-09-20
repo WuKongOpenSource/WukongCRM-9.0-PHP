@@ -31,15 +31,6 @@ class Structures extends ApiCommon
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
-
-        $userInfo = $this->userInfo;
-        //权限判断
-        $unAction = ['index','listdialog','subindex','getsubuserbystructrue'];
-        $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(3,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }
     }    
     
     //获取权限范围内的部门
@@ -53,15 +44,26 @@ class Structures extends ApiCommon
         $a = $param['a'] ? : '';
         $ret = $userModel->getUserByPer($m, $c, $a);
         $where['au.id'] = ['in',$ret];
-        $list = Db::name('AdminUser')
+        $structure_ids = Db::name('AdminUser')
             ->alias('au')
             ->join('AdminStructure ast','ast.id = au.structure_id','LEFT')
-            ->field('ast.*')
             ->where($where)
             ->group('structure_id')
             ->order('structure_id asc')
+            ->column('ast.id');
+        $list = Db::name('AdminStructure')
+            ->group('id')
+            ->order('id asc')
             ->select();
         $result = getSubObj(0, $list, '', 1);
+        $adminTypes = adminGroupTypes($userInfo['id']);
+        if(!in_array(1,$adminTypes)){
+            foreach ($result as $key => $value) {
+                if(!in_array($value['id'],$structure_ids)){
+                    unset($result[$key]);
+                }
+            }
+        }
         return resultArray(['data'=>$result]);
     }
 
@@ -87,6 +89,11 @@ class Structures extends ApiCommon
      */    
     public function index()
     {   
+        //权限判断
+        // if (!checkPerByAction('admin', 'users', 'index')) {
+        //     header('Content-Type:application/json; charset=utf-8');
+        //     exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        // }        
         $structureModel = model('Structure');
 		$param = $this->param;
         $type = $param['type'] ? 'tree' : '';
@@ -101,7 +108,7 @@ class Structures extends ApiCommon
      * @return                            
      */    
     public function read()
-    {   
+    {           
         $structureModel = model('Structure');
         $param = $this->param;
         $data = $structureModel->getDataById($param['id']);
@@ -119,6 +126,11 @@ class Structures extends ApiCommon
      */    
     public function save()
     {
+        //权限判断
+        if (!checkPerByAction('admin', 'users', 'structures_save')) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }        
         $structureModel = model('Structure');
         $param = $this->param;
 		if(!$param['pid']){
@@ -139,6 +151,11 @@ class Structures extends ApiCommon
      */
     public function update()
     {
+        //权限判断
+        if (!checkPerByAction('admin', 'users', 'structures_update')) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }        
         $structureModel = model('Structure');
         $param = $this->param;
         $dataInfo = $structureModel->getDataByID($param['id']);
@@ -160,6 +177,11 @@ class Structures extends ApiCommon
      */  
     public function delete()
     {
+        //权限判断
+        if (!checkPerByAction('admin', 'users', 'structures_delete')) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }        
         $structureModel = model('Structure');
         $param = $this->param;
         $data = $structureModel->delStrById($param['id']);       
@@ -177,6 +199,11 @@ class Structures extends ApiCommon
      */    
     public function enables()
     {
+        //权限判断
+        if (!checkPerByAction('admin', 'users', 'structures_update')) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }        
         $structureModel = model('Structure');
         $param = $this->param;
         $data = $structureModel->enableDatas($param['ids'], $param['status'], true);  

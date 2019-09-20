@@ -39,10 +39,7 @@ class Event extends Common
 	public function getDataList($param)
     {
 		$userModel = new \app\admin\model\User();
-		$BusinessModel = new \app\crm\model\Business();
-		$ContactsModel = new \app\crm\model\Contacts();
-		$ContractModel = new \app\crm\model\Contract();
-		$CustomerModel = new \app\crm\model\Customer();
+		$recordModel = new \app\admin\model\Record();
 
 		$user_id = $param['user_id'];
 		if ($param['start_time'] && $param['end_time']) {
@@ -56,24 +53,27 @@ class Event extends Common
 		$event_date = Db::name('OaEvent')->where($where)->select();  
 	
 		foreach ($event_date as $k=>$v) {
-			$event_date[$k]['create_user_info'] = $userModel->getDataById($v['create_user_id']);
+			$event_date[$k]['create_user_info'] = $userModel->getUserById($v['create_user_id']);
 			$event_date[$k]['ownerList'] = $userModel->getDataByStr($v['owner_user_ids']) ? : [];
-			$relation = Db::name('OaEventRelation')->where('event_id ='.$v['event_id'])->find();
-			$event_date[$k]['businessList'] = $relation['business_ids'] ? $BusinessModel->getDataByStr($relation['business_ids']) : []; //商机
-			$event_date[$k]['contactsList'] = $relation['contacts_ids'] ? $ContactsModel->getDataByStr($relation['contacts_ids']) : []; //联系人
-			$event_date[$k]['contractList'] = $relation['contract_ids'] ? $ContractModel->getDataByStr($relation['contract_ids']) : []; //合同
-			$event_date[$k]['customerList'] = $relation['customer_ids'] ? $CustomerModel->getDataByStr($relation['customer_ids']) : []; //客户
+
+			$relationArr= [];
+			$relationArr = $recordModel->getListByRelationId('event', $v['event_id']);
+			$event_date[$k]['businessList'] = $relationArr['businessList'];
+			$event_date[$k]['contactsList'] = $relationArr['contactsList'];
+			$event_date[$k]['contractList'] = $relationArr['contractList'];
+			$event_date[$k]['customerList'] = $relationArr['customerList'];
+
 			$event_date[$k]['remindtype'] = (int)$v['remindtype'];
-			$noticeList = Db::name('OaEventNotice')->where('event_id = '.$v['event_id'].'')->find();
-			if (!$noticeList) {
-				$event_date[$k]['is_repeat'] = 0;
-			} else {
-				$event_date[$k]['is_repeat'] = 1;
+			$noticeInfo = Db::name('OaEventNotice')->where(['event_id' => $v['event_id']])->find();
+			$is_repeat = 0;
+			if ($noticeInfo) {
+				$is_repeat = 1;
 			}
-			$event_date[$k]['stop_time'] = $noticeList ? $noticeList['stop_time'] : '';
-			$event_date[$k]['noticetype'] = $noticeList ? $noticeList['noticetype'] : '';
-			if ($noticeList['noticetype'] == '2') {
-				$event_date[$k]['repeat'] = $noticeList['repeated'] ? explode('|||',$noticeList['repeated']) : [];
+			$event_date[$k]['is_repeat'] = $is_repeat;
+			$event_date[$k]['stop_time'] = $noticeInfo ? $noticeInfo['stop_time'] : '';
+			$event_date[$k]['noticetype'] = $noticeInfo ? $noticeInfo['noticetype'] : '';
+			if ($noticeInfo['noticetype'] == '2') {
+				$event_date[$k]['repeat'] = $noticeInfo['repeated'] ? explode('|||',$noticeInfo['repeated']) : [];
 			} else {
 				$event_date[$k]['repeat'] =  '';
 			}
@@ -103,12 +103,7 @@ class Event extends Common
 		$param['start_time'] = $param['start_time'] ? : $today_time[0];
 		$param['end_time'] = $param['end_time'] ?$param['end_time'] : $today_time[1];
 		$param['create_time'] = time();
-		if (count($param['owner_user_ids'])) {
-			$param['owner_user_ids'] = ','.implode(',',$param['owner_user_ids']).','; //参与人
-		} else {
-			$param['owner_user_ids'] = '';
-		}
-		
+		$param['owner_user_ids'] = count($param['owner_user_ids']) ? arrayToString($param['owner_user_ids']) : '';
 		$rdata['customer_ids'] = count($param['customer_ids']) ? arrayToString($param['customer_ids']) : ''; 
 		$rdata['contacts_ids'] = count($param['contacts_ids']) ? arrayToString($param['contacts_ids']) : ''; 
 		$rdata['business_ids'] = count($param['business_ids']) ? arrayToString($param['business_ids']) : ''; 
@@ -166,8 +161,7 @@ class Event extends Common
 			$this->error = '数据不存在或已删除';
 			return false;
 		}
-		
-		if(  $dataInfo['create_user_id'] != $param['user_id'] ) {
+		if ($dataInfo['create_user_id'] != $param['user_id']) {
 			$this->error = '没有编辑权限';
 			return false;
 		}
@@ -176,7 +170,6 @@ class Event extends Common
 		$rdata['contacts_ids'] = count($param['contacts_ids']) ? arrayToString($param['contacts_ids']) : ''; 
 		$rdata['business_ids'] = count($param['business_ids']) ? arrayToString($param['business_ids']) : ''; 
 		$rdata['contract_ids'] = count($param['contract_ids']) ? arrayToString($param['contract_ids']) : '';  
-
 		$rdata['event_id'] = $event_id;
 		
 		//重复设置
@@ -193,31 +186,27 @@ class Event extends Common
 		$param['start_time'] = $param['start_time'] ? : $today_time[0];
 		$param['end_time'] = $param['end_time'] ?$param['end_time']: $today_time[1];
 		$param['create_time'] = time();
-		if( count($param['owner_user_ids']) ){
-			$param['owner_user_ids'] = ','.implode(',',$param['owner_user_ids']).','; //参与人
-		} else {
-			$param['owner_user_ids'] = '';
-		}
+		$param['owner_user_ids'] = count($param['owner_user_ids']) ? arrayToString($param['owner_user_ids']) : ''; //参与人
 		if ($this->allowField(true)->save($param, ['event_id' => $event_id])) {
 			actionLog($event_id,'',$param['owner_user_ids'],'修改了日程');
-			if($param['is_repeat']){
-				$repeatData['event_id'] = $event_id; //
-				if( $repeatData['noticetype'] == '1' ){ //天
+			if ($param['is_repeat']) {
+				$repeatData['event_id'] = $event_id;
+				if ($repeatData['noticetype'] == '1') { //天
 					$repeatData['repeated'] = date("H:i:s",$param['start_time']); // $param['repeat']; Y-m-d H:i:s
-				} else if ( $repeatData['noticetype'] == '2' ) { //周
+				} elseif ( $repeatData['noticetype'] == '2' ) { //周
 					$repeatData['repeated'] = $repeat;  //周几
-				} else if ( $repeatData['noticetype'] == '3' ) { //月
+				} elseif ( $repeatData['noticetype'] == '3' ) { //月
 					$repeatData['repeated'] = date("d H:i:s",$param['start_time']); 
-				} else if ( $repeatData['noticetype'] == '4' ) { //年
+				} elseif ( $repeatData['noticetype'] == '4' ) { //年
 					$repeatData['repeated'] = date("m-d H:i:s",$param['start_time']); 
 				}
-				Db::name('OaEventNotice')->where('event_id ='.$event_id)->update($repeatData);
+				Db::name('OaEventNotice')->where(['event_id' => $event_id])->update($repeatData);
 			} else {
-				Db::name('OaEventNotice')->where('event_id ='.$event_id)->delete();
+				Db::name('OaEventNotice')->where(['event_id' => $event_id])->delete();
 			}
 			$data = [];
 			$data['event_id'] = $event_id;
-			Db::name('OaEventRelation')->where('event_id ='.$event_id)->update($rdata);
+			Db::name('OaEventRelation')->where(['event_id' => $event_id])->update($rdata);
 			return $data;
 		} else {
 			$this->error = '编辑失败';
@@ -231,7 +220,8 @@ class Event extends Common
      * @return 
      */	
    	public function getDataById($id = '', $param)
-   	{   		
+   	{   
+   		$recordModel = new \app\admin\model\Record();		
    		$map['event_id'] = $id;
    		$map['create_user_id'] = $param['user_id'];
 		$dataInfo = $this->where($map)->find();
@@ -239,18 +229,15 @@ class Event extends Common
 			$this->error = '暂无此数据';
 			return false;
 		}
-		$userModel = new \app\admin\model\User(); 
-		$BusinessModel = new \app\crm\model\Business();
-		$ContactsModel = new \app\crm\model\Contacts();
-		$ContractModel = new \app\crm\model\Contract();
-		$CustomerModel = new \app\crm\model\Customer();
-
+		$userModel = new \app\admin\model\User();
 	    $dataInfo['ownerList'] = $userModel->getDataByStr($dataInfo['owner_user_ids']);
-		$relation = Db::name('OaEventRelation')->where('event_id ='.$id)->find();
-		$dataInfo['businessList'] = $relation['business_ids']?$BusinessModel->getDataByStr($relation['business_ids']):''; //商机
-		$dataInfo['contactsList'] = $relation['contacts_ids']?$ContactsModel->getDataByStr($relation['contacts_ids']):''; //联系人
-		$dataInfo['contractList'] = $relation['contract_ids']?$ContractModel->getDataByStr($relation['contract_ids']):''; //合同
-		$dataInfo['customerList'] = $relation['customer_ids']?$CustomerModel->getDataByStr($relation['customer_ids']):''; //客户
+
+		$relationArr= [];
+		$relationArr = $recordModel->getListByRelationId('event', $id);
+		$dataInfo['businessList'] = $relationArr['businessList'];
+		$dataInfo['contactsList'] = $relationArr['contactsList'];
+		$dataInfo['contractList'] = $relationArr['contractList'];
+		$dataInfo['customerList'] = $relationArr['customerList'];
 		$dataInfo['event_id'] = $id;
 		return $dataInfo;
    	}

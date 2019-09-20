@@ -97,9 +97,10 @@ class Excel extends Common
 						    }
 							$endcell = $c;
 						}
-						for ($c=3; $c<=70; $c++) {		
+						for ($j=3; $j<=70; $j++) {	
+							$objActSheet->getStyle($this->stringFromColumnIndex($k).$j)->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_TEXT);//设置单元格格式 (文本)	
 							//数据有效性   start
-							$objValidation = $objActSheet->getCell($this->stringFromColumnIndex($k).$c)->getDataValidation();
+							$objValidation = $objActSheet->getCell($this->stringFromColumnIndex($k).$j)->getDataValidation();
 							$objValidation -> setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST)  
 					           -> setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_INFORMATION)  
 					           -> setAllowBlank(false)  
@@ -114,9 +115,10 @@ class Excel extends Common
 					    }
 					} else {
 						if ($select_value) {
-	 						for ($c=3; $c<=70; $c++) {		
+	 						for ($j=3; $j<=70; $j++) {	
+	 							$objActSheet->getStyle($this->stringFromColumnIndex($k).$j)->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_TEXT);//设置单元格格式 (文本)	
 								//数据有效性   start
-								$objValidation = $objActSheet->getCell($this->stringFromColumnIndex($k).$c)->getDataValidation();
+								$objValidation = $objActSheet->getCell($this->stringFromColumnIndex($k).$j)->getDataValidation();
 								$objValidation -> setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST)  
 						           -> setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_INFORMATION)  
 						           -> setAllowBlank(false)  
@@ -132,6 +134,7 @@ class Excel extends Common
 						}
 					}
 				}
+				$objActSheet->getStyle($this->stringFromColumnIndex($k))->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_TEXT);//设置单元格格式 (文本)
 				//检查该字段若必填，加上"*"
 				$field['name'] = sign_required($field['is_null'], $field['name']);
 				$objActSheet->setCellValue($this->stringFromColumnIndex($k).'2', $field['name']);
@@ -183,7 +186,7 @@ class Excel extends Common
 	 * @param $callback 回调函数，查询需要导出的数据
 	 * @author
 	 **/
-	public function exportCsv($file_name, $field_list, callback $callback)
+	public function exportCsv($file_name, $field_list, $callback)
 	{
 		$fieldModel = new \app\admin\model\Field();
 		ini_set('memory_limit','1024M');
@@ -300,27 +303,40 @@ class Excel extends Common
 			}
 	        $currentSheet = $ExcelObj->getSheet(0);
 	        //查看有几个sheet
-	        // $sheetContent = count($ExcelObj->getSheet(0)->toArray());
+	        $sheetContent = $ExcelObj->getSheet(0)->toArray();
 	        //获取总行数
 	        $sheetCount = $ExcelObj->getSheet(0)->getHighestRow();
 	   		// if ($sheetCount > 2002) {
 			// $this->error = '';
     		// return false; 	        	
 	   		// }
-	        //放入缓存
-	        cache($savePath, $ExcelObj->getSheet(0)->toArray());
-	        $sheetContent = cache($savePath);
 			//读取表头
-	        // $excelHeader = $sheetContent[1];
 	        $excelHeader = $sheetContent[1];
 	        unset($sheetContent[0]);
 	        unset($sheetContent[1]);
 	        //取出文件的内容描述信息，循环取出数据，写入数据库
 			switch ($types) {
-				case 'crm_leads' : $dataModel = new \app\crm\model\Leads(); $db = 'crm_leads'; $db_id = 'leads_id'; break;
-				case 'crm_customer' : $dataModel = new \app\crm\model\Customer(); $db = 'crm_customer'; $db_id = 'customer_id'; $fieldParam['form_type'] = array('not in',['file','form','user','structure']); break;
-				case 'crm_contacts' : $dataModel = new \app\crm\model\Contacts(); $db = 'crm_contacts'; $db_id = 'contacts_id'; break;
-				case 'crm_product' : $dataModel = new \app\crm\model\Product(); $db = 'crm_product'; $db_id = 'product_id'; break;
+				case 'crm_leads' : 
+					$dataModel = new \app\crm\model\Leads(); 
+					$db = 'crm_leads';
+					$db_id = 'leads_id'; 
+					break;
+				case 'crm_customer' : 
+					$dataModel = new \app\crm\model\Customer(); 
+					$db = 'crm_customer'; 
+					$db_id = 'customer_id'; 
+					$fieldParam['form_type'] = array('not in',['file','form','user','structure']); 
+					break;
+				case 'crm_contacts' : 
+					$dataModel = new \app\crm\model\Contacts(); 
+					$db = 'crm_contacts'; 
+					$db_id = 'contacts_id'; 
+					break;
+				case 'crm_product' : 
+					$dataModel = new \app\crm\model\Product(); 
+					$db = 'crm_product'; 
+					$db_id = 'product_id'; 
+					break;
 			}
 			$contactsModel = new \app\crm\model\Contacts();        
 
@@ -333,7 +349,9 @@ class Excel extends Common
         	foreach ($field_list as $k=>$v) {
         		$fieldArr[$v['name']]['field'] = $v['field'];
         		$fieldArr[$v['name']]['form_type'] = $v['form_type'];
-        		if ($v['is_unique'] == 1) $uniqueField[] = $v['field'];
+        		if ($v['is_unique'] == 1) {
+        			$uniqueField[] = $v['field'];
+        		}
         	}
         	$field_num = count($field_list);
         	//客户导入联系人
@@ -349,10 +367,7 @@ class Excel extends Common
 	        $defaultData['create_user_id'] = $param['create_user_id'];
 	        $defaultData['owner_user_id'] = $param['owner_user_id'];
 	        $defaultData['create_time'] = time();
-	        $defaultData['update_time'] = time();
-	        if ($types == 'crm_customer') {
-	        	$defaultData['deal_time'] = time();
-	        }	        
+	        $defaultData['update_time'] = time();	        
 	        //产品类别
 	        if ($types == 'crm_product') {
 	        	$productCategory = db('crm_product_category')->select();
@@ -361,12 +376,11 @@ class Excel extends Common
 	        		$productCategoryArr[$v['name']] = $v['category_id'];
 	        	}
 	        }
-
 	       	$keys = 2;
 	       	$errorMessage = [];
 			$forCount = 1000; //每次取出1000个
-			for ($i = 0; $i < ceil(round($sheetCount/$forCount,2)); $i++){
-				$_sub = array_slice($sheetContent, ($i)*$forCount, 1000);				
+			for ($i = 0; $i <= ceil(round($sheetCount/$forCount,2)); $i++){
+				$_sub = array_slice($sheetContent, ($i)*$forCount, 1000);			
 				foreach ($_sub as $kk => $val){
 		        	$data = '';
 		        	$contactsData = '';
@@ -379,6 +393,7 @@ class Excel extends Common
 		            $data = $defaultData; //导入数据
 		            $contacts_data = $defaultData; //导入数据
 		            $resWhere = ''; //验重条件
+		            $resWhereNum = 0; //验重数
 		            $resContacts = false; //联系人是否有数据
 		            $resInfo = false; //Excel列是否有数据
 		            $resData = []; 
@@ -406,12 +421,15 @@ class Excel extends Common
 								continue;
 				        	}
 				        	$data['customer_id'] = $customer_id;
-				        }					
+				        }				
 						if ($aa < $field_num) {
 							if (empty($fieldArr[$fieldName]['field'])) continue; 
 							// if ($fieldArr[$fieldName]['field'] == 'name') $name = $info;
-							if (in_array($fieldArr[$fieldName]['field'], $uniqueField) && $info) $resWhere .= " `".$fieldArr[$fieldName]['field']."` = '".$info."' OR";
-
+							if (in_array($fieldArr[$fieldName]['field'], $uniqueField) && $info) {
+								if ($resWhereNum > 0) $resWhere .= " OR ";
+								$resWhere .= " `".$fieldArr[$fieldName]['field']."` = '".$info."'";
+								$resWhereNum += 1;
+							}
 							$resList = [];
 							$resList = $this->sheetData($k, $fieldArr, $fieldName, $info);
 							$resData[] = $resList['data'];
@@ -438,24 +456,35 @@ class Excel extends Common
 						$resultContacts = $this->changeArr($resContactsData);
 						$contactsData = $resultContacts ? array_merge($contacts_data,$resultContacts) : []; //联系人
 					}
-					$resWhere = $resWhere ? substr($resWhere,0,-2) : '';
-					$ownerWhere['owner_user_id'] = $param['owner_user_id'];
+					$resWhere = $resWhere ? : '';
+					// $ownerWhere['owner_user_id'] = $param['owner_user_id'];
 					if ($uniqueField && $resWhere) {
 						$resNameIds = db($db)->where($resWhere)->where($ownerWhere)->column($db_id);
 					}
 					if ($resInfo == false) {
 						continue;
-					}
+					}				
 					if ($resNameIds && $data) {
-						if ($config == 1 && $resNameIds) {
+						if ($config == 1) {
 							$data['user_id'] = $param['create_user_id'];
+							$data['update_time'] = time();
 							//覆盖数据（以名称为查重规则，如存在则覆盖原数据）	
 							foreach ($resNameIds as $nid) {
+								$data[$db_id] = $id;
+								unset($data['owner_user_id']);
 								$upRes = $dataModel->updateDataById($data, $nid);
 								if (!$upRes) {
 									$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$dataModel->getError();
 									continue;	
 								}
+								if ($types == 'crm_customer' && $resContacts !== false) {
+									$contactsData['customer_id'] = $upRes['customer_id'];
+									if (!$contactsData['owner_user_id']) $contactsData['owner_user_id'] = $param['create_user_id'];
+									if (!$resData = $contactsModel->createData($contactsData)) {
+										$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$contactsModel->getError();
+										continue;
+									}
+								}								
 							}
 						}					
 					} else {
@@ -465,18 +494,19 @@ class Excel extends Common
 						}
 						if ($types == 'crm_customer' && $resContacts !== false) {
 							$contactsData['customer_id'] = $resData['customer_id'];
+							if (!$contactsData['owner_user_id']) $contactsData['owner_user_id'] = $param['create_user_id'];
 							if (!$resData = $contactsModel->createData($contactsData)) {
 								$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$contactsModel->getError();
 								continue;
 							}				
-						}						
-					}					
+						}											
+					}
 				}
 				// ob_flush();
     			// flush();
         		unset($_sub);//用完及时销毁									
 			}
-			// unset($sheetContent);
+			unset($sheetContent);
 	        	       
 	        if ($errorMessage) {
 	        	$this->error = $errorMessage;
@@ -668,7 +698,7 @@ class Excel extends Common
 	 * @param $callback 回调函数，查询需要导出的数据
 	 * @author
 	 **/
-	public function dataExportCsv($file_name, $field_list, callback $callback)
+	public function dataExportCsv($file_name, $field_list, $callback)
 	{
 		ini_set('memory_limit','128M');
 	    set_time_limit (0);

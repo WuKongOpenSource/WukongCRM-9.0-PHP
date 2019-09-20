@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
 
-export function roleListFun (data) {
+export function roleListFun(data) {
     return request({
         url: 'admin/groups/index',
         method: 'post',
@@ -9,7 +9,7 @@ export function roleListFun (data) {
     })
 }
 
-export function rulesList (data) {
+export function rulesList(data) {
     return request({
         url: 'admin/rules/index',
         method: 'post',
@@ -17,7 +17,7 @@ export function rulesList (data) {
     })
 }
 
-export function roleAdd (data) {
+export function roleAdd(data) {
     return request({
         url: 'admin/groups/save',
         method: 'post',
@@ -25,7 +25,7 @@ export function roleAdd (data) {
     })
 }
 
-export function roleDelete (data) {
+export function roleDelete(data) {
     return request({
         url: 'admin/groups/delete',
         method: 'post',
@@ -34,7 +34,7 @@ export function roleDelete (data) {
 }
 
 // 角色复制
-export function roleCopy (data) {
+export function roleCopy(data) {
     return request({
         url: 'admin/groups/copy',
         method: 'post',
@@ -44,7 +44,7 @@ export function roleCopy (data) {
 
 
 // 角色编辑
-export function roleUpdate (data) {
+export function roleUpdate(data) {
     return request({
         url: 'admin/groups/update',
         method: 'post',
@@ -53,7 +53,7 @@ export function roleUpdate (data) {
 }
 
 // 添加编辑员工
-export function usersEdit (data) {
+export function usersEdit(data) {
     return request({
         url: 'admin/users/groups',
         method: 'post',
@@ -62,9 +62,18 @@ export function usersEdit (data) {
 }
 
 // 删除员工
-export function usersDelete (data) {
+export function usersDelete(data) {
     return request({
         url: 'admin/users/groupsDel',
+        method: 'post',
+        data: data
+    })
+}
+
+// 角色分类列表
+export function adminGroupsTypeListAPI(data) {
+    return request({
+        url: 'admin/groups/typeList',
         method: 'post',
         data: data
     })

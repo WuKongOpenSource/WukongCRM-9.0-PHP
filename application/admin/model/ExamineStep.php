@@ -181,7 +181,7 @@ class ExamineStep extends Common
             case 'crm_receivables' : $dataInfo = db('crm_receivables')->where(['receivables_id' => intval($types_id)])->field('create_user_id,owner_user_id,check_user_id,flow_id,order_id,check_status,update_time')->find(); break;
     	}
         $stepInfo = [];
-        if ($dataInfo['flow_id']) {
+        if ($dataInfo['flow_id'] && !in_array($dataInfo['check_status'],['5'])) {
             //固定审批流
             $stepInfo = db('admin_examine_step')->where(['flow_id' => $dataInfo['flow_id'],'order_id' => $dataInfo['order_id']])->find();
         }
@@ -353,7 +353,7 @@ class ExamineStep extends Common
                     foreach ($examine_user_arr as $key=>$val) {
                         $user_id_info = [];
                         $user_id_info = $userModel->getUserById($val);
-                        $check_type = 4; //type 0失败，1通过，2撤销，3创建，4待审核，5审核中
+                        $check_type = 4; //type 0失败，1通过，2撤销，3创建，4待审核，5未提交
                         //当前步骤已审批user_id
                         $check_user_ids = [];
                         $check_user_ids = $this->getUserByCheck($types, $types_id, $v['order_id'], 1);
@@ -425,9 +425,10 @@ class ExamineStep extends Common
      * 获取有效审批步骤列表(自选审批)
      * @param  types 类型
      * @param  types_id 类型ID
+     * @param  action 操作类型: view、save
      * @return
      */ 
-    public function getPerStepList($types, $types_id, $user_id, $check_user_id)
+    public function getPerStepList($types, $types_id, $user_id, $check_user_id, $action = '')
     {
         $examineRecordModel = new \app\admin\model\ExamineRecord();
         $userModel = new \app\admin\model\User();
@@ -446,7 +447,7 @@ class ExamineStep extends Common
         $userList[0]['type'] = '3'; //创建
         $userList[0]['time'] = $dataInfo['update_time'] ? : '';
  
-        //type 0失败，1通过，2撤销，3创建，4待审核
+        //type 0失败，1通过，2撤销，3创建，4待审核，5未提交
         $i = 1;
         foreach ($recordList as $k=>$v) {
             $userList[$i]['userInfo'] = $userModel->getUserById($v['check_user_id']);
@@ -459,17 +460,23 @@ class ExamineStep extends Common
             $userList[$i]['userInfo'] = $userModel->getUserById($check_user_id_arr[0]);
             $userList[$i]['type'] = '4';
         }
+        if ($dataInfo['check_status'] == 5 && $dataInfo['check_user_id']) {
+            $userList = [];
+            $check_user_id_arr = stringToArray($dataInfo['check_user_id']);
+            $userList[0]['userInfo'] = $userModel->getUserById($check_user_id_arr[0]);
+            $userList[0]['type'] = '5';
+        }        
         $is_check = 0; //审批权限(1有)
         $is_recheck = 0; //撤销审批权限(1有)
 
         $admin_user_ids = $userModel->getAdminId();
         //创建人或负责人或管理员有撤销权限
         if ($dataInfo['create_user_id'] == $check_user_id || $dataInfo['owner_user_id'] == $check_user_id || in_array($check_user_id, $admin_user_ids)) {
-            if (!in_array($dataInfo['check_status'],['2','3','4'])) {
+            if (!in_array($dataInfo['check_status'],['2','3','4','5'])) {
                 $is_recheck = 1;
             }
         }
-        if (in_array($check_user_id, stringToArray($dataInfo['check_user_id'])) && !in_array($dataInfo['check_status'],['2','3'])) {
+        if (in_array($check_user_id, stringToArray($dataInfo['check_user_id'])) && !in_array($dataInfo['check_status'],['2','3','5'])) {
             $is_check = 1;
         }
 

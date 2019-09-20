@@ -242,10 +242,10 @@ export default {
     ...mapGetters(['userInfo']),
     allData() {
       let allData = {}
-      allData.business = this.data.businessList
-      allData.contacts = this.data.contactsList
-      allData.contract = this.data.contractList
-      allData.customer = this.data.customerList
+      allData.business = this.data.businessList || []
+      allData.contacts = this.data.contactsList || []
+      allData.contract = this.data.contractList || []
+      allData.customer = this.data.customerList || []
       return allData
     },
     allDataShow() {
@@ -254,10 +254,10 @@ export default {
         return false
       }
       if (
-        this.data.businessList.length != 0 ||
-        this.data.contactsList.length != 0 ||
-        this.data.contractList.length != 0 ||
-        this.data.customerList.length != 0
+        (this.data.businessList && this.data.businessList.length != 0) ||
+        (this.data.contactsList && this.data.contactsList.length != 0) ||
+        (this.data.contractList && this.data.contractList.length != 0) ||
+        (this.data.customerList && this.data.customerList.length != 0)
       ) {
         return true
       } else {

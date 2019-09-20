@@ -184,7 +184,7 @@ class Log extends ApiCommon
             if ($dataInfo['create_user_id'] !== $userInfo['id'] && !in_array(1,$adminTypes)) {
                 header('Content-Type:application/json; charset=utf-8');
                 exit(json_encode(['code'=>102,'error'=>'无权操作']));                
-            }                       
+            }                     
 			$res = model('Log')->delDataById($param);
 			if (!$res) {
 				return resultArray(['error' => model('Log')->getError()]);

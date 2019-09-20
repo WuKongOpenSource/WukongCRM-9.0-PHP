@@ -42,7 +42,7 @@ class WorkLable extends Common
 		$data = [];
 		$data['list'] = $list ? : [];
 		$data['dataCount'] = $dataCount ? : 0;
-		return $data;
+		return $data ? : [];
 	}
 	
 	/**

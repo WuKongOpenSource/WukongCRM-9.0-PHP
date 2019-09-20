@@ -72,15 +72,7 @@ function teamUserId($types, $types_id, $type, $user_id, $is_del, $owner_user_id,
                 $all_ro_user_id = $old_ro_user_id ? array_merge($old_ro_user_id, $user_id) : $user_id; // 合并
             }
             $data['rw_user_id'] = $all_rw_user_id ? arrayToString($all_rw_user_id) : ''; //去空
-            $data['ro_user_id'] = $all_ro_user_id ? arrayToString($all_ro_user_id) : ''; //去空             
-        // } elseif ($is_del == 3) {
-        //     if ($type == 2) {
-        //         $all_rw_user_id = $old_rw_user_id ? array_merge($old_rw_user_id, $user_id) : $user_id; // 合并
-        //     } else {
-        //         $all_ro_user_id = $old_ro_user_id ? array_merge($old_ro_user_id, $user_id) : $user_id; // 合并
-        //     }
-        //     $data['rw_user_id'] = $all_rw_user_id ? arrayToString($all_rw_user_id) : ''; //去空
-        //     $data['ro_user_id'] = $all_ro_user_id ? arrayToString($all_ro_user_id) : ''; //去空           
+            $data['ro_user_id'] = $all_ro_user_id ? arrayToString($all_ro_user_id) : ''; //去空         
         } else {
             $del_ro_user_id = []; //需要删除的只读
             $del_rw_user_id = []; //需要删除的读写

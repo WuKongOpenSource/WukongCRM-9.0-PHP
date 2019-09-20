@@ -53,6 +53,7 @@ export default {
       this.loading = true
       crmReceivablesPlanIndex({
         contract_id: this.relation.contract_id,
+        types: 1,
         pageType: 'all'
       })
         .then(res => {

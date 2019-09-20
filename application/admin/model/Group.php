@@ -19,54 +19,58 @@ class Group extends Common
 
 	/**
 	 * [getDataList 获取列表]
-	 * @param  tree 1 二维数组
+	 * @param  tree 1 属性
+	 * @param  rules 1 二维数组
+	 * @param  pid 分类：0客户自定义角色,1系统默认管理角色,2客户管理角色,3人力资源管理角色(原客户),4财务管理角色(原客户),5项目管理角色,6办公管理角色,7人力资源管理角色,8财务管理角色,9项目管理员角色
+	 * @param  备注：原自定义角色0,人事管理角色3,财务管理角色4，划分至新客户管理角色中
+	 * @param  rule：types 0系统设置1工作台2客户管理3项目管理4人力资源5财务管理6商业智能(客戶)
 	 * @return    [array]            
 	 */
 	public function getDataList($param)
 	{
-		if ($param['pid']) {
-			$map['pid'] = $param['pid'];
-		}
+		$ruleModel = new \app\admin\model\Rule();
+		$map = [];	
 		if ($param['tree'] == 1) {
-			$list = ['0' => ['name' => '管理角色','pid' => 1],'1' => ['name' => '客户管理角色','pid' => 2],'2' => ['name' => '人事角色','pid' => 3],'3' => ['name' => '财务角色','pid' => 4],'4' => ['name' => '项目角色','pid' => 5],'5' => ['name' => '自定义角色','pid' => 0]];
+			$list = $this->getTypeList();
 			foreach ($list as $k=>$v) {
 				$where = [];
-				$where['pid'] = $v['pid'];
-				$where['type'] = ['gt',0];
+				$where = $this->getNewGroupPid($v['pid']);
 				$groupList = db('admin_group')->where($where)->select() ? : [];
-				foreach ($groupList as $key => $val) {
-					$crmRules = [];
-					$biRules = [];
-					$rules = stringToArray($val['rules']) ? : [];
-					foreach ($rules as $k1=>$v1) {
-						$ruleInfo = [];
-						$ruleInfo = db('admin_rule')->where(['id' => $v1])->find();
-						if ($ruleInfo['types'] == 2) {
-							$crmRules[] = $v1;
-						} elseif ($ruleInfo['types'] == 6) {
-							$biRules[] = $v1;
-						}
-					}
-					$groupList[$key]['rules'] = [];
-					$groupList[$key]['rules']['crm'] = $crmRules ? : [];
-					$groupList[$key]['rules']['bi'] = $biRules ? : [];
-				}
 				$list[$k]['list'] = $groupList ? : [];				
 			}
 		} else {
-			$map['type'] = isset($param['type']) ? 0 : ['gt',0];
-			$list = db('admin_group')->where($map)->select();
-			foreach($list as $key=>$value){
-				if ($value['norules']) {
-					$array = explode(',', substr($value['norules'],1,strlen($value['norules'])-2) );
-					if (count($array)) {
-						$temp = $value['rules'];
-						foreach ($array as $v) {
-							$str = ','.$v.',';
-							$temp = str_replace($str,',',$temp);
+			$where = [];
+			if (isset($param['type'])) {
+				$where['pid'] = $param['pid'];
+				$where['type'] = $param['type'];
+			} else {
+				$where = $this->getNewGroupPid($param['pid']);
+			}
+			$list = db('admin_group')->where($where)->select() ? : [];		
+			if ($param['rules'] == 1) {
+				//角色权限分类关系
+				$ruleTypes = $ruleModel->groupsToRules($param['pid']);
+				if ($ruleTypes) {
+					foreach ($list as $key => $val) {
+						$dataRules = [];
+						$biRules = [];
+						$rules = stringToArray($val['rules']) ? : [];
+						foreach ($rules as $k1=>$v1) {
+							$ruleInfo = [];
+							$ruleInfo = db('admin_rule')->where(['id' => $v1])->find();
+							if ($ruleInfo['types'] == $ruleTypes[0]) {
+								$dataRules[] = $v1;
+							} elseif ($ruleInfo['types'] == $ruleTypes[1]) {
+								$biRules[] = $v1;
+							}
 						}
-						$list[$key]['rules'] = $temp;
-					}
+						$list[$key]['rules'] = [];
+						$list[$key]['rules']['data'] = $dataRules ? : [];
+						$list[$key]['rules']['bi'] = $biRules ? : [];
+						if ($val['pid'] == 1 || $val['pid'] == 5 || $val['pid'] == 6 || $val['pid'] == 9) {
+							$list[$key]['type'] = 0;
+						}
+					}				
 				}
 			}			
 		}
@@ -127,5 +131,47 @@ class Group extends Common
 			$this->error = '删除失败';
 			return false;
 		}
+	}
+
+	/**
+	 * [getTypeList 获取分类列表]
+	 * @param  备注：原自定义角色0,人事管理角色3,财务管理角色4，划分至客户管理角色中
+	 * @return    [array]            
+	 */
+	public function getTypeList()
+	{
+		$list = ['0' => ['name' => '系统管理角色','pid' => 1],'1' => ['name' => '办公管理角色','pid' => 6],'2' => ['name' => '客户管理角色','pid' => 2],'3' => ['name' => '项目管理角色','pid' => '9']];
+		return $list ? : [];
+	}
+
+	/**
+	 * [getNewGroupPid 兼容9.0.5版本group pid对应关系]
+	 * @param  备注：原自定义角色0,人事管理角色3,财务管理角色4，划分至客户管理角色中
+	 * @return    [array]            
+	 */	
+	protected function getNewGroupPid($pid)
+	{
+		switch ($pid) {
+			case '1' : 
+				$where['pid'] = 1;
+				$where['types'] = ['not in',['7']];
+				break;
+			case '2' : 
+				$where = function($query) {
+				        		$query->where(['pid' => ['in',['0','2','3','4']]])
+			                    ->whereOr('type != 0 AND pid = 5');
+							};				
+				break;	
+			case '9' : 
+				$where = function($query) {
+				        		$query->where(['pid' => 9])
+			                    ->whereOr('types = 7 AND pid = 1');
+							};	
+				break;											
+			default : 
+				$where['pid'] = $pid;
+				break;
+		}
+		return $where ? : [];	
 	}
 }

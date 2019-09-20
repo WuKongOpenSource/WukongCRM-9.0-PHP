@@ -138,9 +138,9 @@ class Business extends ApiCommon
      */
     public function delete()
     {
+        $param = $this->param; 
         $businessModel = model('Business');
-        $param = $this->param;        
-
+        $recordModel = new \app\admin\model\Record();    
         if (!is_array($param['id'])) {
             $business_id[] = $param['id'];
         } else {
@@ -173,6 +173,8 @@ class Business extends ApiCommon
             if (!$data) {
                 return resultArray(['error' => $businessModel->getError()]);
             }
+            //删除跟进记录
+            $recordModel->delDataByTypes('crm_business',$delIds);            
             actionLog($delIds,'','','');         
         }
         if ($errorMessage) {
@@ -239,7 +241,7 @@ class Business extends ApiCommon
             $businessInfo = $businessModel->getDataById($business_id);
 
             if (!$businessInfo) {
-                $errorMessage[] = 'id:为'.$business_id.'的商机转移失败，错误原因：数据不存在；';
+                $errorMessage[] = '名称:为《'.$businessInfo['name'].'》的商机转移失败，错误原因：数据不存在；';
                 continue;
             }
             //权限判断

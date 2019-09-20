@@ -46,3 +46,12 @@ export function crmIndexSaletrend(data) {
     data: data
   })
 }
+
+// 获取简报 跟进记录信息
+export function crmIndexGetRecordListAPI(data) {
+  return request({
+    url: 'crm/index/getRecordList',
+    method: 'post',
+    data: data
+  })
+}

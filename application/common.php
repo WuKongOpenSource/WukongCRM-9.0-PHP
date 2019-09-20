@@ -127,7 +127,8 @@ function money_view($money)
 function where_arr($array = [], $m = '', $c = '', $a = '')
 {
     $userModel = new UserModel();
-    $checkStatusArray = ['待审核' => '0','审核中'=>'1','审核通过'=>'2','审核失败'=>'3','已撤回'=>'4'];
+    $checkStatusList = ['待审核','审核中','审核通过','审核失败','已撤回','未提交'];
+    $checkStatusArray = ['待审核' => '0','审核中'=>'1','审核通过'=>'2','审核失败'=>'3','已撤回'=>'4','未提交'=>'5'];
     //查询自定义字段模块多选字段类型
     $check_field_arr = [];
     //特殊字段
@@ -157,7 +158,9 @@ function where_arr($array = [], $m = '', $c = '', $a = '')
                 $k = 'name';
                 $c = 'contacts.';
             }
-            if ($k == 'check_status' && is_array($v) && in_array($v['value'],$checkStatusArray)) $v['value'] = $checkStatusArray[$v['value']] ? : '0';
+            if ($k == 'check_status' && is_array($v) && in_array($v['value'],$checkStatusList)) {
+                $v['value'] = $checkStatusArray[$v['value']] ? : '0';
+            }
             if (is_array($v)) {
                 if ($v['state']) {
                     $address_where[] = '%'.$v['state'].'%';
@@ -419,35 +422,38 @@ function rulesDeal($data)
  * @param $self == true  包含自己
  * @param $type == 0  下属userid
  * @param $type == 1  全部userid
+ * @param $user_id 需要查询的user_id
  */
-function getSubUserId($self = true, $type = 0)
+function getSubUserId($self = true, $type = 0, $user_id = '')
 {   
     $request = Request::instance();
     $header = $request->header();    
     $authKey = $header['authkey'];
     $cache = cache('Auth_'.$authKey);
-    if (!$cache) {
-        return false;
-    }
-    $userInfo = $cache['userInfo'];
-
-    $adminTypes = adminGroupTypes($userInfo['id']);  
-    if (in_array(1,$adminTypes)) {
-        $type = 1;
-    }    
+    if (!$user_id) {
+        if (!$cache) {
+            return false;
+        }
+        $userInfo = $cache['userInfo'];
+        $user_id = $userInfo['id'];
+        $adminTypes = adminGroupTypes($user_id);  
+        if (in_array(1,$adminTypes)) {
+            $type = 1;
+        }        
+    }  
 
     $belowIds = [];
     if (empty($type)) {
-        if ($userInfo['id']) {
-            $belowIds = getSubUser($userInfo['id']);
+        if ($user_id) {
+            $belowIds = getSubUser($user_id);
         }
     } else {
         $belowIds = getSubUser(0);
     }   
     if ($self == true) {
-        $belowIds[] = $userInfo['id'];
+        $belowIds[] = $user_id;
     } else {
-        $belowIds = $belowIds ? array_diff($belowIds,array($userInfo['id'])) : [];
+        $belowIds = $belowIds ? array_diff($belowIds,array($user_id)) : [];
     }
     return array_unique($belowIds);
 }
@@ -567,7 +573,7 @@ function sendMessage($user_id, $content, $action_id, $sysMessage = 0)
         $data['action_name'] = $a;        
         $data['action_id'] = $action_id;        
         db('admin_message')->insert($data); 
-    }   
+    }  
     return true;
 }
 
@@ -639,7 +645,11 @@ function updateActionLog($user_id, $types, $action_id, $oldData = [], $newData =
                 } elseif ($newFieldArr[$k]['form_type'] == 'business') {
                     $new_value = $v ? db('crm_business')->where(['business_id' => $v])->value('name') : '';
                     $old_value = $v ? db('crm_business')->where(['business_id' => $oldData[$k]])->value('name') : '';
-                }                
+                } elseif ($newFieldArr[$k]['field'] == 'check_status') {
+                    $statusArr = ['0'=>'待审核','1'=>'审核中','2'=>'审核通过','3'=>'已拒绝','4'=>'已撤回','5'=>'未提交'];
+                    $new_value = $statusArr[$v];
+                    $old_value = $statusArr[$oldData[$k]];
+                }               
                 $message[] = '将 '."'".$field_name."'".' 由 '.$old_value.' 修改为 '.$new_value;
             }
         }
@@ -1354,4 +1364,6 @@ function curl_post($url = '', $post = array())
     if (curl_errno($curl)) {
         echo 'Errno'.curl_error($curl);//捕抓异常
     }
+    curl_close($curl); // 关闭CURL会话
+    return $res; // 返回数据，json格式
 }

@@ -56,7 +56,7 @@ export default {
         return require('@/assets/img/check_revoke.png')
       } else if (status == 3) {
         return require('@/assets/img/check_create.png')
-      } else if (status == 4) {
+      } else if (status == 4 || status == 5) {
         return require('@/assets/img/check_wait.png')
       }
       return ''
@@ -133,7 +133,7 @@ export default {
       } else if (status == 4) {
         return '待审核'
       } else if (status == 5) {
-        return '审核中'
+        return '待提交'
       }
       return ''
     },

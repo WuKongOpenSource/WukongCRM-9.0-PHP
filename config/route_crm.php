@@ -14,6 +14,7 @@ return [
 	// 【仪表盘】销售简报
 	'crm/index/index' => ['crm/index/index', ['method' => 'POST']],    
 	'crm/index/indexList' => ['crm/index/indexList', ['method' => 'POST']], 
+	'crm/index/getRecordList' => ['crm/index/getRecordList', ['method' => 'POST']], 
 	
 	// 【客户】列表
 	'crm/customer/index' => ['crm/customer/index', ['method' => 'POST']],
@@ -248,6 +249,7 @@ return [
 	'crm/message/checkreceivables' => ['crm/message/checkreceivables', ['method' => 'POST']],				
 	'crm/message/remindreceivablesplan' => ['crm/message/remindreceivablesplan', ['method' => 'POST']],				
 	'crm/message/endContract' => ['crm/message/endContract', ['method' => 'POST']],
+	'crm/message/remindCustomer' => ['crm/message/remindCustomer', ['method' => 'POST']],
 
 	// 【客户】标记跟进
 	'crm/customer/setFollow' => ['crm/customer/setFollow', ['method' => 'POST']],					
@@ -273,6 +275,20 @@ return [
 
 	// 【公海】数据统计 导出
 	'crm/customer/poolExcelExport' => ['crm/customer/poolExcelExport', ['method' => 'POST']],	
+
+	// 【CRM设置】拥有、锁定客户数限制列表
+	'crm/setting/customerConfigList' => ['crm/setting/customerConfigList', ['method' => 'POST']],
+	// 【CRM设置】拥有、锁定客户数限制创建
+	'crm/setting/customerConfigSave' => ['crm/setting/customerConfigSave', ['method' => 'POST']],	
+	// 【CRM设置】拥有、锁定客户数限制编辑
+	'crm/setting/customerConfigUpdate' => ['crm/setting/customerConfigUpdate', ['method' => 'POST']],
+	// 【CRM设置】拥有、锁定客户数限制删除
+	'crm/setting/customerConfigDel' => ['crm/setting/customerConfigDel', ['method' => 'POST']],	
+
+	// 【客户成交】
+	'crm/customer/deal_status' => ['crm/customer/deal_status', ['method' => 'POST']],
+	// 【待进入客户池】
+	'crm/message/remindCustomer' => ['crm/message/remindCustomer', ['method' => 'POST']],					
 
 	// MISS路由
 	'__miss__'  => 'admin/base/miss',

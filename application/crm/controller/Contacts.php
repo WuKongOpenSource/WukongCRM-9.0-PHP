@@ -114,18 +114,17 @@ class Contacts extends ApiCommon
     public function update()
     {    
         $contactsModel = model('Contacts');
-        $userModel = new \app\admin\model\User();
         $param = $this->param;
         $userInfo = $this->userInfo;
         $param['user_id'] = $userInfo['id'];
 
-        //判断权限
-        $data = $contactsModel->getDataById($param['id']);
-        $auth_user_ids = $userModel->getUserByPer('crm', 'contacts', 'update');
-        if (!in_array($data['owner_user_id'],$auth_user_ids)) {
-            header('Content-Type:application/json; charset=utf-8');
-            exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
+        // //判断权限
+        // $data = $contactsModel->getDataById($param['id']);
+        // $auth_user_ids = $userModel->getUserByPer('crm', 'contacts', 'update');
+        // if (!in_array($data['owner_user_id'],$auth_user_ids)) {
+        //     header('Content-Type:application/json; charset=utf-8');
+        //     exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        // }        
         if ($contactsModel->updateDataById($param, $param['id'])) {
             return resultArray(['data' => '编辑成功']);
         } else {
@@ -141,9 +140,9 @@ class Contacts extends ApiCommon
      */
     public function delete()
     {
+        $param = $this->param;    
         $contactsModel = model('Contacts');
-        $param = $this->param;        
-
+        $recordModel = new \app\admin\model\Record();
         if (!is_array($param['id'])) {
             $contacts_id[] = $param['id'];
         } else {
@@ -154,7 +153,7 @@ class Contacts extends ApiCommon
 
         //数据权限判断
         $userModel = new \app\admin\model\User();
-        $auth_user_ids = $userModel->getUserByPer('crm', 'business', 'delete');
+        $auth_user_ids = $userModel->getUserByPer('crm', 'contacts', 'delete');
         foreach ($contacts_id as $k=>$v) {
             $isDel = true;
             //数据详情
@@ -176,6 +175,8 @@ class Contacts extends ApiCommon
             if (!$data) {
                 return resultArray(['error' => $contactsModel->getError()]);
             }
+            //删除跟进记录
+            $recordModel->delDataByTypes('crm_contacts',$delIds);            
             actionLog($delIds,'','',''); 
         }        
         if ($errorMessage) {
@@ -218,9 +219,8 @@ class Contacts extends ApiCommon
         $errorMessage = [];
         foreach ($param['contacts_id'] as $contacts_id) {
             $contactsInfo = $contactsModel->getDataById($contacts_id);
-
             if (!$contactsInfo) {
-                $errorMessage[] = 'id:为'.$contacts_id.'的联系人转移失败，错误原因：数据不存在；';
+                $errorMessage[] = '名称:为《'.$contactsInfo['name'].'》的联系人转移失败，错误原因：数据不存在；';
                 continue;
             }
             //权限判断

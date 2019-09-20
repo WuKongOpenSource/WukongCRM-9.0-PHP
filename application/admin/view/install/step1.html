@@ -44,47 +44,47 @@
                                 <th>检查项</th>
                                 <th>当前环境</th>
                                 <th>悟空CRM建议</th>
-                                <th>功能影响</th>
+                                <th>当前状态</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <volist name="{$data['env']}" id="row">
+                            {volist name="data['env']" id="row"}
                                 <tr>
-                                    <td>{$data['env']['os'][0]}</td>
-                                    <td>{$data['env']['os'][3]}</td>
-                                    <td>{$data['env']['os'][2]}</td>
-                                    <td>功能影响 </td>
+                                    <td>{$row[0]}</td>
+                                    <td>{$row[1]}</td>
+                                    <td>{$row[2]}</td>
+                                    <td>
+                                        {if condition="$row['3'] == 'ok'"}
+                                            <img src="__STATIC__/icon/success.png" width="20">
+                                        {else /}
+                                            <img src="__STATIC__/icon/error.png" width="20">
+                                        {/if}
+                                    </td>
                                 </tr>
-                                <tr>
-                                    <td>{$data['env']['php'][0]}</td>
-                                    <td>{$data['env']['php'][3]}</td>
-                                    <td>{$data['env']['php'][2]}</td>
-                                    <td>功能影响 </td>
-                                </tr>
-                            </volist>
+                            {/volist}
                         </tbody>
                     </table>
                     <table class="catalogue-table">
-                    <thead>
-                    <tr>
-                    <th>目录文件</th>
-                    <th>所需状态</th>
-                    <th>当前状态{$data['dir'][0][1]}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach($data['dir'] as $value){ ?>
-                        <tr>
-                            <td>{$value[1]}</td>
-                            <td>{$value[3]}</td>
-                        <?php if($value[5] =='ok') { ?>
-                            <td><img src="__STATIC__/icon/success.png" width="20"></td>
-                        <?php } else { ?>
-                            <td><img src="__STATIC__/icon/error.png" width="20"></td>
-                        <?php } ?>
-                        </tr>
-                        <?php } ?>
-                    </tbody>
+                        <thead>
+                            <tr>
+                                <th>目录文件</th>
+                                <th>所需状态</th>
+                                <th>当前状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach($data['dir'] as $value){ ?>
+                            <tr>
+                                <td>{$value[1]}</td>
+                                <td>{$value[3]}</td>
+                            <?php if($value[5] =='ok') { ?>
+                                <td><img src="__STATIC__/icon/success.png" width="20"></td>
+                            <?php } else { ?>
+                                <td><img src="__STATIC__/icon/error.png" width="20"></td>
+                            <?php } ?>
+                            </tr>
+                            <?php } ?>
+                        </tbody>
                     </table>
                 </div>
                 <div class="control">

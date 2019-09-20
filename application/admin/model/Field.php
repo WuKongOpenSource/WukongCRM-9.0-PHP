@@ -57,6 +57,9 @@ class Field extends Model
         if ($types == 'oa_examine') {
         	$map['types_id'] = $param['types_id'];
         }
+		if ($param['types'] == 'crm_customer') {
+			$map['field'] = array('not in',['deal_status']);
+		}        
         $list = Db::name('AdminField')->where($map)->order('order_id')->select();
         foreach ($list as $k=>$v) {
         	$list[$k]['setting'] = $v['setting'] ? explode(chr(10),$v['setting']) : [];
@@ -222,6 +225,8 @@ class Field extends Model
 		//将英文逗号转换为中文逗号
 		$new_setting = [];
 		foreach ($data['setting'] as $k => $v) {
+			$v = str_replace(')', '）', $v);
+			$v = str_replace('(', '（', $v);			
 			$new_setting[] = str_replace(',', '，', $v);
 		}
 		$data['setting'] = implode(chr(10), $new_setting);
@@ -270,21 +275,7 @@ class Field extends Model
 			//单选、下拉、多选类型(使用回车符隔开)
 			if (in_array($data['form_type'], ['radio','select','checkbox']) && $data['setting']) {
 				//将英文逗号转换为中文逗号
-				$new_setting = [];
-				foreach ($data['setting'] as $k => $v) {
-					$new_setting[] = str_replace(',', '，', $v);
-				}
-				$data['setting'] = implode(chr(10), $new_setting);
-				//默认值
-				$new_default_value = [];
-				if ($data['form_type'] == 'checkbox') {
-					if ($data['default_value']) {
-						foreach ($data['default_value'] as $k => $v) {
-							$new_default_value[] = str_replace(',', '，', $v);
-						}
-					}
-					$data['default_value'] = $new_default_value ? implode(',', $new_default_value) : '';
-				}
+				$data = $this->settingValue($data);
 			}
 			// 验证
 			$validate = validate($this->name);
@@ -496,9 +487,9 @@ class Field extends Model
 		if (in_array($param['action'],array('index','view'))) {
 			$map['types'] = array(array('eq',$types),array('eq',''),'or');
 		} else {
-			// if ($param['types'] == 'crm_customer' && (in_array($param['action'],array('save','update','excel')))) {
-			// 	$map['field'] = array('not in',['deal_status']);
-			// }
+			if ($param['types'] == 'crm_customer' && (in_array($param['action'],array('save','update','excel')))) {
+				$map['field'] = array('not in',['deal_status']);
+			}
 			$map['types'] = $types;
 		}
 		if ($param['controller'] == 'customer' && $param['action'] == 'pool') {
@@ -632,13 +623,13 @@ class Field extends Model
 				} elseif ($v['form_type'] == 'business_type') {
 					//商机状态组
 					$businessStatusModel = new \app\crm\model\BusinessStatus();
-					$userInfo = $userModel->getDataById($user_id);
+					$userInfo = $userModel->getUserById($user_id);
 				    $setting = db('crm_business_type')
 				            ->where(['structure_id' => ['like','%,'.$userInfo['structure_id'].',%'],'status' => 1])
 				            ->whereOr('structure_id','')
 				            ->select();	
 				    foreach ($setting as $key=>$val) {
-				        $setting[$key]['statusList'] = $businessStatusModel->getDataList($val['type_id']); 
+				        $setting[$key]['statusList'] = $businessStatusModel->getDataList($val['type_id'],1); 
 				    }
 				    $setting = $setting ? : [];					
 					if ($param['action'] == 'read') {
@@ -652,7 +643,7 @@ class Field extends Model
 						$value = $dataInfo[$v['field']] ? db('crm_business_status')->where(['status_id' => $dataInfo[$v['field']]])->value('name') : '';
 					} else {
 						$businessStatusModel = new \app\crm\model\BusinessStatus();
-						$setting = $businessStatusModel->getDataList($dataInfo['type_id']);				
+						$setting = $businessStatusModel->getDataList($dataInfo['type_id'],1);				
 						$value = (int)$dataInfo[$v['field']] ? : '';
 					}
 				} elseif ($v['form_type'] == 'receivables_plan') {
@@ -729,7 +720,7 @@ class Field extends Model
 					'field' => 'check_status',
 					'name' => '审核状态',
 					'form_type' => 'select',
-					'setting' => '待审核'.chr(10).'审核中'.chr(10).'审核通过'.chr(10).'审核失败'.chr(10).'已撤回'
+					'setting' => '待审核'.chr(10).'审核中'.chr(10).'审核通过'.chr(10).'审核失败'.chr(10).'已撤回'.chr(10).'未提交'
 				]
 			];
 		}
@@ -769,7 +760,7 @@ class Field extends Model
 			} elseif ($v['form_type'] == 'business_type') {
 				//商机状态组
 				$businessStatusModel = new \app\crm\model\BusinessStatus();
-				$userInfo = $userModel->getDataById($user_id);
+				$userInfo = $userModel->getUserById($user_id);
 			    $setting = db('crm_business_type')
 			            ->where(['structure_id' => $userInfo['structure_id'],'status' => 1])
 			            ->whereOr('structure_id','')
@@ -892,8 +883,9 @@ class Field extends Model
 	 * [getIndexField 列表展示字段]
 	 * @author Michael_xu 
 	 * @param types 分类	
+	 * @param is_data 1 取数据时
 	 */
-	public function getIndexField($types, $user_id)
+	public function getIndexField($types, $user_id, $is_data = '')
 	{	
 		$userFieldModel = new \app\admin\model\UserField();
 		$userFieldData = $userFieldModel->getConfig($types, $user_id);
@@ -910,7 +902,57 @@ class Field extends Model
 			$where['types'] = ['in',['',$types]];
 			$dataList = $this->where($where)->column('field');		
 		}
-		return $dataList ? : [];
+		$sysField = [];
+		$newList = $dataList;
+		if ($is_data == 1) {
+			switch ($types) {
+				case 'crm_leads' : 
+					$sysField = ['leads_id','create_time','update_time','create_user_id','owner_user_id'];
+					break;
+				case 'crm_business' :
+					$newList = [];
+					foreach ($dataList as $v) {
+						$newList[] = 'business.'.$v;
+					}			
+					$sysField = ['business.business_id','business.customer_id','business.create_time','business.update_time','business.status_id','business.type_id','business.create_user_id','business.owner_user_id','business.ro_user_id','business.rw_user_id'];
+					break;
+				case 'crm_customer' : 
+					$sysField = ['customer_id','deal_time','create_time','update_time','is_lock','deal_status','create_user_id','owner_user_id','ro_user_id','rw_user_id'];
+					break;	
+				case 'crm_contacts' : 
+					$newList = [];
+					foreach ($dataList as $v) {
+						$newList[] = 'contacts.'.$v;
+					}			
+					$sysField = ['contacts.contacts_id','contacts.customer_id','contacts.create_time','contacts.update_time','contacts.create_user_id','contacts.owner_user_id'];
+					break;
+				case 'crm_contract' : 
+					$newList = [];
+					foreach ($dataList as $v) {
+						$newList[] = 'contract.'.$v;
+					}
+					$sysField = ['contract.contract_id','contract.create_time','contract.update_time','contract.create_user_id','contract.owner_user_id','contract.check_status'];
+					break;
+				case 'crm_receivables' : 
+					$newList = [];
+					foreach ($dataList as $v) {
+						$newList[] = 'receivables.'.$v;
+					}
+					$sysField = ['receivables.receivables_id','receivables.customer_id','receivables.contract_id','receivables.plan_id','receivables.create_time','receivables.update_time','receivables.create_user_id','receivables.owner_user_id','receivables.check_status'];
+					break;	
+				case 'crm_product' : 
+					$newList = [];
+					foreach ($dataList as $v) {
+						$newList[] = 'product.'.$v;
+					}
+					$sysField = ['product.product_id','product.category_id','product.create_time','product.update_time','product.create_user_id','product.owner_user_id'];
+					break;													
+			}	
+			$listArr = $sysField ? array_unique(array_merge($newList,$sysField)) : $dataList;		
+		} else {
+			$listArr = $dataList;
+		}
+		return $listArr ? : [];
 	}	
 
 	/**
@@ -1076,7 +1118,8 @@ class Field extends Model
 	 * @author Michael_xu 
 	 * @param types 分类	
 	 */	
-	public function getArrayField($types){
+	public function getArrayField($types)
+	{
 		$arrayFormType = ['structure','user','checkbox','file'];
 		$arrFieldAtt = db('admin_field')->where(['types' => $types,'form_type' => ['in',$arrayFormType]])->column('field');
 		return $arrFieldAtt ? : [];		
@@ -1089,7 +1132,8 @@ class Field extends Model
      * @param  $data 数据
      * @return 
      */	
-   	public function getRelevantData($types , $data = []) {
+   	public function getRelevantData($types , $data = [])
+   	{
 		$types_arr = ['crm_leads'];
 		if (!in_array($types, $types_arr)) {
 			$this->error = '参数错误';
@@ -1104,4 +1148,35 @@ class Field extends Model
 		}
 		return $newData ? : [];
    	}	
+
+	/**
+     * 字段排序
+     * @author Michael_xu
+     * @param types 自定义字段分类
+     * @param prefix 自定义字段前缀
+     * @param field 自定义字段
+     * @param order 排序规则
+     * @return 
+     */	
+    public function getOrderByFormtype($types, $prefix, $field, $order_type)
+    {
+    	$form_type = $this->where(['types' => $types,'field' => $field])->value('form_type');
+    	// if (!$form_type) {
+    	// 	$this->error = '参数错误';
+    	// 	return false;
+    	// }
+    	$field = $prefix ? $prefix.'.'.$field : $field;
+    	switch ($form_type) {
+    		case 'textarea' : 
+    		case 'radio' : 
+    		case 'select' : 
+    		case 'checkbox' : 
+    		case 'address' : 
+    			$order = 'convert('.$field.' using gbk) '.trim($order_type);
+    			break;
+    		default : $order = $field.' '.$order_type;
+    			break;
+    	}
+    	return $order;
+    }   	
 }

@@ -32,14 +32,12 @@ class Examine extends ApiCommon
         if (!in_array($a, $action['permission'])) {
             parent::_initialize();
         }
-		$userInfo = $this->userInfo;
         //权限判断
         $unAction = ['index','save','read','update','delete','categorylist','check','revokecheck'];
-        $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(5,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
+        if (!in_array($a, $unAction) && !checkPerByAction('admin', 'oa', 'examine')) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
+        }               
     }
 
     /**
@@ -388,13 +386,14 @@ class Examine extends ApiCommon
         $where['is_deleted'] = ['neq',1];
         $where['status'] = ['eq',1];
         $list = db('oa_examine_category')
-            ->where($where)
-            ->where(function ($query) {
-                $query->where(['user_ids' => '','structure_ids' => '']);
-            })->whereOr(function($query) use ($userInfo){
-                $query->where('structure_ids','like',','.$userInfo['structure_id'].',')
-                      ->whereOr('user_ids','like',','.$userInfo['id'].',');
-        })->select();
+                ->where($where)
+                ->where(function ($query) use ($userInfo){
+                    $query->where('`user_ids` = "" AND `structure_ids` = ""')
+                    ->whereOr(function($query) use ($userInfo){
+                        $query->where('structure_ids','like','%,'.$userInfo['structure_id'].',%')
+                              ->whereOr('user_ids','like','%,'.$userInfo['id'].',%');
+                    });
+                })->select();
         return resultArray(['data' => $list]);        
     } 
 
@@ -484,15 +483,15 @@ class Examine extends ApiCommon
             if ($is_end == 1 && !empty($status)) {
                 //发送站内信
                 $sendContent = '您的'.$dataInfo['category_name'].','.$userInfo['realname'].'已审核通过,审批结束';
-                $resMessage = sendMessage($dataInfo['owner_user_id'], $sendContent, $param['id'], 1);
+                $resMessage = sendMessage($dataInfo['create_user_id'], $sendContent, $param['id'], 1);
             } else {
                 if ($status) {
                     //发送站内信
                     $sendContent = '您的'.$dataInfo['category_name'].','.$userInfo['realname'].'已审核通过';
-                    $resMessage = sendMessage($dataInfo['owner_user_id'], $sendContent, $param['id'], 1);
+                    $resMessage = sendMessage($dataInfo['create_user_id'], $sendContent, $param['id'], 1);
                 } else {
                     $sendContent = '您的'.$dataInfo['category_name'].','.$userInfo['realname'].'已审核拒绝,审核意见：'.$param['content'];
-                    $resMessage = sendMessage($dataInfo['owner_user_id'], $sendContent, $param['id'], 1);
+                    $resMessage = sendMessage($dataInfo['create_user_id'], $sendContent, $param['id'], 1);
                 }                
             }
             return resultArray(['data' => '审批成功']);            

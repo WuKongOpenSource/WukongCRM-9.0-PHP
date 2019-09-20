@@ -32,6 +32,7 @@ class ConfigData extends Common
 	{
 		$data = [];
 		$config = $param['config'] ? 1 : 0;
+		$remind_config = $param['remind_config'] ? 1 : 0;
 		//启用
 		if ($config == 1) {
 			$follow_day = $param['follow_day'] ? : 0;
@@ -40,6 +41,11 @@ class ConfigData extends Common
 			$resDeal = db('crm_config')->where(['name' => 'deal_day'])->update(['value' => $deal_day]);			
 		}
 		$resConfig = db('crm_config')->where(['name' => 'config'])->update(['value' => $config]);
+		if ($remind_config == 1) {
+			$remind_day = $param['remind_day'] ? : 0;
+			$resRemind = db('crm_config')->where(['name' => 'remind_day'])->update(['value' => $remind_day]);		
+		}		
+		$resRemindConfig = db('crm_config')->where(['name' => 'remind_config'])->update(['value' => $remind_config]);
 		return true;	
 	}
 
@@ -56,6 +62,6 @@ class ConfigData extends Common
         foreach ($list as $k=>$v) {
             $data[$v['name']] = $v['value'];
         }
-		return $data ? : '';
+		return $data ? : [];
 	}	
 } 		

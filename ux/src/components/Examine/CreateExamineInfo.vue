@@ -17,6 +17,7 @@
           </div>
         </div>
         <xh-user-cell :infoType="types"
+                      :value="draftUser ? [draftUser] : []"
                       @value-change="fieldValueChange"></xh-user-cell>
       </el-form-item>
     </el-form>
@@ -88,7 +89,8 @@ export default {
         name: [{ required: true, message: '审批人不能为空', trigger: 'blur' }]
       },
       // 审核信息 config 1 固定 0 自选
-      examineInfo: {}
+      examineInfo: {},
+      draftUser: null
     }
   },
   props: {
@@ -115,10 +117,26 @@ export default {
       })
         .then(res => {
           this.examineInfo = res.data
-          this.$emit('value-change', {
-            config: res.data.config, // 审批类型
-            value: [] // 审批信息
-          })
+          if (
+            res.data.config == 0 &&
+            res.data.stepList.length &&
+            res.data.stepList[0].type == '5'
+          ) {
+            let item = res.data.stepList[0]
+            this.draftUser = item.userInfo
+            this.form.name = item.userInfo.id
+            this.$emit('value-change', {
+              config: res.data.config, // 审批类型
+              value: [item.userInfo] // 审批信息
+            })
+          } else {
+            this.form.name = ''
+            this.draftUser = null
+            this.$emit('value-change', {
+              config: res.data.config, // 审批类型
+              value: [] // 审批信息
+            })
+          }
         })
         .catch(() => {})
     },
@@ -138,7 +156,13 @@ export default {
     },
     // 字段的值更新
     fieldValueChange(data) {
-      this.form.name = data
+      if (data.value.length) {
+        this.draftUser = data.value[0]
+        this.form.name = this.draftUser.id
+      } else {
+        this.draftUser = null
+        this.form.name = ''
+      }
       this.$emit('value-change', {
         config: this.examineInfo.config, // 审批类型
         value: data.value // 审批信息

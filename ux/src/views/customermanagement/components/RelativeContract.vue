@@ -60,8 +60,6 @@ export default {
       showFullDetail: false,
       isCreate: false, // 控制新建
       contractId: '', // 查看全屏联系人详情的 ID
-      /** 格式化规则 */
-      formatterRules: {},
       // 创建的相关信息
       createActionInfo: { type: 'relative', crmType: this.crmType, data: {} }
     }
@@ -115,15 +113,7 @@ export default {
       })
 
       this.fieldList.push({ prop: 'end_time', width: '200', label: '结束日期' })
-
-      // 为客户名称加入字段格式化展示规则
-      function fieldFormatter(info) {
-        return info ? info.name : ''
-      }
-      this.formatterRules['customer_id'] = {
-        type: 'crm',
-        formatter: fieldFormatter
-      }
+      this.fieldList.push({ prop: 'check_status', width: '200', label: '状态' })
     },
     getDetail() {
       this.loading = true
@@ -148,20 +138,26 @@ export default {
     /** 格式化字段 */
     fieldFormatter(row, column) {
       // 如果需要格式化
-      var aRules = this.formatterRules[column.property]
-      if (aRules) {
-        if (aRules.type === 'crm') {
-          if (column.property) {
-            return aRules.formatter(row[column.property + '_info'])
-          } else {
-            return ''
-          }
-        } else {
-          return aRules.formatter(row[column.property])
-        }
+      if (column.property === 'customer_id') {
+        return row.customer_id_info.name
+      } else if (column.property === 'check_status') {
+        return this.getStatusName(row.check_status)
       }
       return row[column.property]
     },
+
+    /**
+     * 对应的状态名
+     */
+    getStatusName(status) {
+      if (status > 5) {
+        return ''
+      }
+      return ['待审核', '审核中', '审核通过', '已拒绝', '已撤回', '未提交'][
+        status
+      ]
+    },
+
     //当某一行被点击时会触发该事件
     handleRowClick(row, column, event) {
       this.contractId = row.contract_id

@@ -86,17 +86,21 @@ class Task extends ApiCommon
 		$where['ishidden'] = 0;
 		$where['pid'] = 0;
 		if ($param['work_id']) $where['work_id'] = $param['work_id'];
-		if ($param['status']) {
-			$where['status'] = $param['status'];
+		//状态
+		$status = $param['status'] ? : '';
+		if ($status) {
+			$where['status'] = $status;
 		} else {
 			$where['status'] = [['=',1],['=',5],'OR'];
 		}
 		$priority = $param['priority'] ? : '0';
+		//优先级
 		if ($priority == 'all') {
 			$where['priority'] = ['egt',0];
 		} else {
 			$where['priority'] = $priority;
 		}
+		//截止时间
 		if ($param['stop_type']) {
 			switch ($param['stop_type']) {
 				case '1': //今天到期
@@ -118,6 +122,7 @@ class Task extends ApiCommon
 			}
 			$where['stop_time'] = ['between',''.$timeAry[0].','.$timeAry[1].''];
 		}
+		//负责人
 		$type_temp = $param['type'] ? : 'mymain';
    		if ($param['main_user_id']) {
    			$where['main_user_id'] = $param['main_user_id'];
@@ -140,7 +145,7 @@ class Task extends ApiCommon
 					->where(function($query) use($type){
 						$query->where($type);
 					})
-					->field('task_id,name,create_user_id,main_user_id,owner_user_id,status,priority,pid,start_time,stop_time,work_id,order_id,create_time,lable_id')
+					->field('task_id,name as task_name,create_user_id,main_user_id,owner_user_id,status,priority,pid,start_time,stop_time,work_id,order_id,create_time,lable_id')
 					->page($param['page'], $param['limit'])
 					->order('task_id desc')
 					->select();
@@ -151,8 +156,7 @@ class Task extends ApiCommon
 					})
 					->count();	
 		foreach ($taskList as $k=>$v) {
-			$temp = array();
-			$temp = $v;
+			$temp = $v ? : [];
 			if ($v['pid']) {
 				$pname = db('task')->where('task_id ='.$v['pid'])->value('name');
 				$taskList[$k]['pname'] = $pname ? : '';
@@ -164,7 +168,7 @@ class Task extends ApiCommon
 			$taskList[$k]['commentcount'] = db('admin_comment')->where(['type' => 'task','type_id' => $v['task_id']])->count();
 			$taskList[$k]['filecount'] = Db::name('WorkTaskFile')->where(['task_id' => $v['task_id']])->count();
 			$taskList[$k]['lableList'] = $v['lable_id'] ? $lableModel->getDataByStr($v['lable_id']) : [];
-			$taskList[$k]['main_user'] = $v['main_user_id'] ? $userModel->getDataById($v['main_user_id']) : array();
+			$taskList[$k]['main_user'] = $v['main_user_id'] ? $userModel->getUserById($v['main_user_id']) : array();
 			$taskList[$k]['relationCount'] = $taskModel->getRelationCount($v['task_id']);
 			$is_end = 0;
 			if (!empty($v['stop_time']) && (strtotime(date('Ymd'))+86400 > $v['stop_time'])) $is_end = 1;
@@ -230,8 +234,9 @@ class Task extends ApiCommon
         	$type = $param['type'];
         }
         //状态
-		if ($param['status'] =='1' || $param['status']=='5') {
-			$where = $where.'t.status ='.$param['status'].' and ';
+        $status = $param['status'] ? : '';
+		if ($status == '1' || $status == '5') {
+			$where = $where.'t.status ='.$status.' and ';
 		} else {
 			$where = $where.' (t.status =1 or t.status=5) and ';
 		}
@@ -429,16 +434,15 @@ class Task extends ApiCommon
         $userInfo = $this->userInfo;
         $param['create_user_id'] = $userInfo['id']; 
      	
-        if (isset($param['priority_id']) && $param['task_id']) {
-            if (db('task')->where(['task_id' => $param['task_id']])->setField('priority',$param['priority_id'])) {
-            	$taskInfo = db('task')->where(['task_id' => $param['task_id']])->find();
-				if (!$taskInfo['pid']) {
-					actionLog( $taskInfo['task_id'],$taskInfo['owner_user_id'],$taskInfo['structure_ids'],'修改优先级'); 
-				}
-                return resultArray(['data'=>'操作成功']);
-            } else {
-                return resultArray(['error'=>'操作失败']);
-            }
+        if (!isset($param['priority_id']) || !$param['task_id']) {
+        	return resultArray(['error'=>'参数错误']);
+        }
+        if (db('task')->where(['task_id' => $param['task_id']])->setField('priority',$param['priority_id'])) {
+        	$taskInfo = db('task')->where(['task_id' => $param['task_id']])->find();
+			if (!$taskInfo['pid']) {
+				actionLog( $taskInfo['task_id'],$taskInfo['owner_user_id'],$taskInfo['structure_ids'],'修改优先级'); 
+			}
+            return resultArray(['data'=>'操作成功']);
         } else {
             return resultArray(['error'=>'操作失败']);
         }
@@ -540,14 +544,11 @@ class Task extends ApiCommon
         if (!isset($param['stop_time'])) {
             return resultArray(['error'=>'参数错误']);
         }
-		
 		$rett = $this->checkSub($param['task_id']); //判断编辑权限
         if(!$rett){
 			return resultArray(['error'=>'没有权限']);
 		}
-		
-        $ret = $taskModel->updateDetTask($param);
-        if ( $ret ) {
+        if ($taskModel->updateDetTask($param)) {
             return resultArray(['data'=>'操作成功']);
         } else {
             return resultArray(['error'=>$taskModel->getError()]);
@@ -567,17 +568,14 @@ class Task extends ApiCommon
         $userInfo = $this->userInfo;
         $param['create_user_id'] = $userInfo['id']; 
         $ary = array('lable_id_add','lable_id_del');
-        if ( in_array($param['type'], $ary) ) {
-            $ret = $taskModel->updateDetTask($param);
-            if ( $ret ) {
-                return resultArray(['data'=>'操作成功']);
-            } else {
-                return resultArray(['error'=>$taskModel->getError()]);
-            }
+        if (!in_array($param['type'], $ary)) {
+        	return resultArray(['error' => '参数错误']);
+        }
+        if ($taskModel->updateDetTask($param)) {
+            return resultArray(['data'=>'操作成功']);
         } else {
             return resultArray(['error'=>$taskModel->getError()]);
-        }       
-    
+        }
     }
 
 	/**
@@ -651,14 +649,14 @@ class Task extends ApiCommon
     public function dateList() 
     {
         $param = $this->param;
-        $taskmodel = new \app\work\model\Task(); 
+        $taskModel = new \app\work\model\Task(); 
 		$userInfo = $this->userInfo;
         $param['user_id'] = $userInfo['id'];        
-        $ret = $taskmodel->getDateList($param);
+        $ret = $taskModel->getDateList($param);
         if ($ret) {
             return resultArray(['data'=>$ret]);
         } else {
-            return resultArray(['error'=>$taskmodel->getError()]);
+            return resultArray(['error'=>$taskModel->getError()]);
         }
     }
 
@@ -679,9 +677,9 @@ class Task extends ApiCommon
 		$param['create_user_id'] = $userInfo['id']; 
         $data = $taskModel->createTask($param);
         if ($data) {
-            return resultArray(['data'=>$data]);
+            return resultArray(['data' => $data]);
         } else {
-            return resultArray(['error'=>$workModel->getError()]);
+            return resultArray(['error' => $taskModel->getError()]);
         }
     }
 
@@ -704,13 +702,13 @@ class Task extends ApiCommon
         $param['create_user_id'] = $userInfo['id']; 
 		$taskInfo = Db::name('Task')->where(['task_id' => $param['task_id']])->find();
         $res = Db::name('Task')->where(['task_id' => $param['task_id']])->setField('main_user_id','');
-        if ($res) {
-			if (!$taskInfo['pid']){
-				actionLog( $taskInfo['task_id'],$taskInfo['owner_user_id'],$taskInfo['structure_ids'],'删除负责人');
-			}
-            return resultArray(['data'=>'操作成功']);
+        if (!$res) {
+        	return resultArray(['error'=>'操作失败']);
         }
-        return resultArray(['error'=>'操作失败']);
+		if (!$taskInfo['pid']){
+			actionLog($taskInfo['task_id'],$taskInfo['owner_user_id'],$taskInfo['structure_ids'],'删除负责人');
+		}
+        return resultArray(['data'=>'操作成功']);
     }
 
 	/**
@@ -830,9 +828,6 @@ class Task extends ApiCommon
             return resultArray(['error'=>'参数错误']);
         }
         $list = Db::name('Task')->where(['status' => 3,'work_id' => $param['work_id']])->field('task_id,name,create_time,archive_time,stop_time')->select();
-		foreach ($list as $k=>$v) {
-			$list[$k]['stop_time'] = $v['stop_time'] ? : '';
-		}
         return resultArray(['data'=>$list]);
     }
 }

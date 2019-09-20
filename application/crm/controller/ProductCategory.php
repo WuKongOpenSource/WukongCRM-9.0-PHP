@@ -35,17 +35,16 @@ class ProductCategory extends ApiCommon
         $userInfo = $this->userInfo;
         //权限判断
         $unAction = ['index'];
-        $adminTypes = adminGroupTypes($userInfo['id']);
-        if (!in_array(6,$adminTypes) && !in_array(1,$adminTypes) && !in_array(2,$adminTypes) && !in_array($a, $unAction)) {
+        if (!in_array($a, $unAction) && !checkPerByAction('admin', 'crm', 'setting')) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
+        }                
     } 
 
     /**
      * 产品分类列表
      * @author Michael_xu
-     * @return \think\Response
+     * @return 
      */
     public function index()
     {
@@ -58,8 +57,8 @@ class ProductCategory extends ApiCommon
     /**
      * 添加产品分类
      * @author Michael_xu
-     * @param  \think\Request  $request
-     * @return \think\Response
+     * @param  
+     * @return 
      */
     public function save()
     {
@@ -80,7 +79,7 @@ class ProductCategory extends ApiCommon
      * 编辑产品分类
      * @author Michael_xu
      * @param 
-     * @return \think\Response
+     * @return 
      */
     public function update()
     {    
@@ -100,7 +99,7 @@ class ProductCategory extends ApiCommon
      * 删除产品分类
      * @author Michael_xu
      * @param 
-     * @return \think\Response
+     * @return 
      */
     public function delete()
     {

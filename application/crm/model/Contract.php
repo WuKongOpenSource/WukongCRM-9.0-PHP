@@ -21,7 +21,7 @@ class Contract extends Common
     protected $createTime = 'create_time';
     protected $updateTime = 'update_time';
 	protected $autoWriteTimestamp = true;
-	private $statusArr = ['0'=>'待审核','1'=>'审核中','2'=>'审核通过','3'=>'已拒绝','4'=>'已撤回'];
+	private $statusArr = ['0'=>'待审核','1'=>'审核中','2'=>'审核通过','3'=>'已拒绝','4'=>'已撤回','5'=>'未提交'];
 
 	/**
      * [getDataList 合同list]
@@ -50,7 +50,6 @@ class Contract extends Common
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
-
 		$sceneModel = new \app\admin\model\Scene();
 		if ($scene_id) {
 			//自定义场景
@@ -109,14 +108,14 @@ class Contract extends Common
 			$map['contract.order_user_id'] = ['like','%,'.$map['contract.order_user_id'][1].',%'];
 		}
 		//列表展示字段
-		// $indexField = $fieldModel->getIndexField('crm_contract', $user_id);	
+		$indexField = $fieldModel->getIndexField('crm_contract', $user_id, 1) ? : array('name');
 		//人员类型
 		$userField = $fieldModel->getFieldByFormType('crm_contract', 'user');
 		$structureField = $fieldModel->getFieldByFormType('crm_contract', 'structure');  //部门类型
 	
 		//排序
 		if ($order_type && $order_field) {
-			$order = 'convert(contract.'.trim($order_field).' using gbk) '.trim($order_type);
+			$order = $fieldModel->getOrderByFormtype('crm_contract','contract',$order_field,$order_type);
 		} else {
 			$order = 'contract.update_time desc';
 		}
@@ -134,11 +133,10 @@ class Contract extends Common
 				->where($partMap)
 				->where($authMap)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
-        		->field('contract.*,customer.name as customer_name,business.name as business_name,contacts.name as contacts_name')
-        		// ->field('contract_id,'.implode(',',$indexField))
+        		->field(implode(',',$indexField).',customer.name as customer_name,business.name as business_name,contacts.name as contacts_name')
         		->orderRaw($order)
         		->group('contract.contract_id')
-        		->select();	
+        		->select();
         $dataCount = db('crm_contract')
         			->alias('contract')
 					->join('__CRM_CUSTOMER__ customer','contract.customer_id = customer.customer_id','LEFT')		
@@ -163,8 +161,8 @@ class Contract extends Common
         	$list[$k]['contacts_id_info']['name'] = $v['contacts_name'];        	
         	$moneyInfo = [];
         	$moneyInfo = $receivablesModel->getMoneyByContractId($v['contract_id']);
-        	$list[$k]['unMoney'] = $moneyInfo['unMoney'] ? : 0.00;
-        	$list[$k]['check_status_info'] = $this->statusArr[$v['check_status']]; 
+        	$list[$k]['unMoney'] = $moneyInfo['doneMoney'] ? : 0.00;
+        	// $list[$k]['check_status_info'] = $this->statusArr[$v['check_status']]; 
 			$planInfo = [];
 			$planInfo = db('crm_receivables_plan')->where(['contract_id' => $v['contract_id']])->find();
 			$list[$k]['receivables_id'] = $planInfo['receivables_id'] ? : '';
@@ -243,8 +241,8 @@ class Contract extends Common
             //站内信
             $createUserInfo = $userModel->getDataById($param['create_user_id']);
             $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交了合同【'.$param['name'].'】,需要您审批';
-            if ($send_user_id) {
+            $sendContent = $createUserInfo['realname'].'提交了合同《'.$param['name'].'》,需要您审批';
+            if ($send_user_id && empty($param['check_status'])) {
             	sendMessage($send_user_id, $sendContent, $this->contract_id, 1);
             }
 
@@ -291,7 +289,7 @@ class Contract extends Common
 			$param[$v] = arrayToString($param[$v]);
 		}
 
-		if ($this->allowField(true)->save($param, ['contract_id' => $contract_id])) {
+		if ($this->update($param, ['contract_id' => $contract_id], true)) {
 			//产品数据处理
 	        $resProduct = $productModel->createObject('crm_contract', $param, $contract_id);			
 			//修改记录
@@ -299,8 +297,8 @@ class Contract extends Common
 			//站内信
             $createUserInfo = $userModel->getDataById($param['user_id']);
             $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交了合同【'.$param['name'].'】,需要您审批';
-            if ($send_user_id) {
+            $sendContent = $createUserInfo['realname'].'提交了合同《'.$param['name'].'》,需要您审批';
+            if ($send_user_id && empty($param['check_status'])) {
             	sendMessage($send_user_id, $sendContent, $contract_id, 1);
             }			
 			$data = [];
@@ -356,6 +354,14 @@ class Contract extends Common
 	            $errorMessage[] = '合同：'.$contractInfo['name'].'"转移失败，错误原因：审批中，无法转移；';
 	            continue;
 	        }	     		
+			//团队成员
+	        $teamData = [];
+            $teamData['type'] = $type; //权限 1只读2读写
+            $teamData['user_id'] = [$contractInfo['owner_user_id']]; //协作人
+            $teamData['types'] = 'crm_contract'; //类型
+            $teamData['types_id'] = $id; //类型ID
+            $teamData['is_del'] = ($is_remove == 1) ? 1 : '';
+            $res = $settingModel->createTeamData($teamData);	        
 
 			$data = [];
 	        $data['owner_user_id'] = $owner_user_id;
@@ -364,14 +370,6 @@ class Contract extends Common
 				$errorMessage[] = '合同：'.$contractInfo['name'].'"转移失败，错误原因：数据出错；';
 	            continue;				      	
 	        }
-	        //团队成员
-	        $teamData = [];
-            $teamData['type'] = $type; //权限 1只读2读写
-            $teamData['user_id'] = [$contractInfo['owner_user_id']]; //协作人
-            $teamData['types'] = 'crm_contract'; //类型
-            $teamData['types_id'] = $id; //类型ID
-            $teamData['is_del'] = ($is_remove == 1) ? 1 : '';
-            $res = $settingModel->createTeamData($teamData); 
     	}
     	if ($errorMessage) {
 			return $errorMessage;

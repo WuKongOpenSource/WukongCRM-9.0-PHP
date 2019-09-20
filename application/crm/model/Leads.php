@@ -93,14 +93,13 @@ class Leads extends Common
 	    //负责人
 	    $authMap['leads.owner_user_id'] = ['in',$auth_user_ids];
 		//列表展示字段
-		// $indexField = $fieldModel->getIndexField('crm_leads', $user_id) ? : array('name');
+		$indexField = $fieldModel->getIndexField('crm_leads', $user_id, 1) ? : array('name');
 		$userField = $fieldModel->getFieldByFormType('crm_leads', 'user'); //人员类型
 		$structureField = $fieldModel->getFieldByFormType('crm_leads', 'structure');  //部门类型		
 		
 		//排序
 		if ($order_type && $order_field) {
-			// $order = 'leads.'.trim($order_field).' '.trim($order_type);
-			$order = 'convert(leads.'.trim($order_field).' using gbk) '.trim($order_type);
+			$order = $fieldModel->getOrderByFormtype('crm_leads','leads',$order_field,$order_type);
 		} else {
 			$order = 'leads.update_time desc';
 		}
@@ -118,7 +117,7 @@ class Leads extends Common
 				->where($searchMap)
 				->where($authMap)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
-        		// ->field('leads_id,'.implode(',',$indexField))
+        		->field(implode(',',$indexField))
         		->orderRaw($order)
         		->select();	
         $dataCount = db('crm_leads')->alias('leads')->where($map)->where($searchMap)->where($authMap)->count('leads_id');
@@ -197,11 +196,19 @@ class Leads extends Common
 	 */	
 	public function updateDataById($param, $leads_id = '')
 	{
+		$userModel = new \app\admin\model\User();
 		$dataInfo = $this->getDataById($leads_id);
 		if (!$dataInfo) {
 			$this->error = '数据不存在或已删除';
 			return false;
 		}
+		//判断权限
+        $auth_user_ids = $userModel->getUserByPer('crm', 'leads', 'update');
+        if (!in_array($dataInfo['owner_user_id'],$auth_user_ids)) {
+            $this->error = '无权操作';
+            return false;
+        } 		
+
 		$param['leads_id'] = $leads_id;
 		//过滤不能修改的字段
 		$unUpdateField = ['create_user_id','is_deleted','delete_time'];
@@ -226,7 +233,7 @@ class Leads extends Common
 			$param[$v] = arrayToString($param[$v]);
 		}
 		$param['follow'] = '已跟进';
-		if ($this->allowField(true)->save($param, ['leads_id' => $leads_id])) {
+		if ($this->save($param, ['leads_id' => $leads_id], true)) {
 			//修改记录
 			updateActionLog($param['user_id'], 'crm_leads', $leads_id, $dataInfo->data, $param);
 			$data = [];
@@ -255,5 +262,5 @@ class Leads extends Common
 		$dataInfo['create_user_id_info'] = isset($dataInfo['create_user_id']) ? $userModel->getUserById($dataInfo['create_user_id']) : [];
 		$dataInfo['owner_user_id_info'] = isset($dataInfo['owner_user_id']) ? $userModel->getUserById($dataInfo['owner_user_id']) : []; 
 		return $dataInfo;
-   	}
+   	}	
 }

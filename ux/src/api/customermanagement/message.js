@@ -96,3 +96,15 @@ export function crmMessagNumAPI(data) {
     data: data
   })
 }
+
+/**
+ * 待进入客户池
+ * @param {*} data 
+ */
+export function crmMessagRemindCustomerAPI(data) {
+  return request({
+    url: 'crm/message/remindCustomer',
+    method: 'post',
+    data: data
+  })
+}

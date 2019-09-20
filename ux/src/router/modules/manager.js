@@ -4,48 +4,56 @@ import Layout from '@/views/layout/managerLayout'
 /**
  * 系统管理里的 客户管理
  */
-const systemCustomerAuth = {
-  requiresAuth: true,
-  index: 1,
-  type: 'manage',
-  subType: 'crm'
-}
-
 const systemCustomerRouter = {
   name: 'system-customer',
   path: 'system-customer',
   meta: {
     title: '客户管理',
     icon: 'customer',
-    ...systemCustomerAuth
+    requiresAuth: true,
+    index: 1,
+    type: 'admin',
+    subType: 'crm'
   },
   children: [{
     path: 'custom-field',
     component: () => import('@/views/SystemManagement/SystemCustomer/customField'),
     meta: {
       title: '自定义字段设置',
-      ...systemCustomerAuth
+      requiresAuth: true,
+      index: 2,
+      type: 'admin',
+      subType: ['crm', 'field']
     }
   }, {
     path: 'customer',
     component: () => import('@/views/SystemManagement/SystemCustomer/customer'),
     meta: {
       title: '客户公海规则设置',
-      ...systemCustomerAuth
+      requiresAuth: true,
+      index: 2,
+      type: 'admin',
+      subType: ['crm', 'pool']
     }
   }, {
     path: 'biz-param',
     component: () => import('@/views/SystemManagement/SystemCustomer/bizParam'),
     meta: {
       title: '业务参数设置',
-      ...systemCustomerAuth
+      requiresAuth: true,
+      index: 2,
+      type: 'admin',
+      subType: ['crm', 'setting']
     }
   }, {
     path: 'biz-goals',
     component: () => import('@/views/SystemManagement/SystemCustomer/bizGoals'),
     meta: {
       title: '业绩目标设置',
-      ...systemCustomerAuth
+      requiresAuth: true,
+      index: 2,
+      type: 'admin',
+      subType: ['crm', 'achievement']
     }
   }]
 }
@@ -53,29 +61,41 @@ const systemCustomerRouter = {
 /**
  * 不包含children的路由
  */
-const systemOtherRouter = {
+const systemEmployeeRouter = {
   path: '/manager',
   component: Layout,
   redirect: '/manager/systemconfig',
   name: 'manager',
-  hidden: true,
   meta: {
     requiresAuth: true,
     title: '系统管理',
     index: 0,
-    type: 'manage'
+    type: 'admin'
   },
   children: [{
     name: 'systemconfig',
-    path: 'systemconfig', // 系统配置
+    path: 'systemconfig', // 企业首页
     component: () => import('@/views/SystemManagement/SystemConfig/index'),
     meta: {
       requiresAuth: true,
-      title: '系统配置',
+      title: '企业首页',
       icon: 'systemconfig',
-      index: 1,
-      type: 'manage',
-      subType: 'system'
+      index: 2,
+      type: 'admin',
+      subType: ['system', 'index']
+    }
+  },
+  {
+    name: 'application',
+    path: 'application', // 应用管理
+    component: () => import('@/views/SystemManagement/application/index'),
+    meta: {
+      requiresAuth: true,
+      title: '应用管理',
+      icon: 'product',
+      index: 2,
+      type: 'admin',
+      subType: ['configset', 'index']
     }
   },
   {
@@ -86,63 +106,108 @@ const systemOtherRouter = {
       requiresAuth: true,
       title: '员工与部门管理',
       icon: 'department',
-      index: 1,
-      type: 'manage',
-      subType: 'user'
+      index: 2,
+      type: 'admin',
+      subType: ['users', 'index']
     }
+  }
+  ]
+}
+
+const authRouter = {
+  path: '/role-auth',
+  component: Layout,
+  name: 'role-auth',
+  meta: {
+    requiresAuth: true,
+    title: '角色权限控制',
+    index: 1,
+    type: 'admin',
+    subType: 'groups'
   },
-  {
-    name: 'role-authorization',
-    path: 'role-authorization',
-    component: () => import('@/views/SystemManagement/RoleAuthorization'),
+  children: [{
+    name: 'role-auth',
+    path: 'role-auth/:pid/:title',
+    component: () => import('@/views/SystemManagement/roleAuth/index'),
     meta: {
       requiresAuth: true,
       title: '角色权限管理',
       icon: 'contacts',
       index: 1,
-      type: 'manage',
-      subType: 'permission'
-    }
-  },
-  {
-    name: 'system-examine',
-    path: 'system-examine',
-    component: () => import('@/views/SystemManagement/SystemExamine/SystemExamine'),
-    meta: {
-      requiresAuth: true,
-      title: '审批流程管理',
-      icon: 'examine',
-      index: 1,
-      type: 'manage',
-      subType: 'examineFlow'
-    }
-  },
-  {
-    name: 'system-workbench',
-    path: 'system-workbench', // 工作台
-    component: () => import('@/views/SystemManagement/SystemWorkbench'),
-    meta: {
-      requiresAuth: true,
-      title: '工作台',
-      icon: 'workbench',
-      index: 1,
-      type: 'manage',
-      subType: 'oa'
-    }
-  },
-  {
-    name: 'project',
-    path: 'project', // 项目管理
-    component: () => import('@/views/SystemManagement/project'),
-    meta: {
-      requiresAuth: true,
-      title: '项目管理',
-      icon: 'project',
-      index: 1,
-      type: 'manage',
-      subType: 'work'
+      type: 'admin',
+      subType: 'groups'
     }
   }
+  ]
+}
+
+const authMenuRouter = {
+  path: '/role-auth',
+  component: Layout,
+  name: 'role-auth',
+  meta: {
+    requiresAuth: true,
+    title: '角色权限控制',
+    icon: 'contacts',
+    index: 1,
+    type: 'admin',
+    subType: 'groups'
+  },
+  children: [
+  ]
+}
+
+const examineWorkbenchRouter = {
+  path: '/manager',
+  component: Layout,
+  redirect: '/manager/systemconfig',
+  name: 'manager',
+  meta: {
+    requiresAuth: true,
+    title: '系统管理',
+    index: 0,
+    type: 'admin'
+  },
+  children: [
+    {
+      name: 'system-examine',
+      path: 'system-examine',
+      component: () => import('@/views/SystemManagement/SystemExamine/SystemExamine'),
+      meta: {
+        requiresAuth: true,
+        title: '审批流程管理',
+        icon: 'examine',
+        index: 1,
+        type: 'admin',
+        subType: 'examine_flow'
+      }
+    },
+    {
+      name: 'system-workbench',
+      path: 'system-workbench', // 工作台
+      component: () => import('@/views/SystemManagement/SystemWorkbench'),
+      meta: {
+        requiresAuth: true,
+        title: '工作台',
+        icon: 'workbench',
+        index: 1,
+        type: 'admin',
+        subType: 'oa'
+      }
+    },
+    {
+      name: 'system-project',
+      path: 'system-project', // 项目管理
+      component: () => import('@/views/SystemManagement/project'),
+      meta: {
+        requiresAuth: true,
+        title: '项目管理',
+        icon: 'project',
+        index: 1,
+        type: 'admin',
+        subType: 'work'
+      }
+    }
   ]
 }
 
@@ -168,16 +233,20 @@ export const managerRouter = {
     requiresAuth: true,
     title: '系统管理',
     index: 0,
-    type: 'manage'
+    type: 'admin'
   },
   children: [
-    ...systemOtherRouter.children,
+    ...systemEmployeeRouter.children,
+    ...authRouter.children,
+    ...examineWorkbenchRouter.children,
     ...systemCustomerRouter.children,
     handlefieldRouter
   ]
 }
 
 export const managerRouterMenu = [
-  ...systemOtherRouter.children,
+  ...systemEmployeeRouter.children,
+  authMenuRouter,
+  ...examineWorkbenchRouter.children,
   systemCustomerRouter
 ]

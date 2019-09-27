@@ -348,10 +348,10 @@ class Record extends Common
 			}
 			$dataInfo['fileList'] = $fileList ? : [];
 			$dataInfo['imgList'] = $imgList ? : [];
-			$dataInfo['customerList'] = $relation_list['customer_list'] ? : [];
-			$dataInfo['contactsList'] = $relation_list['contacts_list'] ? : [];
-			$dataInfo['businessList'] = $relation_list['business_list'] ? : [];
-			$dataInfo['contractList'] = $relation_list['contract_list'] ? : [];
+			$dataInfo['customerList'] = $relation_list['customerList'] ? : [];
+			$dataInfo['contactsList'] = $relation_list['contactsList'] ? : [];
+			$dataInfo['businessList'] = $relation_list['businessList'] ? : [];
+			$dataInfo['contractList'] = $relation_list['contractList'] ? : [];
 			$list[$k]['dataInfo'] = $dataInfo ? : [];
 		}
         $data = [];
@@ -474,10 +474,10 @@ class Record extends Common
 			case 'record' : $data = db('admin_record')->where(['record_id' => $relation_id])->find(); break;
 			default : $data = []; break;
 		}
-		if ($data['customer_ids']) $data['customer_list'] = $CustomerModel->getDataByStr($data['customer_ids']) ? : [];
-		if ($data['contacts_ids']) $data['contacts_list'] = $ContactsModel->getDataByStr($data['contacts_ids']) ? : [];
-		if ($data['business_ids']) $data['business_list'] = $BusinessModel->getDataByStr($data['business_ids']) ? : [];
-		if ($data['contract_ids']) $data['contract_list'] = $ContractModel->getDataByStr($data['contract_ids']) ? : [];
+		$data['customerList'] = $data['customer_ids'] ? $CustomerModel->getDataByStr($data['customer_ids']) : [];
+		$data['contactsList'] = $data['contacts_ids'] ? $ContactsModel->getDataByStr($data['contacts_ids']) : [];
+		$data['businessList'] = $data['business_ids'] ? $BusinessModel->getDataByStr($data['business_ids']) : [];
+		$data['contractList'] = $data['contract_ids'] ? $ContractModel->getDataByStr($data['contract_ids']) : [];
 		return $data ? : [];
 	}
 

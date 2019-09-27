@@ -121,10 +121,10 @@ class Examine extends Common
 			//关联业务
 			$relationArr= [];
 			$relationArr = $recordModel->getListByRelationId('examine', $v['examine_id']); 
-			$$relationArr['businessList'] = $relationArr['businessList'];
-			$$relationArr['contactsList'] = $relationArr['contactsList'];
-			$$relationArr['contractList'] = $relationArr['contractList'];
-			$$relationArr['customerList'] = $relationArr['customerList'];			
+			$list[$k]['businessList'] = $relationArr['businessList'];
+			$list[$k]['contactsList'] = $relationArr['contactsList'];
+			$list[$k]['contractList'] = $relationArr['contractList'];
+			$list[$k]['customerList'] = $relationArr['customerList'];			
 
 			//附件
 			$fileList = [];

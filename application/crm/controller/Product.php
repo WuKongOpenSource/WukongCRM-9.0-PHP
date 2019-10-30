@@ -137,10 +137,10 @@ class Product extends ApiCommon
     /**
      * 产品导入模板
      * @author Michael_xu
-     * @param 
+     * @param string $save_path 本地保存路径     用于错误数据导出，在 Admin\Model\Excel::batchImportData()调用
      * @return
      */ 
-    public function excelDownload() 
+    public function excelDownload($save_path = '') 
     {
         $param = $this->param;
         $userInfo = $this->userInfo;
@@ -151,7 +151,7 @@ class Product extends ApiCommon
         $fieldParam['types'] = 'crm_product'; 
         $fieldParam['action'] = 'excel'; 
         $field_list = $fieldModel->field($fieldParam);
-        $res = $excelModel->excelImportDownload($field_list, 'crm_product');
+        $excelModel->excelImportDownload($field_list, 'crm_product', $save_path);
     }  
 
     /**
@@ -172,13 +172,22 @@ class Product extends ApiCommon
         $excelModel = new \app\admin\model\Excel();
         // 导出的字段列表
         $fieldModel = new \app\admin\model\Field();
-        $field_list = $fieldModel->getIndexFieldList('crm_product', $userInfo['id']);
+        $field_list = $fieldModel->getIndexFieldConfig('crm_product', $userInfo['id']);
         // 文件名
         $file_name = '5kcrm_product_'.date('Ymd');
-        $param['pageType'] = 'all'; 
-        $excelModel->exportCsv($file_name, $field_list, function($page) use ($param){
-            $list = model('Product')->getDataList($param);
-            return $list;
+        
+        $model = model('Product');
+        $temp_file = $param['temp_file'];
+        unset($param['temp_file']);
+        $page = $param['page'] ?: 1;
+        unset($param['page']);
+        unset($param['export_queue_index']);
+        return $excelModel->batchExportCsv($file_name, $temp_file, $field_list, $page, function($page, $limit) use ($model, $param, $field_list) {
+            $param['page'] = $page;
+            $param['limit'] = $limit;
+            $data = $model->getDataList($param);
+            $data['list'] = $model->exportHandle($data['list'], $field_list, 'product');
+            return $data;
         });
     } 
 
@@ -197,10 +206,11 @@ class Product extends ApiCommon
         $param['create_user_id'] = $userInfo['id'];
         $param['owner_user_id'] = $param['owner_user_id'] ? : $userInfo['id'];
         $file = request()->file('file');
-        $res = $excelModel->importExcel($file, $param);
+        // $res = $excelModel->importExcel($file, $param, $this);
+        $res = $excelModel->batchImportData($file, $param, $this);
         if (!$res) {
             return resultArray(['error'=>$excelModel->getError()]);
         }
-        return resultArray(['data'=>'导入成功']);
+        return resultArray(['data' => $excelModel->getError()]);
     }    
 }

@@ -232,7 +232,10 @@ class Examine extends ApiCommon
         $data = $examineModel->delDataById($param['id']);
         if (!$data) {
             return resultArray(['error' => $examineModel->getError()]);
-        }       
+        } 
+        $fileModel = new \app\admin\model\File();
+        //删除关联附件
+        $fileModel->delRFileByModule('oa_examine',$param['id']);    
         actionLog($param['id'], '', '', '删除了审批');
         return resultArray(['data' => '删除成功']);
     }

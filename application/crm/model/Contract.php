@@ -21,7 +21,7 @@ class Contract extends Common
     protected $createTime = 'create_time';
     protected $updateTime = 'update_time';
 	protected $autoWriteTimestamp = true;
-	private $statusArr = ['0'=>'待审核','1'=>'审核中','2'=>'审核通过','3'=>'已拒绝','4'=>'已撤回','5'=>'未提交'];
+	private $statusArr = ['0'=>'待审核','1'=>'审核中','2'=>'审核通过','3'=>'已拒绝','4'=>'已撤回','5'=>'未提交','6'=>'已作废'];
 
 	/**
      * [getDataList 合同list]
@@ -42,11 +42,13 @@ class Contract extends Common
     	$scene_id = (int)$request['scene_id'];
 		$order_field = $request['order_field'];
     	$order_type = $request['order_type'];     	
+    	$is_excel = $request['is_excel']; //导出
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);
 		unset($request['order_field']);	
 		unset($request['order_type']);		  	
+		unset($request['is_excel']);	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -79,7 +81,9 @@ class Contract extends Common
 		$order = ['contract.update_time desc'];	
 		$authMap = [];
 		if (!$partMap) {
-			$auth_user_ids = $userModel->getUserByPer('crm', 'contract', 'index');
+			$a = 'index';
+			if ($is_excel) $a = 'excelExport';
+			$auth_user_ids = $userModel->getUserByPer('crm', 'contract', $a);
 			if (isset($map['contract.owner_user_id'])) {
 				if (!is_array($map['contract.owner_user_id'][1])) {
 					$map['contract.owner_user_id'][1] = [$map['contract.owner_user_id'][1]];

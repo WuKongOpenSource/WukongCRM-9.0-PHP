@@ -52,11 +52,11 @@ class Contract extends ApiCommon
         $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
         $userIds = $whereArr['userIds'];
 
-        if (empty($param['year'])) {
-            $year = date('Y');
-        } else {
-            $year = $param['year'];
-        }
+        $year = $param['year'] ? : date('Y');
+        $time = 'order_date';
+        if ($param['type'] == 'back') {
+            $time = 'return_time';
+        }        
         $datas = array();
         for ($i=1; $i <= 12; $i++) { 
             $whereArr = [];
@@ -74,11 +74,7 @@ class Contract extends ApiCommon
             if ($start_time && $end_time) {
                 $create_time = array('between',array($start_time,$end_time));
             }
-            if ($param['type'] == 'back') {
-                $time = 'return_time';
-            } else {
-                $time = 'order_date';
-            }
+
             $whereArr['check_status'] = array('eq',2);
             $whereArr[$time] = $create_time;
             //当月
@@ -193,37 +189,44 @@ class Contract extends ApiCommon
         }
         $company = $biCustomerModel->getParamByCompany($param);
         $datas = array();
+        $count_zong = 0;
+        $money_zong = 0;
+        $back_zong = 0;
         for ($i=1; $i <= $company['j']; $i++) { 
             $whereArr = [];
             $whereArr['owner_user_id'] = array('in',$userIds);
             $whereArr['check_status'] = array('eq',2);
             $item = array();
+            $where_time = [];
             //时间段
             $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
             $item['type'] = $timeArr['type'];
-            $day = $timeArr['day']?$timeArr['day']:'1';
-            $start_time = $timeArr['year'].'-'.$timeArr['month'].'-'.$day;
-            $next_day = $timeArr['next_day']?$timeArr['next_day']:'1';
-            $end_time = $timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day;
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
+            if ($timeArr['start_time'] && $timeArr['end_time']) {
+                $where_time = array('between',array(date('Y-m-d',$timeArr['start_time']),date('Y-m-d',$timeArr['end_time'])));
             }
-            $where = array();
             $where = $whereArr;
-            $where['order_date'] = $create_time;
+            $where['order_date'] = $where_time;
+            if (in_array($param['type'],array('month','lastMonth','week','lastWeek'))) {
+                $where['order_date'] = array('eq',date('Y-m-d',$timeArr['start_time']));
+            }
             $item['count'] = $biContractModel->getDataCount($where);
+            $count_zong += $item['count'];
             $item['money'] = $biContractModel->getDataMoney($where);
-            $where_b = array();
+            $money_zong += $item['money'];
+            
             $where_b = $whereArr;
-            $where_b['return_time'] = $create_time;
+            $where_b['return_time'] = $where_time;
+            if (in_array($param['type'],array('month','lastMonth','week','lastWeek'))) {
+                $where_b['return_time'] = array('eq',date('Y-m-d',$timeArr['start_time']));
+            }            
             $item['back'] = $receivablesModel->getDataMoney($where_b);
+            $back_zong += $item['back'];
             $datas['items'][] = $item;
         }
         $whereArr['create_time'] = array('between',$between_time);
-        $datas['count_zong'] = $biContractModel->getDataCount($whereArr);
-        $datas['money_zong'] = $biContractModel->getDataMoney($whereArr);
-        $datas['back_zong'] = $receivablesModel->getDataMoney($whereArr);
+        $datas['count_zong'] = $count_zong;
+        $datas['money_zong'] = $money_zong;
+        $datas['back_zong'] = $back_zong;
         $datas['w_back_zong'] = $datas['money_zong']-$datas['back_zong'];
         return resultArray(['data' => $datas]);
     }

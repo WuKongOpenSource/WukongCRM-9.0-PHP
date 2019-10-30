@@ -35,21 +35,22 @@ class Contacts extends Common
     	$userModel = new \app\admin\model\User();
     	$structureModel = new \app\admin\model\Structure();
     	$fieldModel = new \app\admin\model\Field();
+    	$customerModel = new \app\crm\model\Customer();
     	$search = $request['search'];
     	$user_id = $request['user_id'];
     	$scene_id = (int)$request['scene_id'];
     	$is_excel = $request['is_excel']; //导出
     	$business_id = $request['business_id'];
 		$order_field = $request['order_field'];
-    	$order_type = $request['order_type'];    	
+    	$order_type = $request['order_type'];
+    	$pageType = $request['pageType'];   	
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);
 		unset($request['is_excel']);		    	
 		unset($request['business_id']);
 		unset($request['order_field']);	
-		unset($request['order_type']);				    	
-
+		unset($request['order_type']);
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
 
@@ -116,22 +117,32 @@ class Contacts extends Common
 		}
 		$readAuthIds = $userModel->getUserByPer('crm', 'contacts', 'read');
         $updateAuthIds = $userModel->getUserByPer('crm', 'contacts', 'update');
-        $deleteAuthIds = $userModel->getUserByPer('crm', 'contacts', 'delete');		
+        $deleteAuthIds = $userModel->getUserByPer('crm', 'contacts', 'delete');	
+       	$customerWhere = [];
+        if ($pageType == !'all') {
+			//非客户池条件
+        	$customerWhere = $customerModel->getWhereByCustomer();
+        }
 		$list = db('crm_contacts')
 				->alias('contacts')
 				->join('__CRM_CUSTOMER__ customer','contacts.customer_id = customer.customer_id','LEFT')
 				->where($map)
 				->where($searchMap)
 				->where($authMap)
+				->where($customerWhere)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		->field('contacts.*,customer.name as customer_name')
         		->field(implode(',',$indexField).',customer.name as customer_name')
         		->orderRaw($order)
-        		->select();	
+        		->select();
         $dataCount = db('crm_contacts')
         			->alias('contacts')
         			->join('__CRM_CUSTOMER__ customer','contacts.customer_id = customer.customer_id','LEFT')
-        			->where($map)->where($searchMap)->where($authMap)->count('contacts_id');
+        			->where($map)
+        			->where($searchMap)
+        			->where($authMap)
+        			->where($customerWhere)
+        			->count('contacts_id');
         foreach ($list as $k=>$v) {
         	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
         	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];

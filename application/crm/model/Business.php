@@ -41,12 +41,14 @@ class Business extends Common
     	$contacts_id = $request['contacts_id'];
 		$order_field = $request['order_field'];
     	$order_type = $request['order_type'];     	
+    	$is_excel = $request['is_excel']; //导出
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);
 		unset($request['contacts_id']);
 		unset($request['order_field']);	
 		unset($request['order_type']);		   	
+		unset($request['is_excel']);	
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -87,7 +89,9 @@ class Business extends Common
 		$map = where_arr($map, 'crm', 'business', 'index');
 		$authMap = [];
 		if (!$partMap) {
-			$auth_user_ids = $userModel->getUserByPer('crm', 'business', 'index');
+			$a = 'index';
+			if ($is_excel) $a = 'excelExport';
+			$auth_user_ids = $userModel->getUserByPer('crm', 'business', $a);
 			if (isset($map['business.owner_user_id'])) {
 				if (!is_array($map['business.owner_user_id'][1])) {
 					$map['business.owner_user_id'][1] = [$map['business.owner_user_id'][1]];
@@ -142,13 +146,14 @@ class Business extends Common
 				->where($partMap)
 				->where($authMap)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
-        		->field(implode(',',$indexField).',customer.name as customer_name')
+        		->field(implode(',',$indexField).',business.is_end,customer.name as customer_name')
         		->orderRaw($order)
         		->select();	
         $dataCount = db('crm_business')
         			->alias('business')
         			->join('__CRM_CUSTOMER__ customer','business.customer_id = customer.customer_id','LEFT')
         			->where($map)->where($partMap)->where($authMap)->count('business_id');
+        $endStatus = ['1' => '赢单','2' => '输单','3' => '无效'];
         foreach ($list as $k=>$v) {
             $list[$k]['customer_id_info']['customer_id'] = $v['customer_id'];
             $list[$k]['customer_id_info']['name'] = $v['customer_name'];
@@ -162,15 +167,19 @@ class Business extends Common
         	}
         	$statusInfo = [];
         	$status_count = 0;
-        	$statusInfo = db('crm_business_status')->where('status_id',$v['status_id'])->find();
-        	if ($statusInfo['order_id'] < 99) {
-				$status_count = db('crm_business_status')->where('type_id',['eq',$v['type_id']])->count();
+        	if (!$v['is_end']) {
+				$statusInfo = db('crm_business_status')->where('status_id',$v['status_id'])->find();
+	        	if ($statusInfo['order_id'] < 99) {
+					$status_count = db('crm_business_status')->where('type_id',['eq',$v['type_id']])->count();
+	        	}
+				//进度
+	        	$list[$k]['status_progress'] = [$statusInfo['order_id'], $status_count+1];	        	    		
+        	} else {
+        		$statusInfo['name'] = $endStatus[$v['is_end']];
         	}
-
         	$list[$k]['status_id_info'] = $statusInfo['name'];//销售阶段
         	$list[$k]['type_id_info'] = db('crm_business_type')->where('type_id',$v['type_id'])->value('name');//商机状态组 
-        	//进度
-        	$list[$k]['status_progress'] = [$statusInfo['order_id'], $status_count+1];
+        	
 			//权限
         	$roPre = $userModel->rwPre($user_id, $v['ro_user_id'], $v['rw_user_id'], 'read');
         	$rwPre = $userModel->rwPre($user_id, $v['ro_user_id'], $v['rw_user_id'], 'update');

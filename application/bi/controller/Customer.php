@@ -84,18 +84,14 @@ class Customer extends ApiCommon
             $whereArr = [];
             $whereArr['create_user_id'] = array('in',$userIds);
             $item = array();
+            $where_time = [];
             //时间段
             $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
             $item['type'] = $timeArr['type'];
-            $day = $timeArr['day']?$timeArr['day']:'1';
-            $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
-            $next_day = $timeArr['next_day']?$timeArr['next_day']:'1';
-            $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
+            if ($timeArr['start_time'] && $timeArr['end_time']) {
+                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
             }
-            $whereArr['create_time'] = $create_time;
+            $whereArr['create_time'] = $where_time;
             $item['customer_num'] = $customerModel->getDataCount($whereArr);
             $whereArr['deal_status'] = '已成交';
             $item['deal_customer_num'] = $customerModel->getDataCount($whereArr);
@@ -133,18 +129,14 @@ class Customer extends ApiCommon
             $whereArr = [];
             $whereArr['create_user_id'] = array('in',$userIds);
             $item = array();
+            $where_time = [];
             //时间段
             $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
             $item['type'] = $timeArr['type'];
-            $day = $timeArr['day']?$timeArr['day']:'1';
-            $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
-            $next_day = $timeArr['next_day']?$timeArr['next_day']:'1';
-            $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
+            if ($timeArr['start_time'] && $timeArr['end_time']) {
+                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
             }
-            $whereArr['create_time'] = $create_time;
+            $whereArr['create_time'] = $where_time;
             /*跟进次数*/
             $item['dataCount'] = $biRecordModel->getRecordNum($whereArr);
             /*跟进客户数*/
@@ -240,18 +232,14 @@ class Customer extends ApiCommon
             $whereArr = [];
             $whereArr['create_user_id'] = array('in',$userIds);
             $item = array();
+            $where_time = [];
             //时间段
             $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
             $item['type'] = $timeArr['type'];
-            $day = $timeArr['day']?$timeArr['day']:'1';
-            $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
-            $next_day = $timeArr['next_day']?$timeArr['next_day']:'1';
-            $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
+            if ($timeArr['start_time'] && $timeArr['end_time']) {
+                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
             }
-            $whereArr['create_time'] = $create_time;
+            $whereArr['create_time'] = $where_time;
             $item['customer_num'] = $customer_num = $customerModel->getDataCount($whereArr);
             $whereArr['deal_status'] = '已成交';
             $item['deal_customer_num'] = $deal_customer_num = $customerModel->getDataCount($whereArr);
@@ -311,18 +299,14 @@ class Customer extends ApiCommon
             $whereArr = [];
             $whereArr['user_id'] = array('in',$userIds);
             $item = array();
+            $where_time = [];
             //时间段
             $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
             $item['type'] = $timeArr['type'];
-            $day = $timeArr['day']?$timeArr['day']:'1';
-            $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
-            $next_day = $timeArr['next_day']?$timeArr['next_day']:'1';
-            $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
+            if ($timeArr['start_time'] && $timeArr['end_time']) {
+                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
             }
-            $whereArr['create_time'] = $create_time;
+            $whereArr['create_time'] = $where_time;
             $whereArr['content'] = '将客户放入公海';
             $item['put_in'] = $actionRecordModel->getDataCount($whereArr);
             $whereArr['content'] = '领取了客户';
@@ -402,18 +386,14 @@ class Customer extends ApiCommon
             $whereArr = [];
             $whereArr['owner_user_id'] = array('in',$userIds);
             $item = array();
+            $where_time = [];
             //时间段
             $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
             $item['type'] = $timeArr['type'];
-            $day = $timeArr['day'] ? $timeArr['day'] : '1';
-            $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
-            $next_day = $timeArr['next_day'] ? $timeArr['next_day'] : '1';
-            $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
+            if ($timeArr['start_time'] && $timeArr['end_time']) {
+                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
             }
-            $whereArr['create_time'] = $create_time;
+            $whereArr['create_time'] = $where_time;
             $whereArr['deal_status'] = '已成交';
             $item['customer_num'] = $customerModel->getDataCount($whereArr);
             //周期

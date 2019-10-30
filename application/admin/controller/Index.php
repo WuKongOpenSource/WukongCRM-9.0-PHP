@@ -79,6 +79,87 @@ class Index extends ApiCommon
         $userModel = model('User');
         $dataList = $userModel->getMenuAndRule($userInfo['id']);
         return resultArray(['data' => $dataList['authList']]);
-    }       
+    }
+
+    /**
+     * 消息通知类型
+     */
+    public function messageTypeList()
+    {
+        return \resultArray([
+            'data' => [
+                ['controller_name' => 'customer', 'name' => '客户'],
+                ['controller_name' => 'business', 'name' => '商机'],
+                ['controller_name' => 'contract', 'name' => '合同'],
+                ['controller_name' => 'receivables', 'name' => '回款'],
+                ['controller_name' => 'task', 'name' => '任务'],
+                ['controller_name' => 'log', 'name' => '日志'],
+                ['controller_name' => 'examine', 'name' => '审批'],
+                ['controller_name' => 'announcement', 'name' => '公告'],
+                ['controller_name' => 'event', 'name' => '日程'],
+                ['controller_name' => 'import', 'name' => '导入错误数据']
+            ]
+        ]);
+    }
+    
+    /**
+     * 系统通知
+     */
+    public function message()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+
+        $where = ['to_user_id' => $userInfo['id']];
+        $order = [];
+
+        // 仅查询未读消息
+        if ($param['unread']) {
+            $where['read_time'] = 0;
+            $page = 1;
+            $limit = 10;
+        } else {
+            $order['read_time'] = 'ASC';
+            $page = $param['page'] ?: 1;
+            $limit = $param['limit'] ?: 15;
+
+            // 消息类型
+            if ($param['controller_name']) {
+                $where['controller_name'] = $param['controller_name'];
+            }
+
+            // 处理时间条件
+            getWhereTimeByParam($where, 'send_time');
+        }
+
+        $order['send_time'] = 'DESC';
+        $data = db('AdminMessage')
+            ->where($where)
+            ->order($order)
+            ->page($page, $limit)
+            ->select();
+
+        foreach ($data as &$val) {
+            $val['content'] = \str_replace('《', '<span>《', $val['content']);
+            $val['content'] = \str_replace('》', '》</span>', $val['content']);
+            $val['send_time'] = date('Y-m-d H:i:s', $val['send_time']);
+        }
+        return resultArray(['data' => $data]);
+    }
+
+    /**
+     * 阅读系统通知，修改状态为已读
+     */
+    public function readMessage()
+    {
+        $userInfo = $this->userInfo;
+        $param = $this->param;
+
+        $where['to_user_id'] = $userInfo['id'];
+        $where['message_id'] = ['IN', (array) $param['message_id']];
+
+        $res = db('AdminMessage')->where($where)->update(['read_time' => time()]);
+        return \resultArray(['data' => $res]);
+    }
 }
  

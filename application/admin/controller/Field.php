@@ -325,9 +325,12 @@ class Field extends ApiCommon
         $userInfo = $this->userInfo;
         $userFieldModel = model('UserField');
         $width = $param['width'] > 10 ? $param['width'] : '';
-        $res = $userFieldModel->setColumnWidth($param['types'], $param['field'], $width, $userInfo['id']);
-        if (!$res) {
-            return resultArray(['error' => $userFieldModel->getError()]);
+        $unField = array('pool_day');
+        if (!in_array($param['field'],$unField)) {
+            $res = $userFieldModel->setColumnWidth($param['types'], $param['field'], $width, $userInfo['id']);
+            if (!$res) {
+                return resultArray(['error' => $userFieldModel->getError()]);
+            }            
         }
         return resultArray(['data' => '设置成功']);
     }

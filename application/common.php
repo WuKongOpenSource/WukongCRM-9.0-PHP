@@ -127,8 +127,8 @@ function money_view($money)
 function where_arr($array = [], $m = '', $c = '', $a = '')
 {
     $userModel = new UserModel();
-    $checkStatusList = ['待审核','审核中','审核通过','审核失败','已撤回','未提交'];
-    $checkStatusArray = ['待审核' => '0','审核中'=>'1','审核通过'=>'2','审核失败'=>'3','已撤回'=>'4','未提交'=>'5'];
+    $checkStatusList = ['待审核','审核中','审核通过','审核失败','已撤回','未提交','已作废'];
+    $checkStatusArray = ['待审核' => '0','审核中'=>'1','审核通过'=>'2','审核失败'=>'3','已撤回'=>'4','未提交'=>'5','已作废'=>'6'];
     //查询自定义字段模块多选字段类型
     $check_field_arr = [];
     //特殊字段
@@ -1366,4 +1366,251 @@ function curl_post($url = '', $post = array())
     }
     curl_close($curl); // 关闭CURL会话
     return $res; // 返回数据，json格式
+}
+
+/**
+ * 输出json字符串，用于接口调试
+ *
+ * @return void
+ * @author ymob
+ */
+function vdd()
+{
+    header('Content-Type: text/json; charset=utf-8');
+    $args = func_get_args();
+    foreach ($args as &$val) {
+        if ($val instanceof think\Model) {
+            $val = $val->getLastSql();
+        }
+    }
+    if (count($args) < 2) {
+        $args = array_shift($args);
+    }
+    die(json_encode($args));
+}
+
+
+/**
+ * 根据时间查询参数返回时间条件 （用于统计分析模块）
+ *
+ * @param array $where
+ * @param string $field
+ * @return void
+ * @author ymob
+ */
+function getWhereTimeByParam(&$where, $field = 'create_time')
+{
+    $param = request()->param();
+    if (empty($param['type']) && empty($param['start_time'])) {
+        $param['type'] = 'month';
+    }
+    if (!empty($param['start_time'])) {
+        $where[$field] = ['between', [$param['start_time'], $param['end_time']]];
+    } else {
+        $timeRange = getTimeByType($param['type']);
+        if ($timeRange) {
+            $where[$field] = ['between', [$timeRange[0], $timeRange[1]]];
+        }
+    }
+}
+
+/**
+ * 根据员工、部门查询参数返回员工、部门条件 （用于统计分析模块）
+ *
+ * @param array $where
+ * @param string $field
+ * @param string $m
+ * @param string $c
+ * @param string $a
+ * @return void
+ * @author ymob
+ */
+function getWhereUserByParam(&$where, $field = 'owner_user_id', $m = '', $c = '', $a = '')
+{
+    $param = request()->param();
+    $userModel = new UserModel();
+
+    $map_user_ids = [];
+    if ($param['user_id']) {
+        $map_user_ids = array($param['user_id']);
+    } else {
+        if ($param['structure_id']) {
+            $map_user_ids = $userModel->getSubUserByStr($param['structure_id'], 2);
+        }
+    }
+    $perUserIds = $userModel->getUserByPer($m, $c, $a); //权限范围内userIds
+    $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
+    $where[$field] = array('in',$userIds);
+}
+
+/**
+ * 获取客户浏览器类型
+ */
+function getBrowser()
+{
+    $Browser = $_SERVER['HTTP_USER_AGENT'];
+    if (preg_match('/MSIE/i', $Browser)) {
+        $Browser = 'MSIE';
+    } elseif (preg_match('/Firefox/i', $Browser)) {
+        $Browser = 'Firefox';
+    } elseif (preg_match('/Chrome/i', $Browser)) {
+        $Browser = 'Chrome';
+    } elseif (preg_match('/Safari/i', $Browser)) {
+        $Browser = 'Safari';
+    } elseif (preg_match('/Opera/i', $Browser)) {
+        $Browser = 'Opera';
+    } else {
+        $Browser = 'Other';
+    }
+    return $Browser;
+}
+
+/**
+ * 获取客户端系统
+ */
+function getOS()
+{
+    $agent = $_SERVER['HTTP_USER_AGENT'];
+    if (preg_match('/win/i', $agent)) {
+        if (preg_match('/nt 6.1/i', $agent)) {
+            $OS = 'Windows 7';
+        } else if (preg_match('/nt 6.2/i', $agent)) {
+            $OS = 'Windows 8';
+        } else if (preg_match('/nt 10.0/i', $agent)) {
+            $OS = 'Windows 10';
+        } else {
+            $OS = 'Windows';
+        }
+    } elseif (preg_match('/mac/i', $agent)) {
+        $OS = 'MAC';
+    } elseif (preg_match('/linux/i', $agent)) {
+        $OS = 'Linux';
+    } elseif (preg_match('/unix/i', $agent)) {
+        $OS = 'Unix';
+    } elseif (preg_match('/bsd/i', $agent)) {
+        $OS = 'BSD';
+    } else {
+        $OS = 'Other';
+    }
+    return $OS;
+}
+
+/**
+ * 根据IP获取地址
+ */
+function getAddress($ip)
+{
+    $res = file_get_contents("http://ip.360.cn/IPQuery/ipquery?ip=" . $ip);
+    $res = json_decode($res, 1);
+    if ($res && $res['errno'] == 0) {
+        return explode("\t", $res['data'])[0];
+    } else {
+        return '';
+    }
+}
+
+/**
+ * 下载服务器文件
+ *
+ * @param string $file  文件路径
+ * @param string $name  下载名称
+ * @param boolean $del  下载后删除
+ * @return void
+ * @author Ymob
+ */
+function download($file, $name = '', $del = false)
+{
+    if (!file_exists($file)) {
+        return resultArray([
+            'error' => '文件不存在',
+        ]);
+    }
+    // 仅允许下载 public 目录下文件
+    $res = strpos(realpath($file), realpath('./public'));
+    if ($res !== 0) {
+        return resultArray([
+            'error' => '文件路径错误',
+        ]);
+    }
+
+    $fp = fopen($file, 'r');
+    $size = filesize($file);
+
+    //下载文件需要的头
+    header("Content-type: application/octet-stream");
+    header("Accept-Ranges: bytes");
+    header('ResponseType: blob');
+    header("Accept-Length: $size");
+    $file_name = $name != '' ? $name : pathinfo($file, PATHINFO_BASENAME);
+    // urlencode 处理中文乱码
+    header("Content-Disposition:attachment; filename=" . urlencode($file_name));
+
+    // 导出数据时  csv office Excel 需要添加bom头
+    if (pathinfo($file, PATHINFO_EXTENSION) == 'csv') {
+	    echo "\xEF\xBB\xBF"; 	// UTF-8 BOM
+    }
+
+    $fileCount = 0;
+    $fileUnit = 1024;
+    while (!feof($fp) && $size - $fileCount > 0) {
+        $fileContent = fread($fp, $fileUnit);
+        echo $fileContent;
+        $fileCount += $fileUnit;
+    }
+    fclose($fp);
+
+    // 删除
+    if ($del) @unlink($file);
+    die();
+}
+
+/**
+ * 临时目录生成文件名，并返回绝对路径
+ *
+ * @param   string  $ext       文件类型后缀
+ * @param   string  $path      临时文件目录 默认 ./public/temp/
+ * @return  string  $file_path 文件名称绝对路径
+ * @author ymob
+ */
+function tempFileName($ext = '')
+{
+    // 临时目录
+    $path = TEMP_DIR . date('Ymd') . DS;
+    
+    if (!file_exists($path)) {
+        mkdir($path, 0777, true);
+    }
+    
+    $ext = trim($ext, '.');
+    do {
+        $temp_file = md5(time() . rand(1000, 9999));
+        $file_path = $path . $temp_file . '.' . $ext;
+    } while (file_exists($file_path));
+    return $file_path;
+}
+
+/**
+ * 递归删除目录
+ *
+ * @param string $dir
+ * @return void
+ * @author Ymob
+ */
+function delDir($dir)
+{
+    $dh = opendir($dir);
+    while ($file = readdir($dh)) {
+        if ($file != "." && $file != "..") {
+            $fullpath = $dir . "/" . $file;
+            if (!is_dir($fullpath)) {
+                @unlink($fullpath);
+            } else {
+                deldir($fullpath);
+            }
+        }
+    }
+
+    closedir($dh);
+    //删除当前文件夹：
+    @rmdir($dir);
 }

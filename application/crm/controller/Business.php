@@ -95,6 +95,10 @@ class Business extends ApiCommon
         }        
         //商机状态组
         $data['status_list'] = $businessStatusModel->getDataById($data['type_id']);
+        $data['lose_reason'] = Db::name('CrmBusinessLog')
+            ->where(['business_id' => $data['business_id']])
+            ->order(['id' => 'DESC'])
+            ->value('remark');
         if (!$data) {
             return resultArray(['error' => $businessModel->getError()]);
         }
@@ -140,7 +144,9 @@ class Business extends ApiCommon
     {
         $param = $this->param; 
         $businessModel = model('Business');
-        $recordModel = new \app\admin\model\Record();    
+        $recordModel = new \app\admin\model\Record();
+        $fileModel = new \app\admin\model\File();
+        $actionRecordModel = new \app\admin\model\ActionRecord();    
         if (!is_array($param['id'])) {
             $business_id[] = $param['id'];
         } else {
@@ -174,7 +180,11 @@ class Business extends ApiCommon
                 return resultArray(['error' => $businessModel->getError()]);
             }
             //删除跟进记录
-            $recordModel->delDataByTypes('crm_business',$delIds);            
+            $recordModel->delDataByTypes('crm_business',$delIds); 
+            //删除关联附件
+            $fileModel->delRFileByModule('crm_business',$delIds);
+            //删除关联操作记录
+            $actionRecordModel->delDataById(['types'=>'crm_business','action_id'=>$delIds]);           
             actionLog($delIds,'','','');         
         }
         if ($errorMessage) {
@@ -333,7 +343,7 @@ class Business extends ApiCommon
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
         }
 
-        $status_id = $param['status_id'];
+        $status_id = $param['status_id'] ? : $businessInfo['status_id'];
         $statusInfo = db('crm_business_status')->where(['type_id' => $businessInfo['type_id'],'status_id' => $status_id])->find();
         if (!$statusInfo && !$is_end) {
             return resultArray(['error' => '参数错误']);
@@ -341,11 +351,8 @@ class Business extends ApiCommon
         $data = [];
         $data['update_time'] = time();
         $data['is_end'] = $is_end;
-        if ($is_end) $status_id = $is_end;
-        if ($status_id) {
-            $data['status_id'] = $status_id;
-            $data['status_time'] = time();
-        }        
+        $data['status_id'] = $status_id;
+        $data['status_time'] = time();        
         $res = db('crm_business')->where(['business_id' => $param['business_id']])->update($data);
         if (!$res) {
             return resultArray(['error' => '推进失败，请重试']);
@@ -360,5 +367,43 @@ class Business extends ApiCommon
 			Db::name('CrmBusinessLog')->insert($temp);
             return resultArray(['data' => '推进成功']);
         }
-    }       
+    }
+    
+    /**
+     * 商机导出
+     * @author Michael_xu
+     * @param 
+     * @return
+     */
+    public function excelExport()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $param['user_id'] = $userInfo['id'];
+        if ($param['business_id']) {
+           $param['business_id'] = ['condition' => 'in','value' => $param['business_id'],'form_type' => 'text','name' => ''];
+           $param['is_excel'] = 1;
+        }        
+
+        $excelModel = new \app\admin\model\Excel();
+        // 导出的字段列表
+        $fieldModel = new \app\admin\model\Field();
+        $field_list = $fieldModel->getIndexFieldConfig('crm_business', $userInfo['id']);
+        // 文件名
+        $file_name = '5kcrm_business_'.date('Ymd');
+
+        $model = model('Business');
+        $temp_file = $param['temp_file'];
+        unset($param['temp_file']);
+        $page = $param['page'] ?: 1;
+        unset($param['page']);
+        unset($param['export_queue_index']);
+        return $excelModel->batchExportCsv($file_name, $temp_file, $field_list, $page, function($page, $limit) use ($model, $param, $field_list) {
+            $param['page'] = $page;
+            $param['limit'] = $limit;
+            $data = $model->getDataList($param);
+            $data['list'] = $model->exportHandle($data['list'], $field_list, 'business');
+            return $data;
+        });
+    } 
 }

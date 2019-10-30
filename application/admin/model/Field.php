@@ -720,7 +720,7 @@ class Field extends Model
 					'field' => 'check_status',
 					'name' => '审核状态',
 					'form_type' => 'select',
-					'setting' => '待审核'.chr(10).'审核中'.chr(10).'审核通过'.chr(10).'审核失败'.chr(10).'已撤回'.chr(10).'未提交'
+					'setting' => '待审核'.chr(10).'审核中'.chr(10).'审核通过'.chr(10).'审核失败'.chr(10).'已撤回'.chr(10).'未提交'.chr(10).'已作废'
 				]
 			];
 		}
@@ -890,11 +890,12 @@ class Field extends Model
 		$userFieldModel = new \app\admin\model\UserField();
 		$userFieldData = $userFieldModel->getConfig($types, $user_id);
 		$userFieldData = $userFieldData ? json_decode($userFieldData, true) : [];
+		$unField = ['pool_day','business-check','call'];
 		$where = [];
 		if ($userFieldData) {
 			$dataList = [];
 			foreach ($userFieldData as $k=>$v) {
-				if (empty($v['is_hide'])) {
+				if (empty($v['is_hide']) && !in_array($k,$unField)) {
 					$dataList[] = $k;
 				}
 			}

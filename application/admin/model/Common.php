@@ -36,7 +36,7 @@ class Common extends Model
 	 * @param     [array]      $request [参数]
 	 * @return    [array]                       
 	 */
-    protected function fmtRequest( $request = [] )
+    public function fmtRequest( $request = [] )
     {
         $pageType = $request['pageType'] ? 'all' : ''; //all全部（不分页）
         $page = 1;
@@ -262,5 +262,47 @@ class Common extends Model
 			$this->rollback();
 			return false;
 		}			
+	}
+
+
+	/**
+	 * 导出数据处理
+	 */
+	public function exportHandle($list, $field_list, $type = '')
+	{
+		foreach ($list as &$val) {
+			foreach ($field_list as $field) {
+				switch ($field['form_type']) {
+					case 'user':
+						if (isset($val[$field['field'] . '_info']['realname'])) {
+							$val[$field['field']] = $val[$field['field'] . '_info']['realname'];
+						} else {
+							$val[$field['field']] = implode(',', array_column($val[$field['field'] . '_info'], 'realname'));
+						}
+						break;
+					case 'structure':
+						$temp = array_map(function ($val) { return $val->toarray(); }, $val[$field['field'] . '_info']);
+						$val[$field['field']] = implode(',', array_column($temp, 'name'));
+						break;
+					case 'datetime':
+						$val[$field['field']] = $val[$field['field']] ? date('Y-m-d H:i:s', $val[$field['field']]) : '';
+						break;
+					case 'customer':
+					case 'business':
+					case 'contacts':
+						$val[$field['field']] = $val[$field['field'] . '_info']['name'];
+						break;
+					default :
+						switch ($field['field']) {
+							// 商机销售阶段、商机状态组
+							case 'status_id':
+							case 'type_id':
+								$val[$field['field']] = $val[$field['field'] . '_info'];
+								break;
+						}
+				}
+			}
+		}
+		return $list;
 	}
 }

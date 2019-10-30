@@ -447,7 +447,10 @@ class File extends Common
         		default : break;
         	}
         	$rWhere = [];
-        	$rWhere[$r_name] = intval ($param['module_id']);
+        	if(!is_array($module_id)){
+        		$module_id = [intval ($module_id)];
+        	}
+        	$rWhere[$r_name] = ['in',$module_id];
         	$rFileIds = $r->where($rWhere)->column('file_id');
         	$rRes = $r->where($rWhere)->delete();
         	if ($rRes && $rFileIds) {

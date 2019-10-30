@@ -8,12 +8,23 @@
 namespace app\admin\model;
 
 use app\admin\model\Common;
+use com\PseudoQueue as Queue;
 use think\Cache;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class Excel extends Common
 {
 	private $types_arr = ['crm_leads','crm_customer','crm_contacts','crm_product']; //支持自定义字段的表，不包含表前缀
+
+	/**
+	 * 导入锁缓存名称
+	 */
+	const IMPORT_QUEUE = DB_NAME . 'IMPORT_QUEUE';
+	
+	/**
+	 * 导出锁缓存名称
+	 */
+	const EXPORT_QUEUE = DB_NAME . 'EXPORT_QUEUE';
 
 	/**
 	 *获取excel相关列
@@ -39,7 +50,7 @@ class Excel extends Common
 	 * @param $types 分类
 	 * @author
 	 **/
-	public function excelImportDownload($field_list, $types){
+	public function excelImportDownload($field_list, $types, $save_path = ''){
 		$fieldModel = new \app\admin\model\Field();	
 
  		//实例化主文件
@@ -64,7 +75,22 @@ class Excel extends Common
 	    $subObject->getProtection()->setSheet(true);
 	    $subObject->protectCells('A1:C1000',time());		
 
-		$k = 0;
+		//填充边框
+        $styleArray = [
+            'borders'=>[
+                'outline'=>[
+                    'style'=>\PHPExcel_Style_Border::BORDER_THICK, //设置边框
+                    'color' => ['argb' => '#F0F8FF'], //设置颜色
+                ],
+            ],
+        ];
+        if ($save_path) {
+            $objActSheet->setCellValue('A2', '错误原因(导入时需删除本列)');
+            $objActSheet->getColumnDimension('A')->setWidth(40); //设置单元格宽度
+            $k = 1;
+        } else {
+            $k = 0;
+        }
         foreach ($field_list as $field) {
         	$objActSheet->getColumnDimension($this->stringFromColumnIndex($k))->setWidth(20); //设置单元格宽度
 			if ($field['form_type'] == 'address') {
@@ -172,12 +198,16 @@ class Excel extends Common
         $objActSheet->setCellValue('A1', $content);
 		$objWriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xls');
 		ob_end_clean();
-		header("Content-Type: application/vnd.ms-excel;");
-        header("Content-Disposition:attachment;filename=".$types_name."导入模板".date('Y-m-d',time()).".xls");
-        header("Pragma:no-cache");
-        header("Expires:0");
-        $objWriter->save('php://output');
-    }		
+		if ($save_path) {
+			$objWriter->save($save_path);
+		} else {
+			header("Content-Type: application/vnd.ms-excel;");
+			header("Content-Disposition:attachment;filename=" . $types_name . "导入模板" . date('Y-m-d', time()) . ".xls");
+			header("Pragma:no-cache");
+			header("Expires:0");
+			$objWriter->save('php://output');
+		}
+	}
 
 	/**
 	 * 自定义字段模块导出csv
@@ -242,7 +272,570 @@ class Excel extends Common
 		fclose($fp);
 		exit();
 	}
+
+	/**
+	 * 分批导出csv
+	 *
+	 * @param string 	$file_name 		下载文件名称
+	 * @param string 	$temp_file		临时文件名称 （不带 .csv 后缀）
+	 * @param array 	$field_list		字段表头 
+	 * @param int 		$page			响应页码默认1
+	 * @param callback  $callback		回调函数，返回数据
+	 * 						($page, $page_size)		查询页码，查询数量
+	 * @param array 	$config			设置信息
+	 * 						- response_size		单次请求响应数量	默认2000
+	 * 						- page_size			单次数据库查询数量	默认 500
+	 * @author Ymob
+	 */
+	public function batchExportCsv($file_name, $temp_file, $field_list, $page, $callback, $config = [])
+	{
+		$queue = new Queue(self::EXPORT_QUEUE, 3);
+		$export_queue_index = input('export_queue_index');
+
+		if (!$export_queue_index) {
+			if (!$export_queue_index = $queue->makeTaskId()) {
+				return resultArray(['error' => $queue->error]);
+			}
+		} else {
+			if (!$queue->setTaskId($export_queue_index)) {
+				return resultArray(['error' => $queue->error]);
+			}
+		}
+		
+		// 已取消
+		if ($page == -1) {
+			$queue->dequeue();
+			return resultArray([
+				'data' => [
+					'msg' => '导出已取消',
+					'page' => -1
+				]
+			]);
+		}
+
+		// 排队中
+		if (!$queue->canExec()) {
+			return resultArray([
+				'data' => [
+					'page' => -2,
+					'export_queue_index' => $export_queue_index,
+					'info' => $queue->error
+				]
+			]);
+		}
+
+		// 没有临时文件名，代表第一次导出，生成临时文件名称，并写入表头数据
+		if ($temp_file === null) {
+			
+			// 生成临时文件路径
+			$file_path = tempFileName('csv');
+			
+			$fp = fopen($file_path, 'a');
+			$title_cell = [];
+			foreach ($field_list as $i => $v) {    
+				$title_cell[$i] = $v['name'];    
+			}
+			fputcsv($fp, $title_cell);
+			$temp_file = \substr($file_path, strlen(TEMP_DIR));
+		} else {
+
+			$file_path = TEMP_DIR . $temp_file;
+			if (!file_exists($file_path)) {
+				return resultArray(['error' => '参数错误，临时文件不存在']);
+			}
+			$fp = fopen($file_path, 'a');
+		}
+
+		// 自定义字段模型
+		$fieldModel = new \app\admin\model\Field();
+
+		// 单次响应条数 (必须是单次查询条数的整数倍)
+		$response_size = $config['response_size'] ?: 1000;
+
+		// 单次查询条数
+		$page_size = $config['page_size'] ?: 200;
+
+		// 最多查询次数
+		$max_query_count = $response_size / $page_size;
+
+		// 总数
+		$total = 0;
+
+		for ($i = 1; $i <= $max_query_count; $i++) {
+			// 两个参数，第一个参数是 page (传入 model\customer::getDataList 方法的参数),
+			$data = $callback($i + ($page - 1) * ($response_size / $page_size), $page_size);
+			$total = $data['dataCount'];
+			foreach ($data['list'] as $val) {
+				$rows = [];
+		    	foreach ($field_list as $rule) {
+		    		$rows[] = $fieldModel->getValueByFormtype($val[$rule['field']], $val['form_type']);
+				}
+		        fputcsv($fp, $rows);				
+			}
+		}
+		fclose($fp);
+		
+		// 已查询数据条数 小于 数据总数
+		$done = $page * $response_size;
+		if ($done < $total) {
+			return resultArray([
+				'data' => [
+					'export_queue_index' => $export_queue_index,
+					'temp_file' => $temp_file,
+					// 总数
+					'total' => $total,
+					// 已完成
+					'done' => $done,
+					// 返回前端页码
+					'page' => $page + 1
+				]
+			]);
+		}
+
+		$res = $queue->dequeue();
+
+		// 所有数据已导入 csv 文件，返回文件流完成后删除
+		return download($file_path, $file_name . '.csv', true);
+	}
 	
+	/**
+	 * 分批导入文件
+	 *
+	 * @param null|array|\think\File $file
+	 * @param array $param
+	 * @param Controller $controller
+	 * @return bool
+	 * 
+	 * @author Ymob
+	 */
+	public function batchImportData($file, $param, $controller = null)
+	{
+		// 导入模块
+		$types = $param['types'];
+		if (!in_array($types, $this->types_arr)) {
+			$this->error = '参数错误！';
+			$queue->dequeue();
+			return false;
+		}
+
+		// 采用伪队列  允许三人同时导入数据
+		$queue = new Queue(self::IMPORT_QUEUE, 3);
+		$import_queue_index = input('import_queue_index');
+
+		// 队列任务ID
+		if (!$import_queue_index) {
+			if (!$import_queue_index = $queue->makeTaskId()) {
+				$this->error = $queue->error;
+				$queue->dequeue();
+				return false;
+			}
+		} else {
+			if (!$queue->setTaskId($import_queue_index)) {
+				$this->error = $queue->error;
+				$queue->dequeue();
+				return false;
+			}
+		}
+
+		// 取消导入
+		if ($param['page'] == -1) {
+			$queue->dequeue();
+			@unlink(UPLOAD_PATH . $param['temp_file']);
+			$this->error = [
+				'msg' => '导入已取消',
+				'page' => -1
+			];
+			if ($param['error']) {
+				$this->error['error_file_path'] = 'temp/' . $param['error_file'];
+			}
+			return true;
+		}
+
+		if (!empty($file) || $param['temp_file']) {
+			// 导入初始化  上传文件
+			if (!empty($file)) {
+				$save_name = $this->upload($file);
+				if ($save_name === false) {
+					$queue->dequeue();
+					return false;
+				}
+			} else {
+				$save_name = $param['temp_file'];
+			}
+
+			// 文件类型
+			$ext = pathinfo($save_name, PATHINFO_EXTENSION);
+			// 文件路径
+			$save_path = UPLOAD_PATH . $save_name;
+
+			// 队列-判断是否需要排队
+			if (!$queue->canExec()) {
+				$this->error = [
+					'temp_file' => $save_name,
+					'page' => -2,
+					'import_queue_index' => $import_queue_index,
+					'info' => $queue->error
+				];
+				return true;
+			}
+
+			// 加载类库
+			vendor("phpexcel.PHPExcel");
+			vendor("phpexcel.PHPExcel.Writer.Excel5");
+			vendor("phpexcel.PHPExcel.Writer.Excel2007");
+			vendor("phpexcel.PHPExcel.IOFactory"); 
+
+			// 错误数据临时文件路径  错误数据开始行数
+			if ($param['error_file']) {
+				$error_path = TEMP_DIR . $param['error_file'];
+				$error_row = $param['error'] + 3;
+				$cover = $param['cover'] ?: 0;
+			} else {
+				// 生成临时文件名称
+				$error_path = tempFileName($ext);
+				// 将导入模板保存至临时路径
+				$controller->excelDownload($error_path);					
+				$error_row = 3;
+				$cover = 0;
+			}
+
+			// 错误数据临时文件名称 相对于临时目录
+			$error_data_file_name = \substr($error_path, strlen(TEMP_DIR));
+
+			// 加载错误数据文件
+			$err_PHPExcel = \PHPExcel_IOFactory::load($error_path);
+			$error_sheet = $err_PHPExcel->setActiveSheetIndex(0);
+
+			/**
+			 * 添加错误数据到临时文件
+			 * 
+			 * @param array $data	原数据
+			 * @param string $error 错误原因
+			 * @return void
+			 */
+			$error_data_func = function ($data, $error) use ($error_sheet, &$error_row) {
+
+				foreach ($data as $key => $val) {
+					// 第一列为错误原因 所以+1
+					$error_col = \PHPExcel_Cell::stringFromColumnIndex($key + 1);
+					$error_sheet->setCellValue($error_col . $error_row, $val);
+				}
+				$error_sheet->setCellValue('A' . $error_row, $error);
+				$error_sheet->getStyle('A' . $error_row)->getFont()->getColor()->setARGB('FF000000');
+				$error_sheet->getStyle('A' . $error_row)->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFFF0000');
+
+				$error_row++;
+			};
+
+			
+			// 字段列表条件
+			$fieldParam = [];
+			// 导入模块
+			switch ($types) {
+				case 'crm_leads' : 
+					$dataModel = new \app\crm\model\Leads(); 
+					$db = 'crm_leads';
+					$db_id = 'leads_id'; 
+					break;
+				case 'crm_customer' : 
+					$dataModel = new \app\crm\model\Customer(); 
+					$db = 'crm_customer'; 
+					$db_id = 'customer_id'; 
+					$fieldParam['form_type'] = ['not in', ['file','form','user','structure']]; 
+					break;
+				case 'crm_contacts' : 
+					$dataModel = new \app\crm\model\Contacts(); 
+					$db = 'crm_contacts'; 
+					$db_id = 'contacts_id'; 
+					break;
+				case 'crm_product' : 
+					$dataModel = new \app\crm\model\Product(); 
+					$db = 'crm_product'; 
+					$db_id = 'product_id';
+					// 产品分类
+					$productCategory = db('crm_product_category')->select();
+					$productCategoryArr = array_column($productCategory, 'category_id', 'name');
+					break;
+			}
+
+			// 字段
+			$fieldModel = new \app\admin\model\Field();
+			$fieldParam['types'] = $types; 
+			$fieldParam['action'] = 'excel'; 
+			$field_list = $fieldModel->field($fieldParam);
+			$field_list = array_map(function ($val) {
+				if (method_exists($val, 'toArray')) {
+					return $val->toArray();
+				} else {
+					return $val;
+				}
+			}, $field_list);
+			$field_key_name_list = array_column($field_list, 'name', 'field');
+
+			// 加载导入数据文件
+			$objRender = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xls');
+			$objRender->setReadDataOnly(true);
+			$ExcelObj = $objRender->load($save_path);
+			// 指定工作表
+			$sheet = $ExcelObj->getSheet(0);
+			// 总行数
+			$max_row = $sheet->getHighestRow();
+			// 最大列数
+			$max_col = \PHPExcel_Cell::stringFromColumnIndex(count($field_list) - 1);
+
+			// 检测导入文件是否使用最新模板
+			$header = $sheet->rangeToArray("A2:{$max_col}2")[0];
+			$temp = 0;
+			foreach ($field_list as $key => $field) {
+				if (
+					$field['name'] == $header[$key]
+					|| $header[$key] == '*' . $field['name']
+				) {
+					$temp++;	
+				}
+			}
+			if ($temp !== count($field_list)) {
+				$this->error = '请使用最新导入模板';
+				@unlink($save_path);
+				$queue->dequeue();
+				return false;
+			}
+
+			// 每次导入条数
+			$page_size = 100;
+
+			// 当前页码
+			$page = ((int) $param['page']) ?: 1;
+
+			// 数据总数
+			$total = $max_row - 2;
+
+			// 总页数
+			$max_page = ceil($total / $page_size);
+			if ($page > $max_page) {
+				// $this->error = 'page参数错误';
+				// @unlink($save_path);
+				// $queue->dequeue();
+				// return false;
+			}
+			
+			// 开始行  +3 跳过表头
+			$start_row = ($page - 1) * $page_size + 3;
+			// 结束行
+			$end_row = $start_row + $page_size - 1;
+			if ($end_row > $max_row) {
+				$end_row = $max_row;
+			}
+			
+			// 读取数据
+			$dataList = $sheet->rangeToArray("A{$start_row}:{$max_col}{$end_row}");
+
+			// 数据重复时的处理方式 0跳过  1覆盖
+			$config = $param['config'] ?: 0;
+
+			// 默认数据
+			$default_data = [
+				'create_user_id' => $param['create_user_id'],
+				'owner_user_id' => $param['owner_user_id'],
+				'create_time' => time(),
+				'update_time' => time(),
+			];
+			
+			// 开始导入数据
+			foreach ($dataList as $val) {
+				$data = [];
+				$unique_where = [];
+				$empty_count = 0;
+				$not_null_field = [];
+				foreach ($field_list as $fk => $field) {
+					$temp_value = trim($val[$fk]);
+
+					if ($field['field'] == 'category_id' && $types == 'crm_product') {
+						$data['category_id'] = $productCategoryArr[$temp_value] ?: 0;
+						$data['category_str'] = $dataModel->getPidStr($productCategoryArr[$temp_value], '', 1);
+					}
+
+					// 特殊字段特殊处理
+					$temp_value = $this->handleData($temp_value, $field);
+					$data[$field['field']] = $temp_value;
+
+					// 查重字段
+					if ($field['is_unique'] && $temp_value) {
+						$unique_where[$field['field']] = $temp_value;
+					}
+					if ($temp_value == '') {
+						if ($field['is_null']) {
+							$not_null_field[] = $field['name'];
+						}
+						$empty_count++;
+					}
+				}
+				if (!empty($not_null_field)) {
+					$error_data_func($val, implode(', ', $not_null_field) . '不能为空');
+					continue;
+				}
+				if ($empty_count == count($field_list)) {
+					$error_data_func($val, '空行');
+					continue;
+				}
+
+
+				$old_data_id_list = [];
+				if ($unique_where) {
+					$old_data_id_list = (array) $dataModel->whereOr($unique_where)->column($db_id);
+				}
+				
+				// 数据重复时
+				if ($old_data_id_list) {
+					// 是否覆盖
+					if ($config) {
+						$data = array_merge($data, $default_data);
+						$data['user_id'] = $param['create_user_id'];
+						$data['update_time'] = time();
+						$dataModel->startTrans();
+						try {
+							$up_success_count = 0;
+							foreach ($old_data_id_list as $id) {
+								$upRes = $dataModel->updateDataById($data, $id);
+								if (!$upRes) {
+									$temp_error = $dataModel->getError();
+									if ($temp_error == '无权操作') {
+										$temp_error = '当前导入人员对该数据无写入权限';
+									}
+									$error_data_func($val, $temp_error);
+									$dataModel->rollback();
+									break;
+								}
+								$up_success_count++;
+							}
+							// 全部更新完成
+							if ($up_success_count === count($old_data_id_list)) {
+								$cover++;
+								$dataModel->commit();
+							}
+						} catch (\Exception $e) {
+							$dataModel->rollback();
+						}
+					} else {
+						// 重复字段标记
+						$unique_field = [];
+						foreach ($old_data_id_list as $id) {
+							$old_data = $dataModel->getDataById($id);
+							foreach ($unique_where as $k => $v) {
+								if (trim($old_data[$k]) == $v) {
+									$unique_field[] = $field_key_name_list[$k];
+								}
+							}
+						}
+						$unique_field = array_unique($unique_field);
+						$error_data_func($val, implode(', ', $unique_field) . ' 重复，跳过');
+					}
+				} else {
+					$data = array_merge($data, $default_data);
+					if (!$resData = $dataModel->createData($data)) {
+						$error_data_func($val, $dataModel->getError());
+					}
+				}
+			}
+
+			// 完成数(已导入数)
+			$done = ($page - 1) * $page_size + count($dataList);
+			if ($page == $max_page) {
+				$done = $total;
+			}
+
+			// 错误数
+			$error = $error_row - 3;
+
+			// 错误数据文件保存
+			$objWriter = \PHPExcel_IOFactory::createWriter($err_PHPExcel, 'Excel5');
+			$objWriter->save($error_path);
+
+			$this->error = [
+				// 数据导入文件临时路径
+				'temp_file' => $save_name,
+				// 错误数据文件路径
+				'error_file' => $error_data_file_name,
+				// 文件总计条数
+				'total' => $total,
+				// 已完成条数
+				'done' => $done,
+				// 覆盖
+				'cover' => $cover,
+				// 错误数据写入行号
+				'error' => $error,
+				// 下次页码
+				'page' => $page + 1,
+				// 导入任务ID
+				'import_queue_index' => $import_queue_index
+			];
+
+			// 执行完成
+			if ($done >= $total) {
+				// 出队
+				@unlink($save_path);
+				$queue->dequeue();
+				// 错误数据文件路径
+				$this->error['error_file_path'] = 'temp/' . $error_data_file_name;
+				// 删除导入文件
+				@unlink($save_path);
+			}
+
+	        return true;
+		} else {
+			$this->error = '请选择导入文件';
+			$queue->dequeue();
+            return false;    
+		}
+	}
+
+	/**
+	 * 导入数据时 读取xls表格数据
+	 *
+	 * @param PHPExcel_Worksheet $sheet
+	 * @param integer $start	开始行
+	 * @param integer $end		结束行 0时表示所有
+	 * @param array $fields		字段名称
+	 * @return array
+	 * @author Ymob
+	 */
+	public function readSheet($sheet, $start = 1, $end = 0, $fields = [])
+	{
+		$data = [];
+		for ($row = $start; $row <= $end; $row++) {
+			$temp = [];
+			foreach ($fields as $key => $field) {
+				$col = Coordinate::stringFromColumnIndex($key);
+				$temp[$field] = $sheet->getCell($col . $row);
+			}
+			$data[] = $temp;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * 上传文件导入数据文件
+	 *
+	 * @param [type] $file
+	 * @return mixed 上传文件路径 | 上传失败错误信息
+	 * @author Ymob
+	 */
+	public function upload($file)
+	{
+		$get_filesize_byte = get_upload_max_filesize_byte();
+		$info = $file->validate(['size'=>$get_filesize_byte,'ext'=>'xls,xlsx,csv'])->move(FILE_PATH . 'public' . DS . 'uploads'); //验证规则
+		if (!$info) {
+			return resultArray(['error' => $file->getError()]);
+		}
+		$saveName = $info->getSaveName(); //保存路径	
+		if (!$saveName) {
+			$this->error = '文件上传失败，请重试！';
+			return false;
+		}
+		return $saveName;
+	}
+
 	/**
 	 * 自定义字段模块数据导入(默认2000行)
 	 * @param $types 分类  
@@ -252,32 +845,112 @@ class Excel extends Common
 	 * @author Michael_xu
 	 * @return 
 	 */		
-	public function importExcel($file, $param)
+	public function importExcel($file, $param, $controller = null)
 	{
-		$get_filesize_byte = get_upload_max_filesize_byte();
+		$queue = new Queue(self::IMPORT_QUEUE, 1);
+		$import_queue_index = input('import_queue_index');
+
+		if (!$import_queue_index) {
+			if (!$import_queue_index = $queue->makeTaskId()) {
+				$this->error = $queue->error;
+				$queue->dequeue();
+				return false;
+			}
+		} else {
+			if (!$queue->setTaskId($import_queue_index)) {
+				$this->error = $queue->error;
+				$queue->dequeue();
+				return false;
+			}
+		}
+
+		if ($param['page'] == -1) {
+			$queue->dequeue();
+			$this->error = [
+				'msg' => '导入已取消',
+				'page' => -1
+			];
+			if ($param['error']) {
+				$this->error['error_file_path'] = 'temp/' . $param['error_file'];
+			}
+			return true;
+		}
 		$config = $param['config'] ? : '';
-		if (!empty($file)) {
+		if (!empty($file) || $param['temp_file']) {
 			$types = $param['types'];
 			if (!in_array($types, $this->types_arr)) {
 				$this->error = '参数错误！';
-            	return false;				
+				$queue->dequeue();
+				return false;				
 			}
-			$info = $file->validate(['size'=>$get_filesize_byte,'ext'=>'xls,xlsx,csv'])->move(FILE_PATH . 'public' . DS . 'uploads'); //验证规则
-			if (!$info) {
-				$this->error = $file->getError();
-            	return false;				
+
+			// 导入初始化  上传文件
+			if (!empty($file)) {
+				$get_filesize_byte = get_upload_max_filesize_byte();
+				$info = $file->validate(['size'=>$get_filesize_byte,'ext'=>'xls,xlsx,csv'])->move(UPLOAD_PATH); //验证规则
+				if (!$info) {
+					$this->error = $file->getError();
+					$queue->dequeue();
+					return false;				
+				}
+				$save_name = $info->getSaveName(); //保存路径	
+				if (!$save_name) {
+					$this->error = '文件上传失败，请重试！';
+					$queue->dequeue();
+					return false;
+				}
+			} else {
+				$save_name = $param['temp_file'];
 			}
-			$saveName = $info->getSaveName(); //保存路径	
-			$ext = $info->getExtension(); //文件后缀
-			if (!$saveName) {
-				$this->error = '文件上传失败，请重试！';
-            	return false;
+
+			$ext = pathinfo($save_name, PATHINFO_EXTENSION); //文件后缀
+			$save_path = UPLOAD_PATH . $save_name;
+
+			if (!$queue->canExec()) {
+				$this->error = [
+					'temp_file' => $save_name,
+					'page' => -2,
+					'import_queue_index' => $import_queue_index,
+					'info' => $queue->error
+				];
+				return true;
 			}
-			$savePath = FILE_PATH . 'public' . DS . 'uploads'. DS . $saveName;
-            // require THINK_PATH.'vendor/PHPExcel/PHPExcelExcelToArrary.php';//导入excelToArray类
-            // $ExcelToArrary = new ExcelToArrary();//实例化
-            // //对上传的Excel数据进行处理生成编程数据,再进行数据库写入
-            // $res = $ExcelToArrary->read($savePath, "UTF-8", $ext);//传参,判断office2007还是office2003
+
+			if ($param['error_file']) {
+				$error_path = TEMP_DIR . $param['error_file'];
+				$error_row = $param['error'] + 3;
+			} else {
+				$error_path = tempFileName($ext);
+				// 生成错误数据文件
+				$controller->excelDownload($error_path);					
+				$error_row = 3;
+			}
+
+			vendor("phpexcel.PHPExcel");
+			vendor("phpexcel.PHPExcel.Writer.Excel5");
+			vendor("phpexcel.PHPExcel.Writer.Excel2007");
+			vendor("phpexcel.PHPExcel.IOFactory"); 
+
+			$err_PHPExcel = \PHPExcel_IOFactory::load($error_path);
+			$sheet = $err_PHPExcel->setActiveSheetIndex(0);
+			
+			// 添加错误数据到临时文件
+			$error_data_func = function ($data, $error) use ($sheet, &$error_row) {
+
+				foreach ($data as $key => $val) {
+					// 第一列为错误原因 所以+1
+					$error_col = \PHPExcel_Cell::stringFromColumnIndex($key + 1);
+					$sheet->setCellValue($error_col . $error_row, $val);
+				}
+				$sheet->setCellValue('A' . $error_row, $error);
+				$sheet->getStyle('A' . $error_row)->getFont()->getColor()->setARGB('FF000000');
+				$sheet->getStyle('A' . $error_row)->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFFF0000');
+
+				$error_row++;
+			};
+
+			// 错误数据临时文件名称
+			$error_data_file_name = \substr($error_path, strlen(TEMP_DIR));
             
             //实例化主文件
 			set_time_limit(1800);
@@ -287,11 +960,11 @@ class Excel extends Common
 	        if ($ext =='xlsx') {
 			    $objRender = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
 			    // $objRender->setReadDataOnly(true);
-			    $ExcelObj = $objRender->load($savePath);
+			    $ExcelObj = $objRender->load($save_path);
 			} elseif ($ext =='xls') {
 			 	$objRender = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xls');
 			    // $objRender->setReadDataOnly(true);
-			    $ExcelObj = $objRender->load($savePath);
+			    $ExcelObj = $objRender->load($save_path);
 			} elseif ($ext=='csv') {
 				$objWriter = new \PhpOffice\PhpSpreadsheet\Reader\Csv($objPHPExcel);
 			    //默认输入字符集
@@ -299,17 +972,20 @@ class Excel extends Common
 			    //默认的分隔符
 			    $objWriter->setDelimiter(',');
 			    //载入文件
-			    $ExcelObj = $objWriter->load($savePath);
+			    $ExcelObj = $objWriter->load($save_path);
 			}
-	        $currentSheet = $ExcelObj->getSheet(0);
+			$currentSheet = $ExcelObj->getSheet(0);
+			$data = $currentSheet->rangeToArray('A3:C12');
+
 	        //查看有几个sheet
 	        $sheetContent = $ExcelObj->getSheet(0)->toArray();
 	        //获取总行数
 	        $sheetCount = $ExcelObj->getSheet(0)->getHighestRow();
-	   		// if ($sheetCount > 2002) {
-			// $this->error = '';
-    		// return false; 	        	
-	   		// }
+	   		
+	   // 		if ($sheetCount > 2002) {
+				// $this->error = '单文件一次最多导入2000条数据';
+	   //  		return false;	        	
+	   // 		}
 			//读取表头
 	        $excelHeader = $sheetContent[1];
 	        unset($sheetContent[0]);
@@ -375,146 +1051,200 @@ class Excel extends Common
 	        	foreach ($productCategory as $v) {
 	        		$productCategoryArr[$v['name']] = $v['category_id'];
 	        	}
-	        }
-	       	$keys = 2;
-	       	$errorMessage = [];
-			$forCount = 1000; //每次取出1000个
-			for ($i = 0; $i <= ceil(round($sheetCount/$forCount,2)); $i++){
-				$_sub = array_slice($sheetContent, ($i)*$forCount, 1000);			
-				foreach ($_sub as $kk => $val){
-		        	$data = '';
-		        	$contactsData = '';
-		        	$k = 0;        	
-		        	$contacts_k = $field_num;        	
-		        	$resNameIds = '';
-		        	$keys++;
-		        	$name = ''; //客户、线索、联系人等名称
-		        	$contactsName = '';
-		            $data = $defaultData; //导入数据
-		            $contacts_data = $defaultData; //导入数据
-		            $resWhere = ''; //验重条件
-		            $resWhereNum = 0; //验重数
-		            $resContacts = false; //联系人是否有数据
-		            $resInfo = false; //Excel列是否有数据
-		            $resData = []; 
-		            $resContactsData = []; 
-					foreach ($excelHeader as $aa => $header) {
-						if (empty($header)) break; 					
-						$fieldName = trim(str_replace('*','',$header));
-						$info = '';
-						$info = $val[$k];
-						if ($info) $resInfo = true;
-						if ($types == 'crm_product' && $fieldName == '产品类别') {
-							$data['category_id'] = $productCategoryArr[$info] ? : 0;
-							$data['category_str'] = $dataModel->getPidStr($productCategoryArr[$info], '', 1);
-						}
-						//联系人
-				        if ($types == 'crm_contacts' && $fieldName == '客户名称') {
-				        	if (!$info) {
-								$errorMessage[] = '第'.$keys.'行导入错误,失败原因：客户名称必填';
-								continue;			        		
-				        	}
-				        	$customer_id = '';
-				        	$customer_id = db('crm_customer')->where(['name' => $info])->value('customer_id');
-				        	if (!$customer_id) {
-								$errorMessage[] = '第'.$keys.'行导入错误,失败原因：客户名称不存在';
-								continue;
-				        	}
-				        	$data['customer_id'] = $customer_id;
-				        }				
-						if ($aa < $field_num) {
-							if (empty($fieldArr[$fieldName]['field'])) continue; 
-							// if ($fieldArr[$fieldName]['field'] == 'name') $name = $info;
-							if (in_array($fieldArr[$fieldName]['field'], $uniqueField) && $info) {
-								if ($resWhereNum > 0) $resWhere .= " OR ";
-								$resWhere .= " `".$fieldArr[$fieldName]['field']."` = '".$info."'";
-								$resWhereNum += 1;
-							}
-							$resList = [];
-							$resList = $this->sheetData($k, $fieldArr, $fieldName, $info);
-							$resData[] = $resList['data'];
-							$k = $resList['k'];
-						} else {
-							//联系人
-							if ($types == 'crm_customer' && $aa == (int)$contacts_k) {
-								$contactsInfo = '';
-								$contactsInfo = $val[$contacts_k];
-								if ($contactsInfo) {
-									$resContacts = true;
-								}
-								// if ($contactsFieldArr[$fieldName]['field'] == 'name') $contactsName = $contactsInfo;	
-								$resContactsList = [];
-								$resContactsList = $this->sheetData($contacts_k, $contactsFieldArr, $fieldName, $contactsInfo);
-								$resContactsData[] = $resContactsList['data'];
-								$contacts_k = $resContactsList['k'];	
-							}
-						}
-        			}
-					$result = $this->changeArr($resData); //二维数组转一维数组
-					$data = $result ? array_merge($data,$result) : [];
-					if ($types == 'crm_customer' && $result) {
-						$resultContacts = $this->changeArr($resContactsData);
-						$contactsData = $resultContacts ? array_merge($contacts_data,$resultContacts) : []; //联系人
+			}
+			// 表头行数
+			$keys = 2;
+
+			// 导入错误数据
+			$errorMessage = [];
+			   
+			// 每次导入条数
+			$forCount = 5;
+
+			// 当前页码
+			$page = $param['page'] ?: 1;
+
+			// 数据总数
+			$total = $sheetCount - $keys;
+
+			// 总页数
+			$max_page = ceil($total / $forCount);
+			if ($page > $max_page) {
+				$this->error = 'page参数错误';
+				$queue->dequeue();
+				return false;
+			}
+
+			$_sub = array_slice($sheetContent, ($page - 1) * $forCount, $forCount);			
+			foreach ($_sub as $kk => $val){
+				$data = '';
+				$contactsData = '';
+				$k = 0;        	
+				$contacts_k = $field_num;        	
+				$resNameIds = '';
+				$keys++;
+				$name = ''; //客户、线索、联系人等名称
+				$contactsName = '';
+				$data = $defaultData; //导入数据
+				$contacts_data = $defaultData; //导入数据
+				$resWhere = ''; //验重条件
+				$resWhereNum = 0; //验重数
+				$resContacts = false; //联系人是否有数据
+				$resInfo = false; //Excel列是否有数据
+				$resData = []; 
+				$resContactsData = [];
+				$row_error = false;
+				foreach ($excelHeader as $aa => $header) {
+					if (empty($header)) break; 					
+					$fieldName = trim(str_replace('*','',$header));
+					$info = '';
+					$info = trim($val[$k]);
+					if ($info) $resInfo = true;
+					if ($types == 'crm_product' && $fieldName == '产品类别') {
+						$data['category_id'] = $productCategoryArr[$info] ? : 0;
+						$data['category_str'] = $dataModel->getPidStr($productCategoryArr[$info], '', 1);
 					}
-					$resWhere = $resWhere ? : '';
-					// $ownerWhere['owner_user_id'] = $param['owner_user_id'];
-					if ($uniqueField && $resWhere) {
-						$resNameIds = db($db)->where($resWhere)->where($ownerWhere)->column($db_id);
-					}
-					if ($resInfo == false) {
-						continue;
-					}				
-					if ($resNameIds && $data) {
-						if ($config == 1) {
-							$data['user_id'] = $param['create_user_id'];
-							$data['update_time'] = time();
-							//覆盖数据（以名称为查重规则，如存在则覆盖原数据）	
-							foreach ($resNameIds as $nid) {
-								$data[$db_id] = $id;
-								unset($data['owner_user_id']);
-								$upRes = $dataModel->updateDataById($data, $nid);
-								if (!$upRes) {
-									$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$dataModel->getError();
-									continue;	
-								}
-								if ($types == 'crm_customer' && $resContacts !== false) {
-									$contactsData['customer_id'] = $upRes['customer_id'];
-									if (!$contactsData['owner_user_id']) $contactsData['owner_user_id'] = $param['create_user_id'];
-									if (!$resData = $contactsModel->createData($contactsData)) {
-										$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$contactsModel->getError();
-										continue;
-									}
-								}								
-							}
-						}					
-					} else {
-						if (!$resData = $dataModel->createData($data)) {
-							$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$dataModel->getError();
+					//联系人
+					if ($types == 'crm_contacts' && $fieldName == '客户名称') {
+						if (!$info) {
+							$error_data_func($val, '客户名称必填');		// 错误数据导出
+							$errorMessage[] = '第'.$keys.'行导入错误,失败原因：客户名称必填';
+							$row_error = true;
+							continue;			        		
+						}
+						$customer_id = '';
+						$customer_id = db('crm_customer')->where(['name' => $info])->value('customer_id');
+						if (!$customer_id) {
+							$error_data_func($val, '客户名称不存在');		// 错误数据导出
+							$errorMessage[] = '第'.$keys.'行导入错误,失败原因：客户名称不存在';
+							$row_error = true;
 							continue;
 						}
-						if ($types == 'crm_customer' && $resContacts !== false) {
-							$contactsData['customer_id'] = $resData['customer_id'];
-							if (!$contactsData['owner_user_id']) $contactsData['owner_user_id'] = $param['create_user_id'];
-							if (!$resData = $contactsModel->createData($contactsData)) {
-								$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$contactsModel->getError();
-								continue;
-							}				
-						}											
+						$data['customer_id'] = $customer_id;
+					}				
+					if ($aa < $field_num) {
+						if (empty($fieldArr[$fieldName]['field'])) continue; 
+						// if ($fieldArr[$fieldName]['field'] == 'name') $name = $info;
+						if (in_array($fieldArr[$fieldName]['field'], $uniqueField) && $info) {
+							if ($resWhereNum > 0) $resWhere .= " OR ";
+							$resWhere .= " `".$fieldArr[$fieldName]['field']."` = '".$info."'";
+							$resWhereNum += 1;
+						}
+						$resList = [];
+						$resList = $this->sheetData($k, $fieldArr, $fieldName, $info);
+						$resData[] = $resList['data'];
+						$k = $resList['k'];
+					} else {
+						//联系人
+						if ($types == 'crm_customer' && $aa == (int)$contacts_k) {
+							$contactsInfo = '';
+							$contactsInfo = $val[$contacts_k];
+							if ($contactsInfo) {
+								$resContacts = true;
+							}
+							// if ($contactsFieldArr[$fieldName]['field'] == 'name') $contactsName = $contactsInfo;	
+							$resContactsList = [];
+							$resContactsList = $this->sheetData($contacts_k, $contactsFieldArr, $fieldName, $contactsInfo);
+							$resContactsData[] = $resContactsList['data'];
+							$contacts_k = $resContactsList['k'];	
+						}
 					}
 				}
-				// ob_flush();
-    			// flush();
-        		unset($_sub);//用完及时销毁									
+				if ($row_error) {
+					continue;
+				}
+				$result = $this->changeArr($resData); //二维数组转一维数组
+				$data = $result ? array_merge($data,$result) : [];
+				if ($types == 'crm_customer' && $result) {
+					$resultContacts = $this->changeArr($resContactsData);
+					$contactsData = $resultContacts ? array_merge($contacts_data,$resultContacts) : []; //联系人
+				}
+				$resWhere = $resWhere ? : '';
+				// $ownerWhere['owner_user_id'] = $param['owner_user_id'];
+				if ($uniqueField && $resWhere) {
+					$resNameIds = db($db)->where($resWhere)->where($ownerWhere)->column($db_id);
+				}
+				if ($resInfo == false) {
+					continue;
+				}
+				if ($resNameIds && $data) {
+					if ($config == 1 && $resNameIds) {
+						$data['user_id'] = $param['create_user_id'];
+						$data['update_time'] = time();
+						//覆盖数据（以名称为查重规则，如存在则覆盖原数据）	
+						foreach ($resNameIds as $nid) {
+							$upRes = $dataModel->updateDataById($data, $nid);
+							if (!$upRes) {
+								$error_data_func($val, $dataModel->getError());		// 错误数据导出
+								$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$dataModel->getError();
+								continue;	
+							}
+							if ($types == 'crm_customer' && $resContacts !== false) {
+								$contactsData['customer_id'] = $upRes['customer_id'];
+								if (!$contactsData['owner_user_id']) $contactsData['owner_user_id'] = $param['create_user_id'];
+								if (!$resData = $contactsModel->createData($contactsData)) {
+									$error_data_func($val, $contactsModel->getError());		// 错误数据导出
+									$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$contactsModel->getError();
+									continue;
+								}
+							}								
+						}
+					} else {
+						$error_data_func($val, '跳过');
+					}				
+				} else {
+					if (!$resData = $dataModel->createData($data)) {
+						$error_data_func($val, $dataModel->getError());		// 错误数据导出
+						$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$dataModel->getError();
+						continue;
+					}
+					if ($types == 'crm_customer' && $resContacts !== false) {
+						$contactsData['customer_id'] = $resData['customer_id'];
+						if (!$contactsData['owner_user_id']) $contactsData['owner_user_id'] = $param['create_user_id'];
+						if (!$resData = $contactsModel->createData($contactsData)) {
+							$error_data_func($val, $contactsModel->getError());		// 错误数据导出
+							$errorMessage[] = '第'.$keys.'行导入错误,失败原因：'.$contactsModel->getError();
+							continue;
+						}				
+					}											
+				}
 			}
-			unset($sheetContent);
-	        	       
-	        if ($errorMessage) {
-	        	$this->error = $errorMessage;
-	        	return false;
-	        }
+			
+			// 完成数
+			$done = ($page - 1) * $forCount + count($_sub);
+			// 错误数
+			$error = $error_row - 3;
+
+			// 错误数据暂存
+			$objWriter = \PHPExcel_IOFactory::createWriter($err_PHPExcel, 'Excel5');
+			$objWriter->save($error_path);
+
+	        $this->error = [
+				'temp_file' => $save_name,
+				'error_file' => $error_data_file_name,
+				// 每行错误信息提示
+				// 'error' => $errorMessage,
+				// 文件总计条数
+				'total' => $total,
+				// 已完成条数
+				'done' => $done,
+				// 错误数据写入行号
+				'error' => $error,
+				// 下次页码
+				'page' => $page + 1,
+				'import_queue_index' => $import_queue_index
+			];
+
+			// 执行完成
+			if ($done >= $total) {
+				$queue->dequeue();
+				$this->error['error_file_path'] = 'temp/' . $error_data_file_name;
+			}
+
 	        return true;
         } else {
 			$this->error = '请选择导入文件';
+			$queue->dequeue();
             return false;        	
         }
 	}
@@ -581,6 +1311,49 @@ class Excel extends Common
 		$res['data'] = $data;
 		$res['k'] = $k;
 		return $res;
+	}
+
+	/**
+	 * 导入数据处理
+	 *
+	 * @param string $value
+	 * @param array $field
+	 * @return string
+	 * @author Ymob
+	 */
+	public function handleData($value, $field)
+	{
+		if ($value == '') {
+			return '';
+		}
+		switch ($field['form_type']) {
+			case 'address':
+				return $value;
+			case 'date':
+				return date('Y-m-d', strtotime($value));
+			case 'datetime':
+				return strtotime($value);
+			case 'customer':
+			case 'contacts':
+			case 'business':
+				$temp = db('crm_' . $field['form_type'])
+					->where(['name' => $value])
+					->value($field['form_type'] . '_id');
+				return $temp ?: 0;
+			case 'business_type':
+				$temp = db('crm_business_type')
+					->where(['name' => $value])
+					->value('type_id');
+				return $temp ?: 0;
+			case 'business_status':
+				$temp = db('crm_business_status')
+					->where(['name' => $value])
+					->value('status_id');
+				return $temp ?: 0;
+			default:
+				return $value;
+		}
+
 	}
 
 	//二维数组转一维数组

@@ -119,7 +119,9 @@ return [
 	// 【商机】漏斗
 	'crm/business/funnel' => ['crm/business/funnel', ['method' => 'POST']],	
 	// 【商机】删除
-	'crm/business/delete' => ['crm/business/delete', ['method' => 'POST']],				
+	'crm/business/delete' => ['crm/business/delete', ['method' => 'POST']],	
+	// 【商机】导出
+	'crm/business/excelExport' => ['crm/business/excelExport', ['method' => 'POST']],			
 
 	// 【合同】列表
 	'crm/contract/index' => ['crm/contract/index', ['method' => 'POST']],
@@ -142,7 +144,11 @@ return [
 	// 【合同】撤销审核
 	'crm/contract/revokeCheck' => ['crm/contract/revokeCheck', ['method' => 'POST']],
 	// 【合同】删除
-	'crm/contract/delete' => ['crm/contract/delete', ['method' => 'POST']],		
+	'crm/contract/delete' => ['crm/contract/delete', ['method' => 'POST']],
+	// 【合同】导出
+	'crm/contract/excelExport' => ['crm/contract/excelExport', ['method' => 'POST']],
+	// 【合同】作废
+	'crm/contract/cancel' => ['crm/contract/cancel', ['method' => 'POST']],		
 	
 	// 【产品】列表
 	'crm/product/index' => ['crm/product/index', ['method' => 'POST']],

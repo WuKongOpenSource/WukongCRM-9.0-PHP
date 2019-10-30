@@ -234,7 +234,7 @@ class Index extends ApiCommon
 
     /**
      * 销售趋势
-     * @return [type] [description]
+     * @return
      */
     public function saletrend()
     {
@@ -256,28 +256,30 @@ class Index extends ApiCommon
         $company = $biCustomerModel->getParamByCompany($param);
         $list = array();
         $totlaContractMoney = '0.00';
-        $totlaReceivablesMoney = '0.00';
-               
+        $totlaReceivablesMoney = '0.00';         
         for ($i=1; $i <= $company['j']; $i++) { 
             $whereArr = [];
-            $item = array();
+            $item = [];
+            $timeArr = [];
+            $where_time = [];
             //时间段
             $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
             $item['type'] = $timeArr['type'];
-            $day = $timeArr['day']?$timeArr['day']:'1';
-            $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
-            $next_day = $timeArr['next_day'] ? $timeArr['next_day']-1 : '1';
-            $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array(date('Y-m-d',$start_time),date('Y-m-d',$end_time)));
+            if ($timeArr['start_time'] && $timeArr['end_time']) {
+                $where_time = array('between',array(date('Y-m-d',$timeArr['start_time']),date('Y-m-d',$timeArr['end_time'])));
             }
-            $whereArr['order_date'] = $create_time;
+            $whereArr['order_date'] = $where_time;
+            if (in_array($param['type'],array('month','lastMonth','week','lastWeek'))) {
+                $whereArr['order_date'] = array('eq',date('Y-m-d',$timeArr['start_time']));
+            }
             $whereArr['check_status'] = array('eq',2);
             $whereArr['owner_user_id'] = array('in',$userIds);
             $totlaContractMoney += $item['contractMoney'] = $biContractModel->getDataMoney($whereArr);
             unset($whereArr['order_date']);
-            $whereArr['return_time'] = $create_time;
+            $whereArr['return_time'] = $where_time;
+            if (in_array($param['type'],array('month','lastMonth','week','lastWeek'))) {
+                $whereArr['return_time'] = array('eq',date('Y-m-d',$timeArr['start_time']));
+            }            
             $totlaReceivablesMoney += $item['receivablesMoney'] = $receivablesModel->getDataMoney($whereArr);
             $list[] = $item;
         }
@@ -376,9 +378,24 @@ class Index extends ApiCommon
             $dataCount = db('crm_customer')
                             ->where($resWhere)
                             ->count();
+            $customerModel = model('Customer');
+            $wherePool = $customerModel->getWhereByPool();
             foreach ($dataList as $k=>$v) {
                 $dataList[$k]['name'] = $v['name'] ? : '查看详情';
-                $dataList[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];
+                if ($v['owner_user_id'] > 0) {
+                    $pool = $customerModel->alias('customer')
+                        ->where(['customer_id' => $v['customer_id']])
+                        ->where($wherePool)
+                        ->value('customer_id');
+                    // 是客户池
+                    if ($pool) {
+                        $dataList[$k]['owner_user_id_info'] = [];
+                    } else {
+                        $dataList[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];
+                    }
+                } else {
+                    $dataList[$k]['owner_user_id_info'] = [];
+                }
             }
         } elseif ($types == 'crm_contacts') {
             if (!$param['name'] && !$param['customer_name'] && !$param['telephone'] && !$param['mobile']) return resultArray(['error' => '查询条件不能为空']);

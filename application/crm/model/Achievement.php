@@ -99,7 +99,7 @@ class Achievement extends Common
         } elseif ($request['structure_id']) {
 			$map['type'] = 3;
 			$result = array();
-			$userlist = Db::name('AdminUser')->field('id,realname as name')->where('structure_id = '.$request['structure_id'].'')->select();
+			$userlist = Db::name('AdminUser')->field('id,realname as name')->where('structure_id = '.$request['structure_id'])->select();
 			if (!$userlist) {
 				return array();
 			}

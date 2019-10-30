@@ -49,6 +49,21 @@ class Customer extends ApiCommon
     {
         $customerModel = model('Customer');
         $param = $this->param;
+        $nearby = $param['nearby'];    //是否为查询附近客户  0 / 1
+        $lng_lat = $param['lng_lat'];  //经纬度
+        $radius = $param['radius'];    //范围 米
+        $lng_lat = explode(',', $lng_lat);
+        $lng = $mapInfo['center_lng'] = $lng_lat[0];
+        $lat = $mapInfo['center_lat'] = $lng_lat[1];
+        $raidus = $mapInfo['raidus'] = intval($raidus);
+        if ($lng && $lat) {
+            $ret = get_around($lng,$lat,$raidus);
+            if (!$ret) {
+                return resultArray(['error' => '地图范围定义失败']);
+            }
+            $param['lng'] = ['between', [$ret['min_lng'],$ret['max_lng']]];
+            $param['lat'] = ['between', [$ret['min_lat'],$ret['max_lat']]];   
+        }
         $userInfo = $this->userInfo;
         $param['user_id'] = $userInfo['id']; 
         $data = $customerModel->getDataList($param);
@@ -167,6 +182,8 @@ class Customer extends ApiCommon
         $customerModel = model('Customer');
         $userModel = new \app\admin\model\User();
         $recordModel = new \app\admin\model\Record();
+        $fileModel = new \app\admin\model\File();
+        $actionRecordModel = new \app\admin\model\ActionRecord();
         $param = $this->param;
         if (!is_array($param['id'])) {
             $customer_id[] = $param['id'];
@@ -230,6 +247,10 @@ class Customer extends ApiCommon
             }
             //删除跟进记录
             $recordModel->delDataByTypes('crm_customer',$delIds);
+            //删除关联附件
+            $fileModel->delRFileByModule('crm_customer',$delIds);
+            //删除关联操作记录
+            $actionRecordModel->delDataById(['types'=>'crm_customer','action_id'=>$delIds]);
             actionLog($delIds,'','','');                    
         }
         if ($errorMessage) {
@@ -397,7 +418,7 @@ class Customer extends ApiCommon
                 continue;
             }
             //联系人负责人清除
-            db('crm_customer')->where(['customer_id' => $customer_id])->update(['owner_user_id' => 0]);
+            db('crm_contacts')->where(['customer_id' => $customer_id])->update(['owner_user_id' => 0]);
             //修改记录
             updateActionLog($userInfo['id'], 'crm_customer', $customer_id, '', '', '将客户放入公海');              
         }
@@ -502,11 +523,15 @@ class Customer extends ApiCommon
             $data['update_time'] = time();
             $data['deal_time'] = time();
             $data['follow'] = '待跟进';
+            //将团队成员全部清除
+            $data['ro_user_id'] = '';
+            $data['rw_user_id'] = '';            
             $resCustomer = db('crm_customer')->where(['customer_id' => $v])->update($data);
             if (!$resCustomer) {
                 $errorMessage[] = '客户《'.$dataName.'》领取失败，错误原因：数据出错；';
                 continue;
             }
+            //联系人领取
             db('crm_contacts')->where(['customer_id' => $v])->update(['owner_user_id' => $userInfo['id']]);
             //修改记录
             updateActionLog($userInfo['id'], 'crm_customer', $v, '', '', '领取了客户');                           
@@ -562,6 +587,9 @@ class Customer extends ApiCommon
             $data['update_time'] = time();
             $data['deal_time'] = time();
             $data['follow'] = '待跟进';
+            //将团队成员全部清除
+            $data['ro_user_id'] = '';
+            $data['rw_user_id'] = '';             
             $resCustomer = db('crm_customer')->where(['customer_id' => $v])->update($data);
             if (!$resCustomer) {
                 $errorMessage[] = '客户《'.$dataName.'》分配失败，错误原因：数据出错；';
@@ -601,260 +629,46 @@ class Customer extends ApiCommon
         $excelModel = new \app\admin\model\Excel();
         // 导出的字段列表
         $fieldModel = new \app\admin\model\Field();
-        $field_list = $fieldModel->getIndexFieldList('crm_customer', $userInfo['id']);
+        $field_list = $fieldModel->getIndexFieldConfig('crm_customer', $userInfo['id']);
         // 文件名
         $file_name = '5kcrm_customer_'.date('Ymd');
-        $param['pageType'] = 'all'; 
-        $excelModel->exportCsv($file_name, $field_list, function($list) use ($param){
-            $list = model('Customer')->getDataList($param);
-            return $list;
+
+        $model = model('Customer');
+        $temp_file = $param['temp_file'];
+        unset($param['temp_file']);
+        $page = $param['page'] ?: 1;
+        unset($param['page']);
+        unset($param['export_queue_index']);
+        return $excelModel->batchExportCsv($file_name, $temp_file, $field_list, $page, function($page, $limit) use ($model, $param, $field_list) {
+            $param['page'] = $page;
+            $param['limit'] = $limit;
+            $data = $model->getDataList($param);
+            $data['list'] = $model->exportHandle($data['list'], $field_list, 'customer');
+            return $data;
         });
     }
 
     /**
      * 客户导入模板下载
      * @author Michael_xu
-     * @param 
+     * @param string $save_path 本地保存路径     用于错误数据导出，在 Admin\Model\Excel::batchImportData()调用
      * @return
      */
-    public function excelDownload()
+    public function excelDownload($save_path = '')
     {
         $param = $this->param;
+        $userInfo = $this->userInfo;
         $excelModel = new \app\admin\model\Excel();
 
         // 导出的字段列表
         $fieldModel = new \app\admin\model\Field();
         $fieldParam['types'] = 'crm_customer'; 
         $fieldParam['action'] = 'excel'; 
-        $customer_field_list = $fieldModel->field($fieldParam);
-        $contactsParam['types'] = 'crm_contacts'; 
-        $contactsParam['field'] = array('neq','customer_id'); 
-        $contacts_field_list = $fieldModel->getDataList($contactsParam);       
-        // $contacts_field_list = [];
-        //实例化主文件
-        vendor("phpexcel.PHPExcel");
-        vendor("phpexcel.PHPExcel.Writer.Excel5");
-        vendor("phpexcel.PHPExcel.Writer.Excel2007");
-        vendor("phpexcel.PHPExcel.IOFactory"); 
-
-        $objPHPExcel = new \phpexcel();
-        $objWriter = new \PHPExcel_Writer_Excel5($objPHPExcel);
-        $objWriter = new \PHPExcel_Writer_Excel2007($objPHPExcel);
-
-        //设置属性
-        $objProps = $objPHPExcel->getProperties();
-        $objProps->setCreator("5kcrm");
-        $objProps->setLastModifiedBy("5kcrm");
-        $objProps->setTitle("5kcrm");
-        $objProps->setSubject("5kcrm data");
-        $objProps->setDescription("5kcrm data");
-        $objProps->setKeywords("5kcrm data");
-        $objProps->setCategory("5kcrm");
-        $objPHPExcel->setActiveSheetIndex(0);
-        $objActSheet = $objPHPExcel->getActiveSheet();
-        $objActSheet->setTitle('悟空软件客户导入模板'.date('Y-m-d',time()));
-
-        //存储Excel数据源到其他工作薄
-        $objPHPExcel->createSheet();
-        $subObject = $objPHPExcel->getSheet(1);
-        $subObject->setTitle('data');
-        //保护数据源
-        $subObject->getProtection()->setSheet(true);
-        $subObject->protectCells('A1:C1000',time());        
-
-        //填充边框
-        $styleArray = [
-            'borders'=>[
-                'outline'=>[
-                    'style'=>\PHPExcel_Style_Border::BORDER_THICK, //设置边框
-                    'color' => ['argb' => '#F0F8FF'], //设置颜色
-                ],
-            ],
-        ];
-        $row = 1000;
-        $k = 0;
-        foreach ($customer_field_list as $field) {
-            $objActSheet->getColumnDimension($excelModel->stringFromColumnIndex($k))->setWidth(20); //设置单元格宽度
-            if ($field['form_type'] == 'address') {
-                for ($a=0; $a<=3; $a++){
-                    $address = array('所在省','所在市','所在县','街道信息');//如果是所在省的话
-                    // $objActSheet->getStyle($excelModel->stringFromColumnIndex($k).'2')->applyFromArray($styleArray);//填充样式
-                    $objActSheet->setCellValue($excelModel->stringFromColumnIndex($k).'2', $address[$a]);
-                    $k++;
-                }
-            } else {
-                if ($field['form_type'] == 'select' || $field['form_type'] == 'checkbox' || $field['form_type'] == 'radio') {
-                    // $setting = $field['setting'] ? explode(chr(10), $field['setting']) : [];
-                    $setting = $field['setting'] ? : [];
-                    $select_value = implode(',',$setting);
-                    //解决下拉框数据来源字串长度过大：将每个来源字串分解到一个空闲的单元格中
-                    $str_len = strlen($select_value);
-                    $selectList = array();
-                    if ($str_len >= 255) {
-                        $str_list_arr = explode(',', $select_value);   
-                        if ($str_list_arr) {
-                            foreach ($str_list_arr as $i1=>$d) {  
-                                $c = $excelModel->stringFromColumnIndex($k).($i1+1);  
-                                $subObject->setCellValue($c,$d);
-                                $selectList[$d]=$d;
-                            }
-                            $endcell = $c;
-                        }
-                        for ($j=3; $j<=70; $j++) { 
-                            $objActSheet->getStyle($excelModel->stringFromColumnIndex($k).$j)->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_TEXT);//设置单元格格式 (文本)     
-                            //数据有效性   start
-                            $objValidation = $objActSheet->getCell($excelModel->stringFromColumnIndex($k).$j)->getDataValidation();
-                            $objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)  
-                               -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
-                               -> setAllowBlank(false)  
-                               -> setShowInputMessage(true)  
-                               -> setShowErrorMessage(true)  
-                               -> setShowDropDown(true)  
-                               -> setErrorTitle('输入的值有误')  
-                               -> setError('您输入的值不在下拉框列表内.')  
-                               -> setPromptTitle('--请选择--')  
-                               -> setFormula1('data!$'.$excelModel->stringFromColumnIndex($k).'$1:$'.$excelModel->stringFromColumnIndex($k).'$'.count(explode(',',$select_value)));
-                            //数据有效性  end   
-                        }
-                    } else {
-                        if ($select_value) {
-                            for ($j=3; $j<=70; $j++) {    
-                                $objActSheet->getStyle($excelModel->stringFromColumnIndex($k).$j)->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_TEXT);//设置单元格格式 (文本)  
-                                //数据有效性   start
-                                $objValidation = $objActSheet->getCell($excelModel->stringFromColumnIndex($k).$j)->getDataValidation();
-                                $objValidation -> setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST)  
-                                   -> setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_INFORMATION)  
-                                   -> setAllowBlank(false)  
-                                   -> setShowInputMessage(true)  
-                                   -> setShowErrorMessage(true)  
-                                   -> setShowDropDown(true)  
-                                   -> setErrorTitle('输入的值有误')  
-                                   -> setError('您输入的值不在下拉框列表内.')  
-                                   -> setPromptTitle('--请选择--')  
-                                   -> setFormula1('"'.$select_value.'"');
-                                //数据有效性  end
-                            }
-                        }
-                    }
-                }
-                $objActSheet->getStyle($excelModel->stringFromColumnIndex($k))->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_TEXT);//设置单元格格式 (文本)
-                //检查该字段若必填，加上"*"
-                $field['name'] = sign_required($field['is_null'], $field['name']);
-                // $objActSheet->getStyle($excelModel->stringFromColumnIndex($k).'2')->applyFromArray($styleArray);//填充样式
-                $objActSheet->setCellValue($excelModel->stringFromColumnIndex($k).'2', $field['name']);
-                $k++;
-            }
-        }
-        $max_customer_column = $excelModel->stringFromColumnIndex($k-1);
-        $mark_customer = $excelModel->stringFromColumnIndex($k);   
-
-        $contacts_start_mark = $excelModel->stringFromColumnIndex($k+1).'1';
-        //联系人相关
-        if ($contacts_field_list) {
-            foreach ($contacts_field_list as $field) {
-                $objActSheet->getColumnDimension($excelModel->stringFromColumnIndex($k))->setWidth(20); //设置单元格宽度
-                if ($field['form_type'] == 'address') {
-                     for ($a=0; $a<=3; $a++){
-                         $address = array('所在省','所在市','所在县','街道信息');//如果是所在省的话
-                         // $objActSheet->getStyle($excelModel->stringFromColumnIndex($k).'2')->applyFromArray($styleArray);//填充样式
-                         $objActSheet->setCellValue($excelModel->stringFromColumnIndex($k).'2', $address[$a]);
-                         $k++;
-                     }
-                } elseif ($field['form_type'] != 'customer') {
-                    if ($field['form_type'] == 'select' || $field['form_type'] == 'checkbox' || $field['form_type'] == 'radio') {
-                        $setting = $field['setting'] ? : [];
-                        $select_value = implode(',',$setting);
-
-                        //解决下拉框数据来源字串长度过大：将每个来源字串分解到一个空闲的单元格中
-                        $str_len = strlen($select_value);
-                        $selectList = array();
-                        if ($str_len >= 255) {
-                            $str_list_arr = explode(',', $select_value);   
-                            if ($str_list_arr) {
-                                foreach ($str_list_arr as $i1=>$d) {  
-                                    $c = $excelModel->stringFromColumnIndex($k).($i1+1);  
-                                    $subObject->setCellValue($c,$d);
-                                    $selectList[$d]=$d;
-                                }
-                                $endcell = $c;
-                            }
-                            for ($j=3; $j<=70; $j++) {     
-                                $objActSheet->getStyle($excelModel->stringFromColumnIndex($k).$j)->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_TEXT);//设置单元格格式 (文本) 
-                                //数据有效性   start
-                                $objValidation = $objActSheet->getCell($excelModel->stringFromColumnIndex($k).$j)->getDataValidation();
-                                $objValidation -> setType(\PHPExcel_Cell_DataValidation::TYPE_LIST)  
-                                   -> setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION)  
-                                   -> setAllowBlank(false)  
-                                   -> setShowInputMessage(true)  
-                                   -> setShowErrorMessage(true)  
-                                   -> setShowDropDown(true)  
-                                   -> setErrorTitle('输入的值有误')  
-                                   -> setError('您输入的值不在下拉框列表内.')  
-                                   -> setPromptTitle('--请选择--')  
-                                   -> setFormula1('data!$'.$excelModel->stringFromColumnIndex($k).'$1:$'.$excelModel->stringFromColumnIndex($k).'$'.count(explode(',',$select_value)));
-                                //数据有效性  end                          
-
-                            }
-                        } else {
-                            if ($select_value) {
-                                for ($j=3; $j<=70; $j++) {   
-                                    $objActSheet->getStyle($excelModel->stringFromColumnIndex($k).$j)->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_TEXT);//设置单元格格式 (文本)   
-                                    //数据有效性   start
-                                    $objValidation = $objActSheet->getCell($excelModel->stringFromColumnIndex($k).$j)->getDataValidation();
-                                    $objValidation -> setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST)  
-                                       -> setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_INFORMATION)  
-                                       -> setAllowBlank(false)  
-                                       -> setShowInputMessage(true)  
-                                       -> setShowErrorMessage(true)  
-                                       -> setShowDropDown(true)  
-                                       -> setErrorTitle('输入的值有误')  
-                                       -> setError('您输入的值不在下拉框列表内.')  
-                                       -> setPromptTitle('--请选择--')  
-                                       -> setFormula1('"'.$select_value.'"');
-                                    //数据有效性  end
-                                }
-                            }
-                        }
-                    }   
-                    $objActSheet->getStyle($excelModel->stringFromColumnIndex($k))->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_TEXT);//设置单元格格式 (文本)             
-                    //检查该字段若必填，加上"*"
-                    $field['name'] = sign_required($field['is_null'], $field['name']);
-                    // $objActSheet->getStyle($excelModel->stringFromColumnIndex($k).'2')->applyFromArray($styleArray);//填充样式
-                    $objActSheet->setCellValue($excelModel->stringFromColumnIndex($k).'2', $field['name']);
-                    $k++;
-                }
-            }            
-        }
-        
-        $mark_contacts = $excelModel->stringFromColumnIndex($k-1);
-
-        $objActSheet->mergeCells('A1:'.$max_customer_column.'1');
-        $objActSheet->mergeCells($mark_customer.'1:'.$mark_contacts.'1');
-        $objActSheet->getStyle('A1:'.$mark_customer.'1')->getAlignment()->setHorizontal(\PHPExcel_Style_Alignment::HORIZONTAL_CENTER); //水平居中
-        $objActSheet->getStyle('A1:'.$mark_customer.'1')->getAlignment()->setVertical(\PHPExcel_Style_Alignment::VERTICAL_CENTER); //垂直居中
-        $objActSheet->getRowDimension(1)->setRowHeight(28); //设置行高
-        $objActSheet->getStyle('A1')->getFont()->getColor()->setARGB('FFFF0000');
-        $objActSheet->getStyle('A1')->getAlignment()->setWrapText(true);
-        //设置单元格格式范围的字体、字体大小、加粗
-        $objActSheet->getStyle('A1:'.$mark_contacts.'1')->getFont()->setName("微软雅黑")->setSize(13)->getColor()->setARGB('#000000');
-        //给单元格填充背景色
-        $objActSheet->getStyle('A1:'.$max_customer_column.'1')->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('#ff9900');
-        $objActSheet->getStyle($mark_customer.'1:'.$mark_contacts.'1')->getFill()->setFillType(\PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('#FFEBCD');
-        $objActSheet->getStyle($contacts_start_mark)->getAlignment()->setWrapText(true);
-        $content = '客户信息（*代表必填项）';
-        $objActSheet->setCellValue('A1', $content);
-        $objActSheet->getStyle('A1:'.$max_customer_column.'1')->getBorders()->getAllBorders()->setBorderStyle(\PHPExcel_Style_Border::BORDER_THIN);         
-        $objActSheet->getStyle('A1')->getBorders()->getRight()->getColor()->setARGB('#000000');        
-        $objActSheet->setCellValue($mark_customer.'1', '联系人信息（*代表必填项）');
-        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
-        ob_end_clean();
-        header("Content-Type: application/vnd.ms-excel;");
-        header("Content-Disposition:attachment;filename=客户信息导入模板".date('Y-m-d',time()).".xls");
-        header("Pragma:no-cache");
-        header("Expires:0");
-        $objWriter->save('php://output');
+        $field_list = $fieldModel->field($fieldParam);
+        $excelModel->excelImportDownload($field_list, 'crm_customer', $save_path);
     }
 
+    
     /**
      * 客户数据导入
      * @author Michael_xu
@@ -872,11 +686,12 @@ class Customer extends ApiCommon
         $param['deal_status'] = '未成交';
         $param['types'] = 'crm_customer';
         $file = request()->file('file');
-        $res = $excelModel->importExcel($file, $param);
+        // $res = $excelModel->importExcel($file, $param, $this);
+        $res = $excelModel->batchImportData($file, $param, $this);
         if (!$res) {
-            return resultArray(['error'=>$excelModel->getError()]);
+            return resultArray(['error' => $excelModel->getError()]);
         }
-        return resultArray(['data'=>'导入成功,请手动刷新页面']);
+        return resultArray(['data' => $excelModel->getError()]);
     }
 
     /**
@@ -946,14 +761,39 @@ class Customer extends ApiCommon
         // 导出的字段列表
         $fieldModel = new \app\admin\model\Field();
         $field_list = $fieldModel->getIndexFieldList('crm_customer', $userInfo['id']);
+        $field_list = array_filter($field_list, function ($val) {
+            return $val['field'] != 'owner_user_id';
+        });
         // 文件名
         $file_name = '5kcrm_customer_'.date('Ymd');
-        $param['pageType'] = 'all'; 
         $param['action'] = 'pool';
-        $excelModel->exportCsv($file_name, $field_list, function($list) use ($param){
-            $list = model('Customer')->getDataList($param);
-            return $list;
+
+        $model = model('Customer');
+        $temp_file = $param['temp_file'];
+        unset($param['temp_file']);
+        $page = $param['page'] ?: 1;
+        unset($param['page']);
+        unset($param['export_queue_index']);
+        return $excelModel->batchExportCsv($file_name, $temp_file, $field_list, $page, function($page, $limit) use ($model, $param) {
+            $param['page'] = $page;
+            $param['limit'] = $limit;
+            $data = $model->getDataList($param);
+            $data['list'] = array_map(function ($val) {
+                $val['create_time'] = date('Y-m-d H:i:s', $val['create_time']);
+                $val['update_time'] = date('Y-m-d H:i:s', $val['update_time']);
+                $val['next_time'] = date('Y-m-d H:i:s', $val['next_time']);
+                $val['create_user_id'] = $val['create_user_id_info']['realname'];
+                $val['owner_user_id'] = $val['owner_user_id_info']['realname'];
+                return $val;
+            }, $data['list']);
+            return $data;
         });
+
+        // $param['pageType'] = 'all'; 
+        // $excelModel->exportCsv($file_name, $field_list, function($list) use ($param){
+        //     $list = model('Customer')->getDataList($param);
+        //     return $list;
+        // });
     } 
 
     /**

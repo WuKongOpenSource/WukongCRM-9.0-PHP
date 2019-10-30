@@ -21,7 +21,7 @@ class File extends ApiCommon
     {
         $action = [
             'permission'=>[''],
-            'allow'=>['index','save','delete','update','read']            
+            'allow'=>['index','save','delete','update','read', 'download']            
         ];
         Hook::listen('check_auth',$action);
         $request = Request::instance();
@@ -136,5 +136,15 @@ class File extends ApiCommon
             return resultArray(['error' => $this->getError()]);
         }
         return resultArray(['data' => $data]);        
-    }     	
+    }   
+    
+    /**
+     * 静态资源文件下载
+     */
+    public function download()
+    {
+        $path = $this->param['path'];
+        $name = $this->param['name'] ?: '';
+        return download(realpath('./public/' . $path), $name);
+    }
 }

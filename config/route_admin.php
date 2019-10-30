@@ -138,6 +138,8 @@ return [
 	'admin/file/index' => ['admin/file/index', ['method' => 'POST']],		
 	// 【附件】重命名
 	'admin/file/update' => ['admin/file/update', ['method' => 'POST']],		
+	// 【附件】下载
+	'admin/file/download' => ['admin/file/download', ['method' => 'POST']],		
 
 	// 【自定义字段】列表
 	'admin/field/index' => ['admin/field/index', ['method' => 'POST']],	
@@ -188,6 +190,16 @@ return [
 	// 【员工部门】员工账号编辑
 	'admin/users/usernameEdit' => ['admin/users/usernameEdit', ['method' => 'POST']],					
 	
+	// 【员工】员工登录记录
+	'admin/users/loginRecord' => ['admin/users/loginRecord', ['method' => 'POST']],
+	
+	// 【系统通知】列表
+	'admin/index/message' => ['admin/index/message', ['method' => 'POST']],
+	// 【系统通知】消息通知类型
+	'admin/index/messageTypeList' => ['admin/index/messageTypeList', ['method' => 'POST']],
+	// 【系统通知】阅读消息
+	'admin/index/readMessage' => ['admin/index/readMessage', ['method' => 'POST']],
+
 	// MISS路由
 	'__miss__'  => 'admin/base/miss',
 ];

@@ -375,9 +375,18 @@ class User extends Common
 	 */
 	public function login($username, $password, $verifyCode = '', $isRemember = false, $type = false, $authKey = '', $paramArr = [])
 	{
-		if (!$password){
-			$this->error = '密码不能为空';
-			return false;
+		if ($paramArr['dingCode']) {
+			$dingtalkModel = new \app\admin\model\Dingtalk();
+            $username = $dingtalkModel->sign($paramArr['dingCode']);
+			if (!$username) {
+				$this->error = $dingtalkModel->getError();;
+				return false;            	
+            }            
+		} else {
+			if (!$password){
+				$this->error = '密码不能为空';
+				return false;
+			}
 		}
         if (config('IDENTIFYING_CODE') && !$type) {
             if (!$verifyCode) {
@@ -398,16 +407,31 @@ class User extends Common
     	if (!$userInfo) {
 			$this->error = '帐号不存在';
 			return false;
-    	}
+		}
+		// 登录记录
+		$login_record = new LoginRecord();
+		$login_record->user_id = $userInfo['id'];
+
+		// 三次出错，十五分钟禁止登录
+		if (false === $error_count = $login_record->verify()) {
+			$this->error = $login_record->error;
+			return false;
+		}
+
 		$userInfo['thumb_img'] = $userInfo['thumb_img'] ? getFullPath($userInfo['thumb_img']) : '';
-    	if (user_md5($password, $userInfo['salt'], $userInfo['username']) !== $userInfo['password']) {
-			$this->error = '密码错误';
+    	if (user_md5($password, $userInfo['salt'], $userInfo['username']) !== $userInfo['password'] && !$paramArr['dingCode']) {
+			$this->error = '密码错误' . "，已错误 " . ($error_count[0] + 1) . " 次，错误 {$error_count[1]} 次之后将等待 {$error_count[2]} 分钟";
+			$login_record->createRecord(LoginRecord::TYPE_PWD_ERROR);
 			return false;
     	}
     	if ($userInfo['status'] === 0) {
 			$this->error = '帐号已被禁用';
+			$login_record->createRecord(LoginRecord::TYPE_USER_BANNED);
 			return false;
-    	}
+		}
+		
+		$login_record->createRecord(LoginRecord::TYPE_SUCCESS);
+
         // 获取菜单和权限
         $dataList = $this->getMenuAndRule($userInfo['id']);
 
@@ -419,7 +443,7 @@ class User extends Common
 
 		//登录有效时间
         $cacheConfig = config('cache');
-        $loginExpire = $cacheConfig['expire'] ? : '86400*3';        
+        $loginExpire = $cacheConfig['expire'] ? : 86400*3;        
 
         // 保存缓存
         session_start();
@@ -717,16 +741,15 @@ class User extends Common
 	 */
 	public function getSubUserByStr($structure_id, $type = 1)
 	{	
-		if (is_array($structure_id)) {
-			$allStrIds = $structure_id;
-		} else {
-			$allStrIds[] = $structure_id;
-		}
+		$allStrIds = (array) $structure_id;
 		if ($type == 2) {
 			$structureModel = new \app\admin\model\Structure();
-			$allSubStrIds = $structureModel->getAllChild($structure_id);
-			if ($allSubStrIds) {
-				$allStrIds = array_merge($allStrIds, $allSubStrIds); //全部关联部门（包含下属部门）
+			foreach ($allStrIds as $v) {
+				$allSubStrIds = [];
+				$allSubStrIds = $structureModel->getAllChild($v);
+				if ($allSubStrIds) {
+					$allStrIds = array_merge($allStrIds, $allSubStrIds); //全部关联部门（包含下属部门）
+				}				
 			}
 		}
 	    $userIds = db('admin_user')->where(['structure_id' => ['in',$allStrIds]])->column('id');

@@ -47,6 +47,9 @@ class Customer extends Common
     	$order_field = $request['order_field'];
     	$order_type = $request['order_type'];
     	$is_remind = $request['is_remind'];
+    	$nearby = $request['nearby'];
+    	$lng_lat = $request['lng_lat'];
+    	$raidus = $request['raidus'];
 		unset($request['scene_id']);
 		unset($request['search']);
 		unset($request['user_id']);	
@@ -55,6 +58,9 @@ class Customer extends Common
 		unset($request['order_field']);	
 		unset($request['order_type']);
 		unset($request['is_remind']);
+		unset($request['nearby']);
+		unset($request['lng_lat']);
+		unset($request['raidus']);
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -100,10 +106,10 @@ class Customer extends Common
 		if ($requestData['a'] == 'pool' || $action == 'pool') {	
 			//客户公海条件(没有负责人或已经到期)
         	$poolMap = is_object($sceneMap) ? $sceneMap : $this->getWhereByPool();
-			if ($search) {
+			/*if ($search) {
 				//普通筛选
 				$customerMap['customer.name'] = array('like','%'.$search.'%');
-			}		
+			}*/		
 		} else {
 			$customerMap = ($is_remind == 1) ? $this->getWhereByRemind() : $this->getWhereByCustomer(); //默认条件
 			//工作台仪表盘
@@ -189,7 +195,7 @@ class Customer extends Common
         if (count($list)) {
 			foreach ($list as $k => $v) {
 	        	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
-	        	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];
+	        	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];	        	
 	        	foreach ($userField as $key => $val) {
 	        		$list[$k][$val.'_info'] = isset($v[$val]) ? $userModel->getListByStr($v[$val]) : [];
 	        	}
@@ -223,11 +229,48 @@ class Customer extends Common
 		        $permission['is_update'] = $is_update;
 		        $permission['is_delete'] = $is_delete;
 		        $list[$k]['permission']	= $permission;        	
-	        }        	
+	        }  
+	        $mapInfo = [];
+	        if($nearby){
+				$lng_lat = explode(',', $lng_lat);
+				$lng = $mapInfo['center_lng'] = $lng_lat[0];
+				$lat = $mapInfo['center_lat'] = $lng_lat[1];
+				$raidus = $mapInfo['raidus'] = intval($raidus);
+				foreach ($list as $k => $v) {
+					//计算客户距中心点的距离
+					$distance = getDistance($lat, $lng, $v['lat'], $v['lng']);
+					if ($distance <= $raidus) {
+						$list[$k]['distance'] = round($distance / 1000,2);  //单位转换为公里
+
+						//格式化地址信息
+						$address_arr = array();
+						$address_arr = explode(chr(10), $v['address']);
+						$list[$k]['address'] = implode('', $address_arr);
+
+						//百度地图信息窗体js拼接信息
+						$data_info .= '['.$v['lng'].','.$v['lat'].',"客户名称：'.$v['name'].'<br />&#12288;&#12288;地址：'.$list[$k]['address'].'<br />&#12288;负责人：'.$list[$k]['owner_user_id_info']['name'].'<br />&#12288;距离约：'.$list[$k]['distance'].'公里"],';
+
+						$list[$k]['content'] = '客户名称：'.$v['name'].'<br />&#12288;&#12288;地址：'.$list[$k]['address'].'<br />&#12288;负责人：'.$list[$k]['owner_user_id_info']['name'].'<br />&#12288;距离约：'.$list[$k]['distance'].'公里';
+					} else {
+						unset($list[$k]);
+					}
+				}
+
+				//根据相距距离由小到大，重新排序$list
+				$temp_array = array();
+				foreach ($list as $k => $v) {
+					$temp_array[] = $v['distance'];
+				}
+				array_multisort($temp_array, SORT_ASC, $list);
+
+				$mapInfo['data_info'] = '['.$data_info.']';
+				$mapInfo['lng_lat'] = $lng_lat;
+			}      	
         }
         $data = [];
         $data['list'] = $list ? : [];
         $data['dataCount'] = $dataCount ? : 0;
+        $data['maoInfo'] = $mapInfo ? : [];
         return $data;
     }
 
@@ -260,16 +303,15 @@ class Customer extends Common
 			$leadsData['rw_user_id'] = '';
             $leadsData['detail_address'] = $param['detail_address']	? : '';			
 			$param = $leadsData;
-		} else {
-			// 自动验证
-			$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则
-			$validate = new Validate($validateArr['rule'], $validateArr['message']);			
-			$result = $validate->check($param);
-			if (!$result) {
-				$this->error = $validate->getError();
-				return false;
-			}
-		}	
+		} 
+		// 自动验证
+		$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则
+		$validate = new Validate($validateArr['rule'], $validateArr['message']);			
+		$result = $validate->check($param);
+		if (!$result) {
+			$this->error = $validate->getError();
+			return false;
+		}
 
 		//处理部门、员工、附件、多选类型字段
 		$arrFieldAtt = $fieldModel->getArrayField('crm_customer');

@@ -527,7 +527,11 @@ class Record extends Common
 		if (!is_array($types_id)) {
 			$types_id[] = $types_id;
 		}
+		$fileModel = new \app\admin\model\File();
+		$record_ids = $this->where(['types' => $types,'types_id' => ['in',$types_id]])->column('record_id');
 		$this->where(['types' => $types,'types_id' => ['in',$types_id]])->delete();
+		//删除关联附件
+        $fileModel->delRFileByModule('admin_record',$record_ids);
 		return true;
 	}	
 }

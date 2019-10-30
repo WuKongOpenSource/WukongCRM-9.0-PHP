@@ -113,6 +113,7 @@ class Contract extends ApiCommon
     {
         $contractModel = model('Contract');
         $userModel = new \app\admin\model\User();
+        $receivablesModel = new \app\crm\model\Receivables();
         $param = $this->param;
         $userInfo = $this->userInfo;
         $data = $contractModel->getDataById($param['id']);
@@ -128,6 +129,12 @@ class Contract extends ApiCommon
         if (!$data) {
             return resultArray(['error' => $contractModel->getError()]);
         }
+        //回款信息用来作废时二次确认
+        $where['contract_id'] = $param['id'];
+        $where['pageType'] = 'all';
+        $where['user_id'] = $userInfo['id']; 
+        $receivablesData = $receivablesModel->getDataList($where); 
+        $data['receivablesDataCount'] = $receivablesData['dataCount'] ? 1 : 0 ;
         return resultArray(['data' => $data]);
     }
 
@@ -219,6 +226,8 @@ class Contract extends ApiCommon
         $userInfo = $this->userInfo;  
         $contractModel = model('Contract');     
         $recordModel = new \app\admin\model\Record(); 
+        $fileModel = new \app\admin\model\File();
+        $actionRecordModel = new \app\admin\model\ActionRecord();
         if (!is_array($param['id'])) {
             $contract_id = [$param['id']];
         } else {
@@ -245,7 +254,12 @@ class Contract extends ApiCommon
                 $errorMessage[] = '名称为'.$data['name'].'的合同删除失败,错误原因：无权操作';
                 continue;
             }
-            if (!in_array($data['check_status'],['0','4','5']) && !in_array(1,$adminTypes)) {
+            if ($data['check_status'] == 6 && !in_array(1,$adminTypes)) {
+                $isDel = false;
+                $errorMessage[] = '名称为'.$data['name'].'的合同删除失败,错误原因：当前合同已作废，非超级管理员，不可删除';
+                continue;
+            }
+            if (!in_array($data['check_status'],['0','4','5','6']) && !in_array(1,$adminTypes)) {
                 $isDel = false;
                 $errorMessage[] = '名称为'.$data['name'].'的合同删除失败,错误原因：当前状态为审批中或已审批通过，不可删除';
                 continue;
@@ -258,7 +272,11 @@ class Contract extends ApiCommon
                 return resultArray(['error' => $contractModel->getError()]);
             }
             //删除跟进记录
-            $recordModel->delDataByTypes('crm_contract',$delIds);            
+            $recordModel->delDataByTypes('crm_contract',$delIds);
+            //删除关联附件
+            $fileModel->delRFileByModule('crm_contract',$delIds);
+            //删除关联操作记录
+            $actionRecordModel->delDataById(['types'=>'crm_contract','action_id'=>$delIds]);              
             actionLog($delIds,'','','');                    
         }
         if ($errorMessage) {
@@ -541,4 +559,78 @@ class Contract extends ApiCommon
         $list['discount_rate'] = $contractInfo['discount_rate'] ? : '0.00';
         return resultArray(['data' => $list]);
     }       
+
+    /**
+     * 导出
+     * @author Michael_xu
+     * @param 
+     * @return
+     */
+    public function excelExport()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $param['user_id'] = $userInfo['id'];
+        if ($param['contract_id']) {
+           $param['contract_id'] = ['condition' => 'in','value' => $param['contract_id'],'form_type' => 'text','name' => ''];
+           $param['is_excel'] = 1;
+        }
+        $excelModel = new \app\admin\model\Excel();
+        // 导出的字段列表
+        $fieldModel = new \app\admin\model\Field();
+        $field_list = $fieldModel->getIndexFieldConfig('crm_contract', $userInfo['id']);
+        // 文件名
+        $file_name = '5kcrm_contract_'.date('Ymd');
+
+        $model = model('Contract');
+        $temp_file = $param['temp_file'];
+        unset($param['temp_file']);
+        $page = $param['page'] ?: 1;
+        unset($param['page']);
+        unset($param['export_queue_index']);
+        return $excelModel->batchExportCsv($file_name, $temp_file, $field_list, $page, function($page, $limit) use ($model, $param, $field_list) {
+            $param['page'] = $page;
+            $param['limit'] = $limit;
+            $data = $model->getDataList($param);
+            $data['list'] = $model->exportHandle($data['list'], $field_list, 'contract');
+            return $data;
+        });
+    }  
+
+     /**
+     * 修改已审核过的合同为作废状态
+     * @author ZFH
+     * @param 
+     * @return
+     */ 
+    public function cancel()
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $userModel = new \app\admin\model\User();
+        $adminTypes = adminGroupTypes($userInfo['id']);
+
+        if (!$param['contract_id']) {
+            return resultArray(['error' => '参数错误']);
+        }
+         //判断权限
+        $auth_user_ids = $userModel->getUserByPer('crm', 'contract', 'cancel');
+        $contractInfo = db('crm_contract')->where(['contract_id' => $param['contract_id']])->find();
+        if(!$contractInfo){
+            return resultArray(['error' => '数据不存在']);
+        }
+        if (!in_array($contractInfo['owner_user_id'],$auth_user_ids)) {
+            header('Content-Type:application/json; charset=utf-8');
+            exit(json_encode(['code'=>102,'error'=>'无权操作']));
+        }
+        if($contractInfo['check_status'] != 2){
+            return resultArray(['error' => '未审核通过的合同不可作废,请选择撤销或删除']);
+        }
+        $data['check_status'] = 6;       //变更合同状态为作废
+        if(db('crm_contract')->where(['contract_id'=>$param['contract_id']])->update($data)){
+            return resultArray(['data' => '作废成功']);
+        }else{
+            return resultArray(['error' => '失败，请重试']);
+        }
+    }
 }

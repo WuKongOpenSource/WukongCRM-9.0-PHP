@@ -63,251 +63,67 @@ class Customer extends Common
         $timeArr = array();
         switch($param['type']) {
             case 'year'://本年度
-                $timeArr['month'] = $i;
-                $timeArr['next_month'] = $i+1;
-                if ($timeArr['next_month'] != 13) {
-                    $timeArr['year'] = $year;
-                    $timeArr['next_year'] = $year;
-                } else {
-                    $timeArr['year'] = $year;
-                    $timeArr['next_year'] = $year+1;
-                    $timeArr['next_month'] = 1;
-                }
-                $timeArr['type'] = $year.'-'.$i;
-            break;
             case 'lastYear'://上年度
-                $timeArr['month'] = $i;
-                $timeArr['next_month'] = $i+1;
-                if ($timeArr['next_month'] != 13) {
-                    $timeArr['year'] = $year;
-                    $timeArr['next_year'] = $year;
-                } else {
-                    $timeArr['year'] = $year;
-                    $timeArr['next_year'] = $year+1;
-                    $timeArr['next_month'] = 1;
-                }
-                $timeArr['type'] = $year.'-'.$i;
-            break;
+                $type = $year.'-'.$i;
+                $whereTime = $this->getMonthArray(strtotime($type.'-01'));
+                break;
             case 'quarter'://本季度
-                $season = ceil(date('n')/3);
-                $dates = mktime(0,0,0,($season-1)*3+1,1,date('Y'));
-                $month = date('m',$dates);
-                $timeArr['year'] = $year;
-                $timeArr['month'] = $month+$i-1;
-                if ($month != 10) {
-                    $timeArr['next_year'] = $year;
-                    $timeArr['next_month'] = $month+$i;
-                    $timeArr['type'] = $year.'-'.($month+$i-1);
+                $timeType = getTimeByType($param['type']);
+                $month = date('m',$timeType[0]);
+                if ($month+$i <= 13) {
+                    $type = $year.'-'.($month+$i-1);
                 } else {
-                    if ($month+$i <= 12) {
-                        $timeArr['next_year'] = $year;
-                        $timeArr['next_month'] = $month+$i;
-                        $timeArr['type'] = $year.$month+$i;
-                    } else {
-                        $timeArr['next_year'] = $year+1;
-                        $timeArr['next_month'] = 1;
-                        $timeArr['type'] = ($year+1).'-'.'01';
-                    }
+                    $type = ($year+1).'-'.'01';
                 }
-            break;
+                $whereTime = $this->getMonthArray(strtotime($type.'-01'));
+                break;
             case 'lastQuarter'://上季度
-                $season = ceil(date('n')/3);
-                $dates = mktime(0,0,0,($season-1)*3+1,1,date('Y'));
-                $month = date('m',$dates);
-                if ($month > 3) {
-                    $timeArr['year'] = $year;
-                    $month = $month-3;
-                    $timeArr['month'] = $month+$i-1;
-                    $timeArr['next_year'] = $year;
-                    $timeArr['next_month'] = $month+$i;
-                    $timeArr['type'] = $year.'-'.($month+$i-1);
-                } else {
-                    $month = 10;
-                    $timeArr['year'] = $year-1;
-                    $timeArr['month'] = $month+$i-1;
-                    if ($month+$i <= 12) {
-                        $timeArr['next_year'] = $year-1;
-                        $timeArr['next_month'] = $month+$i;
-                    } else {
-                        $timeArr['next_year'] = $year;
-                        $timeArr['next_month'] = 1;
-                    }
-                    $timeArr['type'] = $year.'-'.$month+$i-1;
-                }                                                         
-            break;
+                $timeType = getTimeByType($param['type']);
+                $month = date('m',$timeType[0]);
+                $type = $year.'-'.($month+$i-1);
+                $whereTime = $this->getMonthArray(strtotime($type.'-01'));                                                       
+                break;
             case 'month'://本月
-                $timeArr['year'] = $year;
-                $timeArr['month'] = date('m');
-                $timeArr['next_year'] = $year;
-                $timeArr['day'] = $i;
-                if ($i != date("t")) {
-                    $timeArr['next_month'] = date('m');
-                    $timeArr['next_day'] = $i+1;
-                } else {
-                    $timeArr['next_month'] = date('m')+1;
-                    $timeArr['next_day'] = 1;
-                }  
-                $timeArr['type'] = $year.'-'.date('m').'-'.$i;                                                            
-            break;
+                $type = $year.'-'.date('m').'-'.$i;
+                $dateArr = getDateRange(strtotime($type));
+                $whereTime = [$dateArr['sdate'],$dateArr['edate']];
+                break;
             case 'lastMonth'://上月
-                $timeArr['year'] = $year;
-                $month = date('m');//当前月
-                if ($month != 1) {
-                    $month = $month-1;//上月
-                    $days = date('t', strtotime(date('Y').'-'.$month.'-1'));//上月天数
-                    $timeArr['next_year'] = $year;
-                    if ($i != $days) {
-                        $timeArr['day'] = $i;
-                        $timeArr['next_day'] = $i+1;
-                        $timeArr['month'] = $month;
-                        $timeArr['next_month'] = $month;
-                    } else {
-                        $timeArr['day'] = $i;
-                        $timeArr['next_day'] = 1;
-                        $timeArr['month'] = $month;
-                        if ($month != 12) {
-                            $timeArr['next_month'] = $month+1;
-                        } else {
-                            $timeArr['next_month'] = 1;
-                            $timeArr['next_year'] = $year;
-                        }
-                    }
-                } else {
-                    $month = 12;
-                    $timeArr['year'] = $year-1;
-                    $timeArr['next_year'] = $year;
-                }        
-                $timeArr['type'] = $year.'-'.$month.'-'.$i;                                                  
-            break;
+                $timeType = getTimeByType($param['type']);
+                $type = date('Y-m',$timeType['0']).'-'.$i;
+                $dateArr = getDateRange(strtotime($type));
+                $whereTime = [$dateArr['sdate'],$dateArr['edate']];
+                break;
             case 'week'://本周
-                date_default_timezone_set('PRC');
-                $week = date("Y-m-d",strtotime("this week"));
-                $day = strtotime($week)+($i-1)*(60*60*24);
-                $lastDay = strtotime($week)+$i*(60*60*24);
-                $timeArr['day'] = date("d",$day);
-                $timeArr['next_day'] = date("d",$lastDay);
-                $timeArr['month'] = date("m",$day);
-                $timeArr['next_month'] = date("m",$lastDay);
-                $timeArr['year'] = date("y",$day);
-                $timeArr['next_year'] = date("y",$lastDay);    
-                $timeArr['type'] = $year.'-'.date("m",$day).'-'.date("d",$day);                                  
-            break;
             case 'lastWeek'://上周
-                date_default_timezone_set('PRC');
-                $week = date("Y-m-d",strtotime("this week"));
-                $day = strtotime($week)+($i-8)*(60*60*24);
-                $lastDay = strtotime($week)+($i-7)*(60*60*24);
-                $timeArr['day'] = date("d",$day);
-                $timeArr['next_day'] = date("d",$lastDay);
-                $timeArr['month'] = date("m",$day);
-                $timeArr['next_month'] = date("m",$lastDay);
-                $timeArr['year'] = date("y",$day);
-                $timeArr['next_year'] = date("y",$lastDay);  
-                $timeArr['type'] = $year.'-'.date("m",$day).'-'.date("d",$day);                                    
-            break;
+                $timeType = getTimeByType($param['type']);
+                $type = date('Y-m-d',$timeType['0']+($i-1)*86400);
+                $dateArr = getDateRange(strtotime($type));
+                $whereTime = [$dateArr['sdate'],$dateArr['edate']];
+                break;
             case 'today'://今天
-                $today = time();
-                $yesterday = time()+60*60*24;
-                $timeArr['day'] = date("d",$today);
-                $timeArr['next_day'] = date("d",$yesterday);
-                $timeArr['month'] = date("m",$today);
-                $timeArr['next_month'] = date("m",$yesterday);
-                $timeArr['year'] = date("y",$today);
-                $timeArr['next_year'] = date("y",$yesterday);     
-                $timeArr['type'] = $year.'-'.date("m",$today).'-'.date("d",$today);     
-            break;
             case 'yesterday'://昨天
-                $today = time()-60*60*24;
-                $yesterday = time();
-                $timeArr['day'] = date("d",$today);
-                $timeArr['next_day'] = date("d",$yesterday);
-                $timeArr['month'] = date("m",$today);
-                $timeArr['next_month'] = date("m",$yesterday);
-                $timeArr['year'] = date("y",$today);
-                $timeArr['next_year'] = date("y",$yesterday);      
-                $timeArr['type'] = $year.'-'.date("m",$today).'-'.date("d",$today);    
-            break;
-            case 'month_k'://跨月
-                $start_time_y = date('y',$param['start_time']);
-                $timeArr['year'] = $start_time_y;
-                $timeArr['next_year'] = $start_time_y;   
-                $m = date('m',$param['start_time']);
-                if ($i > 1) {
-                    $timeArr['month'] = $m+$i-1;
-                    $timeArr['next_month'] = $m+$i;
-                    $timeArr['type'] = '20'.$start_time_y.'-'.($m+$i-1);
+                $whereTime = getTimeByType($param['type']);
+                $type = date('Y-m-d',$whereTime[0]);
+                break;
+            default ://自定义时间              
+                $subDay = ceil(($param['end_time']-$param['start_time'])/86400);
+                if ($subDay > 31) {
+                    $param['type'] = 'year';
+                    $res = $this->getStartAndEnd($param,$year,$i);
+                    $whereTime[0] = $res['start_time']; 
+                    $whereTime[1] = $res['end_time']; 
+                    $type = $res['type']; 
                 } else {
-                    $timeArr['month'] = $m;
-                    $timeArr['next_month'] = $m+1;
-                    $timeArr['type'] = '20'.$start_time_y.'-'.$m;
+                    $type = date('Y-m-d',$param['start_time']+($i-1)*86400);
+                    $dateArr = getDateRange(strtotime($type));
+                    $whereTime = [$dateArr['sdate'],$dateArr['sdate']];                    
                 }
-            break;
-            case 'year_k'://跨年
-                $start_time = $param['start_time'];
-                $end_time = $param['end_time'];
-
-                $start_y = date('y',$start_time);
-                $start_m = date('m',$start_time);
-                $start_d = date('d',$start_time);
-
-                $monthNum = $this->getMonthNum($start_time,$end_time);
-                $y = ceil(($start_m+$i-1)/12);
-                if (($start_m+$i-1)/12 <= $y) {
-                    if ($i == 1) {
-                        $timeArr['day'] = $start_d;
-                        $timeArr['end_d'] = 1;
-                    }
-                    $timeArr['year'] = $start_y+$y-1;                        
-                    if ($start_m+$i-1 < 12) {
-                        $timeArr['month'] = $start_m+$i-1;
-                        $timeArr['next_year'] = $start_y+$y-1;
-                        $timeArr['next_month'] = $start_m+$i;
-                        $timeArr['type'] = '20'.($start_y+$y-1).'-'.($start_m+$i-1);
-                    } else {
-                        if (($start_m+$i-1)/12 == $y) {
-                            $timeArr['month'] = 12;
-                            $timeArr['next_year'] = $start_y+$y;
-                            $timeArr['next_month'] = 1;
-                            $timeArr['type'] = '20'.($start_y+$y-1).'-12';
-                        } else {
-                            $timeArr['month'] = ($start_m+$i-1)-12*($y-1);
-                            $timeArr['next_year'] = $start_y+$y-1;
-                            if ($monthNum+1 != $i) {
-                                $timeArr['next_month'] = ($start_m+$i)-12*($y-1);
-                            } else {
-                                $end_d = date('d',$param['end_time']);
-                                $timeArr['next_day'] = $end_d;
-                                $timeArr['next_month'] = ($start_m+$i-1)-12*($y-1);
-                            }
-                            $timeArr['type'] = '20'.($start_y+$y-1).'-'.(($start_m+$i-1)-12*($y-1));
-                        }
-                    }
-                }
-            break;
-            default ://自定义时间
-                $start_time = $param['start_time'];
-                $end_time = $param['end_time'];
-                $start_time_y = date('y',$start_time);
-                $start_time_m = date('m',$start_time);
-                $end_time_y = date('y',$end_time);
-                $end_time_m = date('m',$end_time);
-                if ($end_time_y-$start_time_y == 0) {//不跨年
-                    if ($end_time_m-$start_time_m > 0) {
-                        $param['type']='month_k';
-                        $timeArr = $this->getStartAndEnd($param,$year,$i);
-                    } else {//不跨月
-                        $param['type']='month';
-                        $timeArr = $this->getStartAndEnd($param,$year,$i);
-                    }
-                } else {//跨年
-                    $start_time = date('Y-m-d',$start_time);
-                    $end_time = date('Y-m-d',$end_time);
-                    $monthNum = $this->getMonthNum($start_time,$end_time);
-                    $param['type']='year_k';
-                    $timeArr = $this->getStartAndEnd($param,$year,$i);
-                }
-            break;
+                break;
         }
+        $timeArr['start_time'] = $whereTime[0];
+        $timeArr['end_time'] = $whereTime[1];                
+        $timeArr['type'] = $type;      
         return $timeArr;
     }
     
@@ -324,20 +140,20 @@ class Customer extends Common
         switch($param['type']) {
             case 'year'://本年度
                 $company['j'] = 12;
-            break;
+                break;
             case 'lastYear'://上年度
                 $company['j'] = 12;
                 $company['year'] = date('Y')-1;
-            break;
+                break;
             case 'quarter'://本季度
                 $company['j'] = 3;
-            break;
+                break;
             case 'lastQuarter'://上季度
                 $company['j'] = 3;
-            break;
+                break;
             case 'month'://本月
                 $company['j'] = date("t");
-            break;
+                break;
             case 'lastMonth'://上月
                 if (date('m') == 1) {
                     $m = 12;
@@ -346,43 +162,29 @@ class Customer extends Common
                 }
                 $days = date('t', strtotime(date('Y').'-'.$m.'-1'));
                 $company['j'] = $days;
-            break;
+                break;
             case 'week'://本周
                 $company['j'] = 7;
-            break;
+                break;
             case 'lastWeek'://上周
                 $company['j'] = 7;
-            break;
+                break;
             case 'today'://今天
                 $company['j'] = 1;
-            break;
+                break;
             case 'yesterday'://昨天
                 $company['j'] = 1;
-            break;
+                break;
             default ://自定义时间
-                $start_time = $param['start_time'];
-                $end_time = $param['end_time'];
-                $company['start_time_y'] = $start_time_y = date('y',$start_time);
-                $start_time_m = date('m',$start_time);
-                $end_time_y = date('y',$end_time);
-                $end_time_m = date('m',$end_time);
-                if ($end_time_y-$start_time_y == 0) {//不跨年
-                    if ($end_time_m-$start_time_m > 0) {//跨月
-                        $company['type']='month_k';
-                        $company['time_unit'] = '月';
-                        $company['j'] = $end_time_m-$start_time_m+1;
-                    } else {//不跨月
-                        $company['type']='month';
-                        $company['j'] = date("t");
-                    }
-                } else {//跨年
-                    $start_time = date('Y-m-d',$start_time);
-                    $end_time = date('Y-m-d',$end_time);
-                    $monthNum = $this->getMonthNum($start_time,$end_time);
-                    $company['type']='year_k';
-                    $company['j'] = $monthNum+1;
+                $whereTime[0] = $param['start_time'];
+                $whereTime[1] = $param['end_time'];
+                $subDay = ceil(($param['end_time']-$param['start_time'])/86400);
+                if ($subDay > 31) {
+                    $company['j'] = 12;
+                } else {
+                    $company['j'] = $subDay;
                 }
-            break;
+                break;
         }
         return $company;
     }
@@ -500,4 +302,18 @@ class Customer extends Common
         }
         return $cycle;
     }
+
+    /**
+     * 根据时间获取该时间所在月份开始结束时间
+     * @author zhi
+     * @param     
+     * @return        
+     */ 
+    public function getMonthArray($time)
+    {
+        $start_time = strtotime(date('Y-m-01',$time));
+        $monthDay = getmonthdays($time);
+        $end_time = strtotime(date('Y-m-'.$monthDay,$time));
+        return array($start_time,$end_time);
+    }   
 }

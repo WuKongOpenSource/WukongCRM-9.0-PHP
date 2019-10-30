@@ -151,6 +151,8 @@ class Leads extends ApiCommon
         $param = $this->param; 
         $leadsModel = model('Leads');
         $recordModel = new \app\admin\model\Record();
+        $fileModel = new \app\admin\model\File();
+        $actionRecordModel = new \app\admin\model\ActionRecord();
         if (!is_array($param['id'])) {
             $leads_id[] = $param['id'];
         } else {
@@ -184,7 +186,11 @@ class Leads extends ApiCommon
                 return resultArray(['error' => $leadsModel->getError()]);
             } 
             //删除跟进记录
-            $recordModel->delDataByTypes('crm_leads',$delIds);            
+            $recordModel->delDataByTypes('crm_leads',$delIds);   
+            //删除关联附件
+            $fileModel->delRFileByModule('crm_leads',$delIds);
+            //删除关联操作记录
+            $actionRecordModel->delDataById(['types'=>'crm_leads','action_id'=>$delIds]);         
             actionLog($delIds,'','','');           
         }
         if ($errorMessage) {
@@ -316,10 +322,10 @@ class Leads extends ApiCommon
     /**
      * 线索导入模板
      * @author Michael_xu
-     * @param 
+     * @param string $save_path 本地保存路径     用于错误数据导出，在 Admin\Model\Excel::importExcel()调用
      * @return
      */ 
-    public function excelDownload() 
+    public function excelDownload($save_path = '') 
     {
         $param = $this->param;
         $userInfo = $this->userInfo;
@@ -331,7 +337,7 @@ class Leads extends ApiCommon
         $fieldParam['action'] = 'excel'; 
         $field_list = $fieldModel->field($fieldParam);        
         // $field_list = $fieldModel->getIndexFieldList('crm_leads', $userInfo['id']);
-        $res = $excelModel->excelImportDownload($field_list, 'crm_leads');
+        $excelModel->excelImportDownload($field_list, 'crm_leads', $save_path);
     }  
 
     /**
@@ -353,13 +359,22 @@ class Leads extends ApiCommon
         $excelModel = new \app\admin\model\Excel();
         // 导出的字段列表
         $fieldModel = new \app\admin\model\Field();
-        $field_list = $fieldModel->getIndexFieldList('crm_leads', $userInfo['id']);
+        $field_list = $fieldModel->getIndexFieldConfig('crm_leads', $userInfo['id']);
         // 文件名
         $file_name = '5kcrm_leads_'.date('Ymd');
-        $param['pageType'] = 'all'; 
-        $excelModel->exportCsv($file_name, $field_list, function($page) use ($param){
-            $list = model('Leads')->getDataList($param);
-            return $list;
+
+        $model = model('Leads');
+        $temp_file = $param['temp_file'];
+        unset($param['temp_file']);
+        $page = $param['page'] ?: 1;
+        unset($param['page']);
+        unset($param['export_queue_index']);
+        return $excelModel->batchExportCsv($file_name, $temp_file, $field_list, $page, function($page, $limit) use ($model, $field_list, $param) {
+            $param['page'] = $page;
+            $param['limit'] = $limit;
+            $data = $model->getDataList($param);
+            $data['list'] = $model->exportHandle($data['list'], $field_list, 'leads');
+            return $data;
         });
     } 
 
@@ -378,11 +393,12 @@ class Leads extends ApiCommon
         $param['create_user_id'] = $userInfo['id'];
         $param['owner_user_id'] = $param['owner_user_id'] ? : $userInfo['id'];
         $file = request()->file('file');
-        $res = $excelModel->importExcel($file, $param);
+        // $res = $excelModel->importExcel($file, $param);
+        $res = $excelModel->batchImportData($file, $param, $this);
         if (!$res) {
             return resultArray(['error'=>$excelModel->getError()]);
         }
-        return resultArray(['data'=>'导入成功,请手动刷新页面']);
+        return resultArray(['data' => $excelModel->getError()]);
     }
 
     /**

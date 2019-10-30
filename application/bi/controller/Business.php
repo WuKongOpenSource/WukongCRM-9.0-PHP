@@ -77,18 +77,14 @@ class Business extends ApiCommon
             $whereArr = [];
             $whereArr['create_user_id'] = array('in',$userIds);
             $item = array();
+            $where_time = [];
             //时间段
             $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
             $item['type'] = $timeArr['type'];
-            $day = $timeArr['day'] ? $timeArr['day'] : '1';
-            $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
-            $next_day = $timeArr['next_day'] ? $timeArr['next_day'] : '1';
-            $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
+            if ($timeArr['start_time'] && $timeArr['end_time']) {
+                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
             }
-            $whereArr['create_time'] = $create_time;
+            $whereArr['create_time'] = $where_time;
 
             $item['business_num'] = $businessModel->getDataCount($whereArr);
             $item['business_money'] = $businessModel->getDataMoney($whereArr);
@@ -158,18 +154,14 @@ class Business extends ApiCommon
             $whereArr = [];
             $whereArr['create_user_id'] = array('in',$userIds);
             $item = array();
+            $where_time = [];
             //时间段
             $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
             $item['type'] = $timeArr['type'];
-            $day = $timeArr['day']?$timeArr['day']:'1';
-            $start_time = strtotime($timeArr['year'].'-'.$timeArr['month'].'-'.$day);
-            $next_day = $timeArr['next_day']?$timeArr['next_day']:'1';
-            $end_time = strtotime($timeArr['next_year'].'-'.$timeArr['next_month'].'-'.$next_day);
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
+            if ($timeArr['start_time'] && $timeArr['end_time']) {
+                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
             }
-            $whereArr['create_time'] = $create_time;
+            $whereArr['create_time'] = $where_time;
 
             $item['business_num'] = $businessModel->getDataCount($whereArr);
             $whereArr['is_end'] = 1;

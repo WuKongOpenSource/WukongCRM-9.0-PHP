@@ -35,7 +35,7 @@ function encrypt($data, $key = '5k-72crm')
  * cookies 解密密函数
  * @param array 解密后数组
  */
-function decrypt($str, $key = '5k-72crm') 
+function decrypt($data, $key = '5k-72crm') 
 { 
     $cryptdes = new com\Cryptdes($key);
     return $cryptdes->decrypt($data);

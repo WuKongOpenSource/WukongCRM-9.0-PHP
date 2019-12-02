@@ -79,8 +79,8 @@ class Examine extends Common
             ->fetchSql()
             ->select();
         $list = queryCache($sql);
-        // $list = array_column($list, null, 'create_user_id');
         foreach ($list as $key => $val) {
+            $val['id'] = $val['create_user_id'];
             $val['realname'] = $userModel->getUserById($val['create_user_id'])['realname'];
             $list[$key] = $val;
         }

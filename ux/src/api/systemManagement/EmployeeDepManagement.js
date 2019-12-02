@@ -6,7 +6,7 @@ export function depTreeList() {
     url: 'admin/structures/index',
     method: 'post',
     data: {
-      type: "tree"
+      type: 'tree'
     }
   })
 }
@@ -147,6 +147,20 @@ export function adminUsersTobeusers(data) {
 export function adminStructuresListDialog(data) {
   return request({
     url: 'admin/structures/listDialog',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 部门列表数据（编辑时）
+ * @param {*} data
+ * id 部门ID
+ * type update编辑、save添加
+ */
+export function userSetParent(data) {
+  return request({
+    url: 'admin/users/setParent',
     method: 'post',
     data: data
   })

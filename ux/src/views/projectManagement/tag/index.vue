@@ -1,79 +1,92 @@
 <template>
   <div class="project-tag">
     <div class="header">
-      <span>{{labelName}}</span>
-      <el-popover placement="bottom-start"
-                  width="300"
-                  v-model="labelSetShow"
-                  trigger="click">
+      <span>{{ labelName }}</span>
+      <el-popover
+        v-model="labelSetShow"
+        placement="bottom-start"
+        width="300"
+        trigger="click">
         <div class="new-tag-dialog">
           <div class="title">
             <span>标签设置</span>
-            <span class="el-icon-close rt"
-                  @click="labelSetShow = false"></span>
+            <span
+              class="el-icon-close rt"
+              @click="labelSetShow = false"/>
           </div>
           <div class="search">
-            <el-input size="mini"
-                      placeholder="输入标签名"
-                      v-model="editLabelName"></el-input>
-            <span class="checked-color"
-                  :style="{'background': editLabelColor}"></span>
+            <el-input
+              v-model="editLabelName"
+              size="mini"
+              placeholder="输入标签名"/>
+            <span
+              :style="{'background': editLabelColor}"
+              class="checked-color"/>
           </div>
           <div class="color-box">
-            <span v-for="(item, index) in colorList"
-                  :key="index"
-                  :style="{'background': item}"
-                  @click="editLabelColor = item">
-            </span>
+            <span
+              v-for="(item, index) in colorList"
+              :key="index"
+              :style="{'background': item}"
+              @click="editLabelColor = item"/>
           </div>
           <div class="footer">
-            <el-button type="primary"
-                       size="medium"
-                       @click="labelSetSave">保存</el-button>
-            <el-button size="medium"
-                       @click="labelSetShow = false">取消</el-button>
+            <el-button
+              type="primary"
+              size="medium"
+              @click="labelSetSave">保存</el-button>
+            <el-button
+              size="medium"
+              @click="labelSetShow = false">取消</el-button>
           </div>
         </div>
-        <img src="@/assets/img/project/t_set.png"
-             slot="reference"
-             class="img-set"
-             @click="labelSetClick">
+        <img
+          slot="reference"
+          src="@/assets/img/project/t_set.png"
+          class="img-set"
+          @click="labelSetClick">
       </el-popover>
     </div>
-    <div v-loading="loading"
-         class="content">
-      <div v-empty="taskList.length == 0 && loading == false"
-           class="content-body-items">
+    <div
+      v-loading="loading"
+      class="content">
+      <div
+        v-empty="taskList.length == 0 && loading == false"
+        class="content-body-items">
         <el-collapse v-model="collapseNames">
-          <el-collapse-item :name="item.work_id"
-                            v-for="(item, index) in taskList"
-                            :key="index"
-                            class="list-box">
-            <i slot="title"
-               class="wukong wukong-subproject"
-               :style="{color : item.color ? item.color : '#4AB8B8'}"></i>
-            <span slot="title"
-                  class="title">{{item.work_name}}</span>
-            <task-cell v-for="(taskItem, taskIndex) in item.list"
-                       :key="taskIndex"
-                       class="item-list"
-                       :data="taskItem"
-                       :dataSection="index"
-                       :dataIndex="taskIndex"
-                       @on-handle="taskCellHandle"></task-cell>
+          <el-collapse-item
+            v-for="(item, index) in taskList"
+            :name="item.work_id"
+            :key="index"
+            class="list-box">
+            <i
+              slot="title"
+              :style="{color : item.color ? item.color : '#4AB8B8'}"
+              class="wukong wukong-subproject"/>
+            <span
+              slot="title"
+              class="title">{{ item.work_name }}</span>
+            <task-cell
+              v-for="(taskItem, taskIndex) in item.list"
+              :key="taskIndex"
+              :data="taskItem"
+              :data-section="index"
+              :data-index="taskIndex"
+              class="item-list"
+              @on-handle="taskCellHandle"/>
           </el-collapse-item>
         </el-collapse>
       </div>
     </div>
     <!-- 详情 -->
-    <particulars v-if="taskDetailShow"
-                 ref="particulars"
-                 :id="taskID"
-                 :detailIndex="detailIndex"
-                 :detailSection="detailSection"
-                 @on-handle="detailHandle"
-                 @close="closeBtn">
-    </particulars>
+    <particulars
+      v-if="taskDetailShow"
+      ref="particulars"
+      :id="taskID"
+      :detail-index="detailIndex"
+      :detail-section="detailSection"
+      @on-handle="detailHandle"
+      @close="closeBtn"/>
   </div>
 </template>
 
@@ -157,7 +170,7 @@ export default {
           this.labelName = res.data.name
           this.labelColor = res.data.color
         })
-        .catch(err => {})
+        .catch(() => {})
     },
 
     /**
@@ -175,7 +188,7 @@ export default {
           })
           this.loading = false
         })
-        .catch(err => {
+        .catch(() => {
           this.loading = false
         })
     },
@@ -208,7 +221,7 @@ export default {
      */
     taskCellHandle(data) {
       if (data.type == 'view') {
-        let dataCell = data.data
+        const dataCell = data.data
         this.taskID = dataCell.item.task_id
         this.detailIndex = dataCell.index
         this.detailSection = dataCell.section
@@ -243,7 +256,7 @@ export default {
         ) {
           this.taskList.splice(data.index, 1)
         } else if (data.type == 'change-stop-time') {
-          let stopTime = parseInt(data.value) + 86399
+          const stopTime = parseInt(data.value) + 86399
           if (stopTime > new Date(new Date()).getTime() / 1000) {
             this.taskList[data.section].list[data.index].is_end = false
           } else {
@@ -255,7 +268,7 @@ export default {
         } else if (data.type == 'change-name') {
           this.taskList[data.section].list[data.index].task_name = data.value
         } else if (data.type == 'change-comments') {
-          let commentcount = this.taskList[data.section].list[data.index]
+          const commentcount = this.taskList[data.section].list[data.index]
             .commentcount
           if (data.value == 'add') {
             this.taskList[data.section].list[data.index].commentcount =
@@ -282,7 +295,7 @@ export default {
         !this.$refs.particulars.$el.contains(e.target)
       ) {
         let hidden = true
-        let items = document.getElementsByClassName('board-column')
+        const items = document.getElementsByClassName('board-column')
         for (let index = 0; index < items.length; index++) {
           const element = items[index]
           if (element.contains(e.target)) {

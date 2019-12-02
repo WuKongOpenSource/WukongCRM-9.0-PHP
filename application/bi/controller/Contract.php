@@ -8,6 +8,8 @@
 namespace app\bi\controller;
 
 use app\admin\controller\ApiCommon;
+use app\crm\model\Contract AS ContractModel;
+use app\crm\model\Receivables AS ReceivablesModel;
 use think\Hook;
 use think\Request;
 
@@ -53,118 +55,55 @@ class Contract extends ApiCommon
         $userIds = $whereArr['userIds'];
 
         $year = $param['year'] ? : date('Y');
-        $time = 'order_date';
+        $start_time = strtotime(date(($year - 1) . '-01-01'));
+        $end_time = strtotime('+2 year', $start_time) - 1;
+        $time = getTimeArray($start_time, $end_time);
+        
         if ($param['type'] == 'back') {
-            $time = 'return_time';
-        }        
-        $datas = array();
-        for ($i=1; $i <= 12; $i++) { 
-            $whereArr = [];
-            $whereArr['owner_user_id'] = array('in',$userIds);
-            $item = array();
-            $item['type'] = $i.'月';
-            //时间段
-            $start_time = $year.'-'.$i.'-01';
-            $end_time = $year.'-'.($i+1).'-01';
-            if ($i == 12) {
-                $start_time = $year.'-'.$i.'-01';
-                $end_time = ($year+1).'-01-01';
-            }
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
-            }
-
-            $whereArr['check_status'] = array('eq',2);
-            $whereArr[$time] = $create_time;
-            //当月
-            if ($param['type'] == 'count') {
-                $item['month'] = $biContractModel->getDataCount($whereArr);
-            } elseif ($param['type'] == 'money') {
-                $item['month'] = $biContractModel->getDataMoney($whereArr);
-            } elseif ($param['type'] == 'back') {
-                $item['month'] = $receivablesModel->getDataMoney($whereArr);
-            }
-            //上月
-            if ($i == 1) {
-                $start_time = ($year-1).'-12-01';
-                $end_time = $year.'-01-01';
-            } else {
-                $start_time = $year.'-'.($i-1).'-01';
-                $end_time = $year.'-'.$i.'-01';
-            }
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
-            }
-            $whereArr[$time] = $create_time;
-            if ($param['type'] == 'count') {
-                $item['lastMonth'] = $biContractModel->getDataCount($whereArr);
-            } elseif ($param['type'] == 'money') {
-                $item['lastMonth'] = $biContractModel->getDataMoney($whereArr);
-            } elseif ($param['type'] == 'back') {
-                $whereArr['return_time'] = $create_time;
-                $item['lastMonth'] = $receivablesModel->getDataMoney($whereArr);
-            }
-            
-            //去年当月
-            $start_time = ($year-1).'-'.$i.'-01';
-            $end_time = ($year-1).'-'.($i+1).'-01';
-            if ($i == 12) {
-                $start_time = ($year-1).'-'.$i.'-01';
-                $end_time = ($year).'-01-01';
-            }
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
-            }
-            $whereArr[$time] = $create_time;
-            if ($param['type'] == 'count') {
-                $item['lastYeatMonth'] = $biContractModel->getDataCount($whereArr);
-            } elseif ($param['type'] == 'money') {
-                $item['lastYeatMonth'] = $biContractModel->getDataMoney($whereArr);
-            } elseif ($param['type'] == 'back') {
-                $whereArr['return_time'] = $create_time;
-                $item['lastYeatMonth'] = $receivablesModel->getDataMoney($whereArr);
-            }
-            
-            // //去年上月
-            if ($i == 1) {
-                $start_time = ($year-2).'-12-01';
-                $end_time = ($year-1).'-01-01';
-            } else {
-                $start_time = ($year-1).'-'.($i-1).'-01';
-                $end_time = ($year-1).'-'.$i.'-01';
-            }
-            $create_time = [];
-            if ($start_time && $end_time) {
-                $create_time = array('between',array($start_time,$end_time));
-            }
-            $whereArr[$time] = $create_time;
-            if ($param['type'] == 'count') {
-                $item['lastYeatLastMonth'] = $biContractModel->getDataCount($whereArr);
-            } elseif ($param['type'] == 'money') {
-                $item['lastYeatLastMonth'] = $biContractModel->getDataMoney($whereArr);
-            } elseif ($param['type'] == 'back') {
-                $whereArr['return_time'] = $create_time;
-                $item['lastYeatLastMonth'] = $receivablesModel->getDataMoney($whereArr);
-            }
-            
-            //环比增长
-            if ($item['month'] == 0 || $item['lastMonth'] == 0) {
-                $item['chain_ratio'] = 0;
-            } else {
-                $item['chain_ratio'] = round(($item['month']/$item['lastMonth']),4)*100;
-            }
-            //同比增长
-            if ($item['month'] == 0 || $item['lastYeatMonth'] == 0) {
-                $item['year_on_year'] = 0;
-            } else {
-                $item['year_on_year'] = round(($item['month']/$item['lastYeatMonth']),4)*100;
-            }
-            $datas[] = $item;
+            $model = new ReceivablesModel;
+            $time_field = 'return_time';
+        } else {
+            $model = new ContractModel;
+            $time_field = 'order_date';
         }
-        return resultArray(['data' => $datas]);
+        if ($param['type'] == 'count') {
+            $field['COUNT(*)'] = 'total';
+        } else {
+            $field['SUM(`money`)'] = 'total';
+        }
+        $between_time = [date('Y-m-d', $time['between'][0]), date('Y-m-d', $time['between'][1])];
+        $field["SUBSTR(`{$time_field}`, 1, 7)"] = 'type';
+        $sql = $model->field($field)
+            ->where([
+                'owner_user_id' => ['IN', $userIds],
+                'check_status' => 2,
+                $time_field => ['BETWEEN', $between_time]
+            ])
+            ->group('type')
+            ->fetchSql()
+            ->select();
+        $res = queryCache($sql);
+        $res = array_column($res, null, 'type');
+
+        $data = [];
+        for ($i = 12; $i < 24; $i++) {
+            $k = $time['list'][$i]['type'];
+            $k2 = $time['list'][$i - 1]['type'];
+            $k3 = $time['list'][$i - 11]['type'];
+            $item = [
+                'type' => $i - 11 . '月'
+            ];
+            $item['month'] = $res[$k] ? $res[$k]['total'] : 0;
+            $item['lastMonth'] = $res[$k2] ? $res[$k2]['total'] : 0;
+            $item['lastYeatMonth'] = $res[$k3] ? $res[$k3]['total'] : 0;
+            // 环比
+            $item['chain_ratio'] = $item['lastMonth'] ? round(($item['month'] / $item['lastMonth']), 4) * 100 : 0;
+            // 同比
+            $item['year_on_year'] = $item['year_on_year'] ? round(($item['month'] / $item['year_on_year']), 4) * 100 : 0;
+
+            $data[] = $item;
+        }
+        return resultArray(['data' => $data]);
     }
     
     /**
@@ -182,52 +121,62 @@ class Contract extends ApiCommon
         $perUserIds = $userModel->getUserByPer('bi', 'contract', 'read'); //权限范围内userIds
         $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
         $userIds = $whereArr['userIds'];
-        $between_time = $whereArr['between_time'];
-        
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
         }
-        $company = $biCustomerModel->getParamByCompany($param);
-        $datas = array();
+
+        $time = getTimeArray();
+        $between_time = [date('Y-m-d', $time['between'][0]), date('Y-m-d', $time['between'][1])];
+        $sql = ContractModel::field([
+                'SUBSTR(`order_date`, 1, 7)' => 'type',
+                'COUNT(*)' => 'count',
+                'SUM(`money`)' => 'money'
+            ])
+            ->where([
+                'owner_user_id' => ['IN', $userIds],
+                'check_status' => 2,
+                'order_date' => ['BETWEEN', $between_time]
+            ])
+            ->group('type')
+            ->fetchSql()
+            ->select();
+        
+        $contract_data = queryCache($sql);
+        $contract_data = array_column($contract_data, null, 'type');
+        
+        $sql = ReceivablesModel::field([
+                'SUBSTR(`return_time`, 1, 7)' => 'type',
+                'SUM(`money`)' => 'money'
+            ])
+            ->where([
+                'owner_user_id' => ['IN', $userIds],
+                'check_status' => 2,
+                'return_time' => ['BETWEEN', $between_time]
+            ])
+            ->group('type')
+            ->fetchSql()
+            ->select();
+        $receivables_data = queryCache($sql);
+        $receivables_data = array_column($receivables_data, null, 'type');
+        
+        $items = [];
         $count_zong = 0;
         $money_zong = 0;
         $back_zong = 0;
-        for ($i=1; $i <= $company['j']; $i++) { 
-            $whereArr = [];
-            $whereArr['owner_user_id'] = array('in',$userIds);
-            $whereArr['check_status'] = array('eq',2);
-            $item = array();
-            $where_time = [];
-            //时间段
-            $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
-            $item['type'] = $timeArr['type'];
-            if ($timeArr['start_time'] && $timeArr['end_time']) {
-                $where_time = array('between',array(date('Y-m-d',$timeArr['start_time']),date('Y-m-d',$timeArr['end_time'])));
-            }
-            $where = $whereArr;
-            $where['order_date'] = $where_time;
-            if (in_array($param['type'],array('month','lastMonth','week','lastWeek'))) {
-                $where['order_date'] = array('eq',date('Y-m-d',$timeArr['start_time']));
-            }
-            $item['count'] = $biContractModel->getDataCount($where);
-            $count_zong += $item['count'];
-            $item['money'] = $biContractModel->getDataMoney($where);
-            $money_zong += $item['money'];
-            
-            $where_b = $whereArr;
-            $where_b['return_time'] = $where_time;
-            if (in_array($param['type'],array('month','lastMonth','week','lastWeek'))) {
-                $where_b['return_time'] = array('eq',date('Y-m-d',$timeArr['start_time']));
-            }            
-            $item['back'] = $receivablesModel->getDataMoney($where_b);
-            $back_zong += $item['back'];
-            $datas['items'][] = $item;
+        foreach ($time['list'] as $val) {
+            $item = ['type' => $val['type']];
+            $count_zong += $item['count'] = $contract_data[$val['type']]['count'] ?: 0;
+            $money_zong += $item['money'] = $contract_data[$val['type']]['money'] ?: 0;
+            $back_zong += $item['back'] = $receivables_data[$val['type']]['money'] ?: 0;
+            $items[] = $item;
         }
-        $whereArr['create_time'] = array('between',$between_time);
-        $datas['count_zong'] = $count_zong;
-        $datas['money_zong'] = $money_zong;
-        $datas['back_zong'] = $back_zong;
-        $datas['w_back_zong'] = $datas['money_zong']-$datas['back_zong'];
-        return resultArray(['data' => $datas]);
+        $data = [
+            'items' => $items,
+            'count_zong' => $count_zong,
+            'money_zong' => $money_zong,
+            'back_zong' => $back_zong,
+            'w_back_zong' => $money_zong - $back_zong,
+        ];
+        return resultArray(['data' => $data]);
     }
 }

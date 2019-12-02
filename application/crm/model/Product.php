@@ -8,11 +8,17 @@ namespace app\crm\model;
 
 use think\Db;
 use app\admin\model\Common;
+use app\admin\model\User as UserModel;
+use app\admin\model\File as FileModel;
 use think\Request;
 use think\Validate;
+use traits\model\SoftDelete;
 
 class Product extends Common
 {
+	use SoftDelete;
+	protected $deleteTime = 'delete_time';
+
 	/**
      * 为了数据库的整洁，同时又不影响Model和Controller的名称
      * 我们约定每个模块的数据表都加上相同的前缀，比如CRM模块用crm作为数据表前缀
@@ -83,20 +89,20 @@ class Product extends Common
 		$join = [
 			['__CRM_PRODUCT_CATEGORY__ product_category', 'product_category.category_id = product.category_id', 'LEFT'],
 		];
-		$list_view = db('crm_product')
-					 ->alias('product')
-					 ->where($map)
-				     ->join($join);
-		$list = $list_view
+
+		$list = $this->alias('product')
+				->where($map)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
-        		->field(implode(',',$indexField).',product_category.name as category_name')
+				->field($indexField)
+				->join($join)
+				->field(array_merge($indexField, ['product_category.name' => 'category_name']))
         		->orderRaw($order)
         		->select();
-        $dataCount = db('crm_product')->alias('product')
+        $dataCount = $this->alias('product')
 					 ->where($map)
-				     ->join($join)
 				     ->count('product_id');
         foreach ($list as $k=>$v) {
+			$list[$k] = $v->toArray();
         	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
         	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];
 			foreach ($userField as $key => $val) {
@@ -106,9 +112,11 @@ class Product extends Common
         		$list[$k][$val.'_info'] = isset($v[$val]) ? $structureModel->getDataByStr($v[$val]) : [];
         	}
         	//产品类型
-        	$list[$k]['category_id_info'] = $v['category_name'];
-        }    
-        $data = [];
+			$list[$k]['category_id_info'] = $v['category_name'];
+			$list[$k]['update_time'] = strtotime($v['update_time']);
+			$list[$k]['create_time'] = strtotime($v['create_time']);
+		}    
+		$data = [];
         $data['list'] = $list;
         $data['dataCount'] = $dataCount ? : 0;
 
@@ -330,13 +338,15 @@ class Product extends Common
 			['__CRM_PRODUCT_CATEGORY__ product_category', 'product_category.category_id = product.category_id', 'LEFT'],
 		];
 
-		$list = db('crm_contract_product')
+		$sql = db('crm_contract_product')
 					 ->alias('a')
 					 ->where($where)
 				     ->join($join)
 				     ->field('a.*,product.name as product_name,contract.customer_id,contract.owner_user_id,contract.name as contract_name,contract.num as contract_num,product_category.name as category_id_info,user.realname,product_category.category_id')
 					 ->order('category_id,product_name')
-				     ->select();
+					 ->fetchSql()
+					 ->select();
+		$list = queryCache($sql);
 		foreach ($list as $k=>$v) {
 			$customer_info = Db::name('CrmCustomer')->field('customer_id,name')->where('customer_id = '.$v['customer_id'])->field('customer_id,name')->find(); //客户
 			$list[$k]['customer_id_info'] = $customer_info ? : array();
@@ -376,5 +386,55 @@ class Product extends Common
 		$arr = array_reverse($idArr);
 		$resStr = ','.implode(',',$arr).',';
 		return $resStr;
-	}         	
+	}
+	
+	/**
+	 * 删除当前的记录
+	 *
+	 * @overwrite   重写 traits\model\SoftDelete\delete
+	 * @param boolean $force	是否强制删除
+     * @return integer
+	 * @author Ymob
+	 * @datetime 2019-10-24 15:02:22
+	 */
+    public function delete($force = false)
+    {
+        if (false === $this->trigger('before_delete', $this)) {
+            return false;
+        }
+
+        $name = $this->getDeleteTimeField();
+        if ($name && !$force) {
+            // 软删除
+			$this->data[$name] = $this->autoWriteTimestamp($name);
+			$this->data['delete_user_id'] = UserModel::userInfo('id');
+            $result            = $this->isUpdate()->save();
+        } else {
+            // 强制删除当前模型数据
+            $result = $this->getQuery()->where($this->getWhere())->delete();
+        }
+
+        // 关联删除
+        if (!empty($this->relationWrite)) {
+            foreach ($this->relationWrite as $key => $name) {
+                $name   = is_numeric($key) ? $name : $key;
+                $result = $this->getRelation($name);
+                if ($result instanceof Model) {
+                    $result->delete();
+                } elseif ($result instanceof Collection || is_array($result)) {
+                    foreach ($result as $model) {
+                        $model->delete();
+                    }
+                }
+            }
+        }
+
+        $this->trigger('after_delete', $this);
+
+        // 清空原始数据
+        $this->origin = [];
+
+        return $result;
+    }
+
 }

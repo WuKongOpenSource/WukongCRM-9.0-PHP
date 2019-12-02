@@ -9,6 +9,7 @@ namespace app\work\model;
 
 use think\Db;
 use app\admin\model\Common;
+use app\admin\model\Message;
 use app\admin\model\User as UserModel;
 use app\admin\model\Structure as StructureModel;
 use app\admin\model\Comment as CommentModel;
@@ -267,9 +268,14 @@ class Task extends Common
 				//操作日志
 				actionLog($task_id,'','','新建了任务');
 				//抄送站内信
-				$sendUserArr = $main_user_id;
-				$content = $param['create_user_name'].'新建了任务'.'《'.$param['name'].'》';
-				if ($sendUserArr) sendMessage($sendUserArr,$content,1);				
+				(new Message())->send(
+                    Message::TASK_ALLOCATION,
+                    [
+                        'title' => $param['name'],
+                        'action_id' => $task_id
+                    ],
+                    $main_user_id
+                );
 			}
 			return $task_id;
 		} else {
@@ -400,6 +406,14 @@ class Task extends Common
 				//设置负责人
 				$userdet = $userModel->getDataById($param['main_user_id']);
 				$data['after'] = '设定'.$userdet['realname'].'为主要负责人！';
+				(new Message())->send(
+                    Message::TASK_ALLOCATION,
+                    [
+                        'title' => $taskInfo['name'],
+                        'action_id' => $param['task_id']
+                    ],
+                    $param['main_user_id']
+                );
 				break;				
 		}
 

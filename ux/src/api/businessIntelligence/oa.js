@@ -5,11 +5,11 @@ import request from '@/utils/request'
  * @param {*} data
  */
 export function biLogStatisticsAPI(data) {
-    return request({
-        url: 'bi/log/statistics',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'bi/log/statistics',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -17,13 +17,13 @@ export function biLogStatisticsAPI(data) {
  * @param {*} data
  */
 export function biLogExcelExportAPI(data) {
-    return request({
-        url: 'bi/log/excelExport',
-        method: 'post',
-        data: data,
-        responseType: 'blob',
-        timeout: 600000
-    })
+  return request({
+    url: 'bi/log/excelExport',
+    method: 'post',
+    data: data,
+    responseType: 'blob',
+    timeout: 600000
+  })
 }
 
 /**
@@ -31,11 +31,11 @@ export function biLogExcelExportAPI(data) {
  * @param {*} data
  */
 export function biExamineStatisticsAPI(data) {
-    return request({
-        url: 'bi/examine/statistics',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'bi/examine/statistics',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -43,11 +43,11 @@ export function biExamineStatisticsAPI(data) {
 * @param {*} data
 */
 export function biExamineIndexAPI(data) {
-    return request({
-        url: 'bi/examine/index',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'bi/examine/index',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -55,11 +55,11 @@ export function biExamineIndexAPI(data) {
  * @param {*} data
  */
 export function biExamineExcelExportAPI(data) {
-    return request({
-        url: 'bi/examine/excelExport',
-        method: 'post',
-        data: data,
-        responseType: 'blob',
-        timeout: 600000
-    })
+  return request({
+    url: 'bi/examine/excelExport',
+    method: 'post',
+    data: data,
+    responseType: 'blob',
+    timeout: 600000
+  })
 }

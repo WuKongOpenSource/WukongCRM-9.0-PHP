@@ -8,6 +8,8 @@
 namespace app\crm\controller;
 
 use app\admin\controller\ApiCommon;
+use app\admin\model\Message;
+use app\admin\model\User;
 use think\Hook;
 use think\Request;
 use think\Db;
@@ -130,11 +132,19 @@ class Contract extends ApiCommon
             return resultArray(['error' => $contractModel->getError()]);
         }
         //回款信息用来作废时二次确认
+        $auth_user_ids = $userModel->getUserByPer('crm', 'receivables', 'index');
+        
         $where['contract_id'] = $param['id'];
         $where['pageType'] = 'all';
         $where['user_id'] = $userInfo['id']; 
-        $receivablesData = $receivablesModel->getDataList($where); 
-        $data['receivablesDataCount'] = $receivablesData['dataCount'] ? 1 : 0 ;
+        $receivablesData = $receivablesModel->getDataList($where);
+        $receivablesData = $receivablesModel
+            ->where([
+                'contract_id' => $param['id'],
+                'owner_user_id' => ['IN', $auth_user_ids]
+            ])
+            ->count(); 
+        $data['receivablesDataCount'] = $receivablesData;
         return resultArray(['data' => $data]);
     }
 
@@ -434,9 +444,15 @@ class Contract extends ApiCommon
             $resRecord = $examineRecordModel->createData($checkData);
             //审核通过，相关客户状态改为已成交
             if ($is_end == 1 && !empty($status)) {
-                //发送站内信
-                $sendContent = '您的申请《'.$dataInfo['name'].'》,'.$userInfo['realname'].'已审核通过,审批结束';
-                $resMessage = sendMessage($dataInfo['owner_user_id'], $sendContent, $param['id'], 1);                
+                // 审批通过消息告知负责人
+                (new Message())->send(
+					Message::CONTRACT_PASS,
+					[
+						'title' => $dataInfo['name'],
+						'action_id' => $param['id']
+					],
+					$dataInfo['owner_user_id']
+				);
 
                 $customerData = [];
                 $customerData['deal_status'] = '已成交';
@@ -446,11 +462,25 @@ class Contract extends ApiCommon
             } else {
                 if ($status) {
                     //发送站内信
-                    $sendContent = '您的申请《'.$dataInfo['name'].'》,'.$userInfo['realname'].'已审核通过';
-                    $resMessage = sendMessage($dataInfo['owner_user_id'], $sendContent, $param['id'], 1);
+                    // 通过未完成，发送消息给
+                    (new Message())->send(
+                        Message::CONTRACT_TO_DO,
+                        [
+                            'from_user' => User::where(['id' => $dataInfo['owner_user_id']])->value('realname'),
+                            'title' => $dataInfo['name'],
+                            'action_id' => $param['id']
+                        ],
+                        stringToArray($contractData['check_user_id'])
+                    );
                 } else {
-                    $sendContent = '您的申请《'.$dataInfo['name'].'》,'.$userInfo['realname'].'已审核拒绝,审核意见：'.$param['content'];
-                    $resMessage = sendMessage($dataInfo['owner_user_id'], $sendContent, $param['id'], 1);
+                    (new Message())->send(
+                        Message::CONTRACT_REJECT,
+                        [
+                            'title' => $dataInfo['name'],
+                            'action_id' => $param['id']
+                        ],
+                        $dataInfo['owner_user_id']
+                    );
                 }          
             }
             return resultArray(['data' => '审批成功']);            

@@ -8,6 +8,8 @@
 namespace app\crm\controller;
 
 use app\admin\controller\ApiCommon;
+use app\crm\model\Product as ProductModel;
+use app\Admin\model\File as FileModel;
 use think\Hook;
 use think\Request;
 
@@ -212,5 +214,53 @@ class Product extends ApiCommon
             return resultArray(['error'=>$excelModel->getError()]);
         }
         return resultArray(['data' => $excelModel->getError()]);
-    }    
+    }
+
+    /**
+     * 删除
+     *
+     * @return void
+     * @author Ymob
+     * @datetime 2019-10-24 13:44:31
+     */
+    public function delete()
+    {
+        $id_list = (array) $this->param['id'];
+        $id_list = array_map('intval', $id_list);
+
+        // 错误信息
+        $error_message = [];
+        // 过滤后的ID
+        $id_list_filter = ProductModel::where(['product_id' => ['IN', $id_list]])->column('product_id');
+
+        $diff = array_diff($id_list, $id_list_filter);
+
+        if (!empty($diff)) {
+            foreach ($diff as $key => $val) {
+                $error_message[] = sprintf('ID为 %d 的客户删除失败，错误原因：数据不存在或已删除。', $val);
+            }
+            array_unshift($error_message, '数据已更新，刷新页面后重试！');
+            return resultArray(['error' => $error_message]);
+        }
+
+        // 开启事务
+        ProductModel::startTrans();
+
+        // 软删除数据
+        $res = ProductModel::destroy(['product_id' => ['IN', $id_list]]);
+
+        if ($res == count($id_list)) {
+            // 事务提交
+            ProductModel::commit();
+            // 删除关联附件
+            (new FileModel)->delRFileByModule('crm_product', $id_list);
+            // 添加删除记录
+            actionLog($id_list, '', '', '');
+            return resultArray(['data' => '删除成功']);
+        } else {
+            // 事务回滚
+            ProductModel::rollback();
+            return resultArray(['error' => '删除失败']);
+        }
+    }
 }

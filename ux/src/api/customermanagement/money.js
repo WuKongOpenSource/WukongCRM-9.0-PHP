@@ -75,7 +75,7 @@ export function crmReceivablesPlanIndex(data) {
 
 /**
  * 回款计划删除
- * @param {*} data 
+ * @param {*} data
  */
 export function crmReceivablesPlanDeleteAPI(data) {
   return request({

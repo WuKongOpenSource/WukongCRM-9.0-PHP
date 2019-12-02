@@ -19,6 +19,11 @@ class InitConfigBehavior
          */
         define('DB_NAME', \config('database.database'));
 
+        // 生成临时目录
+        if (!file_exists('./public/temp')) {
+            mkdir('./public/temp', 0777, true);
+        }
+
         /**
          * 自定义临时文件目录的绝对路径，暂时用于存放导入导出时的临时文件
          */

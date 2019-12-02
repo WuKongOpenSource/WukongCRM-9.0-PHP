@@ -1,14 +1,15 @@
 <template>
-  <el-select style="width: 100%;"
-             v-model="dataValue"
-             :disabled="disabled"
-             @change="valueChange"
-             placeholder="请选择">
-    <el-option v-for="(item, index) in option"
-               :key="index"
-               :label="item.num"
-               :value="item.plan_id">
-    </el-option>
+  <el-select
+    v-model="dataValue"
+    :disabled="disabled"
+    style="width: 100%;"
+    placeholder="请选择"
+    @change="valueChange">
+    <el-option
+      v-for="(item, index) in option"
+      :key="index"
+      :label="item.num"
+      :value="item.plan_id"/>
   </el-select>
 </template>
 <script type="text/javascript">
@@ -16,30 +17,30 @@ import stringMixin from './stringMixin'
 import { crmReceivablesPlanIndex } from '@/api/customermanagement/money'
 
 export default {
-  name: 'xh-receivables-plan', // 回款 下的 回款计划
+  name: 'XhReceivablesPlan', // 回款 下的 回款计划
   components: {},
   mixins: [stringMixin],
-  watch: {
-    relation: function(val) {
-      if (val.form_type) {
-        this.getPlanList()
-      } else {
-        this.option = []
-      }
-    }
-  },
-  computed: {},
-  data() {
-    return {
-      option: []
-    }
-  },
   props: {
     relation: {
       // 相关ID
       type: Object,
       default: () => {
         return {}
+      }
+    }
+  },
+  data() {
+    return {
+      option: []
+    }
+  },
+  computed: {},
+  watch: {
+    relation: function(val) {
+      if (val.form_type) {
+        this.getPlanList()
+      } else {
+        this.option = []
       }
     }
   },

@@ -92,3 +92,17 @@ export function crmProductExcelImport(data) {
  *
  */
 export const crmProductExcelDownloadURL = 'crm/product/excelDownload'
+
+
+/**
+ * 删除
+ * @param {*} data
+ *
+ */
+export function crmProductDelete(data) {
+  return request({
+    url: 'crm/product/delete',
+    method: 'post',
+    data: data
+  })
+}

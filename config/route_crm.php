@@ -166,6 +166,8 @@ return [
 	'crm/product/excelDownload' => ['crm/product/excelDownload', ['method' => 'GET']],
 	// 【产品】导入
 	'crm/product/excelImport' => ['crm/product/excelImport', ['method' => 'POST']],			
+	// 【产品】删除
+	'crm/product/delete' => ['crm/product/delete', ['method' => 'POST']],			
 
 	// 【回款】列表
 	'crm/receivables/index' => ['crm/receivables/index', ['method' => 'POST']],

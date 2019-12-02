@@ -1,128 +1,147 @@
 <template>
-  <el-dialog :title="edit_id ? '编辑场景' : '新建场景'"
-             :visible.sync="visible"
-             @close="handleCancel"
-             :append-to-body="true"
-             width="800px">
+  <el-dialog
+    :title="edit_id ? '编辑场景' : '新建场景'"
+    :visible.sync="visible"
+    :append-to-body="true"
+    width="800px"
+    @close="handleCancel">
     <div class="scene-name-container">
       <div class="scene-name">场景名称</div>
-      <el-input class="scene-input"
-                v-model.trim="saveName"
-                :maxlength="10"
-                placeholder="请输入场景名称，最多10个字符">
-      </el-input>
+      <el-input
+        v-model.trim="saveName"
+        :maxlength="10"
+        class="scene-input"
+        placeholder="请输入场景名称，最多10个字符"/>
     </div>
     <div class="scene-name">筛选条件</div>
-    <el-form class="filter-container"
-             id="scene-filter-container">
+    <el-form
+      id="scene-filter-container"
+      class="filter-container">
       <el-form-item>
         <template v-for="(formItem, index) in form">
           <el-row :key="index">
             <el-col :span="8">
-              <el-select v-model="formItem.field"
-                         @change="fieldChange(formItem)"
-                         placeholder="请选择要筛选的字段名">
-                <el-option v-for="item in fieldList"
-                           :key="item.field"
-                           :label="item.name"
-                           :value="item.field">
-                </el-option>
+              <el-select
+                v-model="formItem.field"
+                placeholder="请选择要筛选的字段名"
+                @change="fieldChange(formItem)">
+                <el-option
+                  v-for="item in fieldList"
+                  :key="item.field"
+                  :label="item.name"
+                  :value="item.field"/>
               </el-select>
             </el-col>
 
-            <el-col :span="1"
-                    v-if="formItem.form_type !== 'date' && formItem.form_type !== 'datetime' && formItem.form_type !== 'business_type'">&nbsp;</el-col>
-            <el-col :span="4"
-                    v-if="formItem.form_type !== 'date' && formItem.form_type !== 'datetime' && formItem.form_type !== 'business_type'">
-              <el-select v-model="formItem.condition"
-                         placeholder="请选择范围">
-                <el-option v-for="item in calConditionOptions(formItem.form_type, formItem)"
-                           :key="item.value"
-                           :label="item.label"
-                           :value="item.value">
-                </el-option>
+            <el-col
+              v-if="formItem.form_type !== 'date' && formItem.form_type !== 'datetime' && formItem.form_type !== 'business_type'"
+              :span="1">&nbsp;</el-col>
+            <el-col
+              v-if="formItem.form_type !== 'date' && formItem.form_type !== 'datetime' && formItem.form_type !== 'business_type'"
+              :span="4">
+              <el-select
+                v-model="formItem.condition"
+                placeholder="请选择范围">
+                <el-option
+                  v-for="item in calConditionOptions(formItem.form_type, formItem)"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"/>
               </el-select>
             </el-col>
 
             <!-- 商机组 -->
-            <el-col :span="1"
-                    v-if="formItem.form_type == 'business_type'">&nbsp;</el-col>
-            <el-col :span="4"
-                    v-if="formItem.form_type == 'business_type'">
-              <el-select v-model="formItem.type_id"
-                         @change="typeOptionsChange(formItem)"
-                         placeholder="请选择">
-                <el-option v-for="item in formItem.typeOption"
-                           :key="item.type_id"
-                           :label="item.name"
-                           :value="item.type_id">
-                </el-option>
+            <el-col
+              v-if="formItem.form_type == 'business_type'"
+              :span="1">&nbsp;</el-col>
+            <el-col
+              v-if="formItem.form_type == 'business_type'"
+              :span="4">
+              <el-select
+                v-model="formItem.type_id"
+                placeholder="请选择"
+                @change="typeOptionsChange(formItem)">
+                <el-option
+                  v-for="item in formItem.typeOption"
+                  :key="item.type_id"
+                  :label="item.name"
+                  :value="item.type_id"/>
               </el-select>
             </el-col>
 
             <el-col :span="1">&nbsp;</el-col>
             <el-col :span="formItem.form_type === 'datetime' || formItem.form_type === 'date' ? 13 : 8">
-              <el-select v-if="formItem.form_type === 'select'"
-                         v-model="formItem.value"
-                         placeholder="请选择筛选条件">
-                <el-option v-for="item in formItem.setting"
-                           :key="item"
-                           :label="item"
-                           :value="item">
-                </el-option>
+              <el-select
+                v-if="formItem.form_type === 'select'"
+                v-model="formItem.value"
+                placeholder="请选择筛选条件">
+                <el-option
+                  v-for="item in formItem.setting"
+                  :key="item"
+                  :label="item"
+                  :value="item"/>
               </el-select>
-              <el-date-picker v-else-if="formItem.form_type === 'date' || formItem.form_type === 'datetime'"
-                              v-model="formItem.value"
-                              :value-format="formItem.form_type === 'date' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm:ss'"
-                              :type="formItem.form_type === 'date' ? 'daterange' : 'datetimerange'"
-                              style="padding: 0px 10px;"
-                              range-separator="-"
-                              start-placeholder="开始日期"
-                              end-placeholder="结束日期">
-              </el-date-picker>
-              <el-select v-else-if="formItem.form_type === 'business_type'"
-                         v-model="formItem.status_id"
-                         placeholder="请选择">
-                <el-option v-for="item in formItem.statusOption"
-                           :key="item.status_id"
-                           :label="item.name"
-                           :value="item.status_id">
-                </el-option>
+              <el-date-picker
+                v-else-if="formItem.form_type === 'date' || formItem.form_type === 'datetime'"
+                v-model="formItem.value"
+                :value-format="formItem.form_type === 'date' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm:ss'"
+                :type="formItem.form_type === 'date' ? 'daterange' : 'datetimerange'"
+                style="padding: 0px 10px;"
+                range-separator="-"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"/>
+              <el-select
+                v-else-if="formItem.form_type === 'business_type'"
+                v-model="formItem.status_id"
+                placeholder="请选择">
+                <el-option
+                  v-for="item in formItem.statusOption"
+                  :key="item.status_id"
+                  :label="item.name"
+                  :value="item.status_id"/>
               </el-select>
-              <xh-user-cell v-else-if="formItem.form_type === 'user'"
-                            :item="formItem"
-                            :infoParams="{m	:'crm',c: crmType,a: 'index' }"
-                            :value="formItem.value"
-                            @value-change="userValueChange"></xh-user-cell>
-              <el-input v-else
-                        v-model="formItem.value"
-                        placeholder="请输入筛选条件"></el-input>
+              <xh-user-cell
+                v-else-if="formItem.form_type === 'user'"
+                :item="formItem"
+                :info-params="{m	:'crm',c: crmType,a: 'index' }"
+                :value="formItem.value"
+                @value-change="userValueChange"/>
+              <el-input
+                v-else
+                v-model="formItem.value"
+                placeholder="请输入筛选条件"/>
             </el-col>
-            <el-col :span="1"
-                    class="delete">
-              <i class="el-icon-error delete-btn"
-                 @click="handleDelete(index)"></i>
+            <el-col
+              :span="1"
+              class="delete">
+              <i
+                class="el-icon-error delete-btn"
+                @click="handleDelete(index)"/>
             </el-col>
           </el-row>
         </template>
       </el-form-item>
     </el-form>
-    <p class="el-icon-warning warning-info"
-       v-show="showErrors">
+    <p
+      v-show="showErrors"
+      class="el-icon-warning warning-info">
       <span class="desc">筛选条件中有重复项！</span>
     </p>
-    <el-button type="text"
-               @click="handleAdd">+ 添加筛选条件</el-button>
+    <el-button
+      type="text"
+      @click="handleAdd">+ 添加筛选条件</el-button>
     <div class="save">
       <div class="save-setting">
         <el-checkbox v-model="saveDefault">设置为默认</el-checkbox>
       </div>
     </div>
-    <div slot="footer"
-         class="dialog-footer">
+    <div
+      slot="footer"
+      class="dialog-footer">
       <el-button @click="handleCancel">取 消</el-button>
-      <el-button type="primary"
-                 @click="handleConfirm">确 定</el-button>
+      <el-button
+        type="primary"
+        @click="handleConfirm">确 定</el-button>
     </div>
   </el-dialog>
 </template>
@@ -141,7 +160,7 @@ import { XhUserCell } from '@/components/CreateCom'
  *     type:  date || datetime || select || 其他 input
  */
 export default {
-  name: 'scene-create', // 新建场景
+  name: 'SceneCreate', // 新建场景
   components: {
     XhUserCell
   },
@@ -154,9 +173,12 @@ export default {
     fieldList: {
       type: Array,
       required: true,
-      default: []
+      default: () => {
+        return []
+      }
     },
     obj: {
+      type: Object,
       default: () => {
         return {}
       },
@@ -184,7 +206,7 @@ export default {
   data() {
     return {
       form: [],
-      visible: false, //控制展示
+      visible: false, // 控制展示
       showErrors: false,
       saveDefault: false, // 设置为默认场景
       saveName: null // 场景名称
@@ -197,9 +219,9 @@ export default {
           // 处理编辑数据
           if (this.edit_id) {
             this.form = []
-            for (let field in this.obj.obj) {
+            for (const field in this.obj.obj) {
               const element = this.obj.obj[field]
-              let item = this.getItem()
+              const item = this.getItem()
               item.name = element.name
               item.field = field
               item.condition = element.condition
@@ -216,7 +238,7 @@ export default {
                 item.status_id = element.status_id
                 item.typeOption = element.setting
                 if (element.type_id) {
-                  let obj = element.setting.find(typeItem => {
+                  const obj = element.setting.find(typeItem => {
                     return typeItem.type_id === element.type_id
                   })
                   if (obj) {
@@ -284,7 +306,7 @@ export default {
      */
     typeOptionsChange(formItem) {
       if (formItem.type_id) {
-        let obj = formItem.typeOption.find(item => {
+        const obj = formItem.typeOption.find(item => {
           return item.type_id === formItem.type_id
         })
         formItem.statusOption = obj.statusList || []
@@ -367,7 +389,7 @@ export default {
      * @param formItem
      */
     fieldChange(formItem) {
-      let obj = this.fieldList.find(item => {
+      const obj = this.fieldList.find(item => {
         return item.field === formItem.field
       })
       if (obj) {
@@ -389,7 +411,7 @@ export default {
         }
       }
 
-      let arr = this.form.filter(item => {
+      const arr = this.form.filter(item => {
         return item.field === formItem.field
       })
       if (arr.length > 1) this.showErrors = true
@@ -415,7 +437,7 @@ export default {
         return
       }
       for (let i = 0; i < this.form.length; i++) {
-        let o = this.form[i]
+        const o = this.form[i]
         if (!o.field || o.field === '') {
           this.$message.error('要筛选的字段名称不能为空！')
           return
@@ -440,7 +462,7 @@ export default {
           return
         }
       }
-      let obj = {}
+      const obj = {}
       this.form.forEach(o => {
         if (o.form_type == 'date') {
           obj[o.field] = {
@@ -479,7 +501,7 @@ export default {
           }
         }
       })
-      let data = {
+      const data = {
         obj: obj,
         form: this.form,
         saveDefault: this.saveDefault,
@@ -487,7 +509,7 @@ export default {
       }
       this.requestCreateScene(data)
     },
-    //创建场景
+    // 创建场景
     requestCreateScene(data) {
       /** 编辑操作 */
       if (this.edit_id) {

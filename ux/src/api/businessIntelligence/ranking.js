@@ -18,7 +18,7 @@ export function biRankingContractAPI(data) {
 
 /**
  * 回款金额排行
- * @param {*} data 
+ * @param {*} data
  */
 export function biRankingReceivablesAPI(data) {
   return request({
@@ -30,7 +30,7 @@ export function biRankingReceivablesAPI(data) {
 
 /**
  * 签约合同排行
- * @param {*} data 
+ * @param {*} data
  */
 export function biRankingSigningAPI(data) {
   return request({
@@ -42,7 +42,7 @@ export function biRankingSigningAPI(data) {
 
 /**
  * 产品销量排行
- * @param {*} data 
+ * @param {*} data
  */
 export function biRankingProductAPI(data) {
   return request({
@@ -54,7 +54,7 @@ export function biRankingProductAPI(data) {
 
 /**
  * 新增客户数排行
- * @param {*} data 
+ * @param {*} data
  */
 export function biRankingAddCustomerAPI(data) {
   return request({
@@ -66,7 +66,7 @@ export function biRankingAddCustomerAPI(data) {
 
 /**
  * 新增联系人数排行
- * @param {*} data 
+ * @param {*} data
  */
 export function biRankingAddContactsAPI(data) {
   return request({
@@ -78,7 +78,7 @@ export function biRankingAddContactsAPI(data) {
 
 /**
  * 跟进次数排行
- * @param {*} data 
+ * @param {*} data
  */
 export function biRankingRecordNunAPI(data) {
   return request({
@@ -90,7 +90,7 @@ export function biRankingRecordNunAPI(data) {
 
 /**
  * 跟进客户数排行
- * @param {*} data 
+ * @param {*} data
  */
 export function biRankingRecordCustomerAPI(data) {
   return request({
@@ -102,7 +102,7 @@ export function biRankingRecordCustomerAPI(data) {
 
 /**
  * 出差次数排行
- * @param {*} data 
+ * @param {*} data
  */
 export function biRankingExamineAPI(data) {
   return request({

@@ -1,59 +1,77 @@
 <template>
   <div style="position: relative;">
     <flexbox class="t-section">
-      <img class="t-img"
-           :src="crmIcon" />
-      <div class="t-name">{{name}}</div>
-      <el-button v-if="showTransfer"
-                 class="head-handle-button"
-                 @click.native="handleTypeClick('transfer')"
-                 type="primary">转移</el-button>
-      <el-button v-if="showEdit"
-                 class="head-handle-button"
-                 @click.native="handleTypeClick('edit')"
-                 type="primary">编辑</el-button>
-      <el-dropdown v-if="moreTypes.length > 0"
-                   trigger="click"
-                   @command="handleTypeClick">
-        <flexbox class="t-more"
-                 v-if="moreTypes.length > 0">
+      <img
+        :src="crmIcon"
+        class="t-img" >
+      <div class="t-name">{{ name }}</div>
+      <el-button
+        v-if="showCancel"
+        class="head-handle-button"
+        type="primary"
+        @click.native="handleTypeClick('cancel')">作废</el-button>
+      <el-button
+        v-if="showTransfer"
+        class="head-handle-button"
+        type="primary"
+        @click.native="handleTypeClick('transfer')">转移</el-button>
+      <el-button
+        v-if="showEdit"
+        class="head-handle-button"
+        type="primary"
+        @click.native="handleTypeClick('edit')">编辑</el-button>
+      <el-dropdown
+        v-if="moreTypes.length > 0"
+        trigger="click"
+        @command="handleTypeClick">
+        <flexbox
+          v-if="moreTypes.length > 0"
+          class="t-more">
           <div>更多</div>
-          <i class="el-icon-arrow-down el-icon--right"
-             style="color:#ccc;"></i>
+          <i
+            class="el-icon-arrow-down el-icon--right"
+            style="color:#ccc;"/>
         </flexbox>
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item v-for="(item, index) in moreTypes"
-                            :key="index"
-                            :command="item.type">{{item.name}}</el-dropdown-item>
+          <el-dropdown-item
+            v-for="(item, index) in moreTypes"
+            :key="index"
+            :command="item.type">{{ item.name }}</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
-      <img @click="hideView"
-           class="t-close"
-           src="@/assets/img/task_close.png" />
+      <img
+        class="t-close"
+        src="@/assets/img/task_close.png"
+        @click="hideView" >
     </flexbox>
-    <flexbox class="h-section"
-             align="stretch">
-      <flexbox-item class="h-item"
-                    span="240"
-                    v-for="(item, index) in headDetails"
-                    :key="index">
-        <div class="h-title">{{item.title}}</div>
-        <div class="h-value">{{item.value}}</div>
+    <flexbox
+      class="h-section"
+      align="stretch">
+      <flexbox-item
+        v-for="(item, index) in headDetails"
+        :key="index"
+        class="h-item"
+        span="240">
+        <div class="h-title">{{ item.title }}</div>
+        <div class="h-value">{{ item.value }}</div>
       </flexbox-item>
     </flexbox>
-    <slot></slot>
-    <transfer-handle :crmType="crmType"
-                     :selectionList="[detail]"
-                     @handle="handleCallBack"
-                     :dialogVisible.sync="transferDialogShow"></transfer-handle>
-    <alloc-handle :crmType="crmType"
-                  :selectionList="[detail]"
-                  @handle="handleCallBack"
-                  :dialogVisible.sync="allocDialogShow"></alloc-handle>
-    <deal-status-handle :crmType="crmType"
-                        :selectionList="[detail]"
-                        @handle="handleCallBack"
-                        :visible.sync="dealStatusShow"></deal-status-handle>
+    <slot/>
+    <transfer-handle
+      :crm-type="crmType"
+      :selection-list="[detail]"
+      :dialog-visible.sync="transferDialogShow"
+      @handle="handleCallBack"/>
+    <alloc-handle
+      :crm-type="crmType"
+      :selection-list="[detail]"
+      :dialog-visible.sync="allocDialogShow"
+      @handle="handleCallBack"/>
+    <deal-status-handle
+      :crm-type="crmType"
+      :selection-list="[detail]"
+      :visible.sync="dealStatusShow"
+      @handle="handleCallBack"/>
   </div>
 </template>
 <script type="text/javascript">
@@ -70,7 +88,7 @@ import {
 } from '@/api/customermanagement/customer'
 import { crmContactsDelete } from '@/api/customermanagement/contacts'
 import { crmBusinessDelete } from '@/api/customermanagement/business'
-import { crmContractDelete } from '@/api/customermanagement/contract'
+import { crmContractDelete, crmContractCancel } from '@/api/customermanagement/contract'
 import { crmReceivablesDelete } from '@/api/customermanagement/money'
 import { crmProductStatus } from '@/api/customermanagement/product'
 import TransferHandle from './selectionHandle/TransferHandle' // 转移
@@ -78,11 +96,47 @@ import AllocHandle from './selectionHandle/AllocHandle' // 公海分配操作
 import DealStatusHandle from './selectionHandle/DealStatusHandle' // 客户状态修改操作
 
 export default {
-  name: 'c-r-m-detail-head',
+  name: 'CRMDetailHead',
   components: {
     TransferHandle,
     AllocHandle,
     DealStatusHandle
+  },
+
+  props: {
+    /** 模块ID */
+    id: [String, Number],
+    /** 没有值就是全部类型 有值就是当个类型 */
+    crmType: {
+      type: String,
+      default: ''
+    },
+    // 辅助 使用
+    isSeas: {
+      type: Boolean,
+      default: false
+    },
+    /** 联系人人下 新建商机 需要联系人里的客户信息  合同下需要客户和商机信息 */
+    detail: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    },
+    headDetails: {
+      type: Array,
+      default: () => {
+        return []
+      }
+    }
+  },
+  data() {
+    return {
+      moreTypes: [], // 更多操作
+      transferDialogShow: false, // 转移操作
+      allocDialogShow: false, // 公海分配操作提示框
+      dealStatusShow: false // 成交状态修改框
+    }
   },
   computed: {
     ...mapGetters(['crm', 'CRMConfig']),
@@ -123,46 +177,24 @@ export default {
     },
     showEdit() {
       return this.isSeas ? false : this.crm[this.crmType].update
+    },
+    // 展示作废
+    showCancel() {
+      if (this.crmType === 'contract') {
+        if (this.crm.contract.cancel) {
+          if (this.detail.check_status === 2) {
+            return true
+          }
+          return false
+        }
+        return false
+      }
+      return false
     }
   },
   watch: {
     isSeas() {
       this.moreTypes = this.getSelectionHandleItemsInfo()
-    }
-  },
-  data() {
-    return {
-      moreTypes: [], // 更多操作
-      transferDialogShow: false, // 转移操作
-      allocDialogShow: false, // 公海分配操作提示框
-      dealStatusShow: false // 成交状态修改框
-    }
-  },
-  props: {
-    /** 模块ID */
-    id: [String, Number],
-    /** 没有值就是全部类型 有值就是当个类型 */
-    crmType: {
-      type: String,
-      default: ''
-    },
-    // 辅助 使用
-    isSeas: {
-      type: Boolean,
-      default: false
-    },
-    /** 联系人人下 新建商机 需要联系人里的客户信息  合同下需要客户和商机信息 */
-    detail: {
-      type: Object,
-      default: () => {
-        return {}
-      }
-    },
-    headDetails: {
-      type: Array,
-      default: () => {
-        return []
-      }
     }
   },
   mounted() {
@@ -185,7 +217,8 @@ export default {
         type == 'unlock' ||
         type == 'start' ||
         type == 'disable' ||
-        type == 'get'
+        type == 'get' ||
+        type == 'cancel'
       ) {
         var message = ''
         if (type == 'transform') {
@@ -204,6 +237,11 @@ export default {
           message = '确定要下架这些产品吗?'
         } else if (type == 'get') {
           message = '确定要领取该客户吗?'
+        } else if (type == 'cancel') {
+          message = '确定要作废此合同吗?'
+          if (this.detail.receivablesDataCount) {
+            message = '合同下有相关回款,确定要作废吗?'
+          }
         }
         this.$confirm(message, '提示', {
           confirmButtonText: '确定',
@@ -265,6 +303,13 @@ export default {
             this.$emit('handle', { type: type })
           })
           .catch(() => {})
+      } else if (type === 'cancel') {
+        crmContractCancel({
+          contract_id: this.id
+        }).then(res => {
+          this.$message.success(res.data)
+          this.$emit('handle', { type })
+        }).catch(() => {})
       } else if (type === 'start' || type === 'disable') {
         crmProductStatus({
           id: [this.id],
@@ -330,7 +375,7 @@ export default {
     /** 更多操作 */
     /** 获取展示items */
     getSelectionHandleItemsInfo() {
-      let handleInfos = {
+      const handleInfos = {
         transfer: {
           name: '转移',
           type: 'transfer',
@@ -423,7 +468,7 @@ export default {
     forSelectionHandleItems(handleInfos, array) {
       var tempsHandles = []
       for (let index = 0; index < array.length; index++) {
-        let type = array[index]
+        const type = array[index]
         if (this.whetherTypeShowByPermision(type)) {
           tempsHandles.push(handleInfos[type])
         }

@@ -1,25 +1,30 @@
 <template>
-  <el-popover v-model="showPopover"
-              placement="bottom"
-              width="700"
-              :disabled="disabled"
-              popper-class="no-padding-popover"
-              trigger="click">
-    <examine-flow-relative ref="examineflowrelative"
-                           @close="showPopover=false"
-                           @changeCheckout="checkInfos"></examine-flow-relative>
-    <flexbox slot="reference"
-             wrap="wrap"
-             :class="[disabled ? 'is_disabled' : 'is_valid']"
-             class="user-container">
-      <div v-for="(aitem, aindex) in dataValue"
-           :key="aindex"
-           @click.stop="deleteinfo(aindex)"
-           class="user-item">{{item.data.form_type==='contract' ? aitem.num : aitem.name}}
-        <i class="delete-icon el-icon-close"></i>
+  <el-popover
+    v-model="showPopover"
+    :disabled="disabled"
+    placement="bottom"
+    width="700"
+    popper-class="no-padding-popover"
+    trigger="click">
+    <examine-flow-relative
+      ref="examineflowrelative"
+      @close="showPopover=false"
+      @changeCheckout="checkInfos"/>
+    <flexbox
+      slot="reference"
+      :class="[disabled ? 'is_disabled' : 'is_valid']"
+      wrap="wrap"
+      class="user-container">
+      <div
+        v-for="(aitem, aindex) in dataValue"
+        :key="aindex"
+        class="user-item"
+        @click.stop="deleteinfo(aindex)">{{ item.data.form_type==='contract' ? aitem.num : aitem.name }}
+        <i class="delete-icon el-icon-close"/>
       </div>
-      <div class="add-item"
-           v-if="dataValue.length == 0">+添加</div>
+      <div
+        v-if="dataValue.length == 0"
+        class="add-item">+添加</div>
     </flexbox>
   </el-popover>
 </template>
@@ -27,22 +32,9 @@
 import ExamineFlowRelative from './ExamineFlowRelative'
 
 export default {
-  name: 'examine-flow-relatieve-cell', // 关联审批流
+  name: 'ExamineFlowRelatieveCell', // 关联审批流
   components: {
     ExamineFlowRelative
-  },
-  computed: {},
-  watch: {
-    value: function(val) {
-      this.dataValue = val
-    }
-  },
-  data() {
-    return {
-      showPopover: false, // 展示popover
-      radio: true, // 是否单选
-      dataValue: []
-    }
   },
   props: {
     value: {
@@ -58,6 +50,19 @@ export default {
     disabled: {
       type: Boolean,
       default: false
+    }
+  },
+  data() {
+    return {
+      showPopover: false, // 展示popover
+      radio: true, // 是否单选
+      dataValue: []
+    }
+  },
+  computed: {},
+  watch: {
+    value: function(val) {
+      this.dataValue = val
     }
   },
   mounted() {

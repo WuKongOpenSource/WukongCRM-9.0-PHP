@@ -5,11 +5,11 @@ import request from '@/utils/request'
  * @param {*} data
  */
 export function workTasklableIndexAPI(data) {
-    return request({
-        url: 'work/tasklable/index',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/tasklable/index',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -17,11 +17,11 @@ export function workTasklableIndexAPI(data) {
  * @param {*} data
  */
 export function workTasklableReadAPI(data) {
-    return request({
-        url: 'work/tasklable/read',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/tasklable/read',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -29,11 +29,11 @@ export function workTasklableReadAPI(data) {
  * @param {*} data
  */
 export function workTasklableDeleteAPI(data) {
-    return request({
-        url: 'work/tasklable/delete',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/tasklable/delete',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -41,11 +41,11 @@ export function workTasklableDeleteAPI(data) {
  * @param {*} data
  */
 export function workTasklableSaveAPI(data) {
-    return request({
-        url: 'work/tasklable/save',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/tasklable/save',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -53,11 +53,11 @@ export function workTasklableSaveAPI(data) {
  * @param {*} data
  */
 export function workTasklableGetWokListAPI(data) {
-    return request({
-        url: 'work/tasklable/getWokList',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/tasklable/getWokList',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -65,9 +65,9 @@ export function workTasklableGetWokListAPI(data) {
  * @param {*} data
  */
 export function workTasklableUpdateAPI(data) {
-    return request({
-        url: 'work/tasklable/update',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/tasklable/update',
+    method: 'post',
+    data: data
+  })
 }

@@ -8,6 +8,7 @@ namespace app\crm\model;
 
 use think\Db;
 use app\admin\model\Common;
+use app\admin\model\Message;
 use think\Request;
 use think\Validate;
 
@@ -133,11 +134,18 @@ class Contract extends Common
 				->join('__CRM_BUSINESS__ business','contract.business_id = business.business_id','LEFT')	
 				->join('__CRM_CONTACTS__ contacts','contract.contacts_id = contacts.contacts_id','LEFT')	
 				->join('__CRM_RECEIVABLES_PLAN__ plan','contract.contract_id = plan.contract_id','LEFT')	
+				->join('CrmReceivables receivables','receivables.contract_id = contract.contract_id AND receivables.check_status = 2','LEFT')
 				->where($map)
 				->where($partMap)
 				->where($authMap)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
-        		->field(implode(',',$indexField).',customer.name as customer_name,business.name as business_name,contacts.name as contacts_name')
+        		->field(array_merge($indexField, [
+					'customer.name' => 'customer_name',
+					'business.name' => 'business_name',
+					'contacts.name' => 'contacts_name',
+					'ifnull(SUM(receivables.money), 0)' => 'done_money',
+					'(contract.money - ifnull(SUM(receivables.money), 0))' => 'un_money',
+				]))
         		->orderRaw($order)
         		->group('contract.contract_id')
         		->select();
@@ -166,7 +174,6 @@ class Contract extends Common
         	$moneyInfo = [];
         	$moneyInfo = $receivablesModel->getMoneyByContractId($v['contract_id']);
         	$list[$k]['unMoney'] = $moneyInfo['doneMoney'] ? : 0.00;
-        	// $list[$k]['check_status_info'] = $this->statusArr[$v['check_status']]; 
 			$planInfo = [];
 			$planInfo = db('crm_receivables_plan')->where(['contract_id' => $v['contract_id']])->find();
 			$list[$k]['receivables_id'] = $planInfo['receivables_id'] ? : '';
@@ -243,11 +250,16 @@ class Contract extends Common
 		        }
 			}
             //站内信
-            $createUserInfo = $userModel->getDataById($param['create_user_id']);
             $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交了合同《'.$param['name'].'》,需要您审批';
             if ($send_user_id && empty($param['check_status'])) {
-            	sendMessage($send_user_id, $sendContent, $this->contract_id, 1);
+				(new Message())->send(
+					Message::CONTRACT_TO_DO,
+					[
+						'title' => $param['name'],
+						'action_id' => $this->contract_id
+					],
+					$send_user_id
+				);
             }
 
 			$data = [];
@@ -298,13 +310,18 @@ class Contract extends Common
 	        $resProduct = $productModel->createObject('crm_contract', $param, $contract_id);			
 			//修改记录
 			updateActionLog($param['user_id'], 'crm_contract', $contract_id, $dataInfo, $param);
-			//站内信
-            $createUserInfo = $userModel->getDataById($param['user_id']);
+            //站内信
             $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交了合同《'.$param['name'].'》,需要您审批';
             if ($send_user_id && empty($param['check_status'])) {
-            	sendMessage($send_user_id, $sendContent, $contract_id, 1);
-            }			
+				(new Message())->send(
+					Message::CONTRACT_TO_DO,
+					[
+						'title' => $param['name'],
+						'action_id' => $contract_id
+					],
+					$send_user_id
+				);
+            }		
 			$data = [];
 			$data['contract_id'] = $contract_id;
 			return $data;

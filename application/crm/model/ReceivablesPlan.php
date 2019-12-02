@@ -8,6 +8,7 @@ namespace app\crm\model;
 
 use think\Db;
 use app\admin\model\Common;
+use app\crm\model\Contract as ContractModel;
 use think\Request;
 use think\Validate;
 
@@ -114,8 +115,20 @@ class ReceivablesPlan extends Common
 	 * @return                            
 	 */	
 	public function createData($param)
-	{		if (!$param['contract_id']) {
+	{	
+		if (!$param['contract_id']) {
 			$this->error = '请先选择合同';
+			return false;
+		} else {
+			$res = ContractModel::where(['contract_id' => $param['contract_id']])->value('check_status');
+			if (6 == ContractModel::where(['contract_id' => $param['contract_id']])->value('check_status')) {
+				$this->error = '合同已作废';
+				return false;
+			}
+		}
+		if ($param['remind'] > 90) {
+			$this->error = '提前提醒最大时间为 90 天';
+			return false;
 		}
 		// 自动验证
 		$validate = validate($this->name);

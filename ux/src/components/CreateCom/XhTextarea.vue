@@ -1,24 +1,25 @@
 <template>
-  <el-input v-model="dataValue"
-            type="textarea"
-            resize="none"
-            :rows="3"
-            @input="valueChange"
-            :disabled="disabled"></el-input>
+  <el-input
+    v-model="dataValue"
+    :rows="3"
+    :disabled="disabled"
+    type="textarea"
+    resize="none"
+    @input="valueChange"/>
 </template>
 <script type="text/javascript">
 import stringMixin from './stringMixin'
 
 export default {
-  name: 'xh-textarea', //新建 textarea
+  name: 'XhTextarea', // 新建 textarea
   components: {},
   mixins: [stringMixin],
-  computed: {},
-  watch: {},
+  props: {},
   data() {
     return {}
   },
-  props: {},
+  computed: {},
+  watch: {},
   mounted() {},
   methods: {}
 }

@@ -92,6 +92,12 @@ return [
 	'admin/users/tobeusers' => ['admin/users/tobeusers', ['method' => 'POST']],	
 	//根据ID批量设置密码
 	'admin/users/updatePwd' => ['admin/users/updatePwd', ['method' => 'POST']],	
+	// 【员工】导入模板下载
+	'admin/users/excelDownload' => ['admin/users/excelDownload', ['method' => 'GET']],	
+	// 【员工】导入
+	'admin/users/import' => ['admin/users/import', ['method' => 'POST']],
+	// 【员工】批量设置直属上级
+	'admin/users/setParent' => ['admin/users/setParent', ['method' => 'POST']],
 
 	// 【部门】列表
 	'admin/structures/index' => ['admin/structures/index', ['method' => 'POST']],
@@ -161,7 +167,11 @@ return [
 	'admin/field/uniqueField' => ['admin/field/uniqueField', ['method' => 'POST']],	
 
 	// 【站内信】列表
-	'admin/message/index' => ['admin/message/index', ['method' => 'POST']],	
+	'admin/message/index' => ['admin/message/index', ['method' => 'POST']],
+	// 【站内信】未读数
+	'admin/message/unReadCount' => ['admin/message/unReadCount', ['method' => 'POST']],
+	// 【站内信】标记已读
+	'admin/message/markedRead' => ['admin/message/markedRead', ['method' => 'POST']],
 
 	// 【跟进记录】列表
 	'admin/record/index' => ['admin/record/index', ['method' => 'POST']],

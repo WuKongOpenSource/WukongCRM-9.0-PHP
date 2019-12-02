@@ -25,27 +25,81 @@ class Customer extends Common
      * @param $whereArr 
      * @return
      */
-    function getWhereByList($whereArr)
+    function getWhereByList($where)
     {
         $userModel = new \app\admin\model\User();
-        $receivables = new \app\bi\model\Receivables();
-        
-        $list = db('crm_customer')->field('customer_id,name,owner_user_id,create_user_id,industry,source,create_time')->where($whereArr)->select();
-        foreach ($list as $key => $value) {
-            $where_c = array();
-            $where_c['customer_id'] = array('eq',$value['customer_id']);
-            $contract = db('crm_contract')->field('contract_id,name,money,create_time,order_date')->order('contract_id asc')->limit(1)->where($where_c)->find();
-            $list[$key]['create_time'] = date('Y-m-d',$value['create_time']);
-            $list[$key]['contract_name'] = $contract['name'];
-            $list[$key]['contract_money'] = $contract['money'];
-            $list[$key]['order_time'] = $contract['order_date'];
-            $owner_user = $userModel->getUserById($value['owner_user_id']);
-            $list[$key]['owner_realname'] = $owner_user['realname'];
-            $create_user = $userModel->getUserById($value['create_user_id']);
-            $list[$key]['create_realname'] = $create_user['realname'];
-            $where_c['contract_id'] = array('eq',$contract['contract_id']);
-            $r_money = $receivables->getDataMoney($where_c);
-            $list[$key]['r_money'] = $r_money;
+        $prefix = config('database.prefix');
+        $sql = $this->alias('a')
+            ->field([
+                'a.customer_id',
+                'a.name',
+                'a.owner_user_id',
+                'a.create_user_id',
+                'a.industry',
+                'a.source',
+                'a.create_time',
+                'b.name' => 'contract_name',
+                'b.money' => 'contract_money',
+                'b.order_date' => 'order_time',
+                'b.contract_id' => 'contract_id',
+                'c.r_money'
+            ])
+            ->join(
+                "(
+                    SELECT
+                        `contract_id`,
+                        `customer_id`,
+                        `name`,
+                        `money`,
+                        `create_time`,
+                        `order_date`
+                    FROM 
+                        {$prefix}crm_contract 
+                    WHERE 
+                        `contract_id` IN (
+                            SELECT 
+                                MIN(`contract_id`) as `contract_id`
+                            FROM 
+                                `{$prefix}crm_contract` 
+                            WHERE 
+                                `create_time` > 1572537600
+                                AND `check_status` = 2
+                            GROUP BY
+                                `customer_id`
+                        )
+                ) b",
+                'b.customer_id = a.customer_id',
+                'LEFT'
+            )
+            ->join(
+                "(
+                    SELECT
+                        `contract_id`,
+                        SUM(`money`) AS `r_money`
+                    FROM 
+                        `{$prefix}crm_receivables`
+                    GROUP BY
+                        `contract_id`
+                ) c",
+                'c.contract_id = b.contract_id',
+                'LEFT'
+            )
+            ->where([
+                'a.create_time' => $where['create_time'],
+                'a.owner_user_id' => $where['owner_user_id'],
+                'a.deal_status' => $where['deal_status'],
+            ])
+            ->fetchSql()
+            ->order(['r_money' => 'DESC'])
+            ->limit(50)
+            ->select();
+        $list = queryCache($sql);
+        foreach ($list as &$val) {
+            $val['create_time'] = date('Y-m-d',$val['create_time']);
+            $owner_user = $userModel->getUserById($val['owner_user_id']);
+            $val['owner_realname'] = $owner_user['realname'];
+            $create_user = $userModel->getUserById($val['create_user_id']);
+            $val['create_realname'] = $create_user['realname'];
         }
         return $list;
     }
@@ -117,7 +171,7 @@ class Customer extends Common
                 } else {
                     $type = date('Y-m-d',$param['start_time']+($i-1)*86400);
                     $dateArr = getDateRange(strtotime($type));
-                    $whereTime = [$dateArr['sdate'],$dateArr['sdate']];                    
+                    $whereTime = [$dateArr['sdate'],$dateArr['edate']];                    
                 }
                 break;
         }
@@ -261,6 +315,7 @@ class Customer extends Common
     function getSortByCount($whereArr)
     {
         $count = db('crm_customer')->group('owner_user_id')->field('owner_user_id,count(customer_id) as count')->order('count desc')->where($whereArr)->select();
+        echo db('crm_customer')->getLastSql();die();
         return $count;
     }
 
@@ -313,7 +368,7 @@ class Customer extends Common
     {
         $start_time = strtotime(date('Y-m-01',$time));
         $monthDay = getmonthdays($time);
-        $end_time = strtotime(date('Y-m-'.$monthDay,$time));
+        $end_time = strtotime(date('Y-m-'.$monthDay,$time))+86399;
         return array($start_time,$end_time);
     }   
 }

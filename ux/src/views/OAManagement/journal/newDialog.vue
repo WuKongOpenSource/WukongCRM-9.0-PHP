@@ -1,71 +1,79 @@
 <template>
   <create-view :body-style="{height: '100%'}">
-    <div class="new-journal"
-         v-loading="newLoading">
-      <div slot="header"
-           class="header">
-        <span class="text">{{dialogTitle}}</span>
-        <img class="el-icon-close rt"
-             src="@/assets/img/task_close.png"
-             @click="close"
-             alt="">
+    <div
+      v-loading="newLoading"
+      class="new-journal">
+      <div
+        slot="header"
+        class="header">
+        <span class="text">{{ dialogTitle }}</span>
+        <img
+          class="el-icon-close rt"
+          src="@/assets/img/task_close.png"
+          alt=""
+          @click="close">
       </div>
       <div class="content">
-        <el-tabs v-model="activeName"
-                 @tab-click="tabClick">
-          <el-tab-pane :label="item.label"
-                       :name="item.key"
-                       v-for="(item, index) in tabsData"
-                       :key="index">
-          </el-tab-pane>
+        <el-tabs
+          v-model="activeName"
+          @tab-click="tabClick">
+          <el-tab-pane
+            v-for="(item, index) in tabsData"
+            :label="item.label"
+            :name="item.key"
+            :key="index"/>
         </el-tabs>
         <div class="form">
-          <div class="row-list"
-               v-for="(item, index) in formList"
-               :key="index">
-            <label class="item-label">{{item.label}}：</label>
-            <el-input type="textarea"
-                      :autosize="{ minRows: 4}"
-                      placeholder="请输入内容"
-                      resize="none"
-                      v-model="formData[item.model]">
-            </el-input>
+          <div
+            v-for="(item, index) in formList"
+            :key="index"
+            class="row-list">
+            <label class="item-label">{{ item.label }}：</label>
+            <el-input
+              :autosize="{ minRows: 4}"
+              v-model="formData[item.model]"
+              type="textarea"
+              placeholder="请输入内容"
+              resize="none"/>
           </div>
           <!-- 图片附件 -->
           <div class="img-accessory">
             <div class="img-box">
-              <el-upload ref="imageUpload"
-                         :action="crmFileSaveUrl"
-                         :headers="httpHeader"
-                         name="img[]"
-                         multiple
-                         accept="image/*"
-                         list-type="picture-card"
-                         :on-preview="handleFilePreview"
-                         :before-remove="beforeRemove"
-                         :on-success="imgFileUploadSuccess"
-                         :file-list="imageFileList">
+              <el-upload
+                ref="imageUpload"
+                :action="crmFileSaveUrl"
+                :headers="httpHeader"
+                :on-preview="handleFilePreview"
+                :before-remove="beforeRemove"
+                :on-success="imgFileUploadSuccess"
+                :file-list="imageFileList"
+                name="img[]"
+                multiple
+                accept="image/*"
+                list-type="picture-card">
                 <p class="add-img">
-                  <span class="el-icon-picture"></span>
+                  <span class="el-icon-picture"/>
                   <span>添加图片</span>
                 </p>
-                <i class="el-icon-plus"></i>
+                <i class="el-icon-plus"/>
               </el-upload>
             </div>
             <p class="add-accessory">
-              <el-upload ref="fileUpload"
-                         :action="crmFileSaveUrl"
-                         :headers="httpHeader"
-                         name="file[]"
-                         multiple
-                         accept="*.*"
-                         :on-preview="handleFilePreview"
-                         :before-remove="handleFileRemove"
-                         :on-success="fileUploadSuccess"
-                         :file-list="fileList">
+              <el-upload
+                ref="fileUpload"
+                :action="crmFileSaveUrl"
+                :headers="httpHeader"
+                :on-preview="handleFilePreview"
+                :before-remove="handleFileRemove"
+                :on-success="fileUploadSuccess"
+                :file-list="fileList"
+                name="file[]"
+                multiple
+                accept="*.*">
                 <p>
-                  <img src="@/assets/img/relevance_file.png"
-                       alt="">
+                  <img
+                    src="@/assets/img/relevance_file.png"
+                    alt="">
                   添加附件
                 </p>
               </el-upload>
@@ -73,34 +81,39 @@
           </div>
           <div class="sent-who">
             <span class="label">发送给谁:</span>
-            <div v-photo="k"
-                 v-lazy:background-image="$options.filters.filterUserLazyImg(k.thumb_img)"
-                 v-for="(k, j) in formData.sentWhoList"
-                 :key="j"
-                 class="div-photo k-img header-circle"></div>
+            <div
+              v-photo="k"
+              v-lazy:background-image="$options.filters.filterUserLazyImg(k.thumb_img)"
+              v-for="(k, j) in formData.sentWhoList"
+              :key="j"
+              class="div-photo k-img header-circle"/>
             <span>
-              <span v-for="(item, index) in formData.depData"
-                    :key="index"
-                    class="item-name">{{item.name}}</span>
+              <span
+                v-for="(item, index) in formData.depData"
+                :key="index"
+                class="item-name">{{ item.name }}</span>
             </span>
-            <members-dep :userCheckedData="formData.sentWhoList"
-                         :depCheckedData="formData.depData"
-                         :contentBlock=false
-                         @popoverSubmit="popoverSubmit">
-              <img slot="membersDep"
-                   class="sent-img"
-                   src="@/assets/img/task_add.png">
+            <members-dep
+              :user-checked-data="formData.sentWhoList"
+              :dep-checked-data="formData.depData"
+              :content-block="false"
+              @popoverSubmit="popoverSubmit">
+              <img
+                slot="membersDep"
+                class="sent-img"
+                src="@/assets/img/task_add.png">
             </members-dep>
           </div>
-          <related-business :marginLeft="'0'"
-                            :allData="allData"
-                            @checkInfos="checkInfos">
-          </related-business>
+          <related-business
+            :margin-left="'0'"
+            :all-data="allData"
+            @checkInfos="checkInfos"/>
         </div>
       </div>
       <div class="btn-group">
-        <el-button @click="submitBtn"
-                   type="primary">提交</el-button>
+        <el-button
+          type="primary"
+          @click="submitBtn">提交</el-button>
         <el-button @click="close">取消</el-button>
       </div>
     </div>
@@ -109,7 +122,7 @@
 
 <script>
 import axios from 'axios'
-import { crmFileSave, crmFileDelete, crmFileSaveUrl } from '@/api/common'
+import { crmFileDelete, crmFileSaveUrl } from '@/api/common'
 import CreateView from '@/components/CreateView'
 // 部门员工优化版
 import membersDep from '@/components/selectEmployee/membersDep'
@@ -121,16 +134,31 @@ export default {
     membersDep,
     relatedBusiness
   },
-  computed: {
-    crmFileSaveUrl() {
-      return window.BASE_URL + crmFileSaveUrl
-    },
-    httpHeader() {
-      return {
-        authKey: axios.defaults.headers.authKey,
-        sessionId: axios.defaults.headers.sessionId
+  props: {
+    formData: {
+      type: Object,
+      default: () => {
+        return {}
       }
-    }
+    },
+    dialogTitle: {
+      type: String,
+      default: '写日志'
+    },
+    // 附件
+    accessoryFileList: {
+      type: Array,
+      default: () => {
+        return []
+      }
+    },
+    imgFileList: {
+      type: Array,
+      default: () => {
+        return []
+      }
+    },
+    newLoading: Boolean
   },
   data() {
     return {
@@ -166,31 +194,16 @@ export default {
       allData: {}
     }
   },
-  props: {
-    formData: {
-      type: Object,
-      default: () => {
-        return {}
+  computed: {
+    crmFileSaveUrl() {
+      return window.BASE_URL + crmFileSaveUrl
+    },
+    httpHeader() {
+      return {
+        authKey: axios.defaults.headers.authKey,
+        sessionId: axios.defaults.headers.sessionId
       }
-    },
-    dialogTitle: {
-      type: String,
-      default: '写日志'
-    },
-    // 附件
-    accessoryFileList: {
-      type: Array,
-      default: () => {
-        return []
-      }
-    },
-    imgFileList: {
-      type: Array,
-      default: () => {
-        return []
-      }
-    },
-    newLoading: Boolean
+    }
   },
   mounted() {
     document.body.appendChild(this.$el)
@@ -231,23 +244,23 @@ export default {
     var relevanceAll = {}
     relevanceAll.business_ids = this.formData.businessList
       ? this.formData.businessList.map((item, index, array) => {
-          return item.business_id
-        })
+        return item.business_id
+      })
       : []
     relevanceAll.contacts_ids = this.formData.contactsList
       ? this.formData.contactsList.map((item, index, array) => {
-          return item.contacts_id
-        })
+        return item.contacts_id
+      })
       : []
     relevanceAll.contract_ids = this.formData.contractList
       ? this.formData.contractList.map((item, index, array) => {
-          return item.contract_id
-        })
+        return item.contract_id
+      })
       : []
     relevanceAll.customer_ids = this.formData.customerList
       ? this.formData.customerList.map((item, index, array) => {
-          return item.customer_id
-        })
+        return item.customer_id
+      })
       : []
     this.relevanceAll = relevanceAll
 
@@ -259,6 +272,12 @@ export default {
       item.url = item.file_path_thumb
       return item
     })
+  },
+  destroyed() {
+    // remove DOM node after destroy
+    if (this.$el && this.$el.parentNode) {
+      this.$el.parentNode.removeChild(this.$el)
+    }
   },
   methods: {
     close() {
@@ -298,9 +317,6 @@ export default {
       } else {
         this.$message.error('内容至少填写一项')
       }
-    },
-    beforeRemove() {
-      return this.$confirm('此操作将永久删除该图片, 是否继续？')
     },
     // 图片和附件
     // 上传图片
@@ -447,12 +463,6 @@ export default {
     },
     checkInfos(val) {
       this.relevanceAll = val
-    }
-  },
-  destroyed() {
-    // remove DOM node after destroy
-    if (this.$el && this.$el.parentNode) {
-      this.$el.parentNode.removeChild(this.$el)
     }
   }
 }

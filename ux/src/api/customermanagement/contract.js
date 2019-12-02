@@ -120,3 +120,24 @@ export function crmContractTransfer(data) {
     data: data
   })
 }
+// 作废
+export function crmContractCancel(data) {
+  return request({
+    url: 'crm/contract/cancel',
+    method: 'post',
+    data: data
+  })
+}
+/**
+ * 合同导出
+ * @param {*} data
+ */
+export function crmContractExcelExport(data) {
+  return request({
+    url: 'crm/contract/excelExport',
+    method: 'post',
+    data: data,
+    responseType: 'blob',
+    timeout: 600000
+  })
+}

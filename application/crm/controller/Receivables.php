@@ -8,6 +8,8 @@
 namespace app\crm\controller;
 
 use app\admin\controller\ApiCommon;
+use app\admin\model\Message;
+use app\admin\model\User;
 use think\Hook;
 use think\Request;
 use think\Db;
@@ -166,11 +168,11 @@ class Receivables extends ApiCommon
             //审核判断（是否有符合条件的审批流）
             $examineFlowModel = new \app\admin\model\ExamineFlow();
             $examineStepModel = new \app\admin\model\ExamineStep();
-            if (!$examineFlowModel->checkExamine($param['create_user_id'], 'crm_receivables')) {
+            if (!$examineFlowModel->checkExamine($param['user_id'], 'crm_receivables')) {
                 return resultArray(['error' => '暂无审批人，无法创建']); 
             }
             //添加审批相关信息
-            $examineFlowData = $examineFlowModel->getFlowByTypes($param['create_user_id'], 'crm_receivables');
+            $examineFlowData = $examineFlowModel->getFlowByTypes($param['user_id'], 'crm_receivables');
             if (!$examineFlowData) {
                 return resultArray(['error' => '无可用审批流，请联系管理员']);
             }
@@ -343,21 +345,41 @@ class Receivables extends ApiCommon
         $resReceivables = db('crm_receivables')->where(['receivables_id' => $param['id']])->update($receivablesData);
         if ($resReceivables) {
             if ($status) {
-                //发送站内信
-                $sendContent = '您的申请《'.$dataInfo['number'].'》,'.$userInfo['realname'].'已审核通过';
-                $resMessage = sendMessage($dataInfo['owner_user_id'], $sendContent, $param['id'], 1);
+                // 审批通过，通知下一审批人
+                (new Message())->send(
+                    Message::RECEIVABLES_TO_DO,
+                    [
+                        'from_user' => User::where(['id' => $dataInfo['owner_user_id']])->value('realname'),
+                        'title' => $dataInfo['number'],
+                        'action_id' => $param['id']
+                    ],
+                    stringToArray($receivablesData['check_user_id'])
+                );
             } else {
-                $sendContent = '您的申请《'.$dataInfo['number'].'》,'.$userInfo['realname'].'已审核拒绝,审核意见：'.$param['content'];
-                $resMessage = sendMessage($dataInfo['owner_user_id'], $sendContent, $param['id'], 1);
+                // 驳回通知负责人
+                (new Message())->send(
+                    Message::RECEIVABLES_REJECT,
+                    [
+                        'title' => $dataInfo['number'],
+                        'action_id' => $param['id']
+                    ],
+                    $dataInfo['owner_user_id']
+                );
             }
 
             //审批记录
             $resRecord = $examineRecordModel->createData($checkData);
             
             if ($is_end == 1 && !empty($status)) {
-                //发送站内信
-                $sendContent = '您的申请《'.$dataInfo['number'].'》,'.$userInfo['realname'].'已审核通过,审批结束';
-                $resMessage = sendMessage($dataInfo['owner_user_id'], $sendContent, $param['id'], 1); 
+                //发送站内信 通过
+                (new Message())->send(
+					Message::RECEIVABLES_PASS,
+					[
+						'title' => $dataInfo['number'],
+						'action_id' => $param['id']
+					],
+					$dataInfo['owner_user_id']
+				);
             }
             return resultArray(['data' => '审批成功']);            
         } else {

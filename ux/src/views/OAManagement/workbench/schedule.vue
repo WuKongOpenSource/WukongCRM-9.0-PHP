@@ -2,44 +2,48 @@
   <div class="schedule-calendar">
     <div class="title">
       <span>日程</span>
-      <div class="rt"
-           @click="addSchedule">
-        <span class="el-icon-plus"></span>
+      <div
+        class="rt"
+        @click="addSchedule">
+        <span class="el-icon-plus"/>
         <span>创建</span>
       </div>
     </div>
     <div>
-      <Calendar :markDateMore="calendarArr"
-                @changeMonth="changeMonth"
-                @choseDay="clickDay">
-      </Calendar>
+      <Calendar
+        :mark-date-more="calendarArr"
+        @changeMonth="changeMonth"
+        @choseDay="clickDay"/>
       <div v-loading="loading">
-        <div class="list"
-             v-for="(item, index) in scheduleList"
-             @click="rowFun(item)"
-             :key="index"
-             v-if="index < 1">
-          <p class="list-title">{{item.title}}</p>
+        <div
+          v-for="(item, index) in scheduleList"
+          v-if="index < 1"
+          :key="index"
+          class="list"
+          @click="rowFun(item)">
+          <p class="list-title">{{ item.title }}</p>
           <div>
-            <span class="time">{{item.start_time | moment("YYYY-MM-DD")}} - {{item.end_time | moment("YYYY-MM-DD")}}</span>
+            <span class="time">{{ item.start_time | moment("YYYY-MM-DD") }} - {{ item.end_time | moment("YYYY-MM-DD") }}</span>
             <template v-if="item.ownList.length != 0">
-              <span v-for="(k, j) in item.ownList"
-                    :key="j">{{item.ownList.length - 1 == j ? k.realname : k.realname + '、' }}</span>
+              <span
+                v-for="(k, j) in item.ownList"
+                :key="j">{{ item.ownList.length - 1 == j ? k.realname : k.realname + '、' }}</span>
             </template>
           </div>
         </div>
-        <p v-if="scheduleList.length >= 1"
-           @click="seeMore"
-           class="see-more">查看更多</p>
+        <p
+          v-if="scheduleList.length >= 1"
+          class="see-more"
+          @click="seeMore">查看更多</p>
       </div>
     </div>
     <!-- 新建日程 -->
-    <create-schedule v-if="showDialog"
-                     :text="newText"
-                     :formData="formData"
-                     @onSubmit="onSubmit"
-                     @closeDialog="closeDialog">
-    </create-schedule>
+    <create-schedule
+      v-if="showDialog"
+      :text="newText"
+      :form-data="formData"
+      @onSubmit="onSubmit"
+      @closeDialog="closeDialog"/>
   </div>
 </template>
 
@@ -53,6 +57,14 @@ export default {
   components: {
     Calendar,
     createSchedule
+  },
+  props: {
+    calendarArr: {
+      type: Array,
+      default: () => {
+        return []
+      }
+    }
   },
   data() {
     return {
@@ -68,14 +80,6 @@ export default {
       loading: false
     }
   },
-  props: {
-    calendarArr: {
-      type: Array,
-      default: () => {
-        return []
-      }
-    }
-  },
   mounted() {
     this.clickDay(new Date())
   },
@@ -86,12 +90,12 @@ export default {
       scheduleListAPI({ start_time: Date.parse(date) / 1000 })
         .then(res => {
           this.scheduleList = res.data
-          for (let item of document.getElementsByClassName('wh_item_date')) {
+          for (const item of document.getElementsByClassName('wh_item_date')) {
             item.classList.remove('wh_isToday')
           }
           this.loading = false
         })
-        .catch(error => {
+        .catch(() => {
           this.loading = false
         })
     },

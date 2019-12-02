@@ -57,15 +57,20 @@ export default {
   },
 
   beforeDestroy() {
+    if (document.getElementById('crm-table')) {
+      document.getElementById('crm-table').removeEventListener('click', e => {
+        e.stopPropagation()
+      })
+    }
     this.$bus.off('message-scroll')
   },
 
   methods: {
     /**
      * 当某一行被点击时会触发该事件
-     * @param {*} row 
-     * @param {*} column 
-     * @param {*} event 
+     * @param {*} row
+     * @param {*} column
+     * @param {*} event
      */
     handleRowClick(row, column, event) {
       if (this.crmType === 'leads') {
@@ -141,7 +146,7 @@ export default {
     getList() {
       this.loading = true
       var crmIndexRequest = this.getIndexRequest()
-      let params = {
+      const params = {
         page: this.currentPage,
         limit: this.pageSize,
         types: 'list',
@@ -178,14 +183,14 @@ export default {
         'checkReceivables': crmMessageCheckReceivablesAPI,
         'remindReceivablesPlan': crmMessagRemindreceivablesplanAPI,
         'endContract': crmMessagEndContractAPI,
-        'remindCustomer': crmMessagRemindCustomerAPI,
+        'remindCustomer': crmMessagRemindCustomerAPI
       }[this.infoType]
     },
 
     /** 获取字段 */
     getFieldList() {
       if (this.crmType == 'receivables_plan') {
-        let list = [{
+        const list = [{
           field: 'num',
           form_type: 'text',
           name: '期数'
@@ -249,83 +254,76 @@ export default {
         const element = list[index]
         /** 获取需要格式化的字段 和格式化的规则 */
         if (element.form_type === 'date') {
-          function fieldFormatter(time) {
-            if (time == '0000-00-00') {
-              time = ''
-            }
-            return time
-          }
           this.formatterRules[element.field] = {
-            formatter: fieldFormatter
+            formatter: (time) => {
+              if (time == '0000-00-00') {
+                time = ''
+              }
+              return time
+            }
           }
         } else if (element.form_type === 'datetime') {
-          function fieldFormatter(time) {
-            if (time == 0 || !time) {
-              return ""
-            }
-            return moment(getDateFromTimestamp(time)).format(
-              "YYYY-MM-DD HH:mm:ss"
-            )
-          }
           this.formatterRules[element.field] = {
-            formatter: fieldFormatter
+            formatter: (time) => {
+              if (time == 0 || !time) {
+                return ''
+              }
+              return moment(getDateFromTimestamp(time)).format(
+                'YYYY-MM-DD HH:mm:ss'
+              )
+            }
           }
         } else if (element.field === 'create_user_id' || element.field === 'owner_user_id') {
-          function fieldFormatter(info) {
-            return info ? info.realname : ''
-          }
           this.formatterRules[element.field] = {
             type: 'crm',
-            formatter: fieldFormatter
+            formatter: (info) => {
+              return info ? info.realname : ''
+            }
           }
         } else if (element.form_type === 'user') {
-          function fieldFormatter(info) {
-            if (info) {
-              var content = ''
-              for (let index = 0; index < info.length; index++) {
-                const element = info[index]
-                content = content + element.realname + (index === (info.length - 1) ? '' : ',')
-              }
-              return content
-            }
-            return ''
-          }
           this.formatterRules[element.field] = {
             type: 'crm',
-            formatter: fieldFormatter
+            formatter: (info) => {
+              if (info) {
+                var content = ''
+                for (let index = 0; index < info.length; index++) {
+                  const element = info[index]
+                  content = content + element.realname + (index === (info.length - 1) ? '' : ',')
+                }
+                return content
+              }
+              return ''
+            }
           }
         } else if (element.form_type === 'structure') {
-          function fieldFormatter(info) {
-            if (info) {
-              var content = ''
-              for (let index = 0; index < info.length; index++) {
-                const element = info[index]
-                content = content + element.name + (index === (info.length - 1) ? '' : ',')
-              }
-              return content
-            }
-            return ''
-          }
           this.formatterRules[element.field] = {
             type: 'crm',
-            formatter: fieldFormatter
+            formatter: (info) => {
+              if (info) {
+                var content = ''
+                for (let index = 0; index < info.length; index++) {
+                  const element = info[index]
+                  content = content + element.name + (index === (info.length - 1) ? '' : ',')
+                }
+                return content
+              }
+              return ''
+            }
           }
           /** 联系人 客户 商机 合同*/
         } else if (element.field === 'contacts_id' || element.field === 'customer_id' || element.field === 'business_id' || element.field === 'contract_id') {
-          function fieldFormatter(info) {
-            return info ? info.name : ''
-          }
           this.formatterRules[element.field] = {
             type: 'crm',
-            formatter: fieldFormatter
+            formatter: (info) => {
+              return info ? info.name : ''
+            }
           }
         } else if (element.field === 'status_id' || element.field === 'type_id' || element.field === 'category_id') {
-          function fieldFormatter(info) {
-            return info ? info : ''
-          }
           this.formatterRules[element.field] = {
             type: 'crm',
-            formatter: fieldFormatter
+            formatter: (info) => {
+              return info || ''
+            }
           }
         }
 
@@ -428,14 +426,6 @@ export default {
       var offsetHei = document.documentElement.clientHeight
       var removeHeight = Object.keys(this.filterObj).length > 0 ? 360 : 300
       this.tableHeight = offsetHei - removeHeight
-    }
-  },
-
-  beforeDestroy() {
-    if (document.getElementById('crm-table')) {
-      document.getElementById('crm-table').removeEventListener('click', e => {
-        e.stopPropagation()
-      })
     }
   }
 }

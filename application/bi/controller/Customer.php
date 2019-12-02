@@ -8,6 +8,8 @@
 namespace app\bi\controller;
 
 use app\admin\controller\ApiCommon;
+use app\bi\model\Customer as CustomerModel;
+use app\admin\model\User as UserModel;
 use think\Hook;
 use think\Request;
 use think\Db;
@@ -35,7 +37,7 @@ class Customer extends ApiCommon
         if (!checkPerByAction('bi', 'customer' , 'read')) {
             header('Content-Type:application/json; charset=utf-8');
             exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        }        
+        }
     }
 
     /**
@@ -53,6 +55,7 @@ class Customer extends ApiCommon
             $param['start_time'] = $timeArr[0];
             $param['end_time'] = $timeArr[1];
         }
+
         $list = $customerModel->getStatistics($param);
         return resultArray(['data' => $list]);
     }
@@ -78,28 +81,25 @@ class Customer extends ApiCommon
             $param['type'] = 'month';
         }
 
-        $company = $biCustomerModel->getParamByCompany($param);
-        $datas = array();
-        for ($i=1; $i <= $company['j']; $i++) { 
-            $whereArr = [];
-            $whereArr['create_user_id'] = array('in',$userIds);
-            $item = array();
-            $where_time = [];
-            //时间段
-            $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
-            $item['type'] = $timeArr['type'];
-            if ($timeArr['start_time'] && $timeArr['end_time']) {
-                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
-            }
-            $whereArr['create_time'] = $where_time;
-            $item['customer_num'] = $customerModel->getDataCount($whereArr);
-            $whereArr['deal_status'] = '已成交';
-            $item['deal_customer_num'] = $customerModel->getDataCount($whereArr);
-            $item['start_time'] = $start_time;
-            $item['end_time'] = $end_time;
-            $datas[] = $item;
+        $time = getTimeArray();
+        $where = [
+            'create_user_id' => implode(',',$userIds),
+            'deal_status' => '已成交'
+        ];
+        $sql = [];
+
+        foreach ($time['list'] as $val) {
+            $whereArr = $where;
+            $whereArr['type'] = $val['type'];
+            $whereArr['start_time'] = $val['start_time'];
+            $whereArr['end_time'] = $val['end_time'];
+            $sql[] = $customerModel->getAddDealSql($whereArr);
         }
-        return resultArray(['data' => $datas]);
+
+        $sql = implode(' UNION ALL ', $sql);
+        
+        $list = queryCache($sql);
+        return resultArray(['data' => $list]);
     }
 
     /**
@@ -118,34 +118,34 @@ class Customer extends ApiCommon
         $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
         $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
         $userIds = $whereArr['userIds'];
-        
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
         }
         
-        $company = $biCustomerModel->getParamByCompany($param);
-        $datas = array();
-        for ($i=1; $i <= $company['j']; $i++) { 
-            $whereArr = [];
-            $whereArr['create_user_id'] = array('in',$userIds);
-            $item = array();
-            $where_time = [];
-            //时间段
-            $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
-            $item['type'] = $timeArr['type'];
-            if ($timeArr['start_time'] && $timeArr['end_time']) {
-                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
-            }
-            $whereArr['create_time'] = $where_time;
-            /*跟进次数*/
-            $item['dataCount'] = $biRecordModel->getRecordNum($whereArr);
-            /*跟进客户数*/
-            $item['customerCount'] = $biRecordModel->getCustomerNum($whereArr);
-            $item['start_time'] = $start_time;
-            $item['end_time'] = $end_time;
-            $datas[] = $item;
+        $time = getTimeArray();
+
+        $sql = $biRecordModel
+            ->field([
+                "FROM_UNIXTIME(create_time, '{$time['time_format']}')" => 'type',
+                'COUNT(DISTINCT(types_id))' => 'customerCount',
+                'COUNT(*)' => 'dataCount'
+            ])
+            ->where([
+                'create_time' => ['BETWEEN', $time['between']],
+                'create_user_id' => ['IN', $userIds],
+                'types' => 'crm_customer',
+            ])
+            ->group('type')
+            ->fetchSql()
+            ->select();
+        $res = queryCache($sql);
+        $res = array_column($res, null, 'type');
+
+        foreach ($time['list'] as &$val) {
+            $val['customerCount'] = (int) $res[$val['type']]['customerCount'];
+            $val['dataCount'] = (int) $res[$val['type']]['dataCount'];
         }
-        return resultArray(['data' => $datas]);
+        return resultArray(['data' => $time['list']]);
     }
 
     /**
@@ -157,14 +157,47 @@ class Customer extends ApiCommon
     public function recordList()
     {
         $biRecordModel = new \app\bi\model\Record();
+        $userModel = new \app\admin\model\User();
+        $adminModel = new \app\admin\model\Admin(); 
         $param = $this->param;
-        if ($param['type']) {
-            $timeArr = getTimeByType($param['type']);
-            $param['start_time'] = $timeArr[0];
-            $param['end_time'] = $timeArr[1];
-        }        
-        $list = $biRecordModel->getDataList($param);
-        return resultArray(['data' => $list]);
+        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
+        $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereArr['userIds'];
+
+        $time = getTimeArray();
+        $sql = $biRecordModel
+            ->field([
+                'create_user_id',
+                'COUNT(DISTINCT(types_id))' => 'customer_num',
+                'COUNT(*)' => 'record_num'
+            ])
+            ->where([
+                'create_time' => ['BETWEEN', $time['between']],
+                'create_user_id' => ['IN', $userIds],
+                'types' => 'crm_customer',
+            ])
+            ->group('create_user_id')
+            ->fetchSql()
+            ->select();
+        
+        $list = queryCache($sql);
+        $list = array_column($list, null, 'create_user_id');
+
+        $user_list = $userModel->field(['id', 'realname'])
+            ->where(['id' => ['IN', $userIds]])
+            ->cache(true, config('bi_cache_time'))
+            ->select();
+
+        $data = [];
+        foreach ($userIds as $val) {
+            $item = [];
+            $item['customer_num'] = $list[$val]['customer_num'];
+            $item['record_num'] = $list[$val]['record_num'];
+            $item['realname'] = $userModel->getUserById($val)['realname'];
+            $data[] = $item;
+        }
+
+        return resultArray(['data' => $data]);
     }
 
     /**
@@ -178,8 +211,8 @@ class Customer extends ApiCommon
         $biCustomerModel = new \app\bi\model\Customer();
         $biRecordModel = new \app\bi\model\Record();
         $param = $this->param;
-        $whereArr = array();
         $whereArr = $biCustomerModel->getParamByWhere($param,'record');
+        
         //跟进类型
         $record_type = db('crm_config')->where(['name' => 'record_type'])->find();
         if ($record_type) {
@@ -187,22 +220,37 @@ class Customer extends ApiCommon
         } else {
             $record_categorys = array('打电话','发邮件','发短信','见面拜访','活动');
         }
-        $count = $biRecordModel->getRecordNum($whereArr);
 
-        $datas = array();
-        foreach ($record_categorys as $key => $value) {
-            $item = array();
-            $whereArr['category'] = $value;
-            $item['category'] = $value;
-            $item['recordNum'] = $allCustomer = $biRecordModel->getRecordNum($whereArr);
-            if(empty($allCustomer) || empty($count)){
-                $item['proportion'] = 0;
-            }else{
-                $item['proportion'] = round(($allCustomer/$count),4)*100;
+        $sql = $biRecordModel
+            ->field([
+                'category',
+                'COUNT(*)' => 'count'
+            ])
+            ->where([
+                'create_time' => $whereArr['create_time'],
+                'create_user_id' => $whereArr['create_user_id'],
+                'types' => 'crm_customer',
+            ])
+            ->group('category')
+            ->fetchSql()
+            ->select();
+
+        $list = queryCache($sql);
+        $list = array_column($list, null, 'category');
+        $sum = array_sum(array_column($list, 'count'));
+        
+        $res = [];
+        foreach ($record_categorys as $val) {
+            $item['category'] = $val;
+            if ($sum) {
+                $item['recordNum'] = (int) $list[$val]['count'];
+                $item['proportion'] = round($item['recordNum'] / $sum, 4) * 100;
+            } else {
+                $item['recordNum'] = $item['proportion'] = 0;
             }
-            $datas[] = $item;
+            $res[] = $item;
         }
-        return resultArray(['data' => $datas]);
+        return resultArray(['data' => $res]);
     }
 
     /**
@@ -221,38 +269,29 @@ class Customer extends ApiCommon
         $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
         $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
         $userIds = $whereArr['userIds'];
+        $user_ids = implode(',',$userIds);
         
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
         }
 
-        $company = $biCustomerModel->getParamByCompany($param);
-        $datas = array();
-        for ($i=1; $i <= $company['j']; $i++) { 
-            $whereArr = [];
-            $whereArr['create_user_id'] = array('in',$userIds);
-            $item = array();
-            $where_time = [];
-            //时间段
-            $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
-            $item['type'] = $timeArr['type'];
-            if ($timeArr['start_time'] && $timeArr['end_time']) {
-                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
-            }
-            $whereArr['create_time'] = $where_time;
-            $item['customer_num'] = $customer_num = $customerModel->getDataCount($whereArr);
-            $whereArr['deal_status'] = '已成交';
-            $item['deal_customer_num'] = $deal_customer_num = $customerModel->getDataCount($whereArr);
-            if ($customer_num== 0 || $deal_customer_num == 0) {
-                $item['proportion'] = 0;
-            } else {
-                $item['proportion'] = round(($item['deal_customer_num']/$item['customer_num']),4)*100;
-            }
-            $item['start_time'] = $start_time;
-            $item['end_time'] = $end_time;
-            $datas[] = $item;
+        $time = getTimeArray();
+        $sql = [];
+        foreach ($time['list'] as $val) {
+            $sql[] = $customerModel->getAddDealSql([
+                'create_user_id' => $user_ids,
+                'type' => $val['type'],
+                'start_time' => $val['start_time'],
+                'end_time' => $val['end_time'],
+                'deal_status' => '已成交',
+            ]);
         }
-        return resultArray(['data' => $datas]);
+        $sql = implode(' UNION ALL ', $sql);
+        $list = queryCache($sql);
+        foreach ($list as &$val) {
+            $val['proportion'] = $val['customer_num'] ? $val['deal_customer_num'] / $val['customer_num'] : 0;
+        }
+        return resultArray(['data' => $list]);
     }
 
     /**
@@ -267,7 +306,8 @@ class Customer extends ApiCommon
         $userModel = new \app\admin\model\User();
         $param = $this->param;
         $whereArr = $customerModel->getParamByWhere($param);
-        $whereArr['deal_status'] = array('eq','已成交');
+        $whereArr['deal_status'] = '已成交';
+        
         $list = $customerModel->getWhereByList($whereArr);
         return resultArray(['data' => $list]);
     }
@@ -288,34 +328,34 @@ class Customer extends ApiCommon
         $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
         $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
         $userIds = $whereArr['userIds'];
-        
         if (empty($param['type']) && empty($param['start_time'])) {
             $param['type'] = 'month';
         }
 
-        $company = $biCustomerModel->getParamByCompany($param);
-        $datas = array();
-        for ($i=1; $i <= $company['j']; $i++) { 
-            $whereArr = [];
-            $whereArr['user_id'] = array('in',$userIds);
-            $item = array();
-            $where_time = [];
-            //时间段
-            $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
-            $item['type'] = $timeArr['type'];
-            if ($timeArr['start_time'] && $timeArr['end_time']) {
-                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
-            }
-            $whereArr['create_time'] = $where_time;
-            $whereArr['content'] = '将客户放入公海';
-            $item['put_in'] = $actionRecordModel->getDataCount($whereArr);
-            $whereArr['content'] = '领取了客户';
-            $item['receive'] = $actionRecordModel->getDataCount($whereArr);
-            $item['start_time'] = $start_time;
-            $item['end_time'] = $end_time;
-            $datas[] = $item;
+        $time = getTimeArray();
+        $sql = $actionRecordModel
+            ->field([
+                "FROM_UNIXTIME(`create_time`, '{$time['time_format']}')" => 'type',
+                'SUM(CASE WHEN `content` = "将客户放入公海" THEN 1 ELSE 0 END)' => 'put_in',
+                'SUM(CASE WHEN `content` = "领取了客户" THEN 1 ELSE 0 END)' => 'receive'
+            ])
+            ->where([
+                'user_id' => ['IN', $userIds],
+                'create_time' => ['BETWEEN', $time['between']],
+                'content' => ['IN', ['将客户放入公海', '领取了客户']]
+            ])
+            ->group('type')
+            ->fetchSql()
+            ->select();
+        $res = queryCache($sql);
+        $res = array_column($res, null, 'type');
+        
+        foreach ($time['list'] as &$val) {
+            $val['put_in'] = (int) $res[$val['type']]['put_in'];
+            $val['receive'] = (int) $res[$val['type']]['receive'];
         }
-        return resultArray(['data' => $datas]);
+
+        return resultArray(['data' => $time['list']]);
     }
 
     /**
@@ -337,26 +377,49 @@ class Customer extends ApiCommon
         $userIds = $whereArr['userIds'];
         $between_time = $whereArr['between_time'];
 
-        $where['id'] = array('in',$userIds);
-        $where['type'] = 1;
-        $userList = db('admin_user')->where($where)->field('id,username,structure_id,realname')->select();
-        $whereData['create_time'] = array('between',$between_time);
-        foreach ($userList as $k=>$v) {
-            $structure_info = $structureModel->getDataByID($v['structure_id']);
-            $customer_num = 0;
-            $whereData['user_id'] = $v['id'];
-            $whereData['content'] = '将客户放入公海';
-            $userList[$k]['put_in'] = $actionRecordModel->getDataCount($whereData);
-            $whereData['content'] = '领取了客户';
-            $userList[$k]['receive'] = $actionRecordModel->getDataCount($whereData);
+        $sql = CustomerModel::field([
+                'COUNT(*)' => 'customer_num',
+                'owner_user_id'
+            ])
+            ->where([
+                'create_time' => ['BETWEEN', $between_time],
+                'owner_user_id' => ['IN', $userIds]
+            ])
+            ->group('owner_user_id')
+            ->fetchSql()
+            ->select();
+        $customer_num_list = queryCache($sql);
+        $customer_num_list = array_column($customer_num_list, null, 'owner_user_id');
 
-            $where_c['create_time'] = array('between',$between_time);
-            $where_c['owner_user_id'] = $v['id'];
-            $customer_num = $customerModel->getDataCount($where_c);
-            $userList[$k]['customer_num'] = $customer_num;
-            $userList[$k]['username'] = $structure_info['name'];
+        $sql = $actionRecordModel
+            ->field([
+                'user_id',
+                'SUM(CASE WHEN `content` = "将客户放入公海" THEN 1 ELSE 0 END)' => 'put_in',
+                'SUM(CASE WHEN `content` = "领取了客户" THEN 1 ELSE 0 END)' => 'receive'
+            ])
+            ->group('user_id')
+            ->where([
+                'create_time' => ['BETWEEN', $between_time],
+                'user_id' => ['IN', $userIds],
+                'content' => ['IN', ['将客户放入公海', '领取了客户']],
+                'types' => 'crm_customer',
+            ])
+            ->fetchSql()
+            ->select();
+        $action_record_list = queryCache($sql);
+        $action_record_list = array_column($action_record_list, null, 'user_id');
+
+        $res = [];
+        foreach ($userIds as $val) {
+            $item['put_in'] = $action_record_list[$val]['put_in'] ?: 0;
+            $item['receive'] = $action_record_list[$val]['receive'] ?: 0;
+            $item['customer_num'] = $customer_num_list[$val]['customer_num'] ?: 0;
+            $user_info = $userModel->getUserById($val);
+            $item['realname'] = $user_info['realname'];
+            $item['username'] = $user_info['structure_name'];
+            $res[] = $item;
         }
-        return resultArray(['data' => $userList]);
+        return resultArray(['data' => $res]);
     }
 
     /**
@@ -367,7 +430,6 @@ class Customer extends ApiCommon
      */
     public function userCycle()
     {
-        $customerModel = new \app\crm\model\Customer();
         $userModel = new \app\admin\model\User();
         $biCustomerModel = new \app\bi\model\Customer();
         $adminModel = new \app\admin\model\Admin(); 
@@ -380,43 +442,102 @@ class Customer extends ApiCommon
         if (empty($param['type']) && empty($param['start_time'])) {
             $param['type'] = 'month';
         }
-        $company = $biCustomerModel->getParamByCompany($param);
-        $datas = array();
-        for ($i=1; $i <= $company['j']; $i++) { 
-            $whereArr = [];
-            $whereArr['owner_user_id'] = array('in',$userIds);
-            $item = array();
-            $where_time = [];
-            //时间段
-            $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
-            $item['type'] = $timeArr['type'];
-            if ($timeArr['start_time'] && $timeArr['end_time']) {
-                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
+        $time = getTimeArray();
+        $sql = [];
+
+        $prefix = config('database.prefix');
+        
+        $sql = CustomerModel::alias('a')
+            ->field([
+                "FROM_UNIXTIME(`a`.`create_time`, '{$time['time_format']}')" => 'type',
+                'COUNT(*)' => 'customer_num',
+                'SUM(
+                    CASE WHEN ISNULL(`b`.`order_date`) THEN 0 ELSE (
+                        UNIX_TIMESTAMP(`b`.`order_date`) - `a`.`create_time`
+                    ) / 86400 END
+                )' => 'cycle_sum'
+            ])
+            ->join(
+                "(
+                    SELECT 
+                        `customer_id`, MIN(`order_date`) AS `order_date` 
+                    FROM
+                        `{$prefix}crm_contract` 
+                    WHERE
+                        `check_status` = 2 
+                    GROUP BY
+                        `customer_id`
+                ) b",
+                '`a`.`customer_id` = `b`.`customer_id`',
+                'LEFT'
+            )
+            ->where([
+                'a.deal_status' => '已成交',
+                'a.create_time' => ['BETWEEN', $time['between']],
+                'a.owner_user_id' => ['IN', $userIds]
+            ])
+            ->group('type')
+            ->fetchsql()
+            ->select();
+        $res = queryCache($sql);
+        $res = array_column($res, null, 'type');
+        
+        foreach ($time['list'] as &$val) {
+            $val['customer_num'] = (int) $res[$val['type']]['customer_num'];
+            if ($res[$val['type']]['customer_num']) {
+                $val['cycle'] = intval($res[$val['type']]['cycle_sum'] / $res[$val['type']]['customer_num']);
+            } else {
+                $val['cycle'] = 0;
             }
-            $whereArr['create_time'] = $where_time;
-            $whereArr['deal_status'] = '已成交';
-            $item['customer_num'] = $customerModel->getDataCount($whereArr);
-            //周期
-            $cycle = $biCustomerModel->getWhereByCycle($whereArr);
-            $item['cycle'] = $cycle ? $cycle : 0;
-            $item['start_time'] = $start_time;
-            $item['end_time'] = $end_time;
-            $datas['items'][] = $item;
         }
-        $where['id'] = array('in',$userIds);
-        $where['type'] = 1;
-        $userList = db('admin_user')->where($where)->field('id,username,realname')->select();
-        $where_c['create_time'] = array('between',$between_time);
-        foreach ($userList as $k=>$v) {
-            $customer_num = 0;
-            $where_c['owner_user_id'] = array('eq',$v['id']);
-            $where_c['deal_status'] = '已成交';
-            $customer_num = $customerModel->getDataCount($where_c);
-            $customer_cycle = $biCustomerModel->getWhereByCycle($where_c);
-            $userList[$k]['customer_num'] = $customer_num;
-            $userList[$k]['cycle'] = $customer_cycle?$customer_cycle:0;
+        
+        $datas = ['items' => $time['list']];
+
+        $sql = CustomerModel::alias('a')
+            ->field([
+                'a.owner_user_id',
+                'COUNT(*)' => 'customer_num',
+                'SUM(
+                    CASE WHEN  ISNULL(b.order_date) THEN 0 ELSE (
+                        UNIX_TIMESTAMP(b.order_date) - a.create_time
+                    ) / 86400 END
+                )' => 'cycle_sum'
+            ])
+            ->join(
+                "(
+                    SELECT 
+                        `customer_id`, 
+                        MIN(`order_date`) AS `order_date` 
+                    FROM 
+                        `{$prefix}crm_contract` 
+                    WHERE 
+                        `check_status` = 2 
+                    GROUP BY 
+                        `customer_id`
+                ) b",
+                'a.customer_id = b.customer_id',
+                'LEFT'
+            )
+            ->where([
+                'a.deal_status' => '已成交',
+                'a.create_time' => ['BETWEEN', $time['between']],
+                'a.owner_user_id' => ['IN', $userIds]
+            ])
+            ->group('a.owner_user_id')
+            ->fetchSql()
+            ->select();
+        $res = queryCache($sql);
+        $res = array_column($res, null, 'owner_user_id');
+        
+        $user_data = [];
+        foreach ($userIds as $val) {
+            $item['customer_num'] = $res[$val]['customer_num'];
+            $item['cycle'] = $res[$val]['customer_num'] ? intval($res[$val]['cycle_sum'] / $res[$val]['customer_num']) : 0;
+            $item['realname'] = $userModel->getUserById($val)['realname'];
+            $user_data[] = $item;
         }
-        $datas['users'] = $userList;
+        $datas['users'] = $user_data;
+
         return resultArray(['data' => $datas]);
     }
 
@@ -459,8 +580,7 @@ class Customer extends ApiCommon
         $userModel = new \app\admin\model\User();
         $customerModel = new \app\crm\model\Customer();
         $biCustomerModel = new \app\bi\model\Customer();
-        $address_arr = array('北京','上海','天津','广东','浙江','海南','福建','湖南','湖北','重庆','辽宁','吉林','黑龙江','河北','河南','山东','陕西','甘肃','青海','新疆','山西','四川','贵州','安徽','江西','江苏','云南','内蒙古','广西','西藏','宁夏',
-        );
+        $address_arr = \app\crm\model\Customer::$address;
         $param = $this->param;
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
@@ -475,33 +595,55 @@ class Customer extends ApiCommon
         }
         $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
-        $datas = array();
-        foreach ($address_arr as $key => $value) {
-            $item = array();
-            $whereArr = array();
-            if (!empty($param['start_time'])) {
-                $start_time = $param['start_time'];
-                $end_time = $param['end_time'];
-                $whereArr['create_time'] = array('between',array($param['start_time'],$param['end_time']));
-            } else {
-                $create_time = getTimeByType($param['type']);
-                $start_time = $create_time[0];
-                $end_time = $create_time[1];
-                if ($create_time) {
-                    $whereArr['create_time'] = array('between',array($create_time[0],$create_time[1]));
-                }
-            }
-            $whereArr['owner_user_id'] = array('in',$userIds);
-            $whereArr['address'] = array('like','%'.$value.'%');
-            $item['address'] = $value;
-            $whereArr['deal_status'] = '已成交';
-            $item['customer_num'] = $dealCustomer = $customerModel->getDataCount($whereArr);
-            //周期
-            $cycle = $biCustomerModel->getWhereByCycle($whereArr);
-            $item['cycle'] = $cycle?$cycle:0;
-            $datas[] = $item;
+        $time = getTimeArray();
+
+        $prefix = config('database.prefix');
+        $sql = CustomerModel::alias('a')
+            ->field([
+                'SUBSTR(`a`.`address`, 1, 2)' => 'addr',
+                'COUNT(*)' => 'customer_num',
+                'SUM(
+                    CASE WHEN  ISNULL(b.order_date) THEN 0 ELSE (
+                        UNIX_TIMESTAMP(b.order_date) - a.create_time
+                    ) / 86400 END
+                )' => 'cycle_sum'
+            ])
+            ->join(
+                "(
+                    SELECT 
+                        `customer_id`, 
+                        MIN(`order_date`) AS `order_date` 
+                    FROM 
+                        `{$prefix}crm_contract` 
+                    WHERE 
+                        `check_status` = 2 
+                    GROUP BY 
+                        `customer_id`
+                ) b",
+                'a.customer_id = b.customer_id',
+                'LEFT'
+            )
+            ->where([
+                'a.deal_status' => '已成交',
+                'a.create_time' => ['BETWEEN', $time['between']],
+                'a.owner_user_id' => ['IN', $userIds]
+            ])
+            ->group('addr')
+            ->fetchSql()
+            ->select();
+        $list = queryCache($sql);
+        $list = array_column($list, null, 'addr');
+        $list['黑龙江'] = $list['黑龙'];
+        $list['内蒙古'] = $list['内蒙'];
+        $res = [];
+        foreach ($address_arr as $val) {
+            $item['address'] = $val;
+            $item['customer_num'] = $list[$val]['customer_num'];
+            $item['cycle'] = $list[$val]['customer_num'] ? intval($list[$val]['cycle_sum'] / $list[$val]['customer_num']) : 0;
+            $res[] = $item;
         }
-        return resultArray(['data' => $datas]);
+        
+        return resultArray(['data' => $res]);
     }
 
     /**
@@ -512,10 +654,9 @@ class Customer extends ApiCommon
      */
     public function addressAnalyse()
     {
-        $customerModel = new \app\crm\model\Customer();
+        // $customerModel = new \app\crm\model\Customer();
         $userModel = new \app\admin\model\User();
-        $address_arr = array('北京','上海','天津','广东','浙江','海南','福建','湖南','湖北','重庆','辽宁','吉林','黑龙江','河北','河南','山东','陕西','甘肃','青海','新疆','山西','四川','贵州','安徽','江西','江苏','云南','内蒙古','广西','西藏','宁夏',
-        );
+        $address_arr = \app\crm\model\Customer::$address;
         $map_user_ids = [];
         if ($param['user_id']) {
             $map_user_ids = array($param['user_id']);
@@ -526,19 +667,35 @@ class Customer extends ApiCommon
         }
         $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
         $userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
-        $datas = array();
-        foreach ($address_arr as $key => $value) {
-            $item = array();
-            $whereArr = array();
-            $whereArr['address'] = array('like','%'.$value.'%');
-            $whereArr['owner_user_id'] = array('in',$userIds);
-            $item['address'] = $value;
-            $item['allCustomer'] = $allCustomer = $customerModel->getDataCount($whereArr);
-            $whereArr['deal_status'] = '已成交';
-            $item['dealCustomer'] = $dealCustomer = $customerModel->getDataCount($whereArr);
-            $datas[] = $item;
+        
+        $time = getTimeArray();
+        $sql = CustomerModel::alias('a')
+            ->field([
+                'SUBSTR(`address`, 1, 2)' => 'addr',
+                'COUNT(*)' => 'allCustomer',
+                'SUM(
+                    CASE WHEN `deal_status` = "已成交" THEN  1 ELSE 0 END
+                )' => 'dealCustomer',
+            ])
+            ->where([
+                'create_time' => ['BETWEEN', $time['between']],
+                'owner_user_id' => ['IN', $userIds]
+            ])
+            ->group('addr')
+            ->fetchSql()
+            ->select();
+        $list = queryCache($sql);
+        $list = array_column($list, null, 'addr');
+        $list['黑龙江'] = $list['黑龙'];
+        $list['内蒙古'] = $list['内蒙'];
+        $data = [];
+        foreach ($address_arr as $val) {
+            $item['address'] = $val;
+            $item['allCustomer'] = $list[$val]['allCustomer'];
+            $item['dealCustomer'] = $list[$val]['dealCustomer'];
+            $data[] = $item;
         }
-        return resultArray(['data' => $datas]);
+        return resultArray(['data' => $data]);
     }
     
     /**
@@ -550,30 +707,55 @@ class Customer extends ApiCommon
     public function portrait()
     {
         $biCustomerModel = new \app\bi\model\Customer();
-        $customerModel = new \app\crm\model\Customer();
+        $userModel = new \app\admin\model\User();
+        $adminModel = new \app\admin\model\Admin(); 
         $param = $this->param;
-        $whereArr = array();
-        $whereArr['types'] = array('eq','crm_customer');
-        $whereArr['field'] = array('eq',$param['type_analyse']);
-        $setting = $biCustomerModel->getOptionByField($whereArr);
-        $setting[] = '未知';
-        $datas = array();
-        foreach ($setting as $key => $value) {
-            $item = array();
-            $where = array();
-            $where = $biCustomerModel->getParamByWhere($param);
-            if($value != '未知'){
-                $where[$param['type_analyse']] = array('eq',$value);
-            }else{
-                $where[$param['type_analyse']] = array('eq','');
-            }
-            $item[$param['type_analyse']] = $value;
-            $item['allCustomer'] = $customerModel->getDataCount($where);
-
-            $where['deal_status'] = '已成交';
-            $item['dealCustomer'] = $customerModel->getDataCount($where);
-            $datas[] = $item;
+        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
+        $whereData = $adminModel->getWhere($param, '', $perUserIds); //统计条件
+        $userIds = $whereData['userIds'];
+        if (!in_array($param['type_analyse'], ['industry', 'source', 'level'])) {
+            return resultArray(['error' => '参数错误']);
         }
-        return resultArray(['data' => $datas]);
+        $whereArr = array();
+        $whereArr['types'] = 'crm_customer';
+        $whereArr['field'] = $param['type_analyse'];
+        $setting = $biCustomerModel->getOptionByField($whereArr);
+        $time = getTimeArray();
+        $sql = CustomerModel::field([
+                "(
+                    CASE WHEN 
+                        `{$param['type_analyse']}` = '' 
+                    THEN '(空)' 
+                    ELSE {$param['type_analyse']} END
+                )" => $param['type_analyse'],
+                'COUNT(*)' => 'allCustomer',
+                'SUM(
+                    CASE WHEN `deal_status` = "已成交" THEN  1 ELSE 0 END
+                )' => 'dealCustomer',
+            ])
+            ->where([
+                'create_time' => ['BETWEEN', $time['between']],
+                'owner_user_id' => ['IN', $userIds]
+            ])
+            ->group($param['type_analyse'])
+            ->fetchSql()
+            ->select();
+        $list = queryCache($sql);
+        $list = array_column($list, null, $param['type_analyse']);
+        $other_keys = array_diff(array_keys($list), $setting);
+        $setting = array_merge($setting, $other_keys);
+
+        $data = [];
+        foreach ($setting as $val) {
+            $item = [];
+
+            $item[$param['type_analyse']] = $val;
+            $item['allCustomer'] = $list[$val]['allCustomer'] ?: 0;
+            $item['dealCustomer'] = $list[$val]['dealCustomer'] ?: 0;
+
+            $data[] = $item;
+        }
+
+        return resultArray(['data' => $data]);
     }
 }

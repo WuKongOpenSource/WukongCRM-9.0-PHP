@@ -1,55 +1,64 @@
 <template>
-  <create-view :loading="loading"
-               :body-style="{ height: '100%'}">
-    <flexbox direction="column"
-             align="stretch"
-             class="crm-create-container">
+  <create-view
+    :loading="loading"
+    :body-style="{ height: '100%'}">
+    <flexbox
+      direction="column"
+      align="stretch"
+      class="crm-create-container">
       <flexbox class="crm-create-header">
-        <div style="flex:1;font-size:17px;color:#333;">{{name}}</div>
-        <img @click="hidenView"
-             class="close"
-             src="@/assets/img/task_close.png" />
+        <div style="flex:1;font-size:17px;color:#333;">{{ name }}</div>
+        <img
+          class="close"
+          src="@/assets/img/task_close.png"
+          @click="hidenView" >
       </flexbox>
-      <flexbox class="crm-create-flex"
-               direction="column"
-               align="stretch">
+      <flexbox
+        class="crm-create-flex"
+        direction="column"
+        align="stretch">
         <div class="crm-create-body">
-          <el-form ref="crmForm"
-                   :model="crmForm"
-                   label-position="top"
-                   class="crm-create-box">
-            <el-form-item v-for="(item, index) in this.crmForm.crmFields"
-                          :key="'item'+index"
-                          :prop="'crmFields.' + index + '.value'"
-                          :class="{ 'crm-create-block-item': item.showblock, 'crm-create-item': !item.showblock }"
-                          :rules="crmRules[item.key]"
-                          :style="{'padding-left': getPaddingLeft(item, index), 'padding-right': getPaddingRight(item, index)}">
-              <div slot="label"
-                   style="display: inline-block;">
+          <el-form
+            ref="crmForm"
+            :model="crmForm"
+            label-position="top"
+            class="crm-create-box">
+            <el-form-item
+              v-for="(item, index) in crmForm.crmFields"
+              :key="'item'+index"
+              :prop="'crmFields.' + index + '.value'"
+              :class="{ 'crm-create-block-item': item.showblock, 'crm-create-item': !item.showblock }"
+              :rules="crmRules[item.key]"
+              :style="{'padding-left': getPaddingLeft(item, index), 'padding-right': getPaddingRight(item, index)}">
+              <div
+                slot="label"
+                style="display: inline-block;">
                 <div style="margin:5px 0;font-size:12px;word-wrap:break-word;word-break:break-all;">
-                  {{item.data.name}}
+                  {{ item.data.name }}
                   <span style="color:#999;">
-                    {{item.data.input_tips ? '（'+item.data.input_tips+'）':''}}
+                    {{ item.data.input_tips ? '（'+item.data.input_tips+'）':'' }}
                   </span>
                 </div>
               </div>
-              <component :is="item.data.form_type | typeToComponentName"
-                         :value="item.value"
-                         :index="index"
-                         :item="item"
-                         :disabled="item.disabled"
-                         @value-change="fieldValueChange">
-              </component>
+              <component
+                :is="item.data.form_type | typeToComponentName"
+                :value="item.value"
+                :index="index"
+                :item="item"
+                :disabled="item.disabled"
+                @value-change="fieldValueChange"/>
             </el-form-item>
           </el-form>
         </div>
       </flexbox>
       <div class="handle-bar">
-        <el-button class="handle-button"
-                   @click.native="hidenView">取消</el-button>
-        <el-button class="handle-button"
-                   type="primary"
-                   @click.native="saveField">保存</el-button>
+        <el-button
+          class="handle-button"
+          @click.native="hidenView">取消</el-button>
+        <el-button
+          class="handle-button"
+          type="primary"
+          @click.native="saveField">保存</el-button>
       </div>
     </flexbox>
   </create-view>
@@ -58,7 +67,6 @@
 import { crmReceivablesPlanSave } from '@/api/customermanagement/contract'
 
 import CreateView from '@/components/CreateView'
-import { getMaxIndex } from '@/utils/index'
 import {
   XhInput,
   XhTextarea,
@@ -70,7 +78,7 @@ import {
 import { formatTimeToTimestamp, timestampToFormatTime } from '@/utils'
 
 export default {
-  name: 'money-plan-create', // 回款计划新建
+  name: 'MoneyPlanCreate', // 回款计划新建
   components: {
     CreateView,
     XhInput,
@@ -79,19 +87,6 @@ export default {
     XhDate,
     XhFiles,
     CrmRelativeCell
-  },
-  computed: {},
-  data() {
-    return {
-      name: '',
-      loading: false,
-      // 自定义字段验证规则
-      crmRules: {},
-      // 自定义字段信息表单
-      crmForm: {
-        crmFields: []
-      }
-    }
   },
   filters: {
     /** 根据type 找到组件 */
@@ -131,6 +126,19 @@ export default {
       }
     }
   },
+  data() {
+    return {
+      name: '',
+      loading: false,
+      // 自定义字段验证规则
+      crmRules: {},
+      // 自定义字段信息表单
+      crmForm: {
+        crmFields: []
+      }
+    }
+  },
+  computed: {},
   mounted() {
     document.body.appendChild(this.$el)
     if (this.action.type == 'update') {
@@ -139,6 +147,12 @@ export default {
     } else {
       this.name = '新建回款计划'
       this.getField()
+    }
+  },
+  destroyed() {
+    // remove DOM node after destroy
+    if (this.$el && this.$el.parentNode) {
+      this.$el.parentNode.removeChild(this.$el)
     }
   },
   methods: {
@@ -236,7 +250,7 @@ export default {
         /** 规则数据 */
         var tempList = []
 
-        //验证必填
+        // 验证必填
         if (item.is_null == 1) {
           tempList.push({
             required: true,
@@ -260,7 +274,7 @@ export default {
             params['value'] = [this.action.params.contract]
             params['disabled'] = true
           }
-          //客户下新建包含客户信息 默认禁止点击合同
+          // 客户下新建包含客户信息 默认禁止点击合同
         } else if (this.crmType === 'customer') {
           if (item.form_type === 'customer') {
             params['value'] = [this.action.params.customer]
@@ -276,7 +290,6 @@ export default {
 
         this.crmForm.crmFields.push(params)
       }
-
     },
     // 保存数据
     saveField() {
@@ -372,12 +385,6 @@ export default {
         return '0'
       }
       return index % 2 == 0 ? '25px' : '0'
-    }
-  },
-  destroyed() {
-    // remove DOM node after destroy
-    if (this.$el && this.$el.parentNode) {
-      this.$el.parentNode.removeChild(this.$el)
     }
   }
 }

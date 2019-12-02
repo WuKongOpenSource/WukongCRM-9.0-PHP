@@ -10,6 +10,7 @@ namespace app\admin\controller;
 use think\Hook;
 use think\Request;
 use think\Db;
+use app\admin\model\User as UserModel;
 
 class Field extends ApiCommon
 {
@@ -360,7 +361,14 @@ class Field extends ApiCommon
     public function uniqueField()
     {
         $param = $this->param;
-        $list = db('admin_field')->where(['types' => $param['types'],'is_unique' => 1])->column('name');
+        if ($param['types'] == 'crm_user') {
+            $list = array_filter(UserModel::$import_field_list, function ($val) {
+                return $val['is_unique'] == 1;
+            });
+            $list = array_column($list, 'name');
+        } else {
+            $list = db('admin_field')->where(['types' => $param['types'],'is_unique' => 1])->column('name');
+        }
         $list = $list ? implode(',',$list) : '无';
         return resultArray(['data' => $list]);
     }       

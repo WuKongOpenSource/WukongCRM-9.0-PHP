@@ -1,30 +1,32 @@
 
 <template>
-  <div v-loading="loading"
-       class="main-container">
-    <filtrate-handle-view class="filtrate-bar"
-                          moduleType="customer"
-                          @load="loading=true"
-                          @change="searchClick">
-    </filtrate-handle-view>
+  <div
+    v-loading="loading"
+    class="main-container">
+    <filtrate-handle-view
+      class="filtrate-bar"
+      module-type="customer"
+      @load="loading=true"
+      @change="searchClick"/>
     <div class="content">
       <div class="axis-content">
-        <div id="axismain"></div>
+        <div id="axismain"/>
       </div>
       <div class="table-content">
-        <el-table :data="list"
-                  height="400"
-                  stripe
-                  border
-                  highlight-current-row>
-          <el-table-column v-for="(item, index) in fieldList"
-                           :key="index"
-                           align="center"
-                           header-align="center"
-                           show-overflow-tooltip
-                           :prop="item.field"
-                           :label="item.name">
-          </el-table-column>
+        <el-table
+          :data="list"
+          height="400"
+          stripe
+          border
+          highlight-current-row>
+          <el-table-column
+            v-for="(item, index) in fieldList"
+            :key="index"
+            :prop="item.field"
+            :label="item.name"
+            align="center"
+            header-align="center"
+            show-overflow-tooltip/>
         </el-table>
       </div>
     </div>
@@ -41,7 +43,8 @@ import {
 
 export default {
   /** 客户总量分析 */
-  name: 'customer-total-statistics',
+  name: 'CustomerTotalStatistics',
+  mixins: [base],
   data() {
     return {
       loading: false,
@@ -64,7 +67,6 @@ export default {
       ]
     }
   },
-  mixins: [base],
   computed: {},
   mounted() {
     this.initAxis()
@@ -86,12 +88,12 @@ export default {
       biCustomerTotalAPI(this.postParams)
         .then(res => {
           this.loading = false
-          let list = res.data || []
+          const list = res.data || []
           this.axisList = list
 
-          let dealData = []
-          let numData = []
-          let legendData = []
+          const dealData = []
+          const numData = []
+          const legendData = []
           for (let index = 0; index < list.length; index++) {
             const element = list[index]
             dealData.push(element.deal_customer_num)
@@ -118,7 +120,7 @@ export default {
       let params = {}
 
       if (typeof dataIndex !== 'undefined') {
-        let dataItem = this.axisList[dataIndex]
+        const dataItem = this.axisList[dataIndex]
         params.user_id = this.postParams.user_id
         params.structure_id = this.postParams.structure_id
         params.start_time = dataItem.start_time

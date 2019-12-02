@@ -1081,7 +1081,7 @@ function getTimeByType($type = 'today')
 function getFullPath($path)
 {
     if ($path) {
-        return 'http://'.$_SERVER['HTTP_HOST'].substr($_SERVER["SCRIPT_NAME"],0,-10).substr(str_replace(DS, '/', $path),1);
+        return $_SERVER['REQUEST_SCHEME'] . '://'.$_SERVER['HTTP_HOST'].substr($_SERVER["SCRIPT_NAME"],0,-10).substr(str_replace(DS, '/', $path),1);
     } else {
         return '';
     }
@@ -1575,8 +1575,7 @@ function download($file, $name = '', $del = false)
 function tempFileName($ext = '')
 {
     // 临时目录
-    $path = TEMP_DIR . date('Ymd') . DS;
-    
+    $path = TEMP_DIR . date('Ymd') . DS; 
     if (!file_exists($path)) {
         mkdir($path, 0777, true);
     }
@@ -1613,4 +1612,159 @@ function delDir($dir)
     closedir($dh);
     //删除当前文件夹：
     @rmdir($dir);
+}
+
+/**
+ * 商业智能 查询缓存
+ *
+ * @param string $sql   Sql语句
+ * @param int $bi_slow_query_time   慢查询时间(毫秒)，默认读取Config(bi_slow_query_time)
+ * @return mixed
+ * @author Ymob
+ * @datetime 2019-11-21 17:36:50
+ */
+function queryCache($sql = '', $bi_slow_query_time = null) {
+    $key = 'BI_queryCache' . md5($sql);
+    $val = cache($key);
+    if (!$val) {
+        $start_time = microtime(true) * 1000;
+        $val = Db::query($sql);
+        $end_time = microtime(true) * 1000;
+        $slow_query = true;
+        // 是否使用系统默认设置-慢查询时间
+        if ($bi_slow_query_time === null) {
+            $bi_slow_query_time = config('bi_slow_query_time');
+        }
+        if ($bi_slow_query_time > 0) {
+            $slow_query = ($end_time - $start_time) > $bi_slow_query_time;
+        }
+        if ($slow_query && $val) {
+            cache($key, $val, config('bi_cache_time'));
+        }
+    }
+    return $val;
+}
+
+/**
+ * 图表时间范围处理，按月/天返回时间段数组
+ *
+ * @param int $start    开始时间（时间戳）
+ * @param int $end      结束时间（时间戳）
+ * @return array 
+ * @author Ymob
+ * @datetime 2019-11-18 09:25:09
+ */
+function getTimeArray($start = null, $end = null)
+{
+    if ($start == null || $end == null) {
+        $param = request()->param();
+        switch ($param['type']) {
+            // 本年
+            case 'year':
+                $start = strtotime(date('Y-01-01'));
+                $end = strtotime('+1 year', $start) - 1;
+                break;
+            // 去年
+            case 'lastYear':
+                $start = strtotime(date(date('Y') - 1 . '-01-01'));
+                $end = strtotime('+1 year', $start) - 1;
+                break;
+            // 本季度、上季度
+            case 'quarter':
+            case 'lastQuarter':
+                $t = intval((date('m') - 1) / 3);
+                $start_y = ($t * 3) + 1;
+                $start = strtotime(date("Y-{$start_y}-01"));
+                if ($param['type'] == 'lastQuarter') {  // 上季度
+                    $start = strtotime('-3 month', $start);
+                }
+                $end = strtotime('+3 month', $start) - 1;
+                break;
+            // 本月、上月
+            case 'month':
+            case 'lastMonth':
+                $start = strtotime(date('Y-m-01'));
+                if ($param['type'] == 'lastMonth') {
+                    $start = strtotime('-1 month', $start);
+                }
+                $end = strtotime('+1 month', $start) - 1;
+                break;
+            // 本周、上周
+            case 'week':
+            case 'lastWeek':
+                $start = strtotime('-' . (date('w') - 1) . 'day', strtotime(date('Y-m-d')));
+                if ($param['type'] == 'lastWeek') {
+                    $start = strtotime('-7 day', $start);
+                }
+                $end = strtotime('+7 day', $start) - 1;
+                break;
+            // 今天、昨天
+            case 'tody':
+            case 'yesterday':
+                $start = strtotime(date('Y-m-d'));
+                if ($param['type'] == 'yesterday') {
+                    $start = strtotime('-1 day', $start);
+                }
+                $end = strtotime('+1 day', $start) - 1;
+                break;
+            default:
+                if ($param['start_time'] && $param['end_time']) {
+                    $start = $param['start_time'];
+                    $end = $param['end_time'];
+                } else {
+                    // 本年
+                    $start = strtotime(date('Y-01-01'));
+                    $end = strtotime('+1 year', $start) - 1;
+                }
+                break;
+        }
+    }
+
+    $between = [$start, $end];
+    $list = [];
+    $len = ($end - $start) / 86400;
+    // 大于30天 按月统计、小于按天统计
+    if ($len > 30) {
+        $time_format = '%Y-%m';
+        while (true) {
+            $start = strtotime(date('Y-m-01', $start));
+            $item = [];
+            $item['type'] = date('Y-m', $start);
+            $item['start_time'] = $start;
+            $item['end_time'] = strtotime('+1 month', $start) - 1;
+            $list[] = $item;
+            if ($item['end_time'] >= $end) break;
+            $start = $item['end_time'] + 1;
+        }
+    } else {
+        $time_format = '%Y-%m-%d';
+        while (true) {
+            $item = [];
+            $item['type'] = date('Y-m-d', $start);
+            $item['start_time'] = $start;
+            $item['end_time'] = strtotime('+1 day', $start) - 1;
+            $list[] = $item;
+            if ($item['end_time'] >= $end) break;
+            $start = $item['end_time'] + 1;
+        }
+    }
+
+    return [
+        'list' => $list,        // 时间段列表
+        'time_format' => $time_format,      // 时间格式 mysql 格式化时间戳
+        'between' => $between       // 开始结束时间
+    ];
+}
+
+/**
+ * 打印程序执行时间
+ *
+ * @param integer $s
+ * @return void
+ * @author Ymob
+ * @datetime 2019-11-28 09:31:45
+ */
+function tt($s = 0)
+{
+    die((string) round(microtime(1) - ($s ?: THINK_START_TIME), 3));
 }

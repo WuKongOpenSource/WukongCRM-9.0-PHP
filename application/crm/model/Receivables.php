@@ -7,7 +7,9 @@
 namespace app\crm\model;
 
 use think\Db;
+use app\crm\model\Contract as ContractModel;
 use app\admin\model\Common;
+use app\admin\model\Message;
 use think\Request;
 use think\Validate;
 
@@ -97,7 +99,7 @@ class Receivables extends Common
 		}
 		//排序
 		if ($order_type && $order_field) {
-			$order = 'convert(receivables.'.trim($order_field).' using gbk) '.trim($order_type);
+			$order = $fieldModel->getOrderByFormtype('crm_receivables','receivables',$order_field, $order_type);
 		} else {
 			$order = 'receivables.update_time desc';
 		}		
@@ -169,7 +171,23 @@ class Receivables extends Common
 	{
 		if (!$param['customer_id']) {
 			$this->error = '请先选择客户';
+			return false;
 		}
+		// 仅允许审批通过，且未作废的合同添加回款
+		if ($param['contract_id']) {
+			$check_status = ContractModel::where(['contract_id' => $param['contract_id']])->value('check_status');
+			if ($check_status == 6) {
+				$this->error = '合同已作废';
+				return false;
+			} elseif ($check_status != 2) {
+				$this->error = '合同未审核通过';
+				return false;
+			}
+		} else {
+			$this->error = '请先选择合同';
+			return false;
+		}
+
 		$fieldModel = new \app\admin\model\Field();
 		// 自动验证
 		$validateArr = $fieldModel->validateField($this->name); //获取自定义字段验证规则
@@ -187,6 +205,18 @@ class Receivables extends Common
 			$param[$v] = arrayToString($param[$v]);
 		}
 		if ($this->data($param)->allowField(true)->save()) {
+            //站内信
+            $send_user_id = stringToArray($param['check_user_id']);
+            if ($send_user_id && empty($param['check_status'])) {
+				(new Message())->send(
+					Message::CONTRACT_TO_DO,
+					[
+						'title' => $param['number'],
+						'action_id' => $this->receivables_id
+					],
+					$send_user_id
+				);
+            }
 			$data = [];
 			$data['receivables_id'] = $this->receivables_id;
 			return $data;
@@ -264,12 +294,17 @@ class Receivables extends Common
 			//修改记录
 			updateActionLog($param['user_id'], 'crm_receivables', $receivables_id, $dataInfo, $param);
 			//站内信
-            $createUserInfo = $userModel->getUserById($param['user_id']);
-            $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交了回款《'.$dataInfo['number'].'》,需要您审批';
-            if ($send_user_id) {
-            	sendMessage($send_user_id, $sendContent, $receivables_id, 1);
-            }			
+			$send_user_id = stringToArray($param['check_user_id']);
+            if ($send_user_id && empty($param['check_status'])) {
+				(new Message())->send(
+					Message::RECEIVABLES_TO_DO,
+					[
+						'title' => $param['number'],
+						'action_id' => $receivables_id
+					],
+					$send_user_id
+				);
+            }	
 
 			$data = [];
 			$data['receivables_id'] = $receivables_id;

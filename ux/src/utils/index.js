@@ -139,7 +139,7 @@ export function regexIsCRMEmail(email) {
 
 /**
  * 时间操作
- * @param 
+ * @param
  */
 /** 时间戳转date*/
 import moment from 'moment'
@@ -158,8 +158,8 @@ export function getDateFromTimestamp(time) {
 }
 
 /**
- * 
- * @param {*} timestamp 时间戳 
+ *
+ * @param {*} timestamp 时间戳
  * @param {*} format 格式化
  */
 export function timestampToFormatTime(timestamp, format) {
@@ -169,7 +169,7 @@ export function timestampToFormatTime(timestamp, format) {
   return ''
 }
 /**
- * 
+ *
  * @param {*} format 格式化字符串
  */
 export function formatTimeToTimestamp(format) {
@@ -194,7 +194,7 @@ export function downloadImage(data, filename) {
     const image = new Image()
     // 解决跨域 canvas 污染问题
     image.setAttribute('crossOrigin', 'anonymous')
-    image.onload = function () {
+    image.onload = function() {
       const canvas = document.createElement('canvas')
       canvas.width = image.width
       canvas.height = image.height
@@ -227,7 +227,7 @@ export function downloadImage(data, filename) {
     a.dispatchEvent(event)
   }
 }
-/** 
+/**
  * path  和 name
  */
 export function downloadFile(data) {

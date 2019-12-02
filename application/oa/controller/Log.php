@@ -10,6 +10,7 @@ namespace app\oa\controller;
 use app\admin\controller\ApiCommon;
 use think\Hook;
 use think\Request;
+use app\admin\model\Message;
 use app\admin\model\Comment as CommentModel;
 use think\Db;
 
@@ -214,6 +215,14 @@ class Log extends ApiCommon
 			$flag = $commentmodel->createData($param);
 			if ($flag) {
 				$logInfo = $logmodel->getDataById($param['log_id']);
+                (new Message())->send(
+                    Message::LOG_REPLAY,
+                    [
+                        'title' => $logInfo['title'],
+                        'action_id' => $param['log_id']
+                    ],
+                    $logInfo['create_user_id']
+                );
 				//actionLog($param['log_id'],$logInfo['send_user_ids'],$logInfo['send_structure_ids'],'评论了日志');
 				return resultArray(['data'=>$flag]);
 			} else {

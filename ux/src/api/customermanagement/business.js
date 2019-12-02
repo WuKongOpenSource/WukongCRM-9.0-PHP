@@ -97,3 +97,17 @@ export function crmBusinessProduct(data) {
     data: data
   })
 }
+
+/**
+ * 商机导出
+ * @param {*} data
+ */
+export function crmBusinessExcelExport(data) {
+  return request({
+    url: 'crm/business/excelExport',
+    method: 'post',
+    data: data,
+    responseType: 'blob',
+    timeout: 600000
+  })
+}

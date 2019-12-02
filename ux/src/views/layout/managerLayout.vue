@@ -1,17 +1,19 @@
 <template>
   <el-container>
     <el-header class="nav-container">
-      <manager-navbar></manager-navbar>
+      <manager-navbar/>
     </el-header>
     <el-container>
-      <el-aside width="auto"
-                class="aside-container">
-        <sidebar :items="routerItems"
-                 createButtonTitle=""
-                 mainRouter="manager"></sidebar>
+      <el-aside
+        width="auto"
+        class="aside-container">
+        <sidebar
+          :items="routerItems"
+          create-button-title=""
+          main-router="manager"/>
       </el-aside>
       <el-main id="manager-main-container">
-        <app-main></app-main>
+        <app-main/>
       </el-main>
     </el-container>
   </el-container>
@@ -30,15 +32,15 @@ export default {
     Sidebar,
     AppMain
   },
-  computed: {
-    ...mapGetters(['admin'])
-  },
+
   data() {
     return {
       routerItems: []
     }
   },
-
+  computed: {
+    ...mapGetters(['admin'])
+  },
   mounted() {
     this.routerItems = this.filterAsyncRouter(managerRouterMenu, {
       admin: this.admin
@@ -55,10 +57,10 @@ export default {
           return true
         } else {
           if (metaInfo.index == 0) {
-            return authInfo[metaInfo.type] ? true : false
+            return !!authInfo[metaInfo.type]
           } else if (metaInfo.index == 1) {
             if (authInfo[metaInfo.type]) {
-              return authInfo[metaInfo.type][metaInfo.subType] ? true : false
+              return !!authInfo[metaInfo.type][metaInfo.subType]
             }
             return false
           } else {
@@ -114,7 +116,7 @@ export default {
             }
           }
         })
-        .catch(err => {})
+        .catch(() => {})
     }
   }
 }

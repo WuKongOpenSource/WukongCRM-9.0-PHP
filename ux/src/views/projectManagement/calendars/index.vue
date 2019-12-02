@@ -1,47 +1,50 @@
 <template>
-  <div class="task-calendars"
-       v-loading="loading">
+  <div
+    v-loading="loading"
+    class="task-calendars">
     <div class="add-btn">
-      <el-button type="primary"
-                 @click="createTask">
+      <el-button
+        type="primary"
+        @click="createTask">
         创建任务
       </el-button>
     </div>
-    <div ref="hoverDialog"
-         class="hover-dialog"
-         :style="{'border-color': getPriorityColor(hoverDialogList.priority)}">
-      <flexbox class="title"
-               align="stretch">
-        <el-checkbox></el-checkbox>
-        <div>{{hoverDialogList.name}}</div>
+    <div
+      ref="hoverDialog"
+      :style="{'border-color': getPriorityColor(hoverDialogList.priority)}"
+      class="hover-dialog">
+      <flexbox
+        class="title"
+        align="stretch">
+        <el-checkbox/>
+        <div>{{ hoverDialogList.name }}</div>
       </flexbox>
       <div class="img-content">
-        <span>{{hoverDialogList.start_time + ' - ' + hoverDialogList.stop_time}}</span>
+        <span>{{ hoverDialogList.start_time + ' - ' + hoverDialogList.stop_time }}</span>
       </div>
     </div>
     <!-- 新建任务弹出框 newDialog-->
-    <new-dialog :visible="taskCreateShow"
-                :action="createActionInfo"
-                @handleClose="handleClose"
-                @submit="refetchCalendar">
-    </new-dialog>
+    <new-dialog
+      :visible="taskCreateShow"
+      :action="createActionInfo"
+      @handleClose="handleClose"
+      @submit="refetchCalendar"/>
     <!-- 详情 -->
-    <particulars v-if="taskDetailShow"
-                 ref="particulars"
-                 :id="taskID"
-                 :detailIndex="detailIndex"
-                 @on-handle="refetchCalendar"
-                 @close="closeBtn">
-    </particulars>
+    <particulars
+      v-if="taskDetailShow"
+      ref="particulars"
+      :id="taskID"
+      :detail-index="detailIndex"
+      @on-handle="refetchCalendar"
+      @close="closeBtn"/>
     <!-- 日历 -->
-    <div id='calendar'></div>
+    <div id="calendar"/>
   </div>
 </template>
 
 
 <script>
 import $ from 'jquery'
-import fullcalendar from 'fullcalendar'
 import 'fullcalendar/dist/locale/zh-cn.js'
 
 import newDialog from '../components/newDialog'
@@ -70,8 +73,7 @@ export default {
       loading: true,
       // 详情数据
       taskID: '',
-      detailIndex: -1,
-      taskDetailShow: false
+      detailIndex: -1
     }
   },
 
@@ -112,8 +114,8 @@ export default {
         },
 
         header: {
-          left: 'today,   agendaDay,agendaWeek,month', //上一页、下一页、今天
-          center: 'prevYear,prev, title, next,nextYear', //居中：时间范围区间标题
+          left: 'today,   agendaDay,agendaWeek,month', // 上一页、下一页、今天
+          center: 'prevYear,prev, title, next,nextYear', // 居中：时间范围区间标题
           right: ''
         },
 
@@ -123,7 +125,7 @@ export default {
             document.getElementsByClassName('fc-day')[0].offsetWidth - 10 + 'px'
           this.$refs.hoverDialog.style.left =
             jsEvent.currentTarget.offsetLeft + 'px'
-          let styleTop = jsEvent.clientY - jsEvent.offsetY - 60
+          const styleTop = jsEvent.clientY - jsEvent.offsetY - 60
           this.$refs.hoverDialog.style.top = styleTop + 'px'
           this.hoverDialogList = {
             start_time: timestampToFormatTime(event.start_time, 'YYYY-MM-DD') || '无',
@@ -134,7 +136,7 @@ export default {
           }
 
           this.$nextTick(() => {
-            let hoverDialogRect = this.$refs.hoverDialog.getBoundingClientRect()
+            const hoverDialogRect = this.$refs.hoverDialog.getBoundingClientRect()
             if (
               hoverDialogRect.top + hoverDialogRect.height >
               document.body.clientHeight
@@ -156,7 +158,7 @@ export default {
             stop_time: end.unix()
           })
             .then(res => {
-              let taskData = res.data.map(item => {
+              const taskData = res.data.map(item => {
                 if (item.start_time && item.stop_time) {
                   item.start = timestampToFormatTime(
                     item.start_time,
@@ -167,21 +169,21 @@ export default {
                     'YYYY-MM-DD HH:mm:ss'
                   )
                 } else if (!item.start_time && item.stop_time) {
-                  let stopTime = timestampToFormatTime(
+                  const stopTime = timestampToFormatTime(
                     item.stop_time,
                     'YYYY-MM-DD HH:mm:ss'
                   )
                   item.start = stopTime
                   item.end = stopTime
                 } else if (item.start_time && !item.stop_time) {
-                  let startTime = timestampToFormatTime(
+                  const startTime = timestampToFormatTime(
                     item.start_time,
                     'YYYY-MM-DD HH:mm:ss'
                   )
                   item.start = startTime
                   item.end = startTime
                 } else if (!item.start_time && !item.stop_time) {
-                  let updateTime = timestampToFormatTime(
+                  const updateTime = timestampToFormatTime(
                     item.update_time,
                     'YYYY-MM-DD HH:mm:ss'
                   )
@@ -196,7 +198,7 @@ export default {
               callback(taskData)
               this.loading = false
             })
-            .catch(err => {
+            .catch(() => {
               this.loading = false
             })
         }
@@ -263,7 +265,7 @@ export default {
         !this.$refs.particulars.$el.contains(e.target)
       ) {
         let hidden = true
-        let items = document.getElementsByClassName('fc-event-container')
+        const items = document.getElementsByClassName('fc-event-container')
         for (let index = 0; index < items.length; index++) {
           const element = items[index]
           if (element.contains(e.target)) {

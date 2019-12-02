@@ -2,78 +2,93 @@
   <div class="list">
     <div class="list-content">
       <flexbox class="header">
-        <div v-photo="data.create_user_info"
-             v-lazy:background-image="$options.filters.filterUserLazyImg(data.create_user_info.thumb_img)"
-             :key="data.create_user_info.thumb_img"
-             class="div-photo head-img"></div>
+        <div
+          v-photo="data.create_user_info"
+          v-lazy:background-image="$options.filters.filterUserLazyImg(data.create_user_info.thumb_img)"
+          :key="data.create_user_info.thumb_img"
+          class="div-photo head-img"/>
         <div class="name-time">
-          <span class="name">{{data.create_user_info.realname}}</span>
-          <span class="time">{{data.create_time|filterTimestampToFormatTime}}</span>
+          <span class="name">{{ data.create_user_info.realname }}</span>
+          <span class="time">{{ data.create_time|filterTimestampToFormatTime }}</span>
         </div>
         <div class="rt-setting">
-          <span class="bg-color"
-                :style="{ 'background-color': getStatusColor(data.check_status) }"></span>
+          <span
+            :style="{ 'background-color': getStatusColor(data.check_status) }"
+            class="bg-color"/>
           <span class="dep">
-            <span>{{data.category_name}} - </span>
-            <span>{{getStatusName(data.check_status)}}</span>
+            <span>{{ data.category_name }} - </span>
+            <span>{{ getStatusName(data.check_status) }}</span>
           </span>
           <!-- 编辑 -->
-          <el-dropdown v-if="data.permission && (data.permission.is_recheck || data.permission.is_update || data.permission.is_delete)"
-                       @command="handleCommand"
-                       trigger="click">
-            <i style="color:#CDCDCD; cursor: pointer;"
-               class="el-icon-arrow-down el-icon-more"></i>
+          <el-dropdown
+            v-if="data.permission && (data.permission.is_recheck || data.permission.is_update || data.permission.is_delete)"
+            trigger="click"
+            @command="handleCommand">
+            <i
+              style="color:#CDCDCD; cursor: pointer;"
+              class="el-icon-arrow-down el-icon-more"/>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item v-if="data.permission && data.permission.is_recheck"
-                                command="withdraw">撤回</el-dropdown-item>
-              <el-dropdown-item v-if="data.permission && data.permission.is_update"
-                                command="edit">编辑</el-dropdown-item>
-              <el-dropdown-item v-if="data.permission && data.permission.is_delete"
-                                command="delete">删除</el-dropdown-item>
+              <el-dropdown-item
+                v-if="data.permission && data.permission.is_recheck"
+                command="withdraw">撤回</el-dropdown-item>
+              <el-dropdown-item
+                v-if="data.permission && data.permission.is_update"
+                command="edit">编辑</el-dropdown-item>
+              <el-dropdown-item
+                v-if="data.permission && data.permission.is_delete"
+                command="delete">删除</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </div>
       </flexbox>
-      <div class="row"
-           @click="checkDetail(data)">
-        <p v-if="data.content"
-           class="text">{{data.content}}</p>
-        <p v-if="data.causeTitle"
-           class="title">{{data.causeTitle}}</p>
+      <div
+        class="row"
+        @click="checkDetail(data)">
+        <p
+          v-if="data.content"
+          class="text">{{ data.content }}</p>
+        <p
+          v-if="data.causeTitle"
+          class="title">{{ data.causeTitle }}</p>
       </div>
-      <div class="accessory"
-           v-if="data.fileList.length > 0 || data.imgList.length > 0">
+      <div
+        v-if="data.fileList.length > 0 || data.imgList.length > 0"
+        class="accessory">
         <!-- 图片 -->
         <div class="upload-img-box">
-          <div v-for="(imgItem, k) in data.imgList"
-               :key="k"
-               class="img-list"
-               @click="imgZoom(data.imgList, k)">
+          <div
+            v-for="(imgItem, k) in data.imgList"
+            :key="k"
+            class="img-list"
+            @click="imgZoom(data.imgList, k)">
             <img v-lazy="imgItem.file_path_thumb">
           </div>
         </div>
         <!-- 附件 -->
         <div class="accessory-box">
-          <file-cell v-for="(file, fileIndex) in data.fileList"
-                     :key="fileIndex"
-                     :data="file"
-                     :cellIndex="fileIndex"></file-cell>
+          <file-cell
+            v-for="(file, fileIndex) in data.fileList"
+            :key="fileIndex"
+            :data="file"
+            :cell-index="fileIndex"/>
         </div>
       </div>
       <!-- 关联业务 -->
-      <div class="related-business"
-           v-if="relatedListData.contacts.length > 0 || relatedListData.customer.length > 0 || relatedListData.business.length > 0 || relatedListData.contract.length > 0">
+      <div
+        v-if="relatedListData.contacts.length > 0 || relatedListData.customer.length > 0 || relatedListData.business.length > 0 || relatedListData.contract.length > 0"
+        class="related-business">
         <div class="label">关联业务</div>
-        <div v-for="(items, key) in relatedListData"
-             :key="key">
-          <related-business-cell v-for="(item, itemIndex) in items"
-                                 :data="item"
-                                 :cellIndex="itemIndex"
-                                 :type="key"
-                                 :key="itemIndex"
-                                 :showFoot="false"
-                                 @click.native="checkRelatedDetail(key, item)">
-          </related-business-cell>
+        <div
+          v-for="(items, key) in relatedListData"
+          :key="key">
+          <related-business-cell
+            v-for="(item, itemIndex) in items"
+            :data="item"
+            :cell-index="itemIndex"
+            :type="key"
+            :key="itemIndex"
+            :show-foot="false"
+            @click.native="checkRelatedDetail(key, item)"/>
         </div>
       </div>
     </div>
@@ -84,12 +99,18 @@ import RelatedBusinessCell from '@/views/OAManagement/components/relatedBusiness
 import FileCell from '@/views/OAManagement/components/fileCell'
 
 export default {
-  name: 'examine-cell', // 审批cell
+  name: 'ExamineCell', // 审批cell
   components: {
     RelatedBusinessCell,
     FileCell
   },
   mixins: [],
+  props: {
+    data: Object
+  },
+  data() {
+    return {}
+  },
   computed: {
     relatedListData() {
       return {
@@ -101,12 +122,6 @@ export default {
     }
   },
   watch: {},
-  data() {
-    return {}
-  },
-  props: {
-    data: Object
-  },
   mounted() {},
   methods: {
     // 获取状态名称
@@ -152,11 +167,11 @@ export default {
     },
     // 编辑 删除 撤回
     handleCommand(command) {
-      this.$emit('on-handle', { type: command, data: { item: this.data } })
+      this.$emit('on-handle', { type: command, data: { item: this.data }})
     },
     // 查看详情
     checkDetail(data) {
-      this.$emit('on-handle', { type: 'view', data: { item: this.data } })
+      this.$emit('on-handle', { type: 'view', data: { item: this.data }})
     },
     // 关联详情
     checkRelatedDetail(type, data) {

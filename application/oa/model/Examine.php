@@ -8,6 +8,7 @@ namespace app\oa\model;
 
 use think\Db;
 use app\admin\model\Common;
+use app\admin\model\Message;
 use think\Request;
 use think\Validate;
 use app\admin\model\Field;
@@ -235,12 +236,16 @@ class Examine extends Common
 			        return false;
 	            }
 				//站内信
-	            $createUserInfo = $userModel->getDataById($param['create_user_id']);
 	            $send_user_id = stringToArray($param['check_user_id']);
-	            $sendContent = $createUserInfo['realname'].'提交的《'.$categoryInfo['title'].'》,需要您审批';
-	            if ($send_user_id) {
-	            	sendMessage($send_user_id, $sendContent, $this->examine_id, 1);
-	            }            
+				(new Message())->send(
+					Message::EXAMINE_TO_DO,
+					[
+						'title' => $categoryInfo['title'],
+						'action_id' => $this->examine_id
+					],
+					$send_user_id
+				);
+
 
 				$data = [];
 				$data['examine_id'] = $this->examine_id;
@@ -266,6 +271,7 @@ class Examine extends Common
 		$examine_id = intval($examine_id);
 		$userModel = new \app\admin\model\User();
 		$examineCategoryModel = new \app\oa\model\ExamineCategory();
+		$examineDataModel = new \app\oa\model\ExamineData();
 		unset($param['id']);
 		$dataInfo = db('oa_examine')->where(['examine_id' => $examine_id])->find();
 		if (!$dataInfo) {
@@ -278,7 +284,7 @@ class Examine extends Common
 			unset($param[$v]);
 		}
 		$categoryInfo = $examineCategoryModel->getDataById($dataInfo['category_id']);
-		
+
 		//验证
 		$fieldModel = new \app\admin\model\Field();
 		$validateArr = $fieldModel->validateField($this->name, $dataInfo['category_id']); //获取自定义字段验证规则
@@ -293,31 +299,39 @@ class Examine extends Common
 		unset($param['file_id']);
 
 		if ($this->allowField(true)->save($param, ['examine_id' => $examine_id])) {
-			//处理附件关系
-	        if ($fileArr) {
-	            $fileModel = new \app\admin\model\File();
-	            $resData = $fileModel->createDataById($fileArr, 'oa_examine', $examine_id);
-				if ($resData == false) {
-		        	$this->error = '附件上传失败';
-		        	return false;
-		        }
-	        }			
+			//处理自定义字段数据
+			$resData = $examineDataModel->createData($param, $examine_id);
+			if ($resData) {			
+				//处理附件关系
+		        if ($fileArr) {
+		            $fileModel = new \app\admin\model\File();
+		            $resData = $fileModel->createDataById($fileArr, 'oa_examine', $examine_id);
+					if ($resData == false) {
+			        	$this->error = '附件上传失败';
+			        	return false;
+			        }
+		        }			
 
 			//站内信
-            $createUserInfo = $userModel->getDataById($param['user_id']);
             $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交了《'.$categoryInfo['title'].'》,需要您审批';
             if ($send_user_id) {
-            	sendMessage($send_user_id, $sendContent, $examine_id, 1);
+				(new Message())->send(
+					Message::EXAMINE_TO_DO,
+					[
+						'title' => $categoryInfo['title'],
+						'action_id' => $examine_id
+					],
+					$send_user_id
+				);
             }
 
-			//相关业务
-	        $rdata = [];
-			$rdata['customer_ids'] = $param['customer_ids'] ? arrayToString($param['customer_ids']) : [];
-			$rdata['contacts_ids'] = $param['contacts_ids'] ? arrayToString($param['contacts_ids']) : [];
-			$rdata['business_ids'] = $param['business_ids'] ? arrayToString($param['business_ids']) : [];
-			$rdata['contract_ids'] = $param['contract_ids'] ? arrayToString($param['contract_ids']) : [];		
-			Db::name('OaExamineRelation')->where('examine_id = '.$examine_id)->update($rdata);  
+				//相关业务
+		        $rdata = [];
+				$rdata['customer_ids'] = $param['customer_ids'] ? arrayToString($param['customer_ids']) : [];
+				$rdata['contacts_ids'] = $param['contacts_ids'] ? arrayToString($param['contacts_ids']) : [];
+				$rdata['business_ids'] = $param['business_ids'] ? arrayToString($param['business_ids']) : [];
+				$rdata['contract_ids'] = $param['contract_ids'] ? arrayToString($param['contract_ids']) : [];		
+				Db::name('OaExamineRelation')->where('examine_id = '.$examine_id)->update($rdata);  
 
 			//处理差旅相关
             $resTravel = true;
@@ -328,17 +342,26 @@ class Examine extends Common
                 $this->error = '相关事项保存失败，请重试';
 		        return false;
             }
-			//站内信
-            $createUserInfo = $userModel->getDataById($dataInfo['create_user_id']);
+			// 站内信
             $send_user_id = stringToArray($param['check_user_id']);
-            $sendContent = $createUserInfo['realname'].'提交的《'.$categoryInfo['title'].'》,需要您审批';
             if ($send_user_id) {
-            	sendMessage($send_user_id, $sendContent, $examine_id, 1);
-            }             		       		
+				(new Message())->send(
+					Message::EXAMINE_TO_DO,
+					[
+						'title' => $categoryInfo['title'],
+						'action_id' => $examine_id
+					],
+					$send_user_id
+				);
+            }	       		
 
-			$data = [];
-			$data['examine_id'] = $examine_id;
-			return $data;
+				$data = [];
+				$data['examine_id'] = $examine_id;
+				return $data;
+			} else {
+				$this->error = $examineDataModel->getError();
+				return false;				
+			}
 		} else {
 			$this->error = '编辑失败';
 			return false;

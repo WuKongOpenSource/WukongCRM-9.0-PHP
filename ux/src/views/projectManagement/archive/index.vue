@@ -3,20 +3,25 @@
     <div class="header">
       归档项目统计
     </div>
-    <div v-loading="loading"
-         class="content-body">
-      <div v-empty="list.length == 0 && loading == false"
-           class="content-body-items">
-        <flexbox v-for="(item, index) of list"
-                 :key="index"
-                 class="archive-item">
-          <i :style="{'color':item.color}"
-             class="wukong wukong-subproject"></i>
-          <div class="title">{{item.name}}</div>
+    <div
+      v-loading="loading"
+      class="content-body">
+      <div
+        v-empty="list.length == 0 && loading == false"
+        class="content-body-items">
+        <flexbox
+          v-for="(item, index) of list"
+          :key="index"
+          class="archive-item">
+          <i
+            :style="{'color':item.color}"
+            class="wukong wukong-subproject"/>
+          <div class="title">{{ item.name }}</div>
           <div class="time-btn">
-            <span>{{item.archive_time | filterTimestampToFormatTime('YYYY-MM-DD')}}</span>
-            <el-button type="text"
-                       @click="recoverProject(item, index)">恢复项目</el-button>
+            <span>{{ item.archive_time | filterTimestampToFormatTime('YYYY-MM-DD') }}</span>
+            <el-button
+              type="text"
+              @click="recoverProject(item, index)">恢复项目</el-button>
           </div>
         </flexbox>
       </div>
@@ -55,7 +60,7 @@ export default {
           this.list = res.data
           this.loading = false
         })
-        .catch(err => {
+        .catch(() => {
           this.loading = false
         })
     },
@@ -80,7 +85,7 @@ export default {
               this.$bus.$emit('recover-project', val.name, val.work_id)
               this.loading = false
             })
-            .catch(err => {
+            .catch(() => {
               this.loading = false
             })
         })

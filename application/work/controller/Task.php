@@ -10,6 +10,7 @@ namespace app\work\controller;
 use think\Request;
 use think\Hook;
 use app\admin\controller\ApiCommon;
+use app\admin\model\Message;
 use think\helper\Time;
 use think\Db;
 
@@ -278,23 +279,33 @@ class Task extends ApiCommon
             $structure_ids = arrayToString($param['structure_ids']);
         }
         $owner_user_id = '';
+        $sendUserArr = [];
         if ($param['owner_userids']) {
             $owner_user_id = arrayToString($param['owner_userids']);
-            //站内信
-            $sendUserArr = [];
             foreach ($param['owner_userids'] as $k=>$v) {
                 if (!in_array($v,stringToArray($taskInfo['owner_user_id']))) {
                     $sendUserArr[] = $v;
                 } 
             }
-            $content = $userInfo['realname'].'邀请您参与《'.$taskInfo['name'].'》项目，请及时查看';
-            if ($sendUserArr) sendMessage($sendUserArr,$content,1);
+            // $content = $userInfo['realname'].'邀请您参与《'.$taskInfo['name'].'》项目，请及时查看';
+            // if ($sendUserArr) sendMessage($sendUserArr,$content,1);
             actionLog($param['task_id'],$param['owner_user_id'],$param['structure_ids'],'修改了参与人');
         }        
         $data['structure_ids'] = $structure_ids;
         $data['owner_user_id'] = $owner_user_id;
         $resUpdate = db('task')->where(['task_id' => $param['task_id']])->update($data); 
         if ($resUpdate) {
+            //站内信
+            if ($sendUserArr) {
+                (new Message())->send(
+                    Message::TASK_INVITE,
+                    [
+                        'title' => $taskInfo['name'],
+                        'action_id' => $taskInfo['task_id']
+                    ],
+                    $sendUserArr
+                );
+            }
             return resultArray(['data'=>'修改成功']);
         }
         return resultArray(['error'=>'修改失败或数据无变化']);
@@ -452,8 +463,16 @@ class Task extends ApiCommon
                 if ($taskInfo['owner_user_id']) {
                    $sendUserArr = $sendUserArr ? array_merge($sendUserArr,stringToArray($taskInfo['owner_user_id'])) : stringToArray($taskInfo['owner_user_id']); 
                 }
-                $content = $userInfo['realname'].'将任务'.'《'.$taskInfo['name'].'》标记结束';
-                if ($sendUserArr) sendMessage($sendUserArr,$content,1);                 
+                if ($sendUserArr) {
+                    (new Message())->send(
+                        Message::TASK_OVER,
+                        [
+                            'title' => $taskInfo['name'],
+                            'action_id' => $param['task_id']
+                        ],
+                        $sendUserArr
+                    );
+                }
 			}
         } else {
             $flag = Db::name('Task')->where('task_id ='.$param['task_id'])->setField('status',1);

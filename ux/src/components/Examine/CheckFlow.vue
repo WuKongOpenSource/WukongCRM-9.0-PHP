@@ -1,37 +1,42 @@
 <template>
-  <div v-loading="loading"
-       v-empty="list"
-       xs-empty-icon="none"
-       xs-empty-text="暂无记录">
+  <div
+    v-loading="loading"
+    v-empty="list"
+    xs-empty-icon="none"
+    xs-empty-text="暂无记录">
     <flexbox class="flow-head">
       <div class="flow-head-name">审批流程</div>
-      <img @click="close"
-           class="flow-head-close"
-           src="@/assets/img/task_close.png" />
+      <img
+        class="flow-head-close"
+        src="@/assets/img/task_close.png"
+        @click="close" >
     </flexbox>
     <div class="flow-body">
-      <flexbox v-for="(item, index) in list"
-               :key="index"
-               class="cf-flow-item"
-               align="stretch"
-               justify="flex-start">
-        <img class="cf-flow-item-img"
-             :src="item.status|statusIcon" />
+      <flexbox
+        v-for="(item, index) in list"
+        :key="index"
+        class="cf-flow-item"
+        align="stretch"
+        justify="flex-start">
+        <img
+          :src="item.status|statusIcon"
+          class="cf-flow-item-img" >
         <div>
           <flexbox class="cf-flow-item-head">
-            <div class="cf-flow-item-des">{{item.order_id|stepName}}</div>
-            <div>{{item.check_time|filterTimestampToFormatTime}}</div>
+            <div class="cf-flow-item-des">{{ item.order_id|stepName }}</div>
+            <div>{{ item.check_time|filterTimestampToFormatTime }}</div>
           </flexbox>
           <flexbox class="cf-flow-item-info">
-            <div class="cf-flow-item-name">{{item.check_user_id_info.realname}}</div>
-            <div><span>{{getStatusName(item.status)}}</span>了此申请</div>
+            <div class="cf-flow-item-name">{{ item.check_user_id_info.realname }}</div>
+            <div><span>{{ getStatusName(item.status) }}</span>了此申请</div>
           </flexbox>
-          <div v-if="item.content"
-               class="cf-flow-item-content">{{item.content}}
-            <div class="cf-flow-item-content-arrow"></div>
+          <div
+            v-if="item.content"
+            class="cf-flow-item-content">{{ item.content }}
+            <div class="cf-flow-item-content-arrow"/>
           </div>
         </div>
-        <div class="cf-flow-item-line"></div>
+        <div class="cf-flow-item-line"/>
       </flexbox>
     </div>
   </div>
@@ -43,7 +48,7 @@ import Nzhcn from 'nzh/cn'
 
 export default {
   /** 客户管理 的 合同详情  查看审批流程*/
-  name: 'check-flow',
+  name: 'CheckFlow',
   components: {},
   filters: {
     statusIcon: function(status) {
@@ -76,12 +81,6 @@ export default {
       return '第' + Nzhcn.encodeS(index) + '级'
     }
   },
-  watch: {
-    id: function(val) {
-      this.list = []
-      this.getDetail()
-    }
-  },
   props: {
     examineType: {
       type: String,
@@ -97,6 +96,12 @@ export default {
     }
   },
   computed: {},
+  watch: {
+    id: function(val) {
+      this.list = []
+      this.getDetail()
+    }
+  },
   mounted() {
     this.getDetail()
   },

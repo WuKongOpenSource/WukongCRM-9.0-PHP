@@ -1,53 +1,53 @@
 <template>
   <div class="task-calendars">
     <div class="add-btn">
-      <el-button type="primary"
-                 @click="newTask">
+      <el-button
+        type="primary"
+        @click="newTask">
         创建日程
       </el-button>
     </div>
-    <div ref="hoverDialog"
-         class="hover-dialog">
+    <div
+      ref="hoverDialog"
+      class="hover-dialog">
       <div class="img-content">
-        <span>{{hoverDialogList.start_time | filterTimestampToFormatTime("YYYY-MM-DD")}}</span>
-        <span v-if="hoverDialogList.end_time"> - {{hoverDialogList.end_time | filterTimestampToFormatTime("YYYY-MM-DD")}}</span>
+        <span>{{ hoverDialogList.start_time | filterTimestampToFormatTime("YYYY-MM-DD") }}</span>
+        <span v-if="hoverDialogList.end_time"> - {{ hoverDialogList.end_time | filterTimestampToFormatTime("YYYY-MM-DD") }}</span>
       </div>
       <div>
-        {{hoverDialogList.text}}
+        {{ hoverDialogList.text }}
       </div>
     </div>
     <!-- 日历 -->
-    <div id='calendar'
-         v-loading="loading"></div>
+    <div
+      v-loading="loading"
+      id="calendar"/>
     <!-- 新建日程 -->
-    <create-schedule v-if="showDialog"
-                     :text="newText"
-                     :formData="formData"
-                     @onSubmit="onSubmit"
-                     @closeDialog="closeDialog">
-    </create-schedule>
+    <create-schedule
+      v-if="showDialog"
+      :text="newText"
+      :form-data="formData"
+      @onSubmit="onSubmit"
+      @closeDialog="closeDialog"/>
     <!-- 详情 -->
-    <v-details v-if="dialogVisible"
-               :dialogVisible="dialogVisible"
-               :listData="listData"
-               @editBtn="editBtn"
-               @deleteClose="deleteClose"
-               @handleClose="handleClose">
-    </v-details>
+    <v-details
+      v-if="dialogVisible"
+      :dialog-visible="dialogVisible"
+      :list-data="listData"
+      @editBtn="editBtn"
+      @deleteClose="deleteClose"
+      @handleClose="handleClose"/>
   </div>
 </template>
 
 <script>
 import $ from 'jquery'
-import fullcalendar from 'fullcalendar'
 import 'fullcalendar/dist/locale/zh-cn.js'
 import createSchedule from './components/createSchedule'
 import VDetails from './components/details'
 // API
 import {
-  scheduleList,
-  scheduleAdd,
-  scheduleEdit
+  scheduleList
 } from '@/api/oamanagement/schedule'
 
 import { timestampToFormatTime, getDateFromTimestamp } from '@/utils'
@@ -130,7 +130,7 @@ export default {
             end_time: end.unix()
           })
             .then(res => {
-              let list = res.data.map(item => {
+              const list = res.data.map(item => {
                 item.start = timestampToFormatTime(
                   item.start_time,
                   'YYYY-MM-DD HH:mm:ss'
@@ -145,7 +145,7 @@ export default {
               callback(list)
               this.loading = false
             })
-            .catch(err => {
+            .catch(() => {
               this.loading = false
             })
         }

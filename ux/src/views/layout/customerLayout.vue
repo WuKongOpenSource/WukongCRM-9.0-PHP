@@ -1,38 +1,45 @@
 <template>
   <el-container>
     <el-header class="nav-container">
-      <navbar :navIndex="1"
-              @nav-items-click="navClick"></navbar>
+      <navbar
+        :nav-index="1"
+        @nav-items-click="navClick"/>
     </el-header>
     <el-container>
-      <el-aside width="auto"
-                class="aside-container">
-        <sidebar :items="crmRouters.children"
-                 :addOffset="quickAddOffset"
-                 createButtonTitle="快速创建"
-                 mainRouter="crm">
-          <div slot="add"
-               class="quick-add">
+      <el-aside
+        width="auto"
+        class="aside-container">
+        <sidebar
+          :items="crmRouters.children"
+          :add-offset="quickAddOffset"
+          create-button-title="快速创建"
+          main-router="crm">
+          <div
+            slot="add"
+            class="quick-add">
             <div class="quick-add-content">
-              <p v-for="(item, index) in quickAddList"
-                 :key="index"
-                 @click="addSkip(item)">
-                <i class="wukong"
-                   :class="'wukong-' + item.icon"></i>
-                <span>{{item.label}}</span>
+              <p
+                v-for="(item, index) in quickAddList"
+                :key="index"
+                @click="addSkip(item)">
+                <i
+                  :class="'wukong-' + item.icon"
+                  class="wukong"/>
+                <span>{{ item.label }}</span>
               </p>
             </div>
           </div>
         </sidebar>
       </el-aside>
       <el-main id="crm-main-container">
-        <app-main></app-main>
+        <app-main/>
       </el-main>
     </el-container>
-    <c-r-m-create-view v-if="isCreate"
-                       :crm-type="createCRMType"
-                       @save-success="createSaveSuccess"
-                       @hiden-view="isCreate=false"></c-r-m-create-view>
+    <c-r-m-create-view
+      v-if="isCreate"
+      :crm-type="createCRMType"
+      @save-success="createSaveSuccess"
+      @hiden-view="isCreate=false"/>
   </el-container>
 </template>
 
@@ -48,6 +55,13 @@ export default {
     Sidebar,
     AppMain,
     CRMCreateView
+  },
+
+  data() {
+    return {
+      isCreate: false,
+      createCRMType: ''
+    }
   },
   computed: {
     ...mapGetters(['crm', 'crmRouters']),
@@ -110,13 +124,6 @@ export default {
       return Math.round(this.quickAddList.length / 2) * 25
     }
   },
-  data() {
-    return {
-      isCreate: false,
-      createCRMType: ''
-    }
-  },
-
   created() {
     this.getcrmMessagNum()
     this.getcrmSettingConfig()

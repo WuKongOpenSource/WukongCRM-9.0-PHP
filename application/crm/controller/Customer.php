@@ -49,21 +49,6 @@ class Customer extends ApiCommon
     {
         $customerModel = model('Customer');
         $param = $this->param;
-        $nearby = $param['nearby'];    //是否为查询附近客户  0 / 1
-        $lng_lat = $param['lng_lat'];  //经纬度
-        $radius = $param['radius'];    //范围 米
-        $lng_lat = explode(',', $lng_lat);
-        $lng = $mapInfo['center_lng'] = $lng_lat[0];
-        $lat = $mapInfo['center_lat'] = $lng_lat[1];
-        $raidus = $mapInfo['raidus'] = intval($raidus);
-        if ($lng && $lat) {
-            $ret = get_around($lng,$lat,$raidus);
-            if (!$ret) {
-                return resultArray(['error' => '地图范围定义失败']);
-            }
-            $param['lng'] = ['between', [$ret['min_lng'],$ret['max_lng']]];
-            $param['lat'] = ['between', [$ret['min_lat'],$ret['max_lat']]];   
-        }
         $userInfo = $this->userInfo;
         $param['user_id'] = $userInfo['id']; 
         $data = $customerModel->getDataList($param);
@@ -149,19 +134,7 @@ class Customer extends ApiCommon
         $data = $customerModel->getDataById($param['id']);
         if (!$data) {
             return resultArray(['error' => $customerModel->getError()]);
-        }
-        // //数据权限判断
-        // $userModel = new \app\admin\model\User();
-        // $auth_user_ids = $userModel->getUserByPer('crm', 'customer', 'update');
-        // //读写权限
-        // $rwPre = $userModel->rwPre($userInfo['id'], $data['ro_user_id'], $data['rw_user_id'], 'update');     
-        // //判断是否客户池数据
-        // $wherePool = $customerModel->getWhereByPool();
-        // $resPool = db('crm_customer')->alias('customer')->where(['customer_id' => $param['id']])->where($wherePool)->find();
-        // if (!$resPool && !in_array($data['owner_user_id'],$auth_user_ids) && !$rwPre) {
-        //     header('Content-Type:application/json; charset=utf-8');
-        //     exit(json_encode(['code'=>102,'error'=>'无权操作']));
-        // }        
+        }      
 
         $param['user_id'] = $userInfo['id'];
         if ($customerModel->updateDataById($param, $param['id'])) {
@@ -172,7 +145,7 @@ class Customer extends ApiCommon
     }
 
     /**
-     * 删除客户（逻辑删）
+     * 删除客户
      * @author Michael_xu
      * @param 
      * @return
@@ -378,7 +351,7 @@ class Customer extends ApiCommon
     } 
 
     /**
-     * 客户放入公海(负责人至为0)
+     * 客户放入公海(负责人置为0)
      * @author Michael_xu
      * @param 
      * @return

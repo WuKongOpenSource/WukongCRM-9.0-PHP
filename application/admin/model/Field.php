@@ -33,7 +33,36 @@ class Field extends Model
  
 	protected $type = [
         'form_value'    =>  'array',
-    ]; 	
+	]; 	
+	
+
+	/**
+	 * 列表展示额外关联字段
+	 */
+	public $orther_field_list = [
+		'crm_contract' => [
+			[
+		        "field" => "done_money",
+		        "name" => "已回款",
+		        "form_type" => "text",
+		        "width" => ""
+			],
+			[
+		        "field" => "un_money",
+		        "name" => "未回款",
+		        "form_type" => "text",
+		        "width" => ""
+		    ]
+		],
+		'crm_receivables' => [
+			[
+		        "field" => "contract_money",
+		        "name" => "合同金额",
+		        "form_type" => "text",
+		        "width" => ""
+		    ]
+		]
+	];
 
 	protected  function initialize()
     {
@@ -482,6 +511,8 @@ class Field extends Model
 		if ($types == 'oa_examine' && !$types_id) {
 			$this->error = '参数错误';
 			return false;			
+		} elseif ($types == 'admin_user') {
+			return User::$import_field_list;
 		}
 
 		if (in_array($param['action'],array('index','view'))) {
@@ -498,8 +529,7 @@ class Field extends Model
 		}
 		if ($param['action'] == 'excel') {
 			$map['form_type'] = array('not in',['file','form','user','structure']);
-		}
-		if ($param['action'] == 'index') {
+		} elseif ($param['action'] == 'index') {
 			$map['form_type'] = array('not in',['file','form']);
 		}				
 
@@ -844,20 +874,7 @@ class Field extends Model
 		$userFieldData = $userFieldModel->getConfig($types, $user_id);
 		$userFieldData = $userFieldData ? json_decode($userFieldData, true) : [];
 
-		$newTypes = $types;
-		$unField = [];
-		if ($types == 'crm_customer_pool') {
-			$newTypes = 'crm_customer';
-			$unField = ['owner_user_id'];
-		}
-		//所有字段
-        $fieldList = db('admin_field')->where(['types' => ['in',['',$newTypes]],'form_type' => ['not in',['file','form']],'field' => ['not in',$unField]])->field('field,name,form_type')->order('order_id asc,field_id asc')->select();
-        $field_list = [];
-        foreach ($fieldList as $k=>$v) {
-        	$field_list[$v['field']]['name'] = $v['name'];
-        	$field_list[$v['field']]['form_type'] = $v['form_type'];
-        	$fieldList[$k]['width'] = '';
-        }
+		$fieldList = $this->getFieldList($types);
 		
 		$where = [];
 		if ($userFieldData) {
@@ -866,9 +883,9 @@ class Field extends Model
 			foreach ($userFieldData as $k=>$v) {
 				if (empty($v['is_hide'])) {
 					$fieldArr[$i]['field'] = $k;
-					$fieldArr[$i]['name'] = $field_list[$k]['name'];
-					$fieldArr[$i]['form_type'] = $field_list[$k]['form_type'];
-					$fieldArr[$i]['width'] = $v['width'];
+					$fieldArr[$i]['name'] = $fieldList[$k]['name'];
+					$fieldArr[$i]['form_type'] = $fieldList[$k]['form_type'];
+					$fieldArr[$i]['width'] = $v['width'] ?: '';
 					$i++;
 				}
 			}
@@ -876,7 +893,48 @@ class Field extends Model
 		} else {
 			$dataList = $fieldList;			
 		}
-		return $dataList ? : [];
+
+		return array_values($dataList) ? : [];
+	}
+
+	/**
+	 * 获取列表展示字段
+	 *
+	 * @return void
+	 * @author Ymob
+	 * @datetime 2019-10-23 17:32:57
+	 */
+	public function getFieldList($types)
+	{
+		$newTypes = $types;
+		$unField = ['-1'];
+		if ($types == 'crm_customer_pool') {
+			$newTypes = 'crm_customer';
+			$unField = ['owner_user_id'];
+		}
+		
+		$fieldArr = $this
+			->where([
+				'types' => ['IN', ['', $newTypes]],
+				'form_type' => ['not in', ['file', 'form']],
+				'field' => ['not in', $unField],
+			])
+			->field(['field', 'name', 'form_type'])
+			->order('order_id asc')
+			->select();
+
+		$res = [];
+		foreach ($fieldArr as $val) {
+			$res[] = $val->toArray();
+		}
+
+		if (isset($this->orther_field_list[$newTypes])) {
+			foreach ($this->orther_field_list[$newTypes] as $val) {
+				$res[] = $val;
+			}
+		}
+		
+		return array_column($res, null, 'field');
 	}
 
 	/**
@@ -952,6 +1010,16 @@ class Field extends Model
 			$listArr = $sysField ? array_unique(array_merge($newList,$sysField)) : $dataList;		
 		} else {
 			$listArr = $dataList;
+		}
+		
+		$type = array_pop(explode('_', $types));
+
+		if (isset($this->orther_field_list[$types])) {
+			foreach ($this->orther_field_list[$types] as $val) {
+				if (in_array($type . '.' . $val['field'], $listArr)) {
+					unset($listArr[array_search($type . '.' . $val['field'], $listArr)]);
+				}
+			} 
 		}
 		return $listArr ? : [];
 	}	
@@ -1165,7 +1233,8 @@ class Field extends Model
     	// if (!$form_type) {
     	// 	$this->error = '参数错误';
     	// 	return false;
-    	// }
+		// }
+		$temp_field = $field;
     	$field = $prefix ? $prefix.'.'.$field : $field;
     	switch ($form_type) {
     		case 'textarea' : 
@@ -1177,7 +1246,17 @@ class Field extends Model
     			break;
     		default : $order = $field.' '.$order_type;
     			break;
-    	}
+		}
+		if (isset($this->orther_field_list[$types])) {
+			foreach ($this->orther_field_list[$types] as $val) {
+				// $res[] = $val;
+				// $order
+				$temp = trim($prefix.'.'.$val['field'], '.');
+				if ($temp == $field) {
+					$order = str_replace($temp, $val['field'], $order);
+				}
+			}
+		}
     	return $order;
     }   	
 }

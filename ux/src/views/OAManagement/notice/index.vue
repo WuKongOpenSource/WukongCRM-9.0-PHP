@@ -1,75 +1,88 @@
 <template>
-  <div class="notice oa-bgcolor"
-       v-loading="loading">
-    <el-button type="primary"
-               class="new-btn"
-               v-if="permissionSave"
-               @click="newBtn">新建公告</el-button>
+  <div
+    v-loading="loading"
+    class="notice oa-bgcolor">
+    <el-button
+      v-if="permissionSave"
+      type="primary"
+      class="new-btn"
+      @click="newBtn">新建公告</el-button>
     <el-tabs v-model="activeName">
-      <el-tab-pane label="公告"
-                   name="first">
+      <el-tab-pane
+        label="公告"
+        name="first">
         <div class="text-top">
           <label class="text">公告状态</label>
-          <el-select v-model="optionsValue"
-                     @change="selectChange"
-                     placeholder="请选择"
-                     size="small">
-            <el-option v-for="item in options"
-                       :key="item.value"
-                       :label="item.label"
-                       :value="item.value">
-            </el-option>
+          <el-select
+            v-model="optionsValue"
+            placeholder="请选择"
+            size="small"
+            @change="selectChange">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"/>
           </el-select>
         </div>
         <div class="content">
           <div class="list-box">
-            <div class="list"
-                 v-for="(item, index) in listData"
-                 :key="index">
+            <div
+              v-for="(item, index) in listData"
+              :key="index"
+              class="list">
               <div class="header">
-                <div v-photo="item"
-                     v-lazy:background-image="$options.filters.filterUserLazyImg(item.thumb_img)"
-                     :key="item.thumb_img"
-                     class="div-photo"></div>
+                <div
+                  v-photo="item"
+                  v-lazy:background-image="$options.filters.filterUserLazyImg(item.thumb_img)"
+                  :key="item.thumb_img"
+                  class="div-photo"/>
                 <div class="name-time">
-                  <p class="name">{{item.realname}}</p>
-                  <p class="time">{{item.create_time | moment("YYYY-MM-DD HH:mm")}}</p>
+                  <p class="name">{{ item.realname }}</p>
+                  <p class="time">{{ item.create_time | moment("YYYY-MM-DD HH:mm") }}</p>
                 </div>
               </div>
-              <div class="title"
-                   @click="rowFun(item)">{{item.title}}</div>
-              <div class="item-content"
-                   v-if="item.preShow">{{item.content}}</div>
-              <div class="item-content"
-                   v-else>{{item.contentSub}}</div>
-              <div v-if="item.contentSub.length < item.content.length"
-                   class="load-more">
-                <span v-if="!item.loadMore"
-                      @click="loadMoreBtn(item)">展开全文</span>
-                <span v-else
-                      @click="item.loadMore = false, item.preShow = false">收起全文</span>
+              <div
+                class="title"
+                @click="rowFun(item)">{{ item.title }}</div>
+              <div
+                v-if="item.preShow"
+                class="item-content">{{ item.content }}</div>
+              <div
+                v-else
+                class="item-content">{{ item.contentSub }}</div>
+              <div
+                v-if="item.contentSub.length < item.content.length"
+                class="load-more">
+                <span
+                  v-if="!item.loadMore"
+                  @click="loadMoreBtn(item)">展开全文</span>
+                <span
+                  v-else
+                  @click="item.loadMore = false, item.preShow = false">收起全文</span>
               </div>
             </div>
             <p class="load">
-              <el-button type="text"
-                         :loading="loadMoreLoading">{{loadText}}</el-button>
+              <el-button
+                :loading="loadMoreLoading"
+                type="text">{{ loadText }}</el-button>
             </p>
           </div>
         </div>
       </el-tab-pane>
     </el-tabs>
     <!-- 详情 -->
-    <v-details v-if="dialog"
-               :titleList="titleList"
-               @editSubmit="editSubmit"
-               @deleteFun="deleteFun"
-               @close="close">
-    </v-details>
+    <v-details
+      v-if="dialog"
+      :title-list="titleList"
+      @editSubmit="editSubmit"
+      @deleteFun="deleteFun"
+      @close="close"/>
     <!-- 新建 -->
-    <new-dialog v-if="showNewDialog"
-                @onSubmit="onSubmit"
-                @close="newClose">
-    </new-dialog>
+    <new-dialog
+      v-if="showNewDialog"
+      @onSubmit="onSubmit"
+      @close="newClose"/>
   </div>
 </template>
 
@@ -78,7 +91,7 @@ import VDetails from './details'
 import newDialog from './newDialog'
 import { mapGetters } from 'vuex'
 // API
-import { noticeList, noticeAdd } from '@/api/oamanagement/notice'
+import { noticeList } from '@/api/oamanagement/notice'
 
 export default {
   components: {
@@ -110,24 +123,25 @@ export default {
       isPost: true
     }
   },
-  watch: {
-    $route(to, from) {
-      this.$router.go(0)
-    }
-  },
+
   computed: {
     ...mapGetters(['oa']),
     permissionSave() {
       return this.oa && this.oa.announcement && this.oa.announcement.save
     }
   },
+  watch: {
+    $route(to, from) {
+      this.$router.go(0)
+    }
+  },
   mounted() {
     this.noticeDataFun(1, this.pageNum)
     // 分批次加载
     document.getElementsByClassName('content')[0].onscroll = () => {
-      let dom = document.getElementsByClassName('content')[0]
-      let scrollOff = dom.scrollTop + dom.clientHeight - dom.scrollHeight
-      //滚动条到底部的条件
+      const dom = document.getElementsByClassName('content')[0]
+      const scrollOff = dom.scrollTop + dom.clientHeight - dom.scrollHeight
+      // 滚动条到底部的条件
       if (Math.abs(scrollOff) < 10 && this.loadMoreLoading == true) {
         if (!this.isPost) {
           this.isPost = true
@@ -141,14 +155,13 @@ export default {
   },
   methods: {
     noticeDataFun(type, num) {
-      let _this = this
       noticeList({
         type: type,
         page: num,
         limit: 15
       })
         .then(res => {
-          for (let item of res.data.list) {
+          for (const item of res.data.list) {
             item.contentSub = item.content.substring(0, 150)
           }
           this.listData = this.listData.concat(res.data.list)
@@ -162,7 +175,7 @@ export default {
           this.loading = false
           this.isPost = false
         })
-        .catch(err => {
+        .catch(() => {
           this.loadText = ''
           this.loading = false
           this.isPost = false
@@ -178,7 +191,7 @@ export default {
     },
     // 删除
     deleteFun() {
-      for (let i in this.listData) {
+      for (const i in this.listData) {
         if (
           this.listData[i].announcement_id == this.titleList.announcement_id
         ) {

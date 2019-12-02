@@ -8,6 +8,7 @@ namespace app\oa\model;
 
 use think\Db;
 use app\admin\model\Common;
+use app\admin\model\Message;
 use think\Request;
 use think\Validate;
 use think\helper\Time;
@@ -138,6 +139,15 @@ class Event extends Common
 				}
 				Db::name('OaEventNotice')->insert($repeatData);
 			}
+			// 站内信
+			(new Message())->send(
+				Message::EVENT_MESSAGE,
+				[
+					'title' => $param['title'],
+					'action_id' => $event_id
+				],
+				$param['owner_user_ids']
+			);
 			actionLog($event_id ,$param['owner_user_ids'],'','创建了日程'); //
 			$data = [];
 			$data['event_id'] = $event_id;
@@ -207,6 +217,16 @@ class Event extends Common
 			$data = [];
 			$data['event_id'] = $event_id;
 			Db::name('OaEventRelation')->where(['event_id' => $event_id])->update($rdata);
+			
+			// 站内信
+			(new Message())->send(
+				Message::EVENT_MESSAGE,
+				[
+					'title' => $param['title'],
+					'action_id' => $event_id
+				],
+				array_diff(stringToArray($param['owner_user_ids']), stringToArray($dataInfo['owner_user_ids']))
+			);
 			return $data;
 		} else {
 			$this->error = '编辑失败';

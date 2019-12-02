@@ -139,15 +139,7 @@ class UserField extends Model
      */
     public function getDataList($types, $user_id)
     {
-        $newTypes = $types;
-        $unField = ['-1'];
-        if ($types == 'crm_customer_pool') {
-            $newTypes = 'crm_customer';
-            $unField = array('owner_user_id');
-        }
-        $unFormType = ['file','form']; 
-        //所有字段
-        $fieldArr = db('admin_field')->where(['types' => ['in',['',$newTypes]],'form_type' => ['not in',$unFormType],'field' => ['not in',$unField]])->field('field,name')->order('types desc,order_id asc')->select();
+        $fieldArr = (new Field)->getFieldList($types);
         $fieldList = [];
         $field_list = [];
         foreach ($fieldArr as $k=>$v) {
@@ -194,7 +186,7 @@ class UserField extends Model
                 $b++;
             }    
         } else {
-            $value_list = $fieldArr;
+            $value_list = array_values($fieldArr);
             $hide_list = [];
         }
 

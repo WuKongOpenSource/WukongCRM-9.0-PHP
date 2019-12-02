@@ -1,51 +1,57 @@
 <template>
-  <slide-view v-empty="!canShowDetail"
-              xs-empty-icon="nopermission"
-              xs-empty-text="暂无权限"
-              :listenerIDs="listenerIDs"
-              :noListenerIDs="noListenerIDs"
-              :noListenerClass="noListenerClass"
-              @side-close="hideView"
-              :body-style="{padding: 0, height: '100%'}">
-    <flexbox v-if="canShowDetail"
-             v-loading="loading"
-             direction="column"
-             align="stretch"
-             class="d-container">
-      <c-r-m-detail-head crmType="customer"
-                         :isSeas="isSeasDetail"
-                         @handle="detailHeadHandle"
-                         @close="hideView"
-                         :detail="detailData"
-                         :headDetails="headDetails"
-                         :id="id">
-      </c-r-m-detail-head>
+  <slide-view
+    v-empty="!canShowDetail"
+    :listener-ids="listenerIDs"
+    :no-listener-ids="noListenerIDs"
+    :no-listener-class="noListenerClass"
+    :body-style="{padding: 0, height: '100%'}"
+    xs-empty-icon="nopermission"
+    xs-empty-text="暂无权限"
+    @side-close="hideView">
+    <flexbox
+      v-loading="loading"
+      v-if="canShowDetail"
+      direction="column"
+      align="stretch"
+      class="d-container">
+      <c-r-m-detail-head
+        :is-seas="isSeasDetail"
+        :detail="detailData"
+        :head-details="headDetails"
+        :id="id"
+        crm-type="customer"
+        @handle="detailHeadHandle"
+        @close="hideView"/>
       <div class="tabs">
-        <el-tabs v-model="tabCurrentName"
-                 @tab-click="handleClick">
-          <el-tab-pane v-for="(item, index) in tabnames"
-                       :key="index"
-                       :label="item.label"
-                       :name="item.name">
-          </el-tab-pane>
+        <el-tabs
+          v-model="tabCurrentName"
+          @tab-click="handleClick">
+          <el-tab-pane
+            v-for="(item, index) in tabnames"
+            :key="index"
+            :label="item.label"
+            :name="item.name"/>
         </el-tabs>
       </div>
-      <div class="t-loading-content"
-           id="follow-log-content">
+      <div
+        id="follow-log-content"
+        class="t-loading-content">
         <keep-alive>
-          <component v-bind:is="tabName"
-                     crmType="customer"
-                     :detail="detailData"
-                     :id="id"
-                     :isSeas="isSeasDetail"></component>
+          <component
+            :is="tabName"
+            :detail="detailData"
+            :id="id"
+            :is-seas="isSeasDetail"
+            crm-type="customer"/>
         </keep-alive>
       </div>
     </flexbox>
-    <c-r-m-create-view v-if="isCreate"
-                       crm-type="customer"
-                       :action="{type: 'update', id: this.id}"
-                       @save-success="editSaveSuccess"
-                       @hiden-view="isCreate=false"></c-r-m-create-view>
+    <c-r-m-create-view
+      v-if="isCreate"
+      :action="{type: 'update', id: id}"
+      crm-type="customer"
+      @save-success="editSaveSuccess"
+      @hiden-view="isCreate=false"/>
   </slide-view>
 </template>
 
@@ -56,22 +62,21 @@ import SlideView from '@/components/SlideView'
 import CRMDetailHead from '../components/CRMDetailHead'
 import CustomerFollow from './components/CustomerFollow' // 跟进记录
 import CRMBaseInfo from '../components/CRMBaseInfo' // 基本信息
-import RelativeContacts from '../components/RelativeContacts' //相关联系人
-import RelativeBusiness from '../components/RelativeBusiness' //相关商机
-import RelativeContract from '../components/RelativeContract' //相关合同
-import RelativeReturnMoney from '../components/RelativeReturnMoney' //相关回款
-import RelativeFiles from '../components/RelativeFiles' //相关附件
-import RelativeHandle from '../components/RelativeHandle' //相关操作
-import RelativeTeam from '../components/RelativeTeam' //相关团队
+import RelativeContacts from '../components/RelativeContacts' // 相关联系人
+import RelativeBusiness from '../components/RelativeBusiness' // 相关商机
+import RelativeContract from '../components/RelativeContract' // 相关合同
+import RelativeReturnMoney from '../components/RelativeReturnMoney' // 相关回款
+import RelativeFiles from '../components/RelativeFiles' // 相关附件
+import RelativeHandle from '../components/RelativeHandle' // 相关操作
+import RelativeTeam from '../components/RelativeTeam' // 相关团队
 
 import CRMCreateView from '../components/CRMCreateView' // 新建页面
 
-import moment from 'moment'
 import detail from '../mixins/detail'
 
 export default {
   /** 客户管理 的 客户详情 */
-  name: 'customer-detail',
+  name: 'CustomerDetail',
   components: {
     SlideView,
     CustomerFollow,
@@ -198,8 +203,8 @@ export default {
           this.headDetails[2].value = this.isSeasDetail
             ? '- -'
             : res.data.owner_user_id_info
-            ? res.data.owner_user_id_info.realname
-            : ''
+              ? res.data.owner_user_id_info.realname
+              : ''
           this.headDetails[3].value = res.data.update_time
         })
         .catch(err => {
@@ -209,11 +214,11 @@ export default {
           this.loading = false
         })
     },
-    //** 点击关闭按钮隐藏视图 */
+    //* * 点击关闭按钮隐藏视图 */
     hideView() {
       this.$emit('hide-view')
     },
-    //** tab标签点击 */
+    //* * tab标签点击 */
     handleClick(tab, event) {},
     editSaveSuccess() {
       this.$emit('handle', { type: 'save-success' })

@@ -1,30 +1,33 @@
 <template>
-  <div v-loading="loading"
-       class="main-container">
-    <filtrate-handle-view class="filtrate-bar"
-                          moduleType="business"
-                          @load="loading=true"
-                          @change="searchClick">
-    </filtrate-handle-view>
+  <div
+    v-loading="loading"
+    class="main-container">
+    <filtrate-handle-view
+      class="filtrate-bar"
+      module-type="business"
+      @load="loading=true"
+      @change="searchClick"/>
     <div class="content">
       <div class="axis-content">
-        <div id="axismain"></div>
+        <div id="axismain"/>
       </div>
       <div class="table-content">
-        <el-table :data="list"
-                  height="400"
-                  stripe
-                  border
-                  highlight-current-row>
-          <el-table-column v-for="(item, index) in fieldList"
-                           :key="index"
-                           align="center"
-                           header-align="center"
-                           show-overflow-tooltip
-                           :prop="item.field"
-                           :label="item.name">
-          </el-table-column>
+        <el-table
+          :data="list"
+          height="400"
+          stripe
+          border
+          highlight-current-row>
+          <el-table-column
+            v-for="(item, index) in fieldList"
+            :key="index"
+            :prop="item.field"
+            :label="item.name"
+            align="center"
+            header-align="center"
+            show-overflow-tooltip/>
         </el-table>
+        <el-tag type="warning" style="margin-top: 20px;">以回款金额排降序，最多展示50条客户数据</el-tag>
       </div>
     </div>
   </div>
@@ -40,7 +43,8 @@ import {
 
 export default {
   /** 赢单机会转化率趋势分析 */
-  name: 'business-win-statistics',
+  name: 'BusinessWinStatistics',
+  mixins: [base],
   data() {
     return {
       loading: false,
@@ -63,7 +67,6 @@ export default {
       ]
     }
   },
-  mixins: [base],
   computed: {},
   mounted() {
     this.initAxis()
@@ -87,10 +90,10 @@ export default {
           this.loading = false
           this.axisList = res.data || []
 
-          let endCounts = []
-          let numCounts = []
-          let proportionCounts = []
-          let xAxis = []
+          const endCounts = []
+          const numCounts = []
+          const proportionCounts = []
+          const xAxis = []
           for (let index = 0; index < this.axisList.length; index++) {
             const element = this.axisList[index]
             endCounts.push(element.business_end)
@@ -118,7 +121,7 @@ export default {
       let params = {}
 
       if (typeof dataIndex !== 'undefined') {
-        let dataItem = this.axisList[dataIndex]
+        const dataItem = this.axisList[dataIndex]
         params.user_id = this.postParams.user_id
         params.structure_id = this.postParams.structure_id
         params.start_time = dataItem.start_time

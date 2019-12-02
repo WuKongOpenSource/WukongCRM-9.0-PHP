@@ -1,55 +1,64 @@
 <template>
-  <slide-view v-empty="!canShowDetail"
-              xs-empty-icon="nopermission"
-              xs-empty-text="暂无权限"
-              :listenerIDs="listenerIDs"
-              :noListenerIDs="noListenerIDs"
-              :noListenerClass="noListenerClass"
-              @side-close="hideView"
-              :body-style="{padding: 0, height: '100%'}">
-    <flexbox v-if="canShowDetail"
-             v-loading="loading"
-             direction="column"
-             align="stretch"
-             class="d-container">
-      <c-r-m-detail-head crmType="contract"
-                         @handle="detailHeadHandle"
-                         @close="hideView"
-                         :detail="detailData"
-                         :headDetails="headDetails"
-                         :id="id">
-      </c-r-m-detail-head>
+  <slide-view
+    v-empty="!canShowDetail"
+    :listener-ids="listenerIDs"
+    :no-listener-ids="noListenerIDs"
+    :no-listener-class="noListenerClass"
+    :body-style="{padding: 0, height: '100%'}"
+    xs-empty-icon="nopermission"
+    xs-empty-text="暂无权限"
+    @side-close="hideView">
+    <flexbox
+      v-loading="loading"
+      v-if="canShowDetail"
+      direction="column"
+      align="stretch"
+      class="d-container">
+      <c-r-m-detail-head
+        :detail="detailData"
+        :head-details="headDetails"
+        :id="id"
+        crm-type="contract"
+        @handle="detailHeadHandle"
+        @close="hideView"/>
       <div class="examine-info">
-        <examine-info :id="id"
-                      class="examine-info-border"
-                      examineType="crm_contract"
-                      :flow_id="detailData.flow_id">
-        </examine-info>
+        <examine-info
+          :id="id"
+          :refresh="isRefresh"
+          :flow_id="detailData.flow_id"
+          class="examine-info-border"
+          examine-type="crm_contract"
+          @on-handle="examineCellHandle"/>
       </div>
       <div class="tabs">
-        <el-tabs v-model="tabCurrentName"
-                 @tab-click="handleClick">
-          <el-tab-pane v-for="(item, index) in tabnames"
-                       :key="index"
-                       :label="item.label"
-                       :name="item.name"></el-tab-pane>
+        <el-tabs
+          v-model="tabCurrentName"
+          @tab-click="handleClick">
+          <el-tab-pane
+            v-for="(item, index) in tabnames"
+            :key="index"
+            :label="item.label"
+            :name="item.name"/>
         </el-tabs>
       </div>
-      <div class="t-loading-content"
-           id="follow-log-content">
+      <div
+        id="follow-log-content"
+        class="t-loading-content">
         <keep-alive>
-          <component v-bind:is="tabName"
-                     crmType="contract"
-                     :detail="detailData"
-                     :id="id"></component>
+          <component
+            :is="tabName"
+            :detail="detailData"
+            :id="id"
+            crm-type="contract"/>
         </keep-alive>
       </div>
     </flexbox>
-    <c-r-m-create-view v-if="isCreate"
-                       crm-type="contract"
-                       :action="{type: 'update', id: this.id}"
-                       @save-success="editSaveSuccess"
-                       @hiden-view="isCreate=false"></c-r-m-create-view>
+    <c-r-m-create-view
+      v-if="isCreate"
+      :action="{type: 'update', id: id}"
+      crm-type="contract"
+      @save-success="editSaveSuccess"
+      @hiden-view="isCreate=false"/>
   </slide-view>
 </template>
 
@@ -60,21 +69,20 @@ import SlideView from '@/components/SlideView'
 import CRMDetailHead from '../components/CRMDetailHead'
 import ContractFollow from './components/ContractFollow' // 跟进记录
 import CRMBaseInfo from '../components/CRMBaseInfo' // 商机基本信息
-import RelativeHandle from '../components/RelativeHandle' //相关操作
-import RelativeTeam from '../components/RelativeTeam' //相关团队
-import RelativeProduct from '../components/RelativeProduct' //相关团队
-import RelativeReturnMoney from '../components/RelativeReturnMoney' //相关回款
-import RelativeFiles from '../components/RelativeFiles' //相关附件
+import RelativeHandle from '../components/RelativeHandle' // 相关操作
+import RelativeTeam from '../components/RelativeTeam' // 相关团队
+import RelativeProduct from '../components/RelativeProduct' // 相关团队
+import RelativeReturnMoney from '../components/RelativeReturnMoney' // 相关回款
+import RelativeFiles from '../components/RelativeFiles' // 相关附件
 import ExamineInfo from '@/components/Examine/ExamineInfo'
 
 import CRMCreateView from '../components/CRMCreateView' // 新建页面
 
-import moment from 'moment'
 import detail from '../mixins/detail'
 
 export default {
   /** 客户管理 的 合同详情 */
-  name: 'contract-detail',
+  name: 'ContractDetail',
   components: {
     SlideView,
     CRMDetailHead,
@@ -117,6 +125,7 @@ export default {
     return {
       loading: false, // 展示加载loading
       crmType: 'contract',
+      isRefresh: true,
       detailData: {}, // read 详情
       headDetails: [
         { title: '合同编号', value: '' },
@@ -201,14 +210,22 @@ export default {
           this.loading = false
         })
     },
-    //** 点击关闭按钮隐藏视图 */
+    //* * 点击关闭按钮隐藏视图 */
     hideView() {
       this.$emit('hide-view')
     },
-    //** tab标签点击 */
+    //* * tab标签点击 */
     handleClick(tab, event) {},
     editSaveSuccess() {
       this.$emit('handle', { type: 'save-success' })
+      this.isRefresh = !this.isRefresh
+      this.getDetial()
+    },
+    /** 审核 **/
+    examineCellHandle(data) {
+      if (!data) {
+        return
+      }
       this.getDetial()
     }
   }

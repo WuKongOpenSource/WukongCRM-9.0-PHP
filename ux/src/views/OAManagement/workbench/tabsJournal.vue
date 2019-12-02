@@ -1,14 +1,15 @@
 <template>
   <div class="content">
     <div class="list-box">
-      <journal-cell v-for="(item, index) in journalData"
-                    :key="index"
-                    class="list-cell"
-                    :logIndex="index"
-                    :data="item"
-                    :showWorkbench="true"
-                    :style="{margin: marginDefaults ? '0' : '0 20px 20px'}"></journal-cell>
-      <slot name="load"></slot>
+      <journal-cell
+        v-for="(item, index) in journalData"
+        :key="index"
+        :log-index="index"
+        :data="item"
+        :show-workbench="true"
+        :style="{margin: marginDefaults ? '0' : '0 20px 20px'}"
+        class="list-cell"/>
+      <slot name="load"/>
     </div>
   </div>
 </template>
@@ -20,10 +21,6 @@ export default {
   components: {
     JournalCell
   },
-  computed: {},
-  data() {
-    return {}
-  },
   props: {
     // 数据
     journalData: Array,
@@ -32,6 +29,10 @@ export default {
       default: false
     }
   },
+  data() {
+    return {}
+  },
+  computed: {},
   methods: {}
 }
 </script>

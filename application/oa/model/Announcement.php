@@ -8,6 +8,7 @@ namespace app\oa\model;
 
 use think\Db;
 use app\admin\model\Common;
+use app\admin\model\Message;
 use think\Request;
 use think\Validate;
 use think\helper\Time;
@@ -119,10 +120,16 @@ class Announcement extends Common
 			} else {
 				$send_user_id = getSubUserId(true, 1); 
 			}
-            $createUserInfo = $userModel->getUserById($param['create_user_id']);
-            $sendContent = $createUserInfo['realname'].'创建了公告《'.$param['title'].'》,请及时查看';
             if ($send_user_id) {
-            	sendMessage($send_user_id, $sendContent, $this->announcement_id, 1);
+				// 发送消息
+				(new Message())->send(
+					Message::NOTICE_MESSAGE,
+					[
+						'title' => $param['title'],
+						'action_id' => $this->announcement_id
+					],
+					$send_user_id
+				);
             }		
 			return $data;
 		} else {

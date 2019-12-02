@@ -10,6 +10,11 @@ namespace app\crm\controller;
 use app\admin\controller\ApiCommon;
 use think\Hook;
 use think\Request;
+use app\bi\model\Common;
+use app\crm\model\Contract as CrmContractModel;
+use app\crm\model\Receivables as ReceivablesModel;
+use app\crm\model\Customer as CustomerModel;
+use think\Db;
 
 class Index extends ApiCommon
 {
@@ -56,7 +61,9 @@ class Index extends ApiCommon
      * @return 
      */
     public function index()
-    {
+    {   
+        Db::query('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;');
+
         $param = $this->param;
         $userInfo = $this->userInfo;
         $adminModel = new \app\admin\model\Admin();
@@ -79,42 +86,47 @@ class Index extends ApiCommon
         $auth_customer_user_ids = $auth_customer_user_ids ? array_intersect($userIds, $auth_customer_user_ids) : []; //取交集   
         $where_customer = $where;
         $where_customer['owner_user_id'] = array('in',$auth_customer_user_ids);
-        $customerNum = db('crm_customer')->where($where_customer)->count('customer_id');
-
+        $sql_customer = db('crm_customer')->where($where_customer)->fetchSql()->count();
+        $customerNum = queryCache($sql_customer, 200)[0]['tp_count'];
         //权限控制
         $auth_contacts_user_ids = $userModel->getUserByPer('crm', 'contacts', 'index');
         $auth_contacts_user_ids = $auth_contacts_user_ids ? array_intersect($userIds, $auth_contacts_user_ids) : []; //取交集   
         $where_contacts = $where;
         $where_contacts['owner_user_id'] = array('in',$auth_contacts_user_ids);        
-        $contactsNum = db('crm_contacts')->where($where_contacts)->count('contacts_id');
+        $sql_contacts = db('crm_contacts')->where($where_contacts)->fetchSql()->count();
+        $contactsNum = queryCache($sql_contacts, 200)[0]['tp_count'];
 
         //权限控制
         $auth_business_user_ids = $userModel->getUserByPer('crm', 'business', 'index');
         $auth_business_user_ids = $auth_business_user_ids ? array_intersect($userIds, $auth_business_user_ids) : []; //取交集   
         $where_business = $where;
         $where_business['owner_user_id'] = array('in',$auth_business_user_ids);         
-        $businessNum = db('crm_business')->where($where_business)->count('business_id');
+        $sql_business = db('crm_business')->where($where_business)->fetchSql()->count();
+        $businessNum = queryCache($sql_business, 200)[0]['tp_count'];
 
         //权限控制
         $auth_contract_user_ids = $userModel->getUserByPer('crm', 'contract', 'index');
         $auth_contract_user_ids = $auth_contract_user_ids ? array_intersect($userIds, $auth_contract_user_ids) : []; //取交集   
         $where_contract = $where;   
         $where_contract['owner_user_id'] = array('in',$auth_contract_user_ids);      
-        $contractNum = db('crm_contract')->where($where_contract)->count('contract_id');
+        $sql_contract = db('crm_contract')->where($where_contract)->fetchSql()->count();
+        $contractNum = queryCache($sql_contract, 200)[0]['tp_count'];
 
         //权限控制
         $auth_receivables_user_ids = $userModel->getUserByPer('crm', 'receivables', 'index');
         $auth_receivables_user_ids = $auth_receivables_user_ids ? array_intersect($userIds, $auth_receivables_user_ids) : []; //取交集   
         $where_receivables = $where;   
         $where_receivables['owner_user_id'] = array('in',$auth_receivables_user_ids);        
-        $receivablesNum = db('crm_receivables')->where($where_receivables)->count('receivables_id');
+        $sql_receivables = db('crm_receivables')->where($where_receivables)->fetchSql()->count();
+        $receivablesNum = queryCache($sql_receivables, 200)[0]['tp_count'];
 
         //权限控制
         $auth_record_user_ids = $userModel->getUserByPer('crm', 'record', 'index');
         $auth_record_user_ids = $auth_record_user_ids ? array_intersect($userIds, $auth_record_user_ids) : []; //取交集   
         $where_record = $where;   
         $where_record['create_user_id'] = array('in',$auth_record_user_ids);
-        $recordNum = db('admin_record')->where($where_record)->count('record_id');
+        $sql_record = db('admin_record')->where($where_record)->fetchSql()->count();
+        $recordNum = queryCache($sql_record , 200)[0]['tp_count'];
 
         //权限控制
         $auth_status_user_ids = $userModel->getUserByPer('crm', 'business', 'index');
@@ -123,7 +135,8 @@ class Index extends ApiCommon
         $where['status_time'] = array('between',$between_time);
         $where_status = $where;   
         $where_status['owner_user_id'] = array('in',$auth_status_user_ids);        
-        $businessStatusNum = db('crm_business')->where($where_status)->count('business_id');
+        $sql_business_status = db('crm_business')->where($where_status)->fetchSql()->count();
+        $businessStatusNum = queryCache($sql_business_status , 200)[0]['tp_count'];
 
         $data = [];
         $data['customerNum'] = $customerNum;
@@ -133,6 +146,7 @@ class Index extends ApiCommon
         $data['recordNum'] = $recordNum;
         $data['receivablesNum'] = $receivablesNum;
         $data['businessStatusNum'] = $businessStatusNum;
+        Db::query('COMMIT;');
         return resultArray(['data' => $data]);      
     }
 
@@ -144,6 +158,7 @@ class Index extends ApiCommon
      */
     public function achievementData()
     {
+        Db::query('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;');
         $param = $this->param;
         $userInfo = $this->userInfo;
         $adminModel = new \app\admin\model\Admin();
@@ -153,7 +168,6 @@ class Index extends ApiCommon
         $whereArr = $adminModel->getWhere($param, 1, ''); //统计条件
         $userIds = $whereArr['userIds'];
         $where['owner_user_id'] = array('in',$userIds);       
-
         if (!empty($param['type'])) {
             $between_time = getTimeByType($param['type']);
             $start_time = $between_time[0];
@@ -167,15 +181,25 @@ class Index extends ApiCommon
         //合同金额
         $where_contract = $where;
         $where_contract['order_date'] = array('between',[date('Y-m-d',$between_time[0]),date('Y-m-d',$between_time[1])]);
-        $where_contract['check_status'] = 2; //审核通过
-        $contractMoney = db('crm_contract')->where($where_contract)->sum('money');
+        $sql = CrmContractModel::field([
+                    'SUM(CASE WHEN check_status = 2 THEN money ELSE 0 END) as money'
+                ])
+                ->where($where_contract)
+                ->fetchSql()
+                ->select();
+        $contractMoney = queryCache($sql, 200);
 
         //回款金额
         $where_receivables = $where;
         $where_receivables['return_time'] = array('between',[date('Y-m-d',$between_time[0]),date('Y-m-d',$between_time[1])]);
         $where_receivables['check_status'] = 2; //审核通过
-        $receivablesMoney = db('crm_receivables')->where($where_receivables)->sum('money');
-
+        $sql1 = db('crm_receivables')->field([
+                    'SUM(CASE WHEN check_status = 2 THEN money ELSE 0 END) as money'
+                ])
+                ->where($where_receivables)
+                ->fetchSql()
+                ->select();
+        $receivablesMoney = queryCache($sql1, 200);
         //业绩目标
         $where_achievement = [];
         $where_achievement['status'] = $status;
@@ -195,23 +219,25 @@ class Index extends ApiCommon
             foreach ($month as $key=>$val) {
                 if ($v['year'] == $key) {
                     foreach ($val as $key1=>$val1) {
-                        $achievementMoney += $v[$this->monthName[$val1]];                      
+                        $achievementMoney += $v[$this->monthName[$val1]];     
                     }
                 } 
             }
         }
         $data = [];
-        $data['contractMoney'] = $contractMoney ? : '0.00';
-        $data['receivablesMoney'] = $receivablesMoney ? : '0.00';
+        $data['contractMoney'] = $contractMoney[0]['money'] ? : '0.00';
+        $data['receivablesMoney'] = $receivablesMoney[0]['money'] ? : '0.00';
         $data['achievementMoney'] = $achievementMoney ? : '0.00';
         //完成率
         $rate = 0.00;
         if ($status == 1) {
-            $rate = $achievementMoney ? round(($contractMoney/$achievementMoney),4) : 0.00;
+            $rate = $achievementMoney ? $contractMoney[0]['money']/$achievementMoney : 0.00;
         } else {
-            $rate = $achievementMoney ? round(($receivablesMoney/$achievementMoney),4) : 0.00;
+            $rate = $achievementMoney ? $receivablesMoney[0]['money']/$achievementMoney : 0.00;
         }
-        $data['rate'] = $rate *100;
+        $data['rate'] = round($rate *100,2);
+        
+        Db::query('COMMIT;');
         return resultArray(['data' => $data]);
     }
 
@@ -238,55 +264,61 @@ class Index extends ApiCommon
      */
     public function saletrend()
     {
-        $receivablesModel = new \app\crm\model\Receivables();
         $userModel = new \app\admin\model\User();
-        $biCustomerModel = new \app\bi\model\Customer();
-        $biContractModel = new \app\bi\model\Contract();
-        $receivablesModel = new \app\bi\model\Receivables();  
         $adminModel = new \app\admin\model\Admin();       
         
+        //统计条件
         $param = $this->param;
         $userInfo = $this->userInfo;
-        $whereArr = $adminModel->getWhere($param, 1, ''); //统计条件
+        $whereArr = $adminModel->getWhere($param, 1, ''); 
         $userIds = $whereArr['userIds'];
+        //时间
+        $time = getTimeArray();
+        $between_time = [date('Y-m-d', $whereArr['between_time'][0]), date('Y-m-d', $whereArr['between_time'][1])];
+        $field_contract["SUBSTR(`order_date`, 1, 7)"] = 'type';
+        $field_contract['SUM(`money`)'] = 'sum';
+        $sql_contract = CrmContractModel::field($field_contract)
+            ->where([
+                'owner_user_id' => ['IN', $userIds],
+                'check_status' => 2,
+                'order_date' => ['BETWEEN', $between_time]
+            ])
+            ->group('type')
+            ->fetchSql()
+            ->select();
+        $res_contract = queryCache($sql_contract, 200);
+        $res_contract = array_column($res_contract, null, 'type');
 
-        if(empty($param['type']) && empty($param['start_time'])){
-            $param['type'] = 'month';
-        }
-        $company = $biCustomerModel->getParamByCompany($param);
+        $field_receivables["SUBSTR(`return_time`, 1, 7)"] = 'type';
+        $field_receivables['SUM(`money`)'] = 'sum';
+        $sql_receivables = ReceivablesModel::field($field_receivables)
+            ->where([
+                'owner_user_id' => ['IN', $userIds],
+                'check_status' => 2,
+                'return_time' => ['BETWEEN', $between_time]
+            ])
+            ->group('type')
+            ->fetchSql()
+            ->select();
+        $res_receivables = queryCache($sql_receivables, 200);
+        $res_receivables = array_column($res_receivables, null, 'type');
+
         $list = array();
         $totlaContractMoney = '0.00';
-        $totlaReceivablesMoney = '0.00';         
-        for ($i=1; $i <= $company['j']; $i++) { 
-            $whereArr = [];
+        $totlaReceivablesMoney = '0.00';
+        foreach ($time['list'] as $val) {
             $item = [];
-            $timeArr = [];
-            $where_time = [];
-            //时间段
-            $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
-            $item['type'] = $timeArr['type'];
-            if ($timeArr['start_time'] && $timeArr['end_time']) {
-                $where_time = array('between',array(date('Y-m-d',$timeArr['start_time']),date('Y-m-d',$timeArr['end_time'])));
-            }
-            $whereArr['order_date'] = $where_time;
-            if (in_array($param['type'],array('month','lastMonth','week','lastWeek'))) {
-                $whereArr['order_date'] = array('eq',date('Y-m-d',$timeArr['start_time']));
-            }
-            $whereArr['check_status'] = array('eq',2);
-            $whereArr['owner_user_id'] = array('in',$userIds);
-            $totlaContractMoney += $item['contractMoney'] = $biContractModel->getDataMoney($whereArr);
-            unset($whereArr['order_date']);
-            $whereArr['return_time'] = $where_time;
-            if (in_array($param['type'],array('month','lastMonth','week','lastWeek'))) {
-                $whereArr['return_time'] = array('eq',date('Y-m-d',$timeArr['start_time']));
-            }            
-            $totlaReceivablesMoney += $item['receivablesMoney'] = $receivablesModel->getDataMoney($whereArr);
+            $item['type'] = $val['type'];
+            $item['contractMoney'] = $res_contract[$val['type']]['sum'] ? : 0;
+            $totlaContractMoney += $item['contractMoney'];
+            $item['receivablesMoney'] = $res_receivables[$val['type']]['sum'] ? : 0;
+            $totlaReceivablesMoney += $item['receivablesMoney'];
             $list[] = $item;
         }
-        $datas['list'] = $list;
-        $datas['totlaContractMoney'] = $totlaContractMoney ? : '0.00';
-        $datas['totlaReceivablesMoney'] = $totlaReceivablesMoney ? : '0.00';
-        return resultArray(['data' => $datas]);
+        $data['list'] = $list;
+        $data['totlaContractMoney'] = $totlaContractMoney ? : '0.00';
+        $data['totlaReceivablesMoney'] = $totlaReceivablesMoney ? : '0.00';
+        return resultArray(['data' => $data]);
     }
 
     /**

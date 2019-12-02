@@ -64,7 +64,7 @@ export default {
       search: '', // 搜索内容
       /** 控制详情展示 */
       rowID: '', // 行信息
-      rowType: '', //详情类型
+      rowType: '', // 详情类型
       showDview: false,
       /** 格式化规则 */
       formatterRules: {},
@@ -86,7 +86,7 @@ export default {
   mounted() {
     var self = this
     /** 控制table的高度 */
-    window.onresize = function () {
+    window.onresize = function() {
       var offsetHei = document.documentElement.clientHeight
       var removeHeight = Object.keys(self.filterObj).length > 0 ? 310 : 240
       self.tableHeight = offsetHei - removeHeight
@@ -117,7 +117,8 @@ export default {
 
       if (this.sortData.order) {
         params.order_field = this.sortData.prop
-        params.order_type = this.sortData.order == "ascending" ? 'asc' : 'desc'
+        params.order_type = this.sortData.order == 'ascending' ? 'asc' : 'desc'
+        this.$bus.emit('getSortData', { order_field: params.order_field, order_type: params.order_type })
       }
       for (var key in this.filterObj) {
         params[key] = this.filterObj[key]
@@ -184,83 +185,76 @@ export default {
               const element = res.data[index]
               /** 获取需要格式化的字段 和格式化的规则 */
               if (element.form_type === 'date') {
-                function fieldFormatter(time) {
-                  if (time == '0000-00-00') {
-                    time = ''
-                  }
-                  return time
-                }
                 this.formatterRules[element.field] = {
-                  formatter: fieldFormatter
+                  formatter: function fieldFormatter(time) {
+                    if (time == '0000-00-00') {
+                      time = ''
+                    }
+                    return time
+                  }
                 }
               } else if (element.form_type === 'datetime') {
-                function fieldFormatter(time) {
-                  if (time == 0 || !time) {
-                    return ""
-                  }
-                  return moment(getDateFromTimestamp(time)).format(
-                    "YYYY-MM-DD HH:mm:ss"
-                  )
-                }
                 this.formatterRules[element.field] = {
-                  formatter: fieldFormatter
+                  formatter: function fieldFormatter(time) {
+                    if (time == 0 || !time) {
+                      return ''
+                    }
+                    return moment(getDateFromTimestamp(time)).format(
+                      'YYYY-MM-DD HH:mm:ss'
+                    )
+                  }
                 }
               } else if (element.field === 'create_user_id' || element.field === 'owner_user_id') {
-                function fieldFormatter(info) {
-                  return info ? info.realname : ''
-                }
                 this.formatterRules[element.field] = {
                   type: 'crm',
-                  formatter: fieldFormatter
+                  formatter: function fieldFormatter(info) {
+                    return info ? info.realname : ''
+                  }
                 }
               } else if (element.form_type === 'user') {
-                function fieldFormatter(info) {
-                  if (info) {
-                    var content = ''
-                    for (let index = 0; index < info.length; index++) {
-                      const element = info[index]
-                      content = content + element.realname + (index === (info.length - 1) ? '' : ',')
-                    }
-                    return content
-                  }
-                  return ''
-                }
                 this.formatterRules[element.field] = {
                   type: 'crm',
-                  formatter: fieldFormatter
+                  formatter: function fieldFormatter(info) {
+                    if (info) {
+                      var content = ''
+                      for (let index = 0; index < info.length; index++) {
+                        const element = info[index]
+                        content = content + element.realname + (index === (info.length - 1) ? '' : ',')
+                      }
+                      return content
+                    }
+                    return ''
+                  }
                 }
               } else if (element.form_type === 'structure') {
-                function fieldFormatter(info) {
-                  if (info) {
-                    var content = ''
-                    for (let index = 0; index < info.length; index++) {
-                      const element = info[index]
-                      content = content + element.name + (index === (info.length - 1) ? '' : ',')
-                    }
-                    return content
-                  }
-                  return ''
-                }
                 this.formatterRules[element.field] = {
                   type: 'crm',
-                  formatter: fieldFormatter
+                  formatter: function fieldFormatter(info) {
+                    if (info) {
+                      var content = ''
+                      for (let index = 0; index < info.length; index++) {
+                        const element = info[index]
+                        content = content + element.name + (index === (info.length - 1) ? '' : ',')
+                      }
+                      return content
+                    }
+                    return ''
+                  }
                 }
                 /** 联系人 客户 商机 合同*/
               } else if (element.field === 'contacts_id' || element.field === 'customer_id' || element.field === 'business_id' || element.field === 'contract_id') {
-                function fieldFormatter(info) {
-                  return info ? info.name : ''
-                }
                 this.formatterRules[element.field] = {
                   type: 'crm',
-                  formatter: fieldFormatter
+                  formatter: function fieldFormatter(info) {
+                    return info ? info.name : ''
+                  }
                 }
               } else if (element.field === 'status_id' || element.field === 'type_id' || element.field === 'category_id' || element.field === 'plan_id') {
-                function fieldFormatter(info) {
-                  return info ? info : ''
-                }
                 this.formatterRules[element.field] = {
                   type: 'crm',
-                  formatter: fieldFormatter
+                  formatter: function fieldFormatter(info) {
+                    return info || ''
+                  }
                 }
               }
 
@@ -292,7 +286,6 @@ export default {
         // 获取好字段开始请求数据
         this.getList()
       }
-
     },
     /** 格式化字段 */
     fieldFormatter(row, column) {
@@ -316,6 +309,7 @@ export default {
     /** 搜索操作 */
     crmSearch(value) {
       this.search = value
+      this.currentPage = 1
       if (this.fieldList.length) {
         this.getList()
       }
@@ -415,12 +409,13 @@ export default {
     },
     /**
      * 导出 线索 客户 联系人 产品
-     * @param {*} data 
+     * @param {*} data
      */
     // 导出操作
-    exportInfos() {
+    exportInfos(page = 1) {
       var params = {
-        search: this.search
+        search: this.search,
+        page
       }
       if (this.scene_id) {
         params.scene_id = this.scene_id
@@ -441,24 +436,40 @@ export default {
           product: crmProductExcelExport
         }[this.crmType]
       }
-      let loading = Loading.service({ fullscreen: true, text: '导出中...' })
+      var progress = ''
+      const loading = Loading.service({ fullscreen: true, text: `导出中...${progress}` })
+      console.log(loading, '==loading==')
       request(params)
         .then(res => {
-          var blob = new Blob([res.data], {
-            type: 'application/vnd.ms-excel;charset=utf-8'
-          })
-          var downloadElement = document.createElement('a')
-          var href = window.URL.createObjectURL(blob) //创建下载的链接
-          downloadElement.href = href
-          downloadElement.download =
-            decodeURI(
-              res.headers['content-disposition'].split('filename=')[1]
-            ) || '' //下载后文件名
-          document.body.appendChild(downloadElement)
-          downloadElement.click() //点击下载
-          document.body.removeChild(downloadElement) //下载完成移除元素
-          window.URL.revokeObjectURL(href) //释放掉blob对象
-          loading.close()
+          if (res.data.type.indexOf('json') !== -1) {
+            var blob = new Blob([res.data], {
+              type: 'application/json'
+            })
+            var reader = new FileReader()
+            reader.readAsText(blob, 'utf-8')
+            reader.onload = () => {
+              var temp = JSON.parse(reader.result)
+              progress = String(temp.data.done) + '/' + String(temp.data.total)
+              loading.setText('导出中...' + progress)
+              this.exportInfos(temp.data.page)
+            }
+          } else {
+            var blob = new Blob([res.data], {
+              type: 'application/vnd.ms-excel;charset=utf-8'
+            })
+            var downloadElement = document.createElement('a')
+            var href = window.URL.createObjectURL(blob) // 创建下载的链接
+            downloadElement.href = href
+            downloadElement.download =
+              decodeURI(
+                res.headers['content-disposition'].split('filename=')[1]
+              ) || '' // 下载后文件名
+            document.body.appendChild(downloadElement)
+            downloadElement.click() // 点击下载
+            document.body.removeChild(downloadElement) // 下载完成移除元素
+            window.URL.revokeObjectURL(href) // 释放掉blob对象
+            loading.close()
+          }
         })
         .catch(() => {
           loading.close()
@@ -482,7 +493,13 @@ export default {
     },
     /** 勾选操作 */
     handleHandle(data) {
-      if (data.type === 'alloc' || data.type === 'get' || data.type === 'transfer' || data.type === 'transform' || data.type === 'delete' || data.type === 'put_seas') {
+      if (data.type === 'alloc' ||
+        data.type === 'get' ||
+        data.type === 'transfer' ||
+        data.type === 'transform' ||
+        data.type === 'delete' ||
+        data.type === 'cancel' ||
+        data.type === 'put_seas') {
         this.showDview = false
       }
 
@@ -577,13 +594,22 @@ export default {
         return {
           'background-color': '#FFFFFF'
         }
+      } else if (status == 6) {
+        return {
+          'border-color': '#E9E9EB',
+          'background-color': '#F4F4F5',
+          'color': '#909399'
+        }
       }
     },
     getStatusName(status) {
-      if (status > 5) {
+      if (status > 6) {
         return ''
       }
-      return ['待审核', '审核中', '审核通过', '已拒绝', '已撤回', '未提交'][status]
+      return ['待审核', '审核中', '审核通过', '已拒绝', '已撤回', '未提交', '已作废'][status]
+    },
+    exportData(params) {
+      this.$refs.listHead.handleTypeDrop('out', params)
     }
   },
 

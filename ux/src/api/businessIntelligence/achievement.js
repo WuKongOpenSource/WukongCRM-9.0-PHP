@@ -14,7 +14,7 @@ export function biAchievementAnalysisAPI(data) {
 
 /**
  * 合同汇总表
- * @param {*} data 
+ * @param {*} data
  */
 export function biAchievementSummaryAPI(data) {
   return request({

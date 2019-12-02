@@ -69,6 +69,8 @@ class BusinessStatus extends ApiCommon
         
         $res = $businessStatusModel->createData($param);
         if ($res) {
+            $key = 'BI_queryCache_StatusList_Data';
+            cache($key, null, true);
             return resultArray(['data' => '添加成功']);
         } else {
             return resultArray(['error' => $businessStatusModel->getError()]);
@@ -106,6 +108,8 @@ class BusinessStatus extends ApiCommon
 
         $res = $businessStatusModel->updateDataById($param, $param['type_id']);
         if ($res) {
+            $key = 'BI_queryCache_StatusList_Data';
+            cache($key, null, true);
             return resultArray(['data' => '编辑成功']);
         } else {
             return resultArray(['error' => $businessStatusModel->getError()]);

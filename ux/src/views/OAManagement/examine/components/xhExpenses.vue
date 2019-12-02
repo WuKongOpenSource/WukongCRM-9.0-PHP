@@ -1,82 +1,94 @@
 <template>
   <div>
-    <div class="expense-item"
-         v-for="(item, index) in mainList"
-         :key="index">
+    <div
+      v-for="(item, index) in mainList"
+      :key="index"
+      class="expense-item">
       <flexbox class="expense-item-head">
-        <div class="expense-item-head-title">报销费用明细（{{index+1}}）</div>
-        <i @click="deleteItems(index)"
-           v-if="index != 0"
-           class="el-icon-delete expense-item-head-delete"></i>
+        <div class="expense-item-head-title">报销费用明细（{{ index+1 }}）</div>
+        <i
+          v-if="index != 0"
+          class="el-icon-delete expense-item-head-delete"
+          @click="deleteItems(index)"/>
       </flexbox>
-      <flexbox wrap="wrap"
-               align="stretch"
-               class="clauses">
-        <flexbox-item :span="1/2"
-                      v-for="(subItem, subIndex) in showItems"
-                      :key="subIndex"
-                      class="clauses-item">
+      <flexbox
+        wrap="wrap"
+        align="stretch"
+        class="clauses">
+        <flexbox-item
+          v-for="(subItem, subIndex) in showItems"
+          :span="1/2"
+          :key="subIndex"
+          class="clauses-item">
           <div class="clauses-item-title">
-            {{subItem.name}}
+            {{ subItem.name }}
           </div>
-          <el-date-picker v-if="subItem.form_type == 'date'"
-                          v-model="item[subItem.field]"
-                          type="date"
-                          value-format="yyyy-MM-dd"
-                          placeholder="选择日期"
-                          @change="valueChange">
-          </el-date-picker>
-          <el-input v-else
-                    @input="calculateValueChange(index, subIndex)"
-                    v-model="item[subItem.field]"></el-input>
+          <el-date-picker
+            v-if="subItem.form_type == 'date'"
+            v-model="item[subItem.field]"
+            type="date"
+            value-format="yyyy-MM-dd"
+            placeholder="选择日期"
+            @change="valueChange"/>
+          <el-input
+            v-else
+            v-model="item[subItem.field]"
+            @input="calculateValueChange(index, subIndex)"/>
         </flexbox-item>
-        <flexbox-item :span="1/2"
-                      class="clauses-item">
+        <flexbox-item
+          :span="1/2"
+          class="clauses-item">
           <div class="sub-total">
-            合计（元）：<span>{{item['money']}}</span>
+            合计（元）：<span>{{ item['money'] }}</span>
           </div>
         </flexbox-item>
       </flexbox>
       <div class="description">
         <div class="description-title">费用明细描述</div>
-        <el-input v-model="item['description']"
-                  type="textarea"
-                  resize="none"
-                  :rows="3"
-                  @input="valueChange"></el-input>
+        <el-input
+          v-model="item['description']"
+          :rows="3"
+          type="textarea"
+          resize="none"
+          @input="valueChange"/>
       </div>
       <div class="files">
-        <el-button type="text"
-                   class="add-files"
-                   @click="addFiles(index)">上传发票图片</el-button>
+        <el-button
+          type="text"
+          class="add-files"
+          @click="addFiles(index)">上传发票图片</el-button>
         <flexbox wrap="wrap">
-          <div class="img-item"
-               v-for="(imgItem, imgIndex) in item['imgList']"
-               :key="imgIndex"
-               :style="{ 'background-image': 'url('+imgItem.path+')' }"
-               @mouseover="mouseImgOver(imgItem, imgIndex, item['imgList'])"
-               @mouseleave="mouseImgLeave(imgItem, imgIndex, item['imgList'])">
-            <div v-if="imgItem.showDelete"
-                 class="img-delete"
-                 @click="deleteFile(imgItem, imgIndex, item['imgList'])">×</div>
+          <div
+            v-for="(imgItem, imgIndex) in item['imgList']"
+            :key="imgIndex"
+            :style="{ 'background-image': 'url('+imgItem.path+')' }"
+            class="img-item"
+            @mouseover="mouseImgOver(imgItem, imgIndex, item['imgList'])"
+            @mouseleave="mouseImgLeave(imgItem, imgIndex, item['imgList'])">
+            <div
+              v-if="imgItem.showDelete"
+              class="img-delete"
+              @click="deleteFile(imgItem, imgIndex, item['imgList'])">×</div>
           </div>
         </flexbox>
       </div>
     </div>
     <div class="handle-bar">
-      <el-button class="handle-bar-button"
-                 type="text"
-                 @click="addItems(index)"
-                 icon="el-icon-plus">添加事项</el-button>
-      <!-- <div class="handle-bar-total">
+      <el-button
+        class="handle-bar-button"
+        type="text"
+        icon="el-icon-plus"
+        @click="addItems(index)">添加事项</el-button>
+        <!-- <div class="handle-bar-total">
         合计（元）：<span>{{totalMoney}}</span>
       </div> -->
     </div>
-    <input id="imageFileInput"
-           type="file"
-           accept="image/*"
-           multiple
-           @change="uploadImageFile" />
+    <input
+      id="imageFileInput"
+      type="file"
+      accept="image/*"
+      multiple
+      @change="uploadImageFile" >
   </div>
 </template>
 <script type="text/javascript">
@@ -84,25 +96,15 @@ import { crmFileSave, crmFileDelete } from '@/api/common'
 import objMixin from '@/components/CreateCom/objMixin'
 
 export default {
-  name: 'xh-expenses', // 差旅报销事项
+  name: 'XhExpenses', // 差旅报销事项
   components: {},
   mixins: [objMixin],
-  computed: {},
-  watch: {
-    value: function(val) {
-      this.dataValue = val
-      if (val.list && val.list.length > 0) {
-        this.mainList = val.list
-      } else {
-        this.mainList.push(this.getValueItem())
-      }
-    }
-  },
+  props: {},
   data() {
     return {
       mainList: [],
       imageIndex: -1,
-      totalMoney: '0', //合计
+      totalMoney: '0', // 合计
       showItems: [
         {
           field: 'start_address',
@@ -147,7 +149,17 @@ export default {
       ]
     }
   },
-  props: {},
+  computed: {},
+  watch: {
+    value: function(val) {
+      this.dataValue = val
+      if (val.list && val.list.length > 0) {
+        this.mainList = val.list
+      } else {
+        this.mainList.push(this.getValueItem())
+      }
+    }
+  },
   mounted() {
     if (this.dataValue.list && this.dataValue.list.length > 0) {
       this.mainList = this.dataValue.list
@@ -163,7 +175,6 @@ export default {
     /** 图片选择出发 */
     uploadImageFile(event) {
       var files = event.target.files
-      var self = this
       for (let index = 0; index < files.length; index++) {
         const file = files[index]
         crmFileSave({
@@ -248,7 +259,7 @@ export default {
         index: this.index,
         value: {
           list: this.mainList,
-          update: update, //是否更新总数
+          update: update, // 是否更新总数
           money: this.totalMoney
         }
       })

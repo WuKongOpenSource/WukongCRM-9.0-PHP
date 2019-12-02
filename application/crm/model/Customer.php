@@ -8,6 +8,7 @@ namespace app\crm\model;
 
 use think\Db;
 use app\admin\model\Common;
+use app\admin\model\User as UserModel;
 use think\Request;
 use think\Validate;
 
@@ -24,6 +25,13 @@ class Customer extends Common
 
 	protected $type = [
 		// 'next_time' => 'timestamp',
+	];
+
+	public static $address = [
+		'北京', '上海', '天津', '广东', '浙江', '海南', '福建', '湖南', 
+		'湖北', '重庆', '辽宁', '吉林', '黑龙江', '河北', '河南', '山东', 
+		'陕西', '甘肃', '青海', '新疆', '山西', '四川', '贵州', '安徽', 
+		'江西', '江苏', '云南', '内蒙古', '广西', '西藏', '宁夏'
 	];
 
 	/**
@@ -47,20 +55,12 @@ class Customer extends Common
     	$order_field = $request['order_field'];
     	$order_type = $request['order_type'];
     	$is_remind = $request['is_remind'];
-    	$nearby = $request['nearby'];
-    	$lng_lat = $request['lng_lat'];
-    	$raidus = $request['raidus'];
-		unset($request['scene_id']);
-		unset($request['search']);
-		unset($request['user_id']);	
-		unset($request['is_excel']);	
-		unset($request['action']);	
-		unset($request['order_field']);	
-		unset($request['order_type']);
-		unset($request['is_remind']);
-		unset($request['nearby']);
-		unset($request['lng_lat']);
-		unset($request['raidus']);
+    	$getCount = $request['getCount'];
+    	//需要过滤的参数
+    	$unsetRequest = ['scene_id','search','user_id','is_excel','action','order_field','order_type','is_remind','getCount'];
+    	foreach ($unsetRequest as $v) {
+    		unset($request[$v]);
+    	}
 
         $request = $this->fmtRequest( $request );
         $requestMap = $request['map'] ? : [];
@@ -89,8 +89,8 @@ class Customer extends Common
 				//相关团队查询
 				$map = $requestMap;
 				$partMap = function($query) use ($sceneMap){
-				        $query->where('customer.ro_user_id',array('like','%,'.$sceneMap['ro_user_id'].',%'))
-				        	->whereOr('customer.rw_user_id',array('like','%,'.$sceneMap['rw_user_id'].',%'));
+				        $query->where('FIND_IN_SET('.$sceneMap['ro_user_id'].', customer.ro_user_id)')
+				        	->whereOr('FIND_IN_SET('.$sceneMap['rw_user_id'].', customer.rw_user_id)');
 				};				
 			} else {
 				$map = $requestMap ? array_merge($sceneMap, $requestMap) : $sceneMap;
@@ -105,11 +105,7 @@ class Customer extends Common
 		$requestData = $this->requestData();
 		if ($requestData['a'] == 'pool' || $action == 'pool') {	
 			//客户公海条件(没有负责人或已经到期)
-        	$poolMap = is_object($sceneMap) ? $sceneMap : $this->getWhereByPool();
-			/*if ($search) {
-				//普通筛选
-				$customerMap['customer.name'] = array('like','%'.$search.'%');
-			}*/		
+        	$poolMap = is_object($sceneMap) ? $sceneMap : $this->getWhereByPool();	
 		} else {
 			$customerMap = ($is_remind == 1) ? $this->getWhereByRemind() : $this->getWhereByCustomer(); //默认条件
 			//工作台仪表盘
@@ -142,15 +138,27 @@ class Customer extends Common
 			    	$authMap = function($query) use ($authMapData){
 			    		$query->where(['customer.owner_user_id' => array('in',$authMapData['auth_user_ids'])])
 			    			  	->whereOr(function ($query) use ($authMapData) {
-			                        $query->where(['customer.ro_user_id' => array('like','%,'.$authMapData['user_id'].',%'),'customer.owner_user_id' => array('neq','')]);
+			                        $query->where('FIND_IN_SET("'.$authMapData['user_id'].'", customer.ro_user_id)')->where(['customer.owner_user_id' => array('neq','')]);
 			                    })
 								->whereOr(function ($query) use ($authMapData) {
-			                        $query->where(['customer.rw_user_id' => array('like','%,'.$authMapData['user_id'].',%'),'customer.owner_user_id' => array('neq','')]);
+			                        $query->where('FIND_IN_SET("'.$authMapData['user_id'].'", customer.rw_user_id)')->where(['customer.owner_user_id' => array('neq','')]);
 			                    });
 				    };			    			    	
 			    }
 			}			
 		}	
+		$dataCount = db('crm_customer')->alias('customer')
+        			->where($map)
+        			->where($searchMap)
+        			->where($customerMap)
+        			->where($authMap)
+        			->where($partMap)
+        			->where($poolMap)
+        			->count();
+        if ($getCount == 1) {
+			$data['dataCount'] = $dataCount ? : 0;
+	        return $data;
+        }
 		//列表展示字段
 		$indexField = $fieldModel->getIndexField('crm_customer', $user_id, 1) ? : array('name');
 		$userField = $fieldModel->getFieldByFormType('crm_customer', 'user'); //人员类型
@@ -167,8 +175,8 @@ class Customer extends Common
 		if ($tops) {
 			$order_t = DB::raw("field(customer_id, $top_ids) desc");
 		}
-		$list = db('crm_customer')
-				->alias('customer')
+
+		$list = db('crm_customer')->alias('customer')
 				->where($map)
 				->where($searchMap)
 				->where($customerMap)
@@ -180,7 +188,6 @@ class Customer extends Common
         		->order($order_t) /*置顶*/
         		->orderRaw($order)
         		->select();
-        $dataCount = db('crm_customer')->alias('customer')->where($map)->where($searchMap)->where($customerMap)->where($authMap)->where($partMap)->where($poolMap)->count('customer_id');
         //保护规则
 		$configModel = new \app\crm\model\ConfigData();
         $configInfo = $configModel->getData();
@@ -191,11 +198,22 @@ class Customer extends Common
 
         $readAuthIds = $userModel->getUserByPer('crm', 'customer', 'read');
         $updateAuthIds = $userModel->getUserByPer('crm', 'customer', 'update');
-        $deleteAuthIds = $userModel->getUserByPer('crm', 'customer', 'delete');
-        if (count($list)) {
+		$deleteAuthIds = $userModel->getUserByPer('crm', 'customer', 'delete');
+        if (!empty($list)) {
+			$business_count = db('crm_business')
+				->field([
+					'COUNT(*)' => 'count',
+					'customer_id'
+				])
+				->where([
+					'customer_id' => ['IN', array_column($list, 'customer_id')]
+				])
+				->group('customer_id')
+				->select();
+			$business_count = array_column($business_count, null, 'customer_id');
 			foreach ($list as $k => $v) {
 	        	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
-	        	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];	        	
+				$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];	        	
 	        	foreach ($userField as $key => $val) {
 	        		$list[$k][$val.'_info'] = isset($v[$val]) ? $userModel->getListByStr($v[$val]) : [];
 	        	}
@@ -203,7 +221,7 @@ class Customer extends Common
 	        		$list[$k][$val.'_info'] = isset($v[$val]) ? $structureModel->getDataByStr($v[$val]) : [];
 	        	} 
 	        	//商机数
-	        	$list[$k]['business_count'] = db('crm_business')->where(['customer_id' => $v['customer_id']])->count() ? : 0;
+				$list[$k]['business_count'] = $business_count[$v['customer_id']]['count'] ?: 0;
 	        	//距进入公海天数
 	        	$poolData = [];
 	        	if ($paramPool['config'] == 1 && $requestData['a'] !== 'pool') {
@@ -228,44 +246,9 @@ class Customer extends Common
 		        $permission['is_read'] = $is_read;
 		        $permission['is_update'] = $is_update;
 		        $permission['is_delete'] = $is_delete;
-		        $list[$k]['permission']	= $permission;        	
+		        $list[$k]['permission']	= $permission;
 	        }  
-	        $mapInfo = [];
-	        if($nearby){
-				$lng_lat = explode(',', $lng_lat);
-				$lng = $mapInfo['center_lng'] = $lng_lat[0];
-				$lat = $mapInfo['center_lat'] = $lng_lat[1];
-				$raidus = $mapInfo['raidus'] = intval($raidus);
-				foreach ($list as $k => $v) {
-					//计算客户距中心点的距离
-					$distance = getDistance($lat, $lng, $v['lat'], $v['lng']);
-					if ($distance <= $raidus) {
-						$list[$k]['distance'] = round($distance / 1000,2);  //单位转换为公里
-
-						//格式化地址信息
-						$address_arr = array();
-						$address_arr = explode(chr(10), $v['address']);
-						$list[$k]['address'] = implode('', $address_arr);
-
-						//百度地图信息窗体js拼接信息
-						$data_info .= '['.$v['lng'].','.$v['lat'].',"客户名称：'.$v['name'].'<br />&#12288;&#12288;地址：'.$list[$k]['address'].'<br />&#12288;负责人：'.$list[$k]['owner_user_id_info']['name'].'<br />&#12288;距离约：'.$list[$k]['distance'].'公里"],';
-
-						$list[$k]['content'] = '客户名称：'.$v['name'].'<br />&#12288;&#12288;地址：'.$list[$k]['address'].'<br />&#12288;负责人：'.$list[$k]['owner_user_id_info']['name'].'<br />&#12288;距离约：'.$list[$k]['distance'].'公里';
-					} else {
-						unset($list[$k]);
-					}
-				}
-
-				//根据相距距离由小到大，重新排序$list
-				$temp_array = array();
-				foreach ($list as $k => $v) {
-					$temp_array[] = $v['distance'];
-				}
-				array_multisort($temp_array, SORT_ASC, $list);
-
-				$mapInfo['data_info'] = '['.$data_info.']';
-				$mapInfo['lng_lat'] = $lng_lat;
-			}      	
+	        $mapInfo = [];      	
         }
         $data = [];
         $data['list'] = $list ? : [];
@@ -469,10 +452,14 @@ class Customer extends Common
 		//时间段
 		$start_time = $map['start_time'];
 		$end_time = $map['end_time'] ? $map['end_time'] : time();
-		$create_time = [];
 		if ($start_time && $end_time) {
-			$create_time = array('between',array($start_time,$end_time));
-			$create_date = array('between',array(date('Y-m-d',$start_time),date('Y-m-d',$end_time)));
+			$start_date = date('Y-m-d',$start_time);
+			$end_date = date('Y-m-d',$end_time);
+			$where_time = " BETWEEN {$start_time} AND {$end_time} ";
+			$where_date = " BETWEEN '{$start_date}' AND '{$end_date}' ";
+		} else {
+			$where_time = " > 0 ";
+      		$where_date = " != '' ";
 		}
 		
 		//员工IDS
@@ -486,38 +473,57 @@ class Customer extends Common
 		}
 		$perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
 		$userIds = $map_user_ids ? array_intersect($map_user_ids, $perUserIds) : $perUserIds; //数组交集
-		$where['id'] = array('in',$userIds);
-		$where['type'] = 1;
-		$userList = db('admin_user')->where($where)->field('id,username,thumb_img,realname')->select();
-		foreach ($userList as $k=>$v) {
-			$userList[$k]['thumb_img'] = $v['thumb_img'] ? getFullPath($v['thumb_img']) : '';
-			$whereArr = [];
-			$customer_num = 0; //客户数
-			$deal_customer_num = 0; //成交客户数
-			$deal_customer_rate = 0; //客户成交率
-			$contract_money = '0.00'; //合同总金额
-			$receivables_money = '0.00'; //回款金额
-			$un_receivables_money = '0.00'; //未回款金额
-			$deal_receivables_rate = 0; //回款完成率
+		$userIds = array_values($userIds);
 
-			$whereArr['create_time'] = $create_time;
-			$whereArr['owner_user_id'] = $v['id'];
-			$userList[$k]['customer_num'] = $customer_num = $this->getDataCount($whereArr);
-			$whereArr['deal_status'] = '已成交';
-			$userList[$k]['deal_customer_num'] = $deal_customer_num = $this->getDataCount($whereArr);
-			$userList[$k]['deal_customer_rate'] = $customer_num ? round(($deal_customer_num/$customer_num),4)*100 : 0;
-			unset($whereArr['deal_status']);
-			$whereArr['check_status'] = 2;
-			unset($whereArr['create_time']);
-			$whereArr['order_date'] = $create_date;			
-			$userList[$k]['contract_money'] = $contract_money = db('crm_contract')->where($whereArr)->sum('money');
-			unset($whereArr['order_date']);
-			$whereArr['return_time'] = $create_date;
-			$userList[$k]['receivables_money'] = $receivables_money = db('crm_receivables')->where($whereArr)->sum('money');
-			$userList[$k]['un_receivables_money'] = $contract_money-$receivables_money >= 0 ? $contract_money-$receivables_money : '0.00';
-			$userList[$k]['deal_receivables_rate'] = $contract_money ? round(($receivables_money/$contract_money), 2)*100 : 0;
+		$prefix = config('database.prefix');
+		$count = count($userIds);
+		$sql = '';
+		foreach ($userIds as $key => $user_id) {
+			$sql .= "
+				SELECT
+					(SELECT realname FROM {$prefix}admin_user WHERE id = {$user_id}) as realname,
+					COUNT(cu.customer_id) AS customer_num,
+					SUM(cu.deal_status = '已成交') AS deal_customer_num,
+					IFNULL(
+						(SELECT SUM(money) FROM {$prefix}crm_contract WHERE
+							owner_user_id = {$user_id} 
+							AND order_date {$where_date}
+							AND check_status = 2
+						), 
+						0
+					) as contract_money,
+					IFNULL(
+						(SELECT SUM(money) FROM {$prefix}crm_receivables WHERE
+							owner_user_id = {$user_id}
+							AND return_time {$where_date}
+							AND check_status = 2
+						), 
+						0
+					) as receivables_money
+				FROM
+					{$prefix}crm_customer as cu
+				WHERE
+					cu.create_time {$where_time}
+					AND cu.owner_user_id = {$user_id}
+			";
+			if ($count > 1 && $key != $count - 1) {
+				$sql .= " UNION ALL ";
+			}
 		}
-        return $userList ? : [];
+
+		if ($sql == '') {
+			return [];
+		}
+		$list = queryCache($sql);
+		foreach ($list as &$val) {
+			$val['deal_customer_num'] = Floor($val['deal_customer_num']);
+			$val['contract_money'] = Floor($val['contract_money']);
+			$val['receivables_money'] = Floor($val['receivables_money']);
+			$val['deal_customer_rate'] = $val['customer_num'] ? round(($val['deal_customer_num'] / $val['customer_num']), 4) * 100 : 0;
+			$val['un_receivables_money'] = $val['contract_money'] - $val['receivables_money'] >= 0 ? $val['contract_money'] - $val['receivables_money'] : '0.00';
+			$val['deal_receivables_rate'] = $val['contract_money'] ? round($val['receivables_money'] / $val['contract_money'], 4) * 100 : 0;
+		}
+		return $list;
     }  
 
 	/**
@@ -531,7 +537,7 @@ class Customer extends Common
 		//非公海条件
 		// $where = $this->getWhereByCustomer();
         $where = [];
-        $dataCount = $this->where($map)->where($where)->count('customer_id');
+		$dataCount = $this->where($map)->fetchSql(false)->count();
         $count = $dataCount ? : 0;
         return $count;		
 	}
@@ -900,5 +906,80 @@ class Customer extends Common
     	}
     	$count = $this->where($where)->where($whereData)->count();
     	return $count ? : 0;
-    }	       
+    }
+
+	/**
+     * [客户成交新增数量]
+     * @author Michael_xu
+     * @param 
+     * @return                   
+     */		
+	public function getAddDealSql($map)
+	{
+		$prefix = config('database.prefix');
+		$sql = "SELECT
+					'{$map['type']}' AS type,
+					'{$map['start_time']}' AS start_time,
+					'{$map['end_time']}' AS end_time,
+					IFNULL(
+						(
+							SELECT
+								count(customer_id)
+							FROM
+								{$prefix}crm_customer
+							WHERE
+								create_time BETWEEN {$map['start_time']} AND {$map['end_time']}
+							AND owner_user_id IN ({$map['create_user_id']})
+						),
+						0
+					) AS customer_num,
+					IFNULL(
+						count(customer_id),
+						0
+					) AS deal_customer_num
+				FROM
+					{$prefix}crm_customer
+				WHERE
+					create_time BETWEEN {$map['start_time']} AND {$map['end_time']}
+					AND deal_status = '{$map['deal_status']}' 
+					AND owner_user_id IN ({$map['create_user_id']})";
+		return $sql;	
+	}
+
+	/**
+     * [客户统计sql]
+     * @author Michael_xu
+     * @param 
+     * @return                   
+     */		
+	public function getAddressCountBySql($map)
+	{
+		$prefix = config('database.prefix');
+		$sql = "SELECT
+					'{$map['address']}' AS address,
+					IFNULL(
+						(
+							SELECT
+								count(customer_id)
+							FROM
+								{$prefix}crm_customer
+							WHERE
+								address LIKE '%{$map['address']}%'
+							AND owner_user_id IN ({$map['owner_user_id']})
+						),
+						0
+					) AS allCustomer,
+					IFNULL(
+						count(customer_id),
+						0
+					) AS dealCustomer
+				FROM
+					{$prefix}crm_customer
+				WHERE
+					address LIKE '%{$map['address']}%'
+				AND deal_status = '{$map['deal_status']}' 
+				AND owner_user_id IN ({$map['owner_user_id']})";
+		$list = $this->query($sql) ? : [];
+		return $list;	
+	}	
 }

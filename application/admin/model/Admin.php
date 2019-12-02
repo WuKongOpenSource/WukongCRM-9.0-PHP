@@ -50,7 +50,7 @@ class Admin extends Common
         if ($user_ids) {
             $userIds = $perUserIds ? array_intersect($user_ids, $perUserIds) : $perUserIds; //数组交集
         }
-        $where['userIds'] = $userIds;      
+        $where['userIds'] = array_map('intval', $userIds);      
         if (!empty($param['type'])) {
             $between_time = getTimeByType($param['type']);
         } else {

@@ -56,32 +56,30 @@ class Message extends ApiCommon
      */
     public function num()
     {
-        $param = $this->param;
         $userInfo = $this->userInfo;
         $configDataModel = model('ConfigData');
         $configData = $configDataModel->getData();
         $data = [];
-        // $sysNum = db('admin_message')->where(['from_user_id' => 0,'to_user_id' => $userInfo['id'],'read_time' => ''])->count();
-        $todayCustomer = $this->todayCustomer();
-        $data['todayCustomer'] = $todayCustomer['dataCount'] ? : '';
+        $todayCustomer = $this->todayCustomer(true);
+        $data['todayCustomer'] = $todayCustomer['dataCount'] ? : 0;
         $followLeads = $this->followLeads();
-        $data['followLeads'] = $followLeads['dataCount'] ? : '';
-        $followCustomer = $this->followCustomer();
-        $data['followCustomer'] = $followCustomer['dataCount'] ? : '';
+        $data['followLeads'] = $followLeads['dataCount'] ? : 0;
+        $followCustomer = $this->followCustomer(true);
+        $data['followCustomer'] = $followCustomer['dataCount'] ? : 0;
         $checkContract = $this->checkContract();
-        $data['checkContract'] = $checkContract['dataCount'] ? : ''; 
+        $data['checkContract'] = $checkContract['dataCount'] ? : 0; 
         $checkReceivables = $this->checkReceivables();
-        $data['checkReceivables'] = $checkReceivables['dataCount'] ? : ''; 
+        $data['checkReceivables'] = $checkReceivables['dataCount'] ? : 0; 
         $remindReceivablesPlan = $this->remindReceivablesPlan();
-        $data['remindReceivablesPlan'] = $remindReceivablesPlan['dataCount'] ? : '';
+        $data['remindReceivablesPlan'] = $remindReceivablesPlan['dataCount'] ? : 0;
         if ($configData['contract_config'] == 1) {
             $endContract = $this->endContract();
-            $data['endContract'] = $endContract['dataCount'] ? : '';  
+            $data['endContract'] = $endContract['dataCount'] ? : 0;  
         }
         //待进入公海提醒
         if ($configData['remind_config'] == 1) {
-            $remindCustomer = $this->remindCustomer();
-            $data['remindCustomer'] = $remindCustomer['dataCount'] ? : '';            
+            $remindCustomer = $this->remindCustomer(true);
+            $data['remindCustomer'] = $remindCustomer['dataCount'] ? : 0;            
         }                                          
         return resultArray(['data' => $data]);
     }
@@ -91,13 +89,16 @@ class Message extends ApiCommon
      * @author Michael_xu
      * @return 
      */
-    public function todayCustomer()
+    public function todayCustomer($getCount = '')
     {
         $param = $this->param;
         $userInfo = $this->userInfo;
         $types = $param['types'];
         $type = $param['type'] ? : 1;
         $isSub = $param['isSub'] ? : '';
+        if ($getCount == true) {
+            $param['getCount'] = 1;
+        }
         unset($param['types']);
         unset($param['type']);
         unset($param['isSub']);
@@ -166,13 +167,16 @@ class Message extends ApiCommon
      * @author Michael_xu
      * @return 
      */
-    public function followCustomer()
+    public function followCustomer($getCount = '')
     {
         $param = $this->param;
         $userInfo = $this->userInfo;
         $types = $param['types'];
         $type = $param['type'] ? : 1;
         $isSub = $param['isSub'] ? : '';
+        if ($getCount == true) {
+            $param['getCount'] = 1;
+        }        
         unset($param['types']);
         unset($param['type']);  
         unset($param['isSub']);         
@@ -183,7 +187,7 @@ class Message extends ApiCommon
             $param['owner_user_id'] = array('in',getSubUserId(false));
         }          
         switch ($type) {
-            case '1' : $param['follow'] = ['neq','已跟进']; break;
+            case '1' : $param['follow'] = ['eq','']; break;
             case '2' : $param['follow'] = ['eq','已跟进']; break;
         }
         $data = $customerModel->getDataList($param);
@@ -350,12 +354,15 @@ class Message extends ApiCommon
      * @author Michael_xu
      * @return 
      */
-    public function remindCustomer()
+    public function remindCustomer($getCount = '')
     {
         $param = $this->param;
         $userInfo = $this->userInfo;
         $types = $param['types'];
         $isSub = $param['isSub'] ? : '';
+        if ($getCount == true) {
+            $param['getCount'] = 1;
+        }        
         unset($param['types']);
         unset($param['type']);
         unset($param['isSub']);

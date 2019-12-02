@@ -1,25 +1,29 @@
 <template>
-  <div class="rc-cont"
-       v-empty="list"
-       style="padding-right:250px;min-height:500px;">
-    <flexbox v-for="(item, index) in list"
-             :key="index"
-             class="ha-cont"
-             align="stretch"
-             justify="flex-start">
-      <div class="ha-week">{{item.create_time|filterTimestampToFormatTime('MM-DD dddd')}}</div>
-      <div class="ha-circle"></div>
-      <div class="ha-time">{{item.create_time|filterTimestampToFormatTime('H:mm')}}</div>
-      <div v-photo="item.user_id_info"
-           v-lazy:background-image="$options.filters.filterUserLazyImg(item.user_id_info.thumb_img)"
-           :key="item.user_id_info.thumb_img"
-           class="div-photo ha-img"></div>
-      <div class="ha-name">{{item.user_id_info.realname}}</div>
+  <div
+    v-empty="list"
+    class="rc-cont"
+    style="padding-right:250px;min-height:500px;">
+    <flexbox
+      v-for="(item, index) in list"
+      :key="index"
+      class="ha-cont"
+      align="stretch"
+      justify="flex-start">
+      <div class="ha-week">{{ item.create_time|filterTimestampToFormatTime('MM-DD dddd') }}</div>
+      <div class="ha-circle"/>
+      <div class="ha-time">{{ item.create_time|filterTimestampToFormatTime('H:mm') }}</div>
+      <div
+        v-photo="item.user_id_info"
+        v-lazy:background-image="$options.filters.filterUserLazyImg(item.user_id_info.thumb_img)"
+        :key="item.user_id_info.thumb_img"
+        class="div-photo ha-img"/>
+      <div class="ha-name">{{ item.user_id_info.realname }}</div>
       <div class="ha-content">
-        <p v-for="(info, infoIndex) in item.content"
-           :key="infoIndex">{{info}}</p>
+        <p
+          v-for="(info, infoIndex) in item.content"
+          :key="infoIndex">{{ info }}</p>
       </div>
-      <div class="ha-line"></div>
+      <div class="ha-line"/>
     </flexbox>
   </div>
 </template>
@@ -27,24 +31,11 @@
 <script type="text/javascript">
 import loading from '../mixins/loading'
 import { crmIndexFieldRecord } from '@/api/customermanagement/common'
-import { timestampToFormatTime } from '@/utils'
 
 export default {
-  name: 'relative-handle', //相关操作  可能再很多地方展示 放到客户管理目录下
+  name: 'RelativeHandle', // 相关操作  可能再很多地方展示 放到客户管理目录下
   components: {},
-  computed: {},
   mixins: [loading],
-  data() {
-    return {
-      list: []
-    }
-  },
-  watch: {
-    id: function(val) {
-      this.list = []
-      this.getDetail()
-    }
-  },
   props: {
     /** 模块ID */
     id: [String, Number],
@@ -64,6 +55,18 @@ export default {
     crmType: {
       type: String,
       default: ''
+    }
+  },
+  data() {
+    return {
+      list: []
+    }
+  },
+  computed: {},
+  watch: {
+    id: function(val) {
+      this.list = []
+      this.getDetail()
     }
   },
   mounted() {

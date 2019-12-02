@@ -10,6 +10,8 @@ use think\Db;
 use app\admin\model\Common;
 use think\Request;
 use think\Validate;
+use app\crm\model\Contract as ContractModel;
+use app\crm\model\Receivables as ReceivablesModel;
 
 class Achievement extends Common
 {
@@ -99,7 +101,7 @@ class Achievement extends Common
         } elseif ($request['structure_id']) {
 			$map['type'] = 3;
 			$result = array();
-			$userlist = Db::name('AdminUser')->field('id,realname as name')->where('structure_id = '.$request['structure_id'])->select();
+			$userlist = Db::name('AdminUser')->field('id,realname as name')->where('structure_id = '.$request['structure_id'].'')->select();
 			if (!$userlist) {
 				return array();
 			}
@@ -139,18 +141,20 @@ class Achievement extends Common
     public function getList($param)
     {
     	$monthList = getMonthStart($param['year']);
-    	$receivablesModel = new \app\crm\model\Receivables();
-    	$contractModel = new \app\crm\model\Contract();
-    	$user_ids = [];
+    	$userModel = new \app\admin\model\User();
+    	
+    	$where = [];
     	//业绩目标
 		if ($param['user_id']) {
 			$dataList = Db::name('CrmAchievement')->where(['type' => 3,'obj_id' => $param['user_id'],'year' => $param['year'],'status' => $param['status']])->find();
+			$where['owner_user_id'] = $param['user_id']; 
 		} else {
 			if ($param['structure_id']) {
 				$dataList = Db::name('CrmAchievement')->where(['type' => 2,'obj_id' => $param['structure_id'],'year' => $param['year'],'status' => $param['status']])->find();
+				$str = $userModel->getSubUserByStr($param['structure_id'], 1) ? : ['-1'];
+				$where['owner_user_id'] = array('in',$str); 
 			}
 		}
-		$map = [];
     	$achiementList = [
     		'1' => [
     			'data' => $dataList['january'],
@@ -201,31 +205,30 @@ class Achievement extends Common
     			'month' => '十二月'
     		]
     	];
-		
-    	//员工统计
-    	if ($param['user_id']) {
-	    	$user_ids[] = $param['user_id'];
-			$map['obj_id'] = $param['user_id'];
-			$map['obj_type'] = 2;
-    	} else {
-	    	if ($param['structure_id']) {
-	    		//部门统计
-				$map['obj_id'] = $param['structure_id'];
-				$map['obj_type'] = 1;
-	    	}
-    	}
-    	$ret = array();
-		for ($i = 1; $i < 13; $i++) {
-	    	$map['year'] = $param['year'];
-	    	$map['start_time'] = $monthList[$i];
-	    	$map['end_time'] = $monthList[$i+1];
+        $where['check_status'] = 2;
+        if($param['status'] == 1){
+            $data_str = 'order_date';
+        }else{
+            $data_str = 'return_time';
+        }
+        $sql = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $fields['(SUM(CASE WHEN '.$data_str.' BETWEEN "' . date('Y-m-d',$monthList[$i]) . '" AND "' . date('Y-m-d',$monthList[$i+1]) . '" THEN money ELSE 0 END))'] = 'money_'.$i;
+        }
+        // 合同 OR 回款
+        if ($param['status'] == 1) {
+            $where['order_date'] = ['between', [date('Y-m-d', $monthList[1]), date('Y-m-d', $monthList[13])]];
+            $sql = ContractModel::where($where)->field($fields)->fetchSql()->select();
+        } else {
+            $sql = ReceivablesModel::where($where)->field($fields)->fetchSql()->select();
+        }
+        $list = queryCache($sql);
+        
+		for ($i = 1; $i <= 12; $i++) {
 	    	$ret[$i]['month'] = $achiementList[$i]['month'];
-	    	if ($param['status'] == 1) {
-	    		$ret[$i]['receivables'] = $contractModel->getDataByUserId($map);//合同
-	    	} else {
-	    		$ret[$i]['receivables'] = $receivablesModel->getDataByUserId($map); //回款
-	    	}
-	    	$ret[$i]['achiement'] = (float)$achiementList[$i]['data'] ? :'0';  //目标
+            $money_id = 'money_'.$i;
+	    	$ret[$i]['receivables'] = $list[0][$money_id];
+	    	$ret[$i]['achiement'] = (float)$achiementList[$i]['data'] ? :'0';  // 目标
 	    	$rate = 0.00;
 			if ($ret[$i]['achiement']) {
 				$rate = round(($ret[$i]['receivables']/$ret[$i]['achiement']),4)*100;

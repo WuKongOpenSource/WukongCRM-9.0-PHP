@@ -4,98 +4,120 @@
       我的任务
     </div>
     <div class="my-task-body">
-      <div class="content-box"
-           v-loading="loading"
-           v-scrollx="{ ignoreClass :['ignoreClass']}">
-        <div class="board-column"
-             v-for="(item, index) in taskList"
-             :key="index">
-          <flexbox orient="vertical"
-                   align="stretch"
-                   class="board-column-wrapper ignoreClass">
+      <div
+        v-loading="loading"
+        v-scrollx="{ ignoreClass :['ignoreClass']}"
+        class="content-box">
+        <div
+          v-for="(item, index) in taskList"
+          :key="index"
+          class="board-column">
+          <flexbox
+            orient="vertical"
+            align="stretch"
+            class="board-column-wrapper ignoreClass">
             <div class="board-column-header">
               <div>
                 <span class="text"> {{ item.title }} </span>
-                <span class="text-num">{{item.checkedNum}} / {{item.list.length}}</span>
+                <span class="text-num">{{ item.checkedNum }} / {{ item.list.length }}</span>
               </div>
-              <el-progress v-if="item.checkedNum == 0"
-                           :percentage="0"></el-progress>
-              <el-progress v-else
-                           :percentage="item.checkedNum / item.list.length * 100"></el-progress>
+              <el-progress
+                v-if="item.checkedNum == 0"
+                :percentage="0"/>
+              <el-progress
+                v-else
+                :percentage="item.checkedNum / item.list.length * 100"/>
             </div>
-            <draggable :list="item.list"
-                       :options="{ group: 'mission', forceFallback: false, dragClass: 'sortable-drag' }"
-                       @end="moveEndTask"
-                       :id="index"
-                       class="board-column-content">
-              <div v-for="(element, i) in item.list"
-                   :key="i"
-                   :class="element.checked ? 'board-item board-item-active' : 'board-item'"
-                   @click="showDetailView(element, index, i)"
-                   ref="taskRow"
-                   :style="{'border-color': element.priority == 1 ? '#8bb5f0' : element.priority == 2 ? '#FF9668' : element.priority == 3 ? '#ED6363' : ''}">
+            <draggable
+              :list="item.list"
+              :options="{ group: 'mission', forceFallback: false, dragClass: 'sortable-drag' }"
+              :id="index"
+              class="board-column-content"
+              @end="moveEndTask">
+              <div
+                v-for="(element, i) in item.list"
+                ref="taskRow"
+                :key="i"
+                :class="element.checked ? 'board-item board-item-active' : 'board-item'"
+                :style="{'border-color': element.priority == 1 ? '#8bb5f0' : element.priority == 2 ? '#FF9668' : element.priority == 3 ? '#ED6363' : ''}"
+                @click="showDetailView(element, index, i)">
                 <flexbox align="stretch">
                   <div @click.stop>
-                    <el-checkbox v-model="element.checked"
-                                 @change="checkboxChange(element, item)"></el-checkbox>
+                    <el-checkbox
+                      v-model="element.checked"
+                      @change="checkboxChange(element, item)"/>
                   </div>
                   <div class="element-label">
-                    <i v-if="element.pname"
-                       class="wukong wukong-sub-task"></i>{{element.name}}<span v-if="element.pname">（{{element.pname}}）</span></div>
-                  <div v-if="element.main_user"
-                       v-photo="element.main_user"
-                       v-lazy:background-image="$options.filters.filterUserLazyImg(element.main_user.thumb_img)"
-                       :key="element.main_user.thumb_img"
-                       class="head-png div-photo"></div>
+                    <i
+                      v-if="element.pname"
+                      class="wukong wukong-sub-task"/>{{ element.name }}<span v-if="element.pname">（{{ element.pname }}）</span></div>
+                  <div
+                    v-photo="element.main_user"
+                    v-lazy:background-image="$options.filters.filterUserLazyImg(element.main_user.thumb_img)"
+                    v-if="element.main_user"
+                    :key="element.main_user.thumb_img"
+                    class="head-png div-photo"/>
                 </flexbox>
                 <div class="img-group">
-                  <div class="img-box"
-                       v-if="element.stop_time">
-                    <i class="wukong wukong-time-task"
-                       :style="{'color': element.is_end == 1 && !element.checked ? 'red': '#999'}"></i>
-                    <span :style="{'color': element.is_end == 1 && !element.checked ? 'red': '#999'}">{{element.stop_time | filterTimestampToFormatTime('MM-DD')}} 截止</span>
+                  <div
+                    v-if="element.stop_time"
+                    class="img-box">
+                    <i
+                      :style="{'color': element.is_end == 1 && !element.checked ? 'red': '#999'}"
+                      class="wukong wukong-time-task"/>
+                    <span :style="{'color': element.is_end == 1 && !element.checked ? 'red': '#999'}">{{ element.stop_time | filterTimestampToFormatTime('MM-DD') }} 截止</span>
                   </div>
-                  <div class="img-box"
-                       v-if="element.subcount || element.subdonecount">
-                    <i class="wukong wukong-sub-task"></i>
-                    <span>{{element.subdonecount}}/{{element.subcount + element.subdonecount}}</span>
+                  <div
+                    v-if="element.subcount || element.subdonecount"
+                    class="img-box">
+                    <i class="wukong wukong-sub-task"/>
+                    <span>{{ element.subdonecount }}/{{ element.subcount + element.subdonecount }}</span>
                   </div>
-                  <div class="img-box"
-                       v-if="element.filecount">
-                    <i class="wukong wukong-file"></i>
-                    <span>{{element.filecount}}</span>
+                  <div
+                    v-if="element.filecount"
+                    class="img-box">
+                    <i class="wukong wukong-file"/>
+                    <span>{{ element.filecount }}</span>
                   </div>
-                  <div class="img-box"
-                       v-if="element.commentcount">
-                    <i class="wukong wukong-comment-task"></i>
-                    <span>{{element.commentcount}}</span>
+                  <div
+                    v-if="element.commentcount"
+                    class="img-box">
+                    <i class="wukong wukong-comment-task"/>
+                    <span>{{ element.commentcount }}</span>
                   </div>
 
                   <template v-if="element.lableList.length <= 2">
-                    <div v-for="(k, j) in element.lableList"
-                         :key="j"
-                         class="item-label"
-                         :style="{'background': k.color}">
-                      {{k.name}}
+                    <div
+                      v-for="(k, j) in element.lableList"
+                      :key="j"
+                      :style="{'background': k.color}"
+                      class="item-label">
+                      {{ k.name }}
                     </div>
                   </template>
                   <template v-else>
-                    <div class="item-label"
-                         :style="{'background': element.lableList[0].color}">{{element.lableList[0].name}}</div>
-                    <div class="item-label"
-                         :style="{'background': element.lableList[1].color}">{{element.lableList[1].name}}</div>
-                    <el-tooltip placement="top"
-                                effect="light"
-                                popper-class="tooltip-change-border task-tooltip">
-                      <div slot="content"
-                           style="margin: 10px 10px 10px 0;">
-                        <div v-for="(k, j) in element.lableList"
-                             :key="j"
-                             style="display: inline-block; margin-right: 10px;">
-                          <span v-if="j >= 2"
-                                class="k-name"
-                                :style="{'background': k.color ? k.color: '#ccc'}"
-                                style="border-radius: 3px; color: #FFF; padding: 3px 10px;">{{k.name}}</span>
+                    <div
+                      :style="{'background': element.lableList[0].color}"
+                      class="item-label">{{ element.lableList[0].name }}</div>
+                    <div
+                      :style="{'background': element.lableList[1].color}"
+                      class="item-label">{{ element.lableList[1].name }}</div>
+                    <el-tooltip
+                      placement="top"
+                      effect="light"
+                      popper-class="tooltip-change-border task-tooltip">
+                      <div
+                        slot="content"
+                        style="margin: 10px 10px 10px 0;">
+                        <div
+                          v-for="(k, j) in element.lableList"
+                          :key="j"
+                          style="display: inline-block; margin-right: 10px;">
+                          <span
+                            v-if="j >= 2"
+                            :style="{'background': k.color ? k.color: '#ccc'}"
+                            class="k-name"
+                            style="border-radius: 3px; color: #FFF; padding: 3px 10px;">{{ k.name }}</span>
                         </div>
                       </div>
                       <div class="color-label-more">
@@ -107,9 +129,10 @@
                 </div>
               </div>
             </draggable>
-            <div class="new-task"
-                 @click="createTaskByTop(item.is_top)">
-              <span class="el-icon-plus"></span>
+            <div
+              class="new-task"
+              @click="createTaskByTop(item.is_top)">
+              <span class="el-icon-plus"/>
               <span>新建任务</span>
             </div>
           </flexbox>
@@ -117,20 +140,20 @@
       </div>
     </div>
     <!-- 新建任务弹出框 newDialog-->
-    <new-dialog :visible="taskCreateShow"
-                :params="{is_top: topId}"
-                @handleClose="handleClose"
-                @submit="getList">
-    </new-dialog>
+    <new-dialog
+      :visible="taskCreateShow"
+      :params="{is_top: topId}"
+      @handleClose="handleClose"
+      @submit="getList"/>
     <!-- 详情 -->
-    <particulars v-if="taskDetailShow"
-                 ref="particulars"
-                 :id="taskID"
-                 :detailIndex="detailIndex"
-                 :detailSection="detailSection"
-                 @on-handle="detailHandle"
-                 @close="closeBtn">
-    </particulars>
+    <particulars
+      v-if="taskDetailShow"
+      ref="particulars"
+      :id="taskID"
+      :detail-index="detailIndex"
+      :detail-section="detailSection"
+      @on-handle="detailHandle"
+      @close="closeBtn"/>
   </div>
 </template>
 <script>
@@ -177,7 +200,7 @@ export default {
   },
 
   mounted() {
-    //为了防止火狐浏览器拖拽的时候以新标签打开，此代码真实有效
+    // 为了防止火狐浏览器拖拽的时候以新标签打开，此代码真实有效
     document.body.ondrop = function(event) {
       event.preventDefault()
       event.stopPropagation()
@@ -203,7 +226,7 @@ export default {
 
           this.loading = false
         })
-        .catch(err => {
+        .catch(() => {
           this.loading = false
         })
     },
@@ -213,16 +236,16 @@ export default {
      */
     moveEndTask(evt) {
       if (evt) {
-        let fromTop = evt.from.id
-        let toTop = evt.to.id
+        const fromTop = evt.from.id
+        const toTop = evt.to.id
 
         // 如果没有进行移动 不做处理
         if (fromTop == toTop && evt.oldIndex == evt.newIndex) {
           return
         }
 
-        let fromList = this.taskList[fromTop].list
-        let toList = this.taskList[toTop].list
+        const fromList = this.taskList[fromTop].list
+        const toList = this.taskList[toTop].list
 
         let params = {}
         if (fromTop == toTop) {
@@ -246,7 +269,7 @@ export default {
         }
         workTaskUpdateTopAPI(params)
           .then(res => {})
-          .catch(err => {})
+          .catch(() => {})
       }
     },
 
@@ -264,7 +287,7 @@ export default {
         type: element.checked ? 1 : 2
       })
         .then(res => {})
-        .catch(err => {
+        .catch(() => {
           if (element.checked) {
             value.checkedNum--
           } else {
@@ -306,7 +329,7 @@ export default {
     detailHandle(data) {
       if (data.index == 0 || data.index) {
         // 是否完成勾选
-        let sectionItem = this.taskList[data.section]
+        const sectionItem = this.taskList[data.section]
         if (data.type == 'title-check') {
           this.$set(sectionItem.list[data.index], 'checked', data.value)
           if (data.value) {
@@ -318,7 +341,7 @@ export default {
         } else if (data.type == 'delete') {
           this.taskList[data.section].list.splice(data.index, 1)
         } else if (data.type == 'change-stop-time') {
-          let stopTime = parseInt(data.value) + 86399
+          const stopTime = parseInt(data.value) + 86399
           if (stopTime > new Date(new Date()).getTime() / 1000) {
             this.taskList[data.section].list[data.index].is_end = false
           } else {
@@ -330,7 +353,7 @@ export default {
         } else if (data.type == 'change-name') {
           this.taskList[data.section].list[data.index].name = data.value
         } else if (data.type == 'change-comments') {
-          let commentcount = this.taskList[data.section].list[data.index]
+          const commentcount = this.taskList[data.section].list[data.index]
             .commentcount
           if (data.value == 'add') {
             this.taskList[data.section].list[data.index].commentcount =
@@ -364,7 +387,7 @@ export default {
         !this.$refs.particulars.$el.contains(e.target)
       ) {
         let hidden = true
-        let items = document.getElementsByClassName('board-item')
+        const items = document.getElementsByClassName('board-item')
         for (let index = 0; index < items.length; index++) {
           const element = items[index]
           if (element.contains(e.target)) {

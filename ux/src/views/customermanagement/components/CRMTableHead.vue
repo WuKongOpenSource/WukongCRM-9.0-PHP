@@ -1,86 +1,99 @@
 <template>
   <div>
-    <flexbox v-show="selectionList.length == 0"
-             class="th-container">
+    <flexbox
+      v-show="selectionList.length == 0"
+      class="th-container">
       <div v-if="!isSeas">场景：</div>
-      <el-popover v-if="!isSeas"
-                  trigger="click"
-                  popper-class="no-padding-popover"
-                  v-model="showScene"
-                  width="150">
+      <el-popover
+        v-if="!isSeas"
+        v-model="showScene"
+        trigger="click"
+        popper-class="no-padding-popover"
+        width="150">
         <flexbox slot="reference">
-          <div class="condition_title">{{sceneData.name || getDefaultSceneName()}}</div>
-          <i class="el-icon-arrow-down el-icon--right"
-             style="color:#777;"></i>
+          <div class="condition_title">{{ sceneData.name || getDefaultSceneName() }}</div>
+          <i
+            class="el-icon-arrow-down el-icon--right"
+            style="color:#777;"/>
         </flexbox>
-        <scene-list ref="sceneList"
-                    :crmType="crmType"
-                    @scene="sceneSelect"
-                    @scene-handle="sceneHandle"
-                    @hidden-scene="showScene=false"></scene-list>
+        <scene-list
+          ref="sceneList"
+          :crm-type="crmType"
+          @scene="sceneSelect"
+          @scene-handle="sceneHandle"
+          @hidden-scene="showScene=false"/>
       </el-popover>
-      <img @click="showFilterClick"
-           class="c-filtrate"
-           :style="{ 'margin-left': isSeas ? 0 : '30px'}"
-           src="@/assets/img/c_filtrate.png" />
-      <div class="condition_title"
-           @click="showFilterClick">高级筛选</div>
-      <filter-form :fieldList="fieldList"
-                   :dialogVisible.sync="showFilter"
-                   :obj="filterObj"
-                   :crmType="crmType"
-                   :isSeas="isSeas"
-                   @filter="handleFilter">
-      </filter-form>
+      <img
+        :style="{ 'margin-left': isSeas ? 0 : '30px'}"
+        class="c-filtrate"
+        src="@/assets/img/c_filtrate.png"
+        @click="showFilterClick" >
+      <div
+        class="condition_title"
+        @click="showFilterClick">高级筛选</div>
+      <filter-form
+        :field-list="fieldList"
+        :dialog-visible.sync="showFilter"
+        :obj="filterObj"
+        :crm-type="crmType"
+        :is-seas="isSeas"
+        @filter="handleFilter"/>
     </flexbox>
-    <flexbox v-if="selectionList.length > 0"
-             class="selection-bar">
-      <div class="selected—title">已选中<span class="selected—count">{{selectionList.length}}</span>项</div>
+    <flexbox
+      v-if="selectionList.length > 0"
+      class="selection-bar">
+      <div class="selected—title">已选中<span class="selected—count">{{ selectionList.length }}</span>项</div>
       <flexbox class="selection-items-box">
-        <flexbox class="selection-item"
-                 v-for="(item, index) in getSelectionHandleItemsInfo()"
-                 :key="index"
-                 @click.native="selectionBarClick(item.type)">
-          <img class="selection-item-icon"
-               :src="item.icon" />
-          <div class="selection-item-name">{{item.name}}</div>
+        <flexbox
+          v-for="(item, index) in getSelectionHandleItemsInfo()"
+          :key="index"
+          class="selection-item"
+          @click.native="selectionBarClick(item.type)">
+          <img
+            :src="item.icon"
+            class="selection-item-icon" >
+          <div class="selection-item-name">{{ item.name }}</div>
         </flexbox>
       </flexbox>
     </flexbox>
-    <filter-content v-if="filterObj.form && filterObj.form.length > 0"
-                    :obj="filterObj"
-                    @delete="handleDeleteField">
-    </filter-content>
+    <filter-content
+      v-if="filterObj.form && filterObj.form.length > 0"
+      :obj="filterObj"
+      @delete="handleDeleteField"/>
 
-    <transfer-handle :crmType="crmType"
-                     :selectionList="selectionList"
-                     @handle="handleCallBack"
-                     :dialogVisible.sync="transferDialogShow"></transfer-handle>
-    <teams-handle :crmType="crmType"
-                  :title="teamsTitle"
-                  :selectionList="selectionList"
-                  @handle="handleCallBack"
-                  :dialogVisible.sync="teamsDialogShow"></teams-handle>
-    <alloc-handle :crmType="crmType"
-                  :selectionList="selectionList"
-                  @handle="handleCallBack"
-                  :dialogVisible.sync="allocDialogShow"></alloc-handle>
-    <deal-status-handle :crmType="crmType"
-                        :selectionList="selectionList"
-                        @handle="handleCallBack"
-                        :visible.sync="dealStatusShow"></deal-status-handle>
+    <transfer-handle
+      :crm-type="crmType"
+      :selection-list="selectionList"
+      :dialog-visible.sync="transferDialogShow"
+      @handle="handleCallBack"/>
+    <teams-handle
+      :crm-type="crmType"
+      :title="teamsTitle"
+      :selection-list="selectionList"
+      :dialog-visible.sync="teamsDialogShow"
+      @handle="handleCallBack"/>
+    <alloc-handle
+      :crm-type="crmType"
+      :selection-list="selectionList"
+      :dialog-visible.sync="allocDialogShow"
+      @handle="handleCallBack"/>
+    <deal-status-handle
+      :crm-type="crmType"
+      :selection-list="selectionList"
+      :visible.sync="dealStatusShow"
+      @handle="handleCallBack"/>
 
-    <scene-set :dialogVisible.sync="showSceneSet"
-               @save-success="updateSceneList"
-               :crmType="crmType">
-    </scene-set>
+    <scene-set
+      :dialog-visible.sync="showSceneSet"
+      :crm-type="crmType"
+      @save-success="updateSceneList"/>
 
-    <scene-create :fieldList="fieldList"
-                  :crmType="crmType"
-                  :dialogVisible.sync="showSceneCreate"
-                  @saveSuccess="updateSceneList"
-                  :obj="sceneFilterObj">
-    </scene-create>
+    <scene-create
+      :field-list="fieldList"
+      :crm-type="crmType"
+      :dialog-visible.sync="showSceneCreate"
+      :obj="sceneFilterObj"
+      @saveSuccess="updateSceneList"/>
   </div>
 </template>
 
@@ -88,32 +101,27 @@
 import { mapGetters } from 'vuex'
 import {
   filterIndexfields,
-  crmSceneIndex,
   crmSceneSave
 } from '@/api/customermanagement/common'
 import {
   crmLeadsTransform,
-  crmLeadsExcelExport,
   crmLeadsDelete
 } from '@/api/customermanagement/clue'
 import {
   crmCustomerLock,
   crmCustomerPutInPool,
-  crmCustomerExcelExport,
-  crmCustomerPoolExcelExportAPI,
   crmCustomerDelete,
   crmCustomerReceive
 } from '@/api/customermanagement/customer'
 import {
-  crmContactsExcelExport,
   crmContactsDelete
 } from '@/api/customermanagement/contacts'
 import { crmBusinessDelete } from '@/api/customermanagement/business'
 import { crmContractDelete } from '@/api/customermanagement/contract'
 import { crmReceivablesDelete } from '@/api/customermanagement/money'
 import {
-  crmProductExcelExport,
-  crmProductStatus
+  crmProductStatus,
+  crmProductDelete
 } from '@/api/customermanagement/product'
 
 import filterForm from './filterForm'
@@ -128,7 +136,7 @@ import AllocHandle from './selectionHandle/AllocHandle' // 公海分配操作
 import DealStatusHandle from './selectionHandle/DealStatusHandle' // 客户状态修改操作
 
 export default {
-  name: 'CRM-table-head', //客户管理下 重要提醒 回款计划提醒
+  name: 'CRMTableHead', // 客户管理下 重要提醒 回款计划提醒
   components: {
     filterForm,
     filterContent,
@@ -140,8 +148,22 @@ export default {
     SceneSet,
     DealStatusHandle
   },
-  computed: {
-    ...mapGetters(['crm', 'CRMConfig'])
+
+  props: {
+    title: {
+      type: String,
+      default: ''
+    },
+    /** 没有值就是全部类型 有值就是当个类型 */
+    crmType: {
+      type: String,
+      default: ''
+    },
+    // 辅助 使用 公海没有场景
+    isSeas: {
+      type: Boolean,
+      default: false
+    }
   },
   data() {
     return {
@@ -169,22 +191,8 @@ export default {
       dealStatusShow: false // 成交状态修改框
     }
   },
-  watch: {},
-  props: {
-    title: {
-      type: String,
-      default: ''
-    },
-    /** 没有值就是全部类型 有值就是当个类型 */
-    crmType: {
-      type: String,
-      default: ''
-    },
-    // 辅助 使用 公海没有场景
-    isSeas: {
-      type: Boolean,
-      default: false
-    }
+  computed: {
+    ...mapGetters(['crm', 'CRMConfig'])
   },
   mounted() {},
   methods: {
@@ -224,7 +232,7 @@ export default {
       }
       this.$emit('filter', form.obj)
     },
-    //删除
+    // 删除
     handleDeleteField(data) {
       this.filterObj = data.obj
       this.$emit('filter', this.filterObj.obj)
@@ -263,41 +271,14 @@ export default {
         // 转移
         this.transferDialogShow = true
       } else if (type == 'export') {
-        let params = { scene_id: this.scene_id }
+        // const params = { scene_id: this.scene_id }
+        const params = {}
 
-        let request
-        // 公海的请求
-        if (this.isSeas) {
-          request = crmCustomerPoolExcelExportAPI
-        } else {
-          request = {
-            customer: crmCustomerExcelExport,
-            leads: crmLeadsExcelExport,
-            contacts: crmContactsExcelExport,
-            product: crmProductExcelExport
-          }[this.crmType]
-        }
         params[this.crmType + '_id'] = this.selectionList.map(item => {
           return item[this.crmType + '_id']
         })
-        request(params)
-          .then(res => {
-            var blob = new Blob([res.data], {
-              type: 'application/vnd.ms-excel;charset=utf-8'
-            })
-            var downloadElement = document.createElement('a')
-            var href = window.URL.createObjectURL(blob) //创建下载的链接
-            downloadElement.href = href
-            downloadElement.download =
-              decodeURI(
-                res.headers['content-disposition'].split('filename=')[1]
-              ) || '' //下载后文件名
-            document.body.appendChild(downloadElement)
-            downloadElement.click() //点击下载
-            document.body.removeChild(downloadElement) //下载完成移除元素
-            window.URL.revokeObjectURL(href) //释放掉blob对象
-          })
-          .catch(() => {})
+        params.__export = true
+        this.$emit('exportData', params)
       } else if (
         type == 'transform' ||
         type == 'put_seas' ||
@@ -420,7 +401,7 @@ export default {
           })
           .catch(() => {})
       } else if (type === 'delete') {
-        let self = this
+        const self = this
         var ids = this.selectionList.map(function(item, index, array) {
           return item[self.crmType + '_id']
         })
@@ -437,6 +418,8 @@ export default {
           request = crmContractDelete
         } else if (this.crmType == 'receivables') {
           request = crmReceivablesDelete
+        } else if (this.crmType == 'product') {
+          request = crmProductDelete
         }
         request({
           id: ids
@@ -469,7 +452,7 @@ export default {
     },
     /** 获取展示items */
     getSelectionHandleItemsInfo() {
-      let handleInfos = {
+      const handleInfos = {
         transfer: {
           name: '转移',
           type: 'transfer',
@@ -578,12 +561,14 @@ export default {
         return this.forSelectionHandleItems(handleInfos, [
           'transfer',
           'delete',
+          'export',
           'add_user',
           'delete_user'
         ])
       } else if (this.crmType == 'contract') {
         return this.forSelectionHandleItems(handleInfos, [
           'transfer',
+          'export',
           'delete',
           'add_user',
           'delete_user'
@@ -594,14 +579,15 @@ export default {
         return this.forSelectionHandleItems(handleInfos, [
           'export',
           'start',
-          'disable'
+          'disable',
+          'delete'
         ])
       }
     },
     forSelectionHandleItems(handleInfos, array) {
       var tempsHandles = []
       for (let index = 0; index < array.length; index++) {
-        let type = array[index]
+        const type = array[index]
         if (this.whetherTypeShowByPermision(type)) {
           tempsHandles.push(handleInfos[type])
         }

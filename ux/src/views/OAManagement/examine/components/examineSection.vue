@@ -1,37 +1,42 @@
 <template>
   <div>
-    <examine-cell v-for="(item, index) in list"
-                  :key="index"
-                  :data="item"
-                  @on-handle="examineCellHandle"></examine-cell>
-    <slot name="load"></slot>
-    <examine-detail v-if="showDview"
-                    :id="rowID"
-                    class="d-view"
-                    @on-examine-handle="handleResult('examine-detail')"
-                    @hide-view="showDview=false">
-    </examine-detail>
-    <c-r-m-all-detail :visible.sync="showRelatedDetail"
-                      :crmType="relatedCRMType"
-                      :listenerIDs="['workbench-main-container']"
-                      :noListenerIDs="['examine-list-box']"
-                      :id="relatedID"></c-r-m-all-detail>
-    <examine-handle :show="showExamineHandle"
-                    @close="showExamineHandle = false"
-                    @save="handleResult('examine-handle')"
-                    :id="rowID"
-                    examineType="oa_examine"
-                    status="2"></examine-handle>
-    <examine-create-view v-if="isCreate"
-                         :category_id="createInfo.category_id"
-                         :category_title="createInfo.title"
-                         :action="createAction"
-                         @save-success="handleResult('edit')"
-                         @hiden-view="isCreate = false"></examine-create-view>
+    <examine-cell
+      v-for="(item, index) in list"
+      :key="index"
+      :data="item"
+      @on-handle="examineCellHandle"/>
+    <slot name="load"/>
+    <examine-detail
+      v-if="showDview"
+      :id="rowID"
+      class="d-view"
+      @on-examine-handle="handleResult('examine-detail')"
+      @hide-view="showDview=false"/>
+    <c-r-m-all-detail
+      :visible.sync="showRelatedDetail"
+      :crm-type="relatedCRMType"
+      :listener-ids="['workbench-main-container']"
+      :no-listener-ids="['examine-list-box']"
+      :id="relatedID"/>
+    <examine-handle
+      :show="showExamineHandle"
+      :id="rowID"
+      examine-type="oa_examine"
+      status="2"
+      @close="showExamineHandle = false"
+      @save="handleResult('examine-handle')"/>
+    <examine-create-view
+      v-if="isCreate"
+      :category_id="createInfo.category_id"
+      :category_title="createInfo.title"
+      :action="createAction"
+      @save-success="handleResult('edit')"
+      @hiden-view="isCreate = false"/>
   </div>
 </template>
 
 <script>
+import { oaExamineDelete } from '@/api/oamanagement/examine'
 import ExamineCell from './examineCell'
 import ExamineDetail from './examineDetail'
 import CRMAllDetail from '@/views/customermanagement/components/CRMAllDetail'
@@ -45,6 +50,10 @@ export default {
     CRMAllDetail,
     ExamineHandle,
     ExamineCreateView
+  },
+
+  props: {
+    list: Array
   },
 
   data() {
@@ -61,8 +70,8 @@ export default {
       // 撤回操作
       showExamineHandle: false,
 
-      //编辑操作
-      isCreate: false, //是编辑
+      // 编辑操作
+      isCreate: false, // 是编辑
       createAction: { type: 'update' },
       createInfo: {} // 编辑所需要的id 标题名信息
     }
@@ -75,10 +84,6 @@ export default {
     }
   },
 
-  props: {
-    list: Array
-  },
-
   mounted() {},
 
   methods: {
@@ -88,7 +93,7 @@ export default {
     examineCellHandle(data) {
       // 编辑
       if (data.type == 'edit') {
-        let item = data.data.item
+        const item = data.data.item
         item.title = item.category_name
         this.createInfo = item
         this.createAction = { type: 'update', id: item.examine_id, data: item }

@@ -21,7 +21,7 @@ export function biCustomerTotalListAPI(data) {
 
 /**
  * 员工客户跟进次数分析
- * @param {*} data 
+ * @param {*} data
  */
 export function biCustomerRecordTimesAPI(data) {
   return request({
@@ -33,7 +33,7 @@ export function biCustomerRecordTimesAPI(data) {
 
 /**
  * 员工客户跟进次数分析 具体员工列表
- * @param {*} data 
+ * @param {*} data
  */
 export function biCustomerRecordListAPI(data) {
   return request({
@@ -45,7 +45,7 @@ export function biCustomerRecordListAPI(data) {
 
 /**
  * 员工跟进方式分析
- * @param {*} data 
+ * @param {*} data
  */
 export function biCustomerRecordModeAPI(data) {
   return request({
@@ -57,7 +57,7 @@ export function biCustomerRecordModeAPI(data) {
 
 /**
  * 客户转化率分析具体数据
- * @param {*} data 
+ * @param {*} data
  */
 export function biCustomerConversionInfoAPI(data) {
   return request({
@@ -69,7 +69,7 @@ export function biCustomerConversionInfoAPI(data) {
 
 /**
  * 客户转化率分析
- * @param {*} data 
+ * @param {*} data
  */
 export function biCustomerConversionAPI(data) {
   return request({
@@ -82,7 +82,7 @@ export function biCustomerConversionAPI(data) {
 
 /**
  * 公海客户分析
- * @param {*} data 
+ * @param {*} data
  */
 export function biCustomerPoolAPI(data) {
   return request({
@@ -94,7 +94,7 @@ export function biCustomerPoolAPI(data) {
 
 /**
  * 公海客户分析
- * @param {*} data 
+ * @param {*} data
  */
 export function biCustomerPoolListAPI(data) {
   return request({
@@ -106,7 +106,7 @@ export function biCustomerPoolListAPI(data) {
 
 /**
  * 员工客户成交周期
- * @param {*} data 
+ * @param {*} data
  */
 export function biCustomerUserCycleAPI(data) {
   return request({
@@ -118,7 +118,7 @@ export function biCustomerUserCycleAPI(data) {
 
 /**
  * 地区成交周期
- * @param {*} data 
+ * @param {*} data
  */
 export function biCustomerAddressCycleAPI(data) {
   return request({
@@ -130,7 +130,7 @@ export function biCustomerAddressCycleAPI(data) {
 
 /**
  * 产品成交周期
- * @param {*} data 
+ * @param {*} data
  */
 export function biCustomerProductCycleAPI(data) {
   return request({

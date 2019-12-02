@@ -1,24 +1,26 @@
 <template>
   <div class="address-book oa-bgcolor">
     <div class="header">
-      <el-tabs v-model="activeName"
-               @tab-click="handleClick">
-        <el-input placeholder="搜索成员"
-                  prefix-icon="el-icon-search"
-                  @blur="blurFun"
-                  @keyup.enter.native="blurFun"
-                  v-model="inputModel">
-        </el-input>
-        <el-tab-pane label="员工"
-                     name="1">
-          <v-staff v-loading="staffLoading"
-                   :staffData="staffData">
-          </v-staff>
+      <el-tabs
+        v-model="activeName"
+        @tab-click="handleClick">
+        <el-input
+          v-model="inputModel"
+          placeholder="搜索成员"
+          prefix-icon="el-icon-search"
+          @blur="blurFun"
+          @keyup.enter.native="blurFun"/>
+        <el-tab-pane
+          label="员工"
+          name="1">
+          <v-staff
+            v-loading="staffLoading"
+            :staff-data="staffData"/>
         </el-tab-pane>
-        <el-tab-pane label="部门"
-                     name="2">
-          <v-department :depData="depData">
-          </v-department>
+        <el-tab-pane
+          label="部门"
+          name="2">
+          <v-department :dep-data="depData"/>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -57,7 +59,7 @@ export default {
         search: search
       }).then(res => {
         if (key == 1) {
-          for (let item in res.data) {
+          for (const item in res.data) {
             this.staffData.push({
               letter: item,
               list: res.data[item]

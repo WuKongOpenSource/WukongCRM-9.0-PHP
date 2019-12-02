@@ -169,7 +169,7 @@ export function crmIndexFieldRecord(data) {
 
 /**
  * 记录类型 数据 与系统设置系统(repeat)
- * @param {*} data 
+ * @param {*} data
  */
 export function crmSettingRecordListAPI(data) {
   return request({
@@ -259,7 +259,7 @@ export function adminFieldUniqueFieldAPI(data) {
 /**
  * 查重
  * @param {*} data
- * types crm_leads crm_customer 
+ * types crm_leads crm_customer
  */
 export function crmIndexSearchAPI(data) {
   return request({

@@ -61,7 +61,14 @@ class Business extends Common
         $between_time = $whereData['between_time'];         
         $where['owner_user_id'] = array('in',$userIds);
         $where['create_time'] = array('between',$between_time);
-        $dataList = db('crm_business')->field('business_id,customer_id,money,type_id,status_id,deal_date,create_user_id,owner_user_id')->where($where)->select();
-        return $dataList;	
+        $sql = $this
+            ->field('business_id,customer_id,money,type_id,status_id,deal_date,create_user_id,owner_user_id')
+            ->where($where)
+            ->fetchSql()
+            ->limit(50)
+            ->order(['money' => 'DESC'])
+            ->select();
+
+        return queryCache($sql);
    }
 }

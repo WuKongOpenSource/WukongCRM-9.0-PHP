@@ -203,14 +203,21 @@ class Business extends ApiCommon
     public function statusList()
     {
         $businessStatusModel = model('BusinessStatus');
-        $userInfo = $this->userInfo;
-        $list = db('crm_business_type')
-                ->where(['structure_id' => ['like','%,'.$userInfo['structure_id'].',%'],'status' => 1])
-                ->whereOr('structure_id','')
-                ->select();	
-        foreach ($list as $k=>$v) {
-            $list[$k]['statusList'] = $businessStatusModel->getDataList($v['type_id']); 
+        $key = 'BI_queryCache_StatusList_Data';
+        $list = cache($key);
+        if (!$list) {
+            $userInfo = $this->userInfo;
+            $list = db('crm_business_type')
+                    ->field(['name', 'status', 'structure_id', 'type_id'])
+                    ->where(['structure_id' => ['like','%,'.$userInfo['structure_id'].',%'],'status' => 1])
+                    ->whereOr('structure_id','')
+                    ->select(); 
+            foreach ($list as $k=>$v) {
+                $list[$k]['statusList'] = $businessStatusModel->getDataList($v['type_id']); 
+            }
+            cache($key, $list, true);
         }
+
         return resultArray(['data' => $list]);
     }          
     
@@ -351,6 +358,9 @@ class Business extends ApiCommon
         $data = [];
         $data['update_time'] = time();
         $data['is_end'] = $is_end;
+        if ($is_end) {
+            $status_id = $is_end;
+        }
         $data['status_id'] = $status_id;
         $data['status_time'] = time();        
         $res = db('crm_business')->where(['business_id' => $param['business_id']])->update($data);

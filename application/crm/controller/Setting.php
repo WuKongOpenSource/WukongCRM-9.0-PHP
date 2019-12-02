@@ -8,6 +8,7 @@
 namespace app\crm\controller;
 
 use app\admin\controller\ApiCommon;
+use app\admin\model\Message;
 use think\Hook;
 use think\Request;
 
@@ -169,6 +170,7 @@ class Setting extends ApiCommon
                         $error = true;
                         $errorMessage[] = "客户'".$dataInfo['name']."'操作失败，错误原因：无权操作";
                     }
+                    $message_type = Message::TEAM_CUSTOMER;
                     continue;
                 case 'crm_business' : 
                     $typesName = '商机';
@@ -180,6 +182,7 @@ class Setting extends ApiCommon
                         $error = true;
                         $errorMessage[] = "商机'".$dataInfo['name']."'操作失败，错误原因：无权操作";
                     }                          
+                    $message_type = Message::TEAM_BUSINESS;
                     continue;
                 case 'crm_contract' : 
                     $typesName = '合同';
@@ -191,6 +194,7 @@ class Setting extends ApiCommon
                         $error = true;
                         $errorMessage[] = "合同'".$dataInfo['name']."'操作失败，错误原因：无权操作";
                     }                         
+                    $message_type = Message::TEAM_CONTRACT;
                     continue;
             }
             if ($error !== true) {
@@ -201,8 +205,17 @@ class Setting extends ApiCommon
                 $res = $settingModel->createTeamData($param);
                 if (!$res) {
                     $errorMessage[] = $typesName.$dataInfo['name']."'操作失败，错误原因：修改失败";
-                }                
-            }          
+                } else {
+                    (new Message())->send(
+                        $message_type,
+                        [
+                            'title' => $dataInfo['name'],
+                            'action_id' => $v
+                        ],
+                        $param['user_id']
+                    );
+                }
+            }         
         }
         if ($errorMessage) {
             return resultArray(['error' => $errorMessage]);

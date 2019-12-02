@@ -1,23 +1,30 @@
 <template>
-  <el-select style="width: 100%;"
-             v-model="dataValue"
-             @change="valueChange"
-             placeholder="请选择"
-             :disabled="disabled">
-    <el-option v-for="item in options"
-               :key="item.type_id"
-               :label="item.name"
-               :value="item.type_id">
-    </el-option>
+  <el-select
+    v-model="dataValue"
+    :disabled="disabled"
+    style="width: 100%;"
+    placeholder="请选择"
+    @change="valueChange">
+    <el-option
+      v-for="item in options"
+      :key="item.type_id"
+      :label="item.name"
+      :value="item.type_id"/>
   </el-select>
 </template>
 <script type="text/javascript">
 import stringMixin from './stringMixin'
 
 export default {
-  name: 'xh-business-status', // 商机状态
+  name: 'XhBusinessStatus', // 商机状态
   components: {},
   mixins: [stringMixin],
+  props: {},
+  data() {
+    return {
+      options: []
+    }
+  },
   computed: {},
   watch: {
     item: {
@@ -32,12 +39,6 @@ export default {
       immediate: true
     }
   },
-  data() {
-    return {
-      options: []
-    }
-  },
-  props: {},
   mounted() {},
   methods: {
     // 输入的值

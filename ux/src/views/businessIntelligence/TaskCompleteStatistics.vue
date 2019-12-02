@@ -1,61 +1,67 @@
 <template>
-  <div v-loading="loading"
-       class="main-container">
+  <div
+    v-loading="loading"
+    class="main-container">
     <div class="handle-bar">
-      <el-date-picker v-model="dateSelect"
-                      type="year"
-                      :clearable="false"
-                      value-format="yyyy"
-                      :picker-options="pickerOptions"
-                      placeholder="选择年">
-      </el-date-picker>
-      <el-select v-model="typeSelect"
-                 placeholder="请选择">
-        <el-option v-for="item in [{label:'合同金额', value:1},{label:'回款金额', value:2}]"
-                   :key="item.value"
-                   :label="item.label"
-                   :value="item.value">
-        </el-option>
+      <el-date-picker
+        v-model="dateSelect"
+        :clearable="false"
+        :picker-options="pickerOptions"
+        type="year"
+        value-format="yyyy"
+        placeholder="选择年"/>
+      <el-select
+        v-model="typeSelect"
+        placeholder="请选择">
+        <el-option
+          v-for="item in [{label:'合同金额', value:1},{label:'回款金额', value:2}]"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"/>
       </el-select>
-      <el-select v-model="structuresSelectValue"
-                 @change="structuresValueChange"
-                 placeholder="选择部门">
-        <el-option v-for="item in deptList"
-                   :key="item.id"
-                   :label="item.name"
-                   :value="item.id">
-        </el-option>
+      <el-select
+        v-model="structuresSelectValue"
+        placeholder="选择部门"
+        @change="structuresValueChange">
+        <el-option
+          v-for="item in deptList"
+          :key="item.id"
+          :label="item.name"
+          :value="item.id"/>
       </el-select>
-      <el-select v-model="userSelectValue"
-                 :clearable="true"
-                 placeholder="选择员工">
-        <el-option v-for="item in userOptions"
-                   :key="item.id"
-                   :label="item.realname"
-                   :value="item.id">
-        </el-option>
+      <el-select
+        v-model="userSelectValue"
+        :clearable="true"
+        placeholder="选择员工">
+        <el-option
+          v-for="item in userOptions"
+          :key="item.id"
+          :label="item.realname"
+          :value="item.id"/>
       </el-select>
-      <el-button @click.native="handleClick('search')"
-                 type="primary">搜索</el-button>
+      <el-button
+        type="primary"
+        @click.native="handleClick('search')">搜索</el-button>
     </div>
     <div class="content">
       <div class="axis-content">
-        <div id="axismain"></div>
+        <div id="axismain"/>
       </div>
       <div class="table-content">
-        <el-table :data="list"
-                  stripe
-                  border
-                  height="400"
-                  highlight-current-row>
-          <el-table-column v-for="(item, index) in fieldList"
-                           :key="index"
-                           align="center"
-                           header-align="center"
-                           show-overflow-tooltip
-                           :prop="item.field"
-                           :label="item.name">
-          </el-table-column>
+        <el-table
+          :data="list"
+          stripe
+          border
+          height="400"
+          highlight-current-row>
+          <el-table-column
+            v-for="(item, index) in fieldList"
+            :key="index"
+            :prop="item.field"
+            :label="item.name"
+            align="center"
+            header-align="center"
+            show-overflow-tooltip/>
         </el-table>
       </div>
     </div>
@@ -70,7 +76,7 @@ import moment from 'moment'
 
 export default {
   /** 业绩目标完成情况 */
-  name: 'task-complete-statistics',
+  name: 'TaskCompleteStatistics',
   components: {},
   data() {
     return {
@@ -147,7 +153,7 @@ export default {
     },
     /** 部门下员工 */
     getUserList() {
-      let params = {}
+      const params = {}
       params.structure_id = this.structuresSelectValue
       getSubUserByStructrue(params)
         .then(res => {
@@ -166,9 +172,9 @@ export default {
       })
         .then(res => {
           this.list = []
-          let receivabless = []
-          let achiements = []
-          let rates = []
+          const receivabless = []
+          const achiements = []
+          const rates = []
           for (let index = 1; index < 13; index++) {
             const element = res.data[index]
             receivabless.push(element.receivables)
@@ -190,7 +196,7 @@ export default {
     /** 顶部操作 */
     handleClick(type) {
       if (type === 'search') {
-        this.refreshTableHeadAndChartInfo() 
+        this.refreshTableHeadAndChartInfo()
         this.getAhievementDatalist()
       }
     },
@@ -207,9 +213,9 @@ export default {
     },
     /** 柱状图 */
     initAxis() {
-      let axisChart = echarts.init(document.getElementById('axismain'))
+      const axisChart = echarts.init(document.getElementById('axismain'))
 
-      let option = {
+      const option = {
         color: ['#6ca2ff', '#6ac9d7', '#ff7474'],
         tooltip: {
           trigger: 'axis',

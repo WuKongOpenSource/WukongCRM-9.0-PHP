@@ -14,7 +14,7 @@ return [
     // 应用命名空间
     'app_namespace'          => 'app',
     // 应用调试模式
-    'app_debug'              => false,
+    'app_debug'              => true,
     // 应用Trace
     'app_trace'              => false,
     // 应用模式状态
@@ -247,5 +247,13 @@ return [
     //百度地图apiKey
     'map_ak' => 'g4D9pzuFnwjVVpUCDvQ6vhkSfPDx7V3q',
     //组织简称授权码
-    'num_ak' => '',
+    'num_ak' => '',     
+    
+    // 营销推广 加密key
+    'marketing_key' => 'WsVcHjqWeg8fccRNYufyDuiTtETC7MPC233',
+
+    // 商业智能查询缓存时间（秒）
+    'bi_cache_time' => 1800,
+    // 商业智能慢查询查询时间（查询超过该时间进行数据缓存）（毫秒）
+    'bi_slow_query_time' => 500
 ];

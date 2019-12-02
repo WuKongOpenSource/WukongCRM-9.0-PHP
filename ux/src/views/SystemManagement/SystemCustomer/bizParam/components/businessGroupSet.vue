@@ -2,56 +2,60 @@
   <div v-loading="loading">
     <div class="content-title">
       <span>商机组设置</span>
-      <el-button type="primary"
-                 class="rt"
-                 size="medium"
-                 @click="addBusiness">添加商机组</el-button>
+      <el-button
+        type="primary"
+        class="rt"
+        size="medium"
+        @click="addBusiness">添加商机组</el-button>
     </div>
     <div class="business-table">
-      <el-table :data="businessData"
-                style="width: 100%"
-                stripe
-                :height="tableHeight"
-                :header-cell-style="headerCellStyle">
-        <el-table-column v-for="(item, index) in businessList"
-                         :key="index"
-                         show-overflow-tooltip
-                         :prop="item.field"
-                         :label="item.label"
-                         :formatter="fieldFormatter">
-
-        </el-table-column>
-        <el-table-column fixed="right"
-                         label="操作"
-                         width="120">
+      <el-table
+        :data="businessData"
+        :height="tableHeight"
+        :header-cell-style="headerCellStyle"
+        style="width: 100%"
+        stripe>
+        <el-table-column
+          v-for="(item, index) in businessList"
+          :key="index"
+          :prop="item.field"
+          :label="item.label"
+          :formatter="fieldFormatter"
+          show-overflow-tooltip/>
+        <el-table-column
+          fixed="right"
+          label="操作"
+          width="120">
           <template slot-scope="scope">
-            <el-button @click="businessEdit(scope.row)"
-                       type="text"
-                       size="small">编 辑</el-button>
-            <el-button type="text"
-                       size="small"
-                       @click="businessDelect(scope)">删 除</el-button>
+            <el-button
+              type="text"
+              size="small"
+              @click="businessEdit(scope.row)">编 辑</el-button>
+            <el-button
+              type="text"
+              size="small"
+              @click="businessDelect(scope)">删 除</el-button>
           </template>
         </el-table-column>
       </el-table>
       <div class="p-contianer">
-        <el-pagination class="p-bar"
-                       @size-change="handleSizeChange"
-                       @current-change="handleCurrentChange"
-                       :current-page="currentPage"
-                       :page-sizes="pageSizes"
-                       :page-size.sync="pageSize"
-                       layout="total, sizes, prev, pager, next, jumper"
-                       :total="total">
-        </el-pagination>
+        <el-pagination
+          :current-page="currentPage"
+          :page-sizes="pageSizes"
+          :page-size.sync="pageSize"
+          :total="total"
+          class="p-bar"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"/>
       </div>
     </div>
-    <business-dialog @businessClose="businessClose"
-                     @businessSubmit="businessSubmit"
-                     :infoData="businessObj"
-                     :businessDialogVisible="businessDialogVisible"
-                     :businessTitle="businessTitle">
-    </business-dialog>
+    <business-dialog
+      :info-data="businessObj"
+      :business-dialog-visible="businessDialogVisible"
+      :business-title="businessTitle"
+      @businessClose="businessClose"
+      @businessSubmit="businessSubmit"/>
   </div>
 </template>
 
@@ -68,7 +72,7 @@ import { getDateFromTimestamp } from '@/utils'
 import moment from 'moment'
 
 export default {
-  name: 'business-group-set',
+  name: 'BusinessGroupSet',
 
   components: {
     BusinessDialog
@@ -97,6 +101,13 @@ export default {
       pageSizes: [10, 20, 30, 40],
       total: 0
     }
+  },
+  created() {
+    /** 控制table的高度 */
+    window.onresize = () => {
+      this.tableHeight = document.documentElement.clientHeight - 320
+    }
+    this.getBusinessGroupList()
   },
   methods: {
     /**
@@ -147,7 +158,7 @@ export default {
     fieldFormatter(row, column) {
       // 如果需要格式化
       if (column.property == 'structure_id') {
-        //格式部门
+        // 格式部门
         var info = row[column.property + '_info']
         var name = ''
         if (info) {
@@ -156,9 +167,9 @@ export default {
               name + info[index].name + (index === info.length - 1 ? '' : '、')
           }
         }
-        return name ? name : '全公司'
+        return name || '全公司'
       } else if (column.property == 'create_time') {
-        //格式时间
+        // 格式时间
         if (row[column.property] == 0 || !row[column.property]) {
           return ''
         }
@@ -166,7 +177,7 @@ export default {
           'YYYY-MM-DD HH:mm:ss'
         )
       } else if (column.property == 'create_user_id') {
-        //格式create_user 人
+        // 格式create_user 人
         var info = row[column.property + '_info']
         return info ? info.realname : ''
       }
@@ -264,13 +275,6 @@ export default {
         })
         .catch(() => {})
     }
-  },
-  created() {
-    /** 控制table的高度 */
-    window.onresize = () => {
-      this.tableHeight = document.documentElement.clientHeight - 320
-    }
-    this.getBusinessGroupList()
   }
 }
 </script>

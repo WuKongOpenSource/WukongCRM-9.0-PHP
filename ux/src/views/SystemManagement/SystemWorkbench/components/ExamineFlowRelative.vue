@@ -4,57 +4,67 @@
     <div style="height: 100%;position: relative;">
       <div class="cr-body-content">
         <flexbox class="content-header">
-          <el-input class="search-container"
-                    v-model="searchContent">
-            <el-button slot="append"
-                       @click.native="searchInput"
-                       icon="el-icon-search"></el-button>
+          <el-input
+            v-model="searchContent"
+            class="search-container">
+            <el-button
+              slot="append"
+              icon="el-icon-search"
+              @click.native="searchInput"/>
           </el-input>
-          <el-button class="create-button"
-                     @click="isCreate=true"
-                     type="primary">新建</el-button>
+          <el-button
+            class="create-button"
+            type="primary"
+            @click="isCreate=true">新建</el-button>
         </flexbox>
-        <el-table class="cr-table"
-                  ref="relativeTable"
-                  :data="list"
-                  v-loading="loading"
-                  :height="250"
-                  stripe
-                  border
-                  highlight-current-row
-                  style="width: 100%"
-                  @select-all="selectAll"
-                  @selection-change="handleSelectionChange"
-                  @row-click="handleRowClick">
-          <el-table-column show-overflow-tooltip
-                           type="selection"
-                           align="center"
-                           width="55"></el-table-column>
-          <el-table-column v-for="(item, index) in fieldList"
-                           :key="index"
-                           show-overflow-tooltip
-                           :prop="item.prop"
-                           :label="item.label"
-                           :width="150"
-                           :formatter="fieldFormatter"></el-table-column>
-          <el-table-column></el-table-column>
+        <el-table
+          v-loading="loading"
+          ref="relativeTable"
+          :data="list"
+          :height="250"
+          class="cr-table"
+          stripe
+          border
+          highlight-current-row
+          style="width: 100%"
+          @select-all="selectAll"
+          @selection-change="handleSelectionChange"
+          @row-click="handleRowClick">
+          <el-table-column
+            show-overflow-tooltip
+            type="selection"
+            align="center"
+            width="55"/>
+          <el-table-column
+            v-for="(item, index) in fieldList"
+            :key="index"
+            :prop="item.prop"
+            :label="item.label"
+            :width="150"
+            :formatter="fieldFormatter"
+            show-overflow-tooltip/>
+          <el-table-column/>
         </el-table>
         <div class="table-footer">
-          <el-button @click.native="changePage('up')"
-                     :disabled="currentPage <= 1">上一页</el-button>
-          <el-button @click.native="changePage('down')"
-                     :disabled="currentPage >= totalPage">下一页</el-button>
+          <el-button
+            :disabled="currentPage <= 1"
+            @click.native="changePage('up')">上一页</el-button>
+          <el-button
+            :disabled="currentPage >= totalPage"
+            @click.native="changePage('down')">下一页</el-button>
         </div>
       </div>
     </div>
     <div class="handle-bar">
       <el-button @click.native="closeView">取消</el-button>
-      <el-button @click.native="confirmClick"
-                 type="primary">确定</el-button>
+      <el-button
+        type="primary"
+        @click.native="confirmClick">确定</el-button>
     </div>
-    <create-system-examine v-if="isCreate"
-                           @save="getList"
-                           @hiden-view="isCreate=false"></create-system-examine>
+    <create-system-examine
+      v-if="isCreate"
+      @save="getList"
+      @hiden-view="isCreate=false"/>
   </div>
 </template>
 
@@ -62,17 +72,38 @@
 import { examineFlowIndex } from '@/api/systemManagement/examineflow'
 import CreateSystemExamine from '../../SystemExamine/CreateSystemExamine'
 import { timestampToFormatTime } from '@/utils'
-import moment from 'moment'
+
 
 export default {
-  name: 'examine-flow-relatieve', // 相关
+  name: 'ExamineFlowRelatieve', // 相关
   components: {
     CreateSystemExamine
   },
-  computed: {
-    // 展示相关效果 去除场景
-    isRelationShow() {
-      return this.action.type === 'condition'
+  props: {
+    /** 多选框 只能选一个 */
+    radio: {
+      type: Boolean,
+      default: true
+    },
+    /** 已选信息 */
+    selectedData: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    },
+    /**
+     * default 默认  condition 固定条件筛选
+     * relative: 相关 添加
+     */
+    action: {
+      type: Object,
+      default: () => {
+        return {
+          type: 'default',
+          data: {}
+        }
+      }
     }
   },
   data() {
@@ -109,35 +140,14 @@ export default {
         }
       ], // 表头数据
       currentPage: 1, // 当前页数
-      totalPage: 1, //总页数
+      totalPage: 1, // 总页数
       selectedItem: [] // 勾选的数据 点击确定 传递给父组件
     }
   },
-  props: {
-    /** 多选框 只能选一个 */
-    radio: {
-      type: Boolean,
-      default: true
-    },
-    /** 已选信息 */
-    selectedData: {
-      type: Object,
-      default: () => {
-        return {}
-      }
-    },
-    /**
-     * default 默认  condition 固定条件筛选
-     * relative: 相关 添加
-     */
-    action: {
-      type: Object,
-      default: () => {
-        return {
-          type: 'default',
-          data: {}
-        }
-      }
+  computed: {
+    // 展示相关效果 去除场景
+    isRelationShow() {
+      return this.action.type === 'condition'
     }
   },
   mounted() {
@@ -222,7 +232,7 @@ export default {
     /** 列表操作 */
     // 当某一行被点击时会触发该事件
     handleRowClick(row, column, event) {},
-    //当选择项发生变化时会触发该事件
+    // 当选择项发生变化时会触发该事件
     handleSelectionChange(val) {
       if (this.radio) {
         // this.$refs.relativeTable.clearSelection();

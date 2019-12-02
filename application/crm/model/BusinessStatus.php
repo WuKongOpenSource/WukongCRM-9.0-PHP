@@ -28,9 +28,9 @@ class BusinessStatus extends Common
 	public function getDataList($type_id, $type = 0)
     {  	
     	if ($type == 1) {
-    		$list = db('crm_business_status')->where(['type_id' => $type_id])->whereOr(['type_id' => 0])->order('order_id asc')->select();
+    		$list = $this->where(['type_id' => $type_id])->whereOr(['type_id' => 0])->select();
     	} else {
-    		$list = db('crm_business_status')->where(['type_id' => $type_id])->order('order_id asc')->select();
+    		$list = $this->where(['type_id' => $type_id])->select();
     	}
         return $list ? : [];
     }

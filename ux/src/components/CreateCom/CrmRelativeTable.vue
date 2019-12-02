@@ -2,66 +2,78 @@
   <div class="cr-body-content">
     <flexbox class="content-header">
       <div v-if="!isRelationShow">场景：</div>
-      <el-dropdown v-if="!isRelationShow"
-                   trigger="click"
-                   @command="handleTypeDrop">
+      <el-dropdown
+        v-if="!isRelationShow"
+        trigger="click"
+        @command="handleTypeDrop">
         <flexbox>
-          <div>{{sceneInfo ? sceneInfo.name : '请选择'}}</div>
-          <i class="el-icon-arrow-down el-icon--right"
-             style="color:#777;"></i>
+          <div>{{ sceneInfo ? sceneInfo.name : '请选择' }}</div>
+          <i
+            class="el-icon-arrow-down el-icon--right"
+            style="color:#777;"/>
         </flexbox>
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item v-for="(item, index) in scenesList"
-                            :key="index"
-                            :command="item ">{{item.name}}</el-dropdown-item>
+          <el-dropdown-item
+            v-for="(item, index) in scenesList"
+            :key="index"
+            :command="item ">{{ item.name }}</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
-      <el-input class="search-container"
-                v-model="searchContent">
-        <el-button slot="append"
-                   @click.native="searchInput"
-                   icon="el-icon-search"></el-button>
+      <el-input
+        v-model="searchContent"
+        class="search-container">
+        <el-button
+          slot="append"
+          icon="el-icon-search"
+          @click.native="searchInput"/>
       </el-input>
-      <el-button class="create-button"
-                 @click="isCreate=true"
-                 type="primary">新建</el-button>
+      <el-button
+        class="create-button"
+        type="primary"
+        @click="isCreate=true">新建</el-button>
     </flexbox>
-    <el-table class="cr-table"
-              ref="relativeTable"
-              :data="list"
-              v-loading="loading"
-              :height="250"
-              stripe
-              border
-              highlight-current-row
-              style="width: 100%"
-              @select-all="selectAll"
-              @selection-change="handleSelectionChange"
-              @row-click="handleRowClick">
-      <el-table-column show-overflow-tooltip
-                       type="selection"
-                       align="center"
-                       width="55"></el-table-column>
-      <el-table-column v-for="(item, index) in fieldList"
-                       :key="index"
-                       :fixed="index===0"
-                       show-overflow-tooltip
-                       :prop="item.prop"
-                       :label="item.label"
-                       :width="150"
-                       :formatter="fieldFormatter"></el-table-column>
-      <el-table-column></el-table-column>
+    <el-table
+      v-loading="loading"
+      ref="relativeTable"
+      :data="list"
+      :height="250"
+      class="cr-table"
+      stripe
+      border
+      highlight-current-row
+      style="width: 100%"
+      @select-all="selectAll"
+      @selection-change="handleSelectionChange"
+      @row-click="handleRowClick">
+      <el-table-column
+        show-overflow-tooltip
+        type="selection"
+        align="center"
+        width="55"/>
+      <el-table-column
+        v-for="(item, index) in fieldList"
+        :key="index"
+        :fixed="index===0"
+        :prop="item.prop"
+        :label="item.label"
+        :width="150"
+        :formatter="fieldFormatter"
+        show-overflow-tooltip/>
+      <el-table-column/>
     </el-table>
     <div class="table-footer">
-      <el-button @click.native="changePage('up')"
-                 :disabled="currentPage <= 1">上一页</el-button>
-      <el-button @click.native="changePage('down')"
-                 :disabled="currentPage >= totalPage">下一页</el-button>
+      <el-button
+        :disabled="currentPage <= 1"
+        @click.native="changePage('up')">上一页</el-button>
+      <el-button
+        :disabled="currentPage >= totalPage"
+        @click.native="changePage('down')">下一页</el-button>
     </div>
-    <c-r-m-create-view v-if="isCreate"
-                       :crm-type="crmType"
-                       @save-success="getList"
-                       @hiden-view="isCreate=false"></c-r-m-create-view>
+    <c-r-m-create-view
+      v-if="isCreate"
+      :crm-type="crmType"
+      @save-success="getList"
+      @hiden-view="isCreate=false"/>
   </div>
 </template>
 <script type="text/javascript">
@@ -76,75 +88,10 @@ import { getDateFromTimestamp } from '@/utils'
 import moment from 'moment'
 
 export default {
-  name: 'crm-relative-table', // 相关模块CRMCell
+  name: 'CrmRelativeTable', // 相关模块CRMCell
   components: {
     CRMCreateView: () =>
       import('@/views/customermanagement/components/CRMCreateView')
-  },
-  computed: {
-    // 展示相关效果 去除场景
-    isRelationShow() {
-      return this.action.type === 'condition'
-    }
-  },
-  watch: {
-    crmType: function(newValue, oldValue) {
-      if (newValue != oldValue) {
-        this.fieldList = []
-        this.getFieldList()
-      }
-    },
-    action: function(val) {
-      if (this.action != val) {
-        this.sceneInfo = null
-        this.list = [] // 表数据
-        this.fieldList = [] // 表头数据
-        this.currentPage = 1 // 当前页数
-        this.totalPage = 1 //总页数
-        if (!this.isRelationShow) {
-          this.getSceneList()
-        } else {
-          this.getFieldList()
-        }
-      }
-    },
-    show: {
-      handler(val) {
-        if (val && this.fieldList.length == 0) {
-          // 相关列表展示时不需要场景 直接获取展示字段
-          if (!this.isRelationShow) {
-            this.getSceneList()
-          } else {
-            this.getFieldList()
-          }
-        }
-      },
-      deep: true,
-      immediate: true
-    },
-    // 选择
-    selectedData: function() {
-      this.checkItemsWithSelectedData()
-    }
-  },
-  data() {
-    return {
-      loading: false, // 加载进度
-      searchContent: '', // 输入内容
-      isCreate: false, // 控制新建
-      scenesList: [], // 场景信息
-      sceneInfo: null,
-
-      list: [], // 表数据
-      fieldList: [], // 表头数据
-      currentPage: 1, // 当前页数
-      totalPage: 1, //总页数
-
-      otherItems: [],
-      selectedItem: [], // 勾选的数据 点击确定 传递给父组件
-      /** 格式化规则 */
-      formatterRules: {}
-    }
   },
   props: {
     show: {
@@ -182,13 +129,78 @@ export default {
       }
     }
   },
+  data() {
+    return {
+      loading: false, // 加载进度
+      searchContent: '', // 输入内容
+      isCreate: false, // 控制新建
+      scenesList: [], // 场景信息
+      sceneInfo: null,
+
+      list: [], // 表数据
+      fieldList: [], // 表头数据
+      currentPage: 1, // 当前页数
+      totalPage: 1, // 总页数
+
+      otherItems: [],
+      selectedItem: [], // 勾选的数据 点击确定 传递给父组件
+      /** 格式化规则 */
+      formatterRules: {}
+    }
+  },
+  computed: {
+    // 展示相关效果 去除场景
+    isRelationShow() {
+      return this.action.type === 'condition'
+    }
+  },
+  watch: {
+    crmType: function(newValue, oldValue) {
+      if (newValue != oldValue) {
+        this.fieldList = []
+        this.getFieldList()
+      }
+    },
+    action: function(val) {
+      if (this.action != val) {
+        this.sceneInfo = null
+        this.list = [] // 表数据
+        this.fieldList = [] // 表头数据
+        this.currentPage = 1 // 当前页数
+        this.totalPage = 1 // 总页数
+        if (!this.isRelationShow) {
+          this.getSceneList()
+        } else {
+          this.getFieldList()
+        }
+      }
+    },
+    show: {
+      handler(val) {
+        if (val && this.fieldList.length == 0) {
+          // 相关列表展示时不需要场景 直接获取展示字段
+          if (!this.isRelationShow) {
+            this.getSceneList()
+          } else {
+            this.getFieldList()
+          }
+        }
+      },
+      deep: true,
+      immediate: true
+    },
+    // 选择
+    selectedData: function() {
+      this.checkItemsWithSelectedData()
+    }
+  },
   mounted() {},
   methods: {
     /**
      * 刷新列表
      */
     refreshList() {
-      this.currentPage = 1;
+      this.currentPage = 1
       this.getList()
     },
 
@@ -223,24 +235,22 @@ export default {
           const element = defaultFields[index]
           /** 获取需要格式化的字段 和格式化的规则 */
           if (element.form_type === 'datetime') {
-            function foramtterDatetime(time) {
-              if (!time || time == 0) {
-                return ''
-              }
-              return moment(getDateFromTimestamp(time)).format(
-                'YYYY-MM-DD HH:mm:ss'
-              )
-            }
             this.formatterRules[element.field] = {
-              formatter: foramtterDatetime
+              formatter: (time) => {
+                if (!time || time == 0) {
+                  return ''
+                }
+                return moment(getDateFromTimestamp(time)).format(
+                  'YYYY-MM-DD HH:mm:ss'
+                )
+              }
             }
           } else if (element.field === 'create_user_id') {
-            function fieldFormatter(info) {
-              return info ? info.realname : ''
-            }
             this.formatterRules[element.field] = {
               type: 'crm',
-              formatter: fieldFormatter
+              formatter: (info) => {
+                return info ? info.realname : ''
+              }
             }
             /** 联系人 客户 商机 */
           } else if (
@@ -248,24 +258,22 @@ export default {
             element.field === 'customer_id' ||
             element.field === 'business_id'
           ) {
-            function fieldFormatter(info) {
-              return info ? info.name : ''
-            }
             this.formatterRules[element.field] = {
               type: 'crm',
-              formatter: fieldFormatter
+              formatter: (info) => {
+                return info ? info.name : ''
+              }
             }
           } else if (
             element.field === 'status_id' ||
             element.field === 'type_id' ||
             element.field === 'category_id'
           ) {
-            function fieldFormatter(info) {
-              return info ? info : ''
-            }
             this.formatterRules[element.field] = {
               type: 'crm',
-              formatter: fieldFormatter
+              formatter: (info) => {
+                return info || ''
+              }
             }
           }
 
@@ -367,7 +375,7 @@ export default {
           // 是什么类型下的数据 传入什么类型的ID
           params.customer_id = this.action.data.customer_id
           if (this.action.data.params) {
-            for (let field in this.action.data.params) {
+            for (const field in this.action.data.params) {
               params[field] = this.action.data.params[field]
             }
           }
@@ -395,12 +403,12 @@ export default {
     },
     // 标记选择数据
     checkItemsWithSelectedData() {
-      let selectedArray = this.selectedData[this.crmType].map(item => {
+      const selectedArray = this.selectedData[this.crmType].map(item => {
         item.has = false
         return item
       })
 
-      let selectedRows = []
+      const selectedRows = []
       this.otherItems = []
 
       this.list.forEach((item, index) => {
@@ -451,7 +459,7 @@ export default {
     /** 列表操作 */
     // 当某一行被点击时会触发该事件
     handleRowClick(row, column, event) {},
-    //当选择项发生变化时会触发该事件
+    // 当选择项发生变化时会触发该事件
     handleSelectionChange(val) {
       if (this.radio) {
         // this.$refs.relativeTable.clearSelection();

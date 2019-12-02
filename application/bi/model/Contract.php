@@ -26,8 +26,7 @@ class Contract extends Common
      */		
 	function getWhereByMoney($whereArr)
     {
-        $money = db('crm_contract')->where($whereArr)->sum('money');
-        return $money;
+        return db('crm_contract')->where($whereArr)->sum('money');
     }
 
     /**
@@ -38,8 +37,7 @@ class Contract extends Common
      */
     function getSortByMoney($whereArr)
     {
-        $money = db('crm_contract')->group('owner_user_id')->field('owner_user_id,sum(money) as money')->order('money desc')->where($whereArr)->select();
-        return $money;
+        return $this->group('owner_user_id')->field('owner_user_id,sum(money) as money')->order('money desc')->where($whereArr)->select();
     }
 
     /**

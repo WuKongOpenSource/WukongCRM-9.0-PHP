@@ -1,76 +1,92 @@
 <template>
-  <slide-view v-empty="!canShowDetail"
-              xs-empty-icon="nopermission"
-              xs-empty-text="暂无权限"
-              :listenerIDs="listenerIDs"
-              :noListenerIDs="noListenerIDs"
-              :noListenerClass="noListenerClass"
-              @side-close="hideView"
-              :body-style="{padding: 0, height: '100%'}">
-    <flexbox v-if="canShowDetail"
-             v-loading="loading"
-             direction="column"
-             align="stretch"
-             class="d-container">
-      <c-r-m-detail-head crmType="business"
-                         @handle="detailHeadHandle"
-                         @close="hideView"
-                         :detail="detailData"
-                         :headDetails="headDetails"
-                         :id="id">
-        <div class="busi-line"></div>
+  <slide-view
+    v-empty="!canShowDetail"
+    :listener-ids="listenerIDs"
+    :no-listener-ids="noListenerIDs"
+    :no-listener-class="noListenerClass"
+    :body-style="{padding: 0, height: '100%'}"
+    xs-empty-icon="nopermission"
+    xs-empty-text="暂无权限"
+    @side-close="hideView">
+    <flexbox
+      v-loading="loading"
+      v-if="canShowDetail"
+      direction="column"
+      align="stretch"
+      class="d-container">
+      <c-r-m-detail-head
+        :detail="detailData"
+        :head-details="headDetails"
+        :id="id"
+        crm-type="business"
+        @handle="detailHeadHandle"
+        @close="hideView">
+        <div class="busi-line"/>
       </c-r-m-detail-head>
-      <div style="padding:10px 50px;"
-           v-if="status.length > 0">
-        <flexbox class="busi-state"
-                 :style="{'opacity' : detailData.is_end != 0 ? 1 : 1}">
-          <a v-for="(item, index) in status"
-             :key="index">
-            <el-popover placement="bottom"
-                        :title="item.name"
-                        width="150"
-                        trigger="hover"
-                        :content="'赢单率' + item.rate + '%'">
-              <div v-if="status.length -1 !=index"
-                   slot="reference"
-                   class="busi-state-item"
-                   @click="handleStatuChange(item, index)"
-                   :class="item.class">
-                {{item.name}}
-                <div v-if="index==0"
-                     class="state-circle circle-left"></div>
-                <div v-if="index!=0"
-                     class="state-arrow arrow-left"></div>
-                <div class="state-arrow arrow-right"></div>
+      <div
+        v-if="status.length > 0"
+        style="padding:10px 50px;">
+        <flexbox
+          :style="{'opacity' : detailData.is_end != 0 ? 1 : 1}"
+          class="busi-state">
+          <a
+            v-for="(item, index) in status"
+            :key="index">
+            <el-popover
+              :title="item.name"
+              :content="'赢单率' + item.rate + '%'"
+              placement="bottom"
+              width="150"
+              trigger="hover">
+              <div
+                v-if="status.length -1 !=index"
+                slot="reference"
+                :class="item.class"
+                class="busi-state-item"
+                @click="handleStatuChange(item, index)">
+                {{ item.name }}
+                <div
+                  v-if="index==0"
+                  class="state-circle circle-left"/>
+                <div
+                  v-if="index!=0"
+                  class="state-arrow arrow-left"/>
+                <div class="state-arrow arrow-right"/>
               </div>
             </el-popover>
 
-            <el-popover v-if="status.length -1 ==index"
-                        placement="bottom"
-                        :title="item.type == 0 ? '' : item.title"
-                        :content="item.type == 0 ? '' : item.detail"
-                        width="150"
-                        trigger="hover">
-              <div class="state-handel-cont"
-                   v-if="item.type == 0">
-                <flexbox class="state-handel-item"
-                         v-for="(item, index) in statuHandleItems"
-                         :key="index"
-                         @click.native="handleStatuResult(item, index)">
-                  <img class="state-handel-item-img"
-                       :src="item.img">
-                  <div class="state-handel-item-name">{{item.name}}</div>
-                  <div class="state-handel-item-value">{{item.value}}</div>
+            <el-popover
+              v-if="status.length -1 ==index"
+              :title="item.type == 0 ? '' : item.title"
+              :content="item.type == 0 ? '' : item.detail"
+              placement="bottom"
+              width="150"
+              trigger="hover">
+              <div
+                v-if="item.type == 0"
+                class="state-handel-cont">
+                <flexbox
+                  v-for="(item, index) in statuHandleItems"
+                  :key="index"
+                  class="state-handel-item"
+                  @click.native="handleStatuResult(item, index)">
+                  <img
+                    :src="item.img"
+                    class="state-handel-item-img">
+                  <div class="state-handel-item-name">{{ item.name }}</div>
+                  <div class="state-handel-item-value">{{ item.value }}</div>
                 </flexbox>
               </div>
-              <div slot="reference"
-                   class="busi-state-item"
-                   :class="item.class">
-                <i :class="item.overIcon"
-                   style="margin-right:8px;"></i>
-                {{item.name}}
-                <div class="state-arrow arrow-left"></div>
-                <div class="state-circle circle-right"></div>
+              <div
+                slot="reference"
+                :class="item.class"
+                class="busi-state-item">
+                <i
+                  :class="item.overIcon"
+                  style="margin-right:8px;"/>
+                {{ item.name }}
+                <div class="state-arrow arrow-left"/>
+                <div class="state-circle circle-right"/>
               </div>
             </el-popover>
           </a>
@@ -78,29 +94,34 @@
 
       </div>
       <div class="tabs">
-        <el-tabs v-model="tabCurrentName"
-                 @tab-click="handleClick">
-          <el-tab-pane v-for="(item, index) in tabnames"
-                       :key="index"
-                       :label="item.label"
-                       :name="item.name"></el-tab-pane>
+        <el-tabs
+          v-model="tabCurrentName"
+          @tab-click="handleClick">
+          <el-tab-pane
+            v-for="(item, index) in tabnames"
+            :key="index"
+            :label="item.label"
+            :name="item.name"/>
         </el-tabs>
       </div>
-      <div class="t-loading-content"
-           id="follow-log-content">
+      <div
+        id="follow-log-content"
+        class="t-loading-content">
         <keep-alive>
-          <component v-bind:is="tabName"
-                     crmType="business"
-                     :detail="detailData"
-                     :id="id"></component>
+          <component
+            :is="tabName"
+            :detail="detailData"
+            :id="id"
+            crm-type="business"/>
         </keep-alive>
       </div>
     </flexbox>
-    <c-r-m-create-view v-if="isCreate"
-                       crm-type="business"
-                       :action="{type: 'update', id: this.id}"
-                       @save-success="editSaveSuccess"
-                       @hiden-view="isCreate=false"></c-r-m-create-view>
+    <c-r-m-create-view
+      v-if="isCreate"
+      :action="{type: 'update', id: id}"
+      crm-type="business"
+      @save-success="editSaveSuccess"
+      @hiden-view="isCreate=false"/>
   </slide-view>
 </template>
 
@@ -116,19 +137,18 @@ import BusinessFollow from './components/BusinessFollow' // 跟进记录
 import CRMBaseInfo from '../components/CRMBaseInfo' // 商机基本信息
 import RelativeContract from '../components/RelativeContract' // 相关合同
 import RelativeContacts from '../components/RelativeContacts' // 相关联系人
-import RelativeHandle from '../components/RelativeHandle' //相关操作
-import RelativeTeam from '../components/RelativeTeam' //相关团队
-import RelativeProduct from '../components/RelativeProduct' //相关团队
-import RelativeFiles from '../components/RelativeFiles' //相关附件
+import RelativeHandle from '../components/RelativeHandle' // 相关操作
+import RelativeTeam from '../components/RelativeTeam' // 相关团队
+import RelativeProduct from '../components/RelativeProduct' // 相关团队
+import RelativeFiles from '../components/RelativeFiles' // 相关附件
 
 import CRMCreateView from '../components/CRMCreateView' // 新建页面
 
-import moment from 'moment'
 import detail from '../mixins/detail'
 
 export default {
   /** 客户管理 的 商机详情 */
-  name: 'business-detail',
+  name: 'BusinessDetail',
   components: {
     SlideView,
     CRMDetailHead,
@@ -283,11 +303,11 @@ export default {
           this.loading = false
         })
     },
-    //** 点击关闭按钮隐藏视图 */
+    //* * 点击关闭按钮隐藏视图 */
     hideView() {
       this.$emit('hide-view')
     },
-    //** tab标签点击 */
+    //* * tab标签点击 */
     handleClick(tab, event) {},
     /** 处理商机状态数据 */
     handleBusinessStatus(data) {
@@ -304,7 +324,7 @@ export default {
             if (data.is_end != 0) {
               // 状态已完成 展示灰色效果
               if (data.is_end == 1) {
-                //赢单
+                // 赢单
                 item['class'] = 'state-suc'
               } else {
                 item['class'] = 'state-invalid'
@@ -322,7 +342,7 @@ export default {
               if (data.is_end != 0) {
                 // 状态已完成 展示灰色效果
                 if (data.is_end == 1) {
-                  //赢单
+                  // 赢单
                   item['class'] = 'state-suc'
                 } else {
                   item['class'] = 'state-invalid'
@@ -359,13 +379,13 @@ export default {
         } else if (data.is_end == 2) {
           overItem.name = '输单'
           overItem.title = '赢单率0%'
-          overItem.detail = data.remark
+          overItem.detail = data.lose_reason
           overItem['overIcon'] = ['el-icon-circle-close', 'el-icon--right']
           overItem['class'] = 'state-fail'
         } else if (data.is_end == 3) {
           overItem.name = '无效'
           overItem.title = '赢单率0%'
-          overItem.detail = data.remark
+          overItem.detail = data.lose_reason
           overItem['overIcon'] = ['el-icon-remove-outline', 'el-icon--right']
           overItem['class'] = 'state-invalid'
         }

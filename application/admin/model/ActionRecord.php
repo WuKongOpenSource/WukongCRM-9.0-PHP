@@ -31,6 +31,13 @@ class ActionRecord extends Common
 			return [];
 		}
 		$dataList = db('admin_action_record')->where(['types' => $types,'action_id' => $action_id])->select();
+		if($types == 'crm_customer') {
+			$leads_id = db('crm_leads')->where(['customer_id' => $action_id, 'is_transform' => 1])->value('leads_id');
+			if($leads_id){
+				$leads_dataList = db('admin_action_record')->where(['types' => 'crm_leads','action_id' => $leads_id])->select();
+				$dataList = array_merge($leads_dataList, $dataList);
+			}
+		}
 		$userModel = model('User');
 		foreach ($dataList as $k=>$v) {
 			$dataList[$k]['user_id_info'] = isset($v['user_id']) ? $userModel->getUserById($v['user_id']) : [];

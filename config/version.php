@@ -1,5 +1,5 @@
 <?php
 return array(
-'VERSION'=>'9.2.6',
-'RELEASE'=>'20191030',
+'VERSION'=>'9.2.7',
+'RELEASE'=>'20191129',
 );

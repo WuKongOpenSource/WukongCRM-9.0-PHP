@@ -10,7 +10,10 @@ namespace app\admin\controller;
 use think\Request;
 use think\Session;
 use think\Hook;
+use think\Cache;
 use think\Db;
+use app\admin\model\LoginRecord;
+use app\admin\model\User as UserModel;
 
 class Users extends ApiCommon
 {
@@ -22,10 +25,24 @@ class Users extends ApiCommon
     **/    
     public function _initialize()
     {
-        parent::_initialize();
         $action = [
-            'permission'=>[],
-            'allow'=>['update','updatepwd','read','updateimg','resetpassword','userlistbystructid','groups','groupsdel','tobeusers','structureuserlist','getuserlist','usernameedit']
+            'permission' => ['exceldownload'],
+            'allow' => [
+                'update',
+                'updatepwd',
+                'read',
+                'updateimg',
+                'resetpassword',
+                'userlistbystructid',
+                'groups'
+                ,'groupsdel',
+                'tobeusers',
+                'structureuserlist',
+                'getuserlist',
+                'usernameedit',
+                'import',
+                'setparent'
+            ]
         ];
         Hook::listen('check_auth',$action);
 
@@ -456,4 +473,111 @@ class Users extends ApiCommon
             return resultArray(['error' => '修改失败，请重试！']);
         }
     }
+
+    /**
+     * 登录记录
+     */
+    public function loginRecord()
+    {
+        $loginRecordModel = new LoginRecord();
+        $request = $loginRecordModel->fmtRequest($this->param);
+        $where = [];
+        getWhereTimeByParam($where);
+        getWhereUserByParam($where, 'create_user_id');
+
+        $data = $loginRecordModel
+            ->where($where)
+            ->order(['create_time' => 'DESC'])
+            ->paginate($request['limit'])
+            ->each(function ($val) {
+                $val['create_user_info'] = $val->create_user_info;
+                $val['type_name'] = $val->type_name;
+            })
+            ->toArray();
+        
+        return resultArray([
+            'data' => [
+                'list' => $data['data'],
+                'dataCount' => $data['total'],
+                'lastPage' => $data['last_page'],
+            ],
+        ]);
+    }
+
+    /**
+     * 员工导入模板下载
+     * @author Michael_xu
+     * @param string $save_path 本地保存路径     用于错误数据导出，在 Admin\Model\Excel::batchImportData()调用
+     * @return
+     */
+    public function excelDownload($save_path = '')
+    {
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $excelModel = new \app\admin\model\Excel();
+
+        // 导出的字段列表
+        $field_list = UserModel::$import_field_list;
+        $excelModel->excelImportDownload($field_list, 'admin_user', $save_path);
+    }
+
+    /**
+     * 员工导入
+     */
+    public function import()
+    {
+        // 仅允许超管，系统管理员，部门与员工管理员 导入
+        if (false === UserModel::checkUserGroup([1, 2, 3])) {
+            return resultArray(['error' => '没有该权限']);
+        }
+        $param = $this->param;
+        $userInfo = $this->userInfo;
+        $excelModel = new \app\admin\model\Excel();
+        $param['types'] = 'admin_user';
+        $file = request()->file('file');
+        $res = $excelModel->batchImportData($file, $param, $this);
+        if (!$res) {
+            return resultArray(['error' => $excelModel->getError()]);
+        }
+        Cache::clear('user_info');
+        return resultArray(['data' => $excelModel->getError()]);
+    }
+
+    /**
+     * 批量设置直属上级
+     *
+     * @author Ymob
+     * @datetime 2019-10-28 13:37:57
+     */
+    public function setParent()
+    {
+        // 仅允许超管，系统管理员，部门与员工管理员 批量设置
+        if (false === UserModel::checkUserGroup([1, 2, 3])) {
+            return resultArray(['error' => '没有该权限']);
+        }
+        $parent_id = (int) $this->param['parent_id'];
+        $parent_user = UserModel::find($parent_id);
+        if (!$parent_user) {
+            return resultArray(['error' => '请选择直属上级']);
+        }
+        $user_id_list = (array) $this->param['id_list'];
+        if (empty($user_id_list)) {
+            return resultArray(['error' => '请选择员工']);
+        }
+        if (in_array(1, $user_id_list)) {
+            return resultArray(['error' => '超级管理员不能设置上级']);
+        }
+
+        if (in_array($parent_id, $user_id_list)) {
+            return resultArray(['error' => '直属上级不能为员工自己']);
+        }
+
+        if (UserModel::where(['id' => ['IN', $user_id_list]])->update(['parent_id' => $parent_id])) {
+            Cache::clear('user_info');
+
+            return resultArray(['data' => '员工直属上级设置成功']);
+        } else {
+            return resultArray(['data' => '员工直属上级设置失败' . (new UserModel)->getError()]);
+        }
+    } 
 }

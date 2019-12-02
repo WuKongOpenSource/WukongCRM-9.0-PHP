@@ -1,33 +1,36 @@
 <template>
-  <div class="container"
-       v-empty="!canShowIndex"
-       xs-empty-icon="nopermission"
-       xs-empty-text="暂无权限">
+  <div
+    v-empty="!canShowIndex"
+    class="container"
+    xs-empty-icon="nopermission"
+    xs-empty-text="暂无权限">
     <flexbox class="header">
-      <div class="name">{{data.row.name}}</div>
-      <div class="detail">商机（{{list.length}}）</div>
-      <img @click="hidenView"
-           class="close"
-           src="@/assets/img/task_close.png" />
+      <div class="name">{{ data.row.name }}</div>
+      <div class="detail">商机（{{ list.length }}）</div>
+      <img
+        class="close"
+        src="@/assets/img/task_close.png"
+        @click="hidenView" >
     </flexbox>
-    <el-table v-loading="loading"
-              :data="list"
-              height="250"
-              stripe
-              :cell-style="cellStyle"
-              :header-cell-style="headerCellStyle"
-              @row-click="handleRowClick"
-              style="margin-right:3px;"
-              highlight-current-row>
-      <el-table-column v-for="(item, index) in fieldList"
-                       :key="index"
-                       align="center"
-                       header-align="center"
-                       show-overflow-tooltip
-                       :formatter="fieldFormatter"
-                       :prop="item.prop"
-                       :label="item.label">
-      </el-table-column>
+    <el-table
+      v-loading="loading"
+      :data="list"
+      :cell-style="cellStyle"
+      :header-cell-style="headerCellStyle"
+      height="250"
+      stripe
+      style="margin-right:3px;"
+      highlight-current-row
+      @row-click="handleRowClick">
+      <el-table-column
+        v-for="(item, index) in fieldList"
+        :key="index"
+        :formatter="fieldFormatter"
+        :prop="item.prop"
+        :label="item.label"
+        align="center"
+        header-align="center"
+        show-overflow-tooltip/>
     </el-table>
   </div>
 </template>
@@ -38,8 +41,31 @@ import { crmBusinessIndex } from '@/api/customermanagement/business'
 
 export default {
   /** 客户管理 的 客户列表  相关商机列表*/
-  name: 'business-check',
+  name: 'BusinessCheck',
   components: {},
+
+  props: {
+    show: Boolean,
+    data: {
+      type: Object,
+      default: () => {
+        return {
+          row: {
+            name: ''
+          }
+        }
+      }
+    }
+  },
+  data() {
+    return {
+      loading: false,
+      list: [],
+      fieldList: [],
+      /** 格式化规则 */
+      formatterRules: {}
+    }
+  },
   computed: {
     ...mapGetters(['crm']),
     canShowIndex() {
@@ -61,28 +87,6 @@ export default {
       },
       deep: true,
       immediate: true
-    }
-  },
-  props: {
-    show: Boolean,
-    data: {
-      type: Object,
-      default: () => {
-        return {
-          row: {
-            name: ''
-          }
-        }
-      }
-    }
-  },
-  data() {
-    return {
-      loading: false,
-      list: [],
-      fieldList: [],
-      /** 格式化规则 */
-      formatterRules: {}
     }
   },
   mounted() {
@@ -109,7 +113,7 @@ export default {
       formatter: crmFieldFormatter
     }
     function fieldFormatter(info) {
-      return info ? info : ''
+      return info || ''
     }
     this.formatterRules['type_id'] = {
       type: 'crm',
@@ -156,7 +160,7 @@ export default {
       document.querySelector('#app').click()
       this.$emit('close', this.$el, this.data)
     },
-    //当某一行被点击时会触发该事件
+    // 当某一行被点击时会触发该事件
     handleRowClick(row, column, event) {
       this.$emit('click', row)
     },

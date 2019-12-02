@@ -11,6 +11,8 @@ use app\admin\controller\ApiCommon;
 use think\Hook;
 use think\Request;
 use think\Db;
+use app\bi\model\Customer as CustomerModel;
+use app\bi\model\Contract as ContractModel;
 
 class Ranking extends ApiCommon
 {
@@ -45,19 +47,16 @@ class Ranking extends ApiCommon
      * @return
      */
     public function contract()
-    {     
-        $userModel = new \app\admin\model\User();
-        $contractModel = new \app\bi\model\Contract();
+    {
         $param = $this->param;
         $whereArr = $this->com($param,'contract');
-        $whereArr['check_status'] = array('eq',2);
-        $userList = $contractModel->getSortByMoney($whereArr);
-        foreach ($userList as $key => $value) {
-            $user = $userModel->getUserById($value['owner_user_id']);
-            $userList[$key]['user_name'] = $user['realname'];
-            $userList[$key]['structure_name'] = $user['structure_name'];
-        }
-        return resultArray(['data' => $userList]);
+        $whereArr['check_status'] = 2;
+
+        return $this->handel(
+            new \app\bi\model\Contract,
+            $whereArr,
+            ['field' => 'SUM(`money`)', 'alias' => 'money', 'default' => '0.00']
+        );
     }
 
     /**
@@ -65,19 +64,16 @@ class Ranking extends ApiCommon
      * @return
      */
     public function receivables()
-    {        
-    	$userModel = new \app\admin\model\User();
-        $receivablesModel = new \app\bi\model\Receivables();
+    {
         $param = $this->param;
-        $whereArr = $this->com($param,'receivables');
-        $whereArr['check_status'] = array('eq',2);
-        $userList = $receivablesModel->getSortByMoney($whereArr);
-        foreach ($userList as $key => $value) {
-            $user = $userModel->getUserById($value['owner_user_id']);
-            $userList[$key]['user_name'] = $user['realname'];
-            $userList[$key]['structure_name'] = $user['structure_name'];
-        }
-        return resultArray(['data' => $userList]);
+        $whereArr = $this->com($param, 'receivables');
+        $whereArr['check_status'] = 2;
+
+        return $this->handel(
+            new \app\bi\model\Receivables,
+            $whereArr,
+            ['field' => 'SUM(`money`)', 'alias' => 'money', 'default' => '0.00']
+        );
     }
 
     /**
@@ -85,19 +81,16 @@ class Ranking extends ApiCommon
      * @return
      */
     public function signing()
-    {        
-    	$userModel = new \app\admin\model\User();
-        $contractModel = new \app\bi\model\Contract();
+    {
         $param = $this->param;
         $whereArr = $this->com($param,'contract');
-        $whereArr['check_status'] = array('eq',2);
-        $userList = $contractModel->getSortByCount($whereArr);
-        foreach ($userList as $key => $value) {
-            $user = $userModel->getUserById($value['owner_user_id']);
-            $userList[$key]['user_name'] = $user['realname'];
-            $userList[$key]['structure_name'] = $user['structure_name'];
-        }
-        return resultArray(['data' => $userList]);
+        $whereArr['check_status'] = 2;
+        
+        return $this->handel(
+            new ContractModel,
+            $whereArr,
+            ['field' => 'COUNT(*)', 'alias' => 'count', 'default' => 0]
+        );
     }
 
     /**
@@ -106,17 +99,14 @@ class Ranking extends ApiCommon
      */
     public function addCustomer()
     {        
-    	$userModel = new \app\admin\model\User();
-        $customerModel = new \app\bi\model\Customer();
-        $param = $this->param;
-        $whereArr = $this->com($param,'record');
-        $userList = $customerModel->getSortByCount($whereArr);
-        foreach ($userList as $key => $value) {
-            $user = $userModel->getUserById($value['owner_user_id']);
-            $userList[$key]['user_name'] = $user['realname'];
-            $userList[$key]['structure_name'] = $user['structure_name'];
-        }
-        return resultArray(['data' => $userList]);
+    	$param = $this->param;
+        $whereArr = $this->com($param, 'customer');
+
+        return $this->handel(
+            new \app\bi\model\Customer,
+            $whereArr,
+            ['field' => 'COUNT(*)', 'alias' => 'count', 'default' => 0]
+        );
     }
 
     /**
@@ -125,17 +115,14 @@ class Ranking extends ApiCommon
      */
     public function addContacts()
     {        
-    	$userModel = new \app\admin\model\User();
-        $contactsModel = new \app\bi\model\Contacts();
-        $param = $this->param;
-        $whereArr = $this->com($param,'record');
-        $userList = $contactsModel->getSortByCount($whereArr);
-        foreach ($userList as $key => $value) {
-            $user = $userModel->getUserById($value['owner_user_id']);
-            $userList[$key]['user_name'] = $user['realname'];
-            $userList[$key]['structure_name'] = $user['structure_name'];
-        }
-        return resultArray(['data' => $userList]);
+    	$param = $this->param;
+        $whereArr = $this->com($param, 'contacts');
+
+        return $this->handel(
+            new \app\bi\model\Contacts,
+            $whereArr,
+            ['field' => 'COUNT(*)', 'alias' => 'count', 'default' => 0]
+        );
     }
 
     /**
@@ -143,18 +130,16 @@ class Ranking extends ApiCommon
      * @return
      */
     public function recordNun()
-    {        
-    	$userModel = new \app\admin\model\User();
-        $recordModel = new \app\bi\model\Record();
+    {
         $param = $this->param;
-        $whereArr = $this->com($param,'record');
-        $userList = $recordModel->getSortByCount($whereArr);
-        foreach ($userList as $key => $value) {
-            $user = $userModel->getUserById($value['create_user_id']);
-            $userList[$key]['user_name'] = $user['realname'];
-            $userList[$key]['structure_name'] = $user['structure_name'];
-        }
-        return resultArray(['data' => $userList]);
+        $whereArr = $this->com($param, 'record');
+
+        return $this->handel(
+            new \app\bi\model\Record,
+            $whereArr,
+            ['field' => 'COUNT(*)', 'alias' => 'count', 'default' => 0],
+            'create_user_id'
+        );
     }
 
     /**
@@ -162,18 +147,16 @@ class Ranking extends ApiCommon
      * @return
      */
     public function recordCustomer()
-    {         
-    	$userModel = new \app\admin\model\User();
-        $recordModel = new \app\bi\model\Record();
-        $param = $this->param;
-        $whereArr = $this->com($param,'record');
-        $userList = $recordModel->getSortByCustomer($whereArr);
-        foreach ($userList as $key => $value) {
-            $user = $userModel->getUserById($value['create_user_id']);
-            $userList[$key]['user_name'] = $user['realname'];
-            $userList[$key]['structure_name'] = $user['structure_name'];
-        }
-        return resultArray(['data' => $userList]);
+    {
+    	$param = $this->param;
+        $whereArr = $this->com($param, 'record');
+
+        return $this->handel(
+            new \app\bi\model\Record,
+            $whereArr,
+            ['field' => 'COUNT(DISTINCT(`types_id`))', 'alias' => 'count', 'default' => 0],
+            'create_user_id'
+        );
     }
 
     /**
@@ -181,19 +164,17 @@ class Ranking extends ApiCommon
      * @return
      */
     public function examine()
-    {         
-        $userModel = new \app\admin\model\User();
-        $examineModel = new \app\bi\model\Examine();
+    {     
         $param = $this->param;
-        $whereArr = $this->com($param,'record');
-        $whereArr['category_id'] = array('eq',3);
-        $userList = $examineModel->getSortByExamine($whereArr);
-        foreach ($userList as $key => $value) {
-            $user = $userModel->getUserById($value['create_user_id']);
-            $userList[$key]['user_name'] = $user['realname'];
-            $userList[$key]['structure_name'] = $user['structure_name'];
-        }
-        return resultArray(['data' => $userList]);
+        $whereArr = $this->com($param, 'record');
+        $whereArr['category_id'] = 3; // 审批类型，3出差
+
+        return $this->handel(
+            new \app\bi\model\Examine,
+            $whereArr,
+            ['field' => 'COUNT(*)', 'alias' => 'count', 'default' => 0],
+            'create_user_id'
+        );
     }
 
     /**
@@ -205,20 +186,28 @@ class Ranking extends ApiCommon
         $userModel = new \app\admin\model\User();
         $productModel = new \app\bi\model\Product();
         $param = $this->param;
-        $userList = $productModel->getSortByProduct($param);
-        foreach ($userList as $key => $value) {
-            $user = $userModel->getUserById($value['owner_user_id']);
-            $userList[$key]['user_name'] = $user['realname'];
-            $userList[$key]['structure_name'] = $user['structure_name'];
+        $list = $productModel->getSortByProduct($param);
+        $list = array_column($list, null, 'owner_user_id');
+
+        $whereArr = $this->com($param, 'contract');
+
+        $data = [];
+        foreach ($whereArr['owner_user_id'][1] as $val) {
+            $user = $userModel->getUserById($val);
+            $item = [];
+            $item['num'] = $list[$val]['num'] ?: 0;
+            $item['user_name'] = $user['realname'];
+            $item['structure_name'] = $user['structure_name'];
+            $data[] = $item;
         }
-        return resultArray(['data' => $userList]);
+        return resultArray(['data' => $data]);
     }
 
     /**
      * 查询条件
      * @return
      */    
-    public function com($param, $type = '')
+    private function com($param, $type = '')
     {
         $userModel = new \app\admin\model\User();
         $adminModel = new \app\admin\model\Admin();
@@ -228,7 +217,7 @@ class Ranking extends ApiCommon
         $between_time = $whereData['between_time'];   
         if ($type == 'contract') {
             $where_time = 'order_date';
-        } elseif ($type == 'record') {
+        } elseif (in_array($type, ['record', 'customer', 'contacts'])) {
             $where_time = 'create_time';
         } elseif ($type == 'receivables') {
             $where_time = 'return_time';
@@ -241,7 +230,50 @@ class Ranking extends ApiCommon
         } else {
             $whereArr[$where_time] = array('between',array($between_time[0],$between_time[1]));
         }
-        $whereArr['create_user_id'] = array('in',$userIds);
+
+        if (in_array($type, ['customer', 'contract', 'receivables', 'contacts'])) {
+            $whereArr['owner_user_id'] = ['IN', $userIds];
+        } else {
+            $whereArr['create_user_id'] = ['IN', $userIds];
+        }
+        
         return $whereArr;
+    }
+
+    /**
+     * 查询统计数据
+     *
+     * @param model $model
+     * @param array $whereArr
+     * @return void
+     * @author Ymob
+     * @datetime 2019-11-25 11:11:59
+     */
+    private function handel($model, $whereArr, $field, $user_field = 'owner_user_id')
+    {
+    	$userModel = new \app\admin\model\User();
+        $sql = $model->field([
+                $user_field,
+                $field['field'] => $field['alias']
+            ])
+            ->where($whereArr)
+            ->group($user_field)
+            ->fetchSql()
+            ->select();
+
+        $list = queryCache($sql);
+        $list = array_column($list, null, $user_field);
+        $data = [];
+
+        foreach ($whereArr[$user_field][1] as $val) {
+            $user = $userModel->getUserById($val);
+            $item = [];
+            $item[$field['alias']] = $list[$val][$field['alias']] ?: $field['default'];
+            $item['user_name'] = $user['realname'];
+            $item['structure_name'] = $user['structure_name'];
+            $data[] = $item;
+        }
+        array_multisort($data, SORT_DESC, array_column($data, $field['alias']));
+        return resultArray(['data' => $data]);
     }
 }

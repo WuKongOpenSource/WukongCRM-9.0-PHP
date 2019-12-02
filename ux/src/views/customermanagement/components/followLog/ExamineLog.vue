@@ -2,31 +2,36 @@
   <div v-loading="loading">
     <div v-empty="list.length === 0">
       <div class="log-items">
-        <examine-cell v-for="(item, index) in list"
-                      :key="index"
-                      :data="item.dataInfo"
-                      @on-handle="examineCellHandle"></examine-cell>
+        <examine-cell
+          v-for="(item, index) in list"
+          :key="index"
+          :data="item.dataInfo"
+          @on-handle="examineCellHandle"/>
         <div class="load">
-          <el-button type="text"
-                     :loading="loadMoreLoading">{{loadMoreLoading ? '加载更多' : '没有更多了'}}</el-button>
+          <el-button
+            :loading="loadMoreLoading"
+            type="text">{{ loadMoreLoading ? '加载更多' : '没有更多了' }}</el-button>
         </div>
       </div>
     </div>
-    <examine-handle :show="showExamineHandle"
-                    @close="showExamineHandle = false"
-                    @save="refreshList"
-                    :id="rowID"
-                    examineType="oa_examine"
-                    status="2"></examine-handle>
-    <examine-create-view v-if="isCreate"
-                         :category_id="createInfo.category_id"
-                         :category_title="createInfo.title"
-                         :action="createAction"
-                         @save-success="refreshList"
-                         @hiden-view="isCreate=false"></examine-create-view>
-    <c-r-m-full-screen-detail :visible.sync="showFullDetail"
-                              :crmType="detailCRMType"
-                              :id="rowID"></c-r-m-full-screen-detail>
+    <examine-handle
+      :show="showExamineHandle"
+      :id="rowID"
+      examine-type="oa_examine"
+      status="2"
+      @close="showExamineHandle = false"
+      @save="refreshList"/>
+    <examine-create-view
+      v-if="isCreate"
+      :category_id="createInfo.category_id"
+      :category_title="createInfo.title"
+      :action="createAction"
+      @save-success="refreshList"
+      @hiden-view="isCreate=false"/>
+    <c-r-m-full-screen-detail
+      :visible.sync="showFullDetail"
+      :crm-type="detailCRMType"
+      :id="rowID"/>
   </div>
 </template>
 
@@ -35,11 +40,10 @@ import ExamineCell from '@/views/OAManagement/examine/components/examineCell' //
 import ExamineCreateView from '@/views/OAManagement/examine/components/examineCreateView'
 import { crmRecordIndex } from '@/api/customermanagement/common'
 import { oaExamineDelete } from '@/api/oamanagement/examine'
-import { formatTimeToTimestamp } from '@/utils'
 
 export default {
   /** 审批 跟进记录*/
-  name: 'examine-log',
+  name: 'ExamineLog',
   components: {
     ExamineCell,
     CRMFullScreenDetail: () =>
@@ -56,11 +60,6 @@ export default {
       default: ''
     }
   },
-  watch: {
-    id: function(val) {
-      this.refreshList()
-    }
-  },
   data() {
     return {
       loading: false,
@@ -71,7 +70,7 @@ export default {
       rowID: '', // 行信息
       // 撤回操作
       showExamineHandle: false,
-      isCreate: false, //是编辑
+      isCreate: false, // 是编辑
       createAction: { type: 'save' },
       createInfo: {}, // 编辑所需要的id 标题名信息
       // 详情
@@ -80,12 +79,17 @@ export default {
     }
   },
   computed: {},
+  watch: {
+    id: function(val) {
+      this.refreshList()
+    }
+  },
   mounted() {
     // 分批次加载
-    let dom = document.getElementById('follow-log-content')
+    const dom = document.getElementById('follow-log-content')
     dom.onscroll = () => {
-      let scrollOff = dom.scrollTop + dom.clientHeight - dom.scrollHeight
-      //滚动条到底部的条件
+      const scrollOff = dom.scrollTop + dom.clientHeight - dom.scrollHeight
+      // 滚动条到底部的条件
       if (Math.abs(scrollOff) < 10 && this.loadMoreLoading == true) {
         if (!this.isPost) {
           this.isPost = true

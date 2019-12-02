@@ -35,6 +35,54 @@ class User extends Common
     ];
 
 	/**
+	 * 导入字段
+	 *
+	 * @var array
+	 * @author Ymob
+	 * @datetime 2019-10-25 15:35:25
+	 */
+	public static $import_field_list = [
+		[
+			'field' => 'username',
+			'name' => '手机号（登录名）',
+			'form_type' => 'mobile',
+			'is_null' => 1,
+			'is_unique' => 1
+		],
+		[
+			'field' => 'password',
+			'name' => '密码',
+			'form_type' => 'text',
+			'is_null' => 1,
+		],
+		[
+			'field' => 'realname',
+			'name' => '姓名',
+			'form_type' => 'text',
+			'is_null' => 1,
+		],
+		[
+			'field' => 'sex',
+			'name' => '性别',
+			'form_type' => 'select',
+			'setting' => ['男', '女'],
+			'is_null' => 0,
+		],
+		[
+			'field' => 'email',
+			'name' => '邮箱',
+			'form_type' => 'email',
+			'is_null' => 0,
+		],
+		[
+			'field' => 'post',
+			'name' => '岗位',
+			'form_type' => 'text',
+			'is_null' => 0,
+		]
+	];
+
+	/**
 	 * 获取用户所属所有用户组
 	 * @param  array   $param  [description]
 	 */
@@ -195,10 +243,21 @@ class User extends Common
 	 */
 	public function createData($param)
 	{
-		if (empty($param['group_id']) || !is_array($param['group_id'])) {
-			$this->error = '请至少勾选一个用户组';
-			return false;
-		}		
+		// 非导入数据
+		if (request()->action() == 'import') {
+			$temp = [];
+			foreach (self::$import_field_list as $key => $val) {
+				$temp[$val['field']] = $param[$val['field']];
+			}
+			$param = $temp;
+			$param['structure_id'] = 0;
+		} else {
+			if (empty($param['group_id']) || !is_array($param['group_id'])) {
+				$this->error = '请至少勾选一个用户组';
+				return false;
+			}		
+		}
+
 		// 验证
 		$validate = validate($this->name);
 		if (!$validate->check($param)) {
@@ -219,8 +278,8 @@ class User extends Common
 			$param['password'] = user_md5($password, $salt, $param['username']);
 			$param['type'] = 1;
 			$param['mobile'] = $param['username'];
-			$this->data($param)->allowField(true)->save();		
-			$user_id = $this->id;
+			$this->data($param)->allowField(true)->isUpdate(false)->save();		
+			$user_id = (int) $this->getLastInsId();
 			//员工档案
 			$data['user_id'] = $param['user_id'];
 			unset($param['user_id']);
@@ -231,16 +290,19 @@ class User extends Common
 			$data['create_time'] = time();
 			Db::name('HrmUserDet')->insert($data);
 			
+			$userGroups = [];
 			foreach ($param['group_id'] as $k => $v) {
 				$userGroup['user_id'] = $user_id;
 				$userGroup['group_id'] = $v;
 				$userGroups[] = $userGroup;
 			}
-			Db::name('admin_access')->insertAll($userGroups);
+			if ($userGroups) {
+				Db::name('admin_access')->insertAll($userGroups);
+			}
 		
 			$this->commit();
 			$param['user_id'] = $data['user_id'];
-	        $resSync = $syncModel->syncData($param);			
+			$resSync = $syncModel->syncData($param);			
 			return true;
 		} catch(\Exception $e) {
 			$this->rollback();
@@ -315,9 +377,11 @@ class User extends Common
 				$this->error = '暂无此数据';
 				return false;
 			}
-			if (empty($param['group_id'])) {
-				$this->error = '请至少勾选一个用户组';
-				return false;
+			if (request()->action() != 'import') {
+				if (empty($param['group_id'])) {
+					$this->error = '请至少勾选一个用户组';
+					return false;
+				}
 			}
 			$subUserId = getSubUserId(true, 0, $id);
 			if ((int)$param['parent_id'] == (int)$id) {
@@ -346,6 +410,7 @@ class User extends Common
 				}
 				$this->allowField(true)->save($param, ['id' => $id]);
 				$this->commit();
+				Cache::rm('user_info' . $id);
 				
 				// $data['mobile'] = $param['username'];	 	
 				$data['email'] = $param['email'];	
@@ -766,7 +831,19 @@ class User extends Common
 		$data = Db::name('AdminUser')
 				->alias('user')
 				->join('__ADMIN_STRUCTURE__ structure', 'structure.id = user.structure_id', 'LEFT')
-				->where(['user.id' => $id])->field('user.id,username,img,thumb_img,realname,parent_id,structure.name as structure_name,structure.id as structure_id')->find();
+				->where(['user.id' => $id])
+				->field([
+					'user.id',
+					'username',
+					'img',
+					'thumb_img',
+					'realname',
+					'parent_id',
+					'structure.name' => 'structure_name',
+					'structure.id' => 'structure_id'
+				])
+				->cache('user_info' . $id, null, 'user_info')
+				->find();
 		$data['img'] = $data['img'] ? getFullPath($data['img']) : '';
 		$data['thumb_img'] = $data['thumb_img'] ? getFullPath($data['thumb_img']) : '';
 		return $data ? : [];
@@ -929,5 +1006,50 @@ class User extends Common
     {
     	$resValue = db('admin_user_threeparty')->where(['key' => $key,'user_id' => $user_id])->value('value');
     	return $resValue ? : '';
-    }			
+	}			
+	
+	/**
+	 * 获取当前登录用户信息
+	 *
+	 * @param string $key	默认返回所有信息
+	 * @return mixed
+	 * @author Ymob
+	 * @datetime 2019-10-22 14:38:07
+	 */
+	public static function userInfo($key = '')
+	{
+        $request = Request::instance();
+		$header = $request->header();
+
+		$authKey = $header['authkey'];
+		$sessionId = $header['sessionid'];
+		$paramArr = $request->param();
+		$platform = $paramArr['platform'] ? '_' . $paramArr['platform'] : ''; //请求平台(mobile,ding)
+		$cache = cache('Auth_' . $authKey . $platform);
+		if ($cache) {
+			if ($key) {
+				return $cache['userInfo'][$key];
+			} else {
+				return $cache['userInfo'];
+			}
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * 判断用户是否拥有 某(些) 角色
+	 *
+	 * @param array $group_list
+	 * @param integer $user_id
+	 * @return bool
+	 * @author Ymob
+	 * @datetime 2019-10-25 15:50:48
+	 */
+	public static function checkUserGroup($group_list = [], $user_id = 0)
+	{
+		$user_id = $user_id ?: self::userInfo('id');
+		if (empty($group_list))
+		return !!Access::where(['user_id' => $user_id, 'group_id' => ['IN', $group]])->value('user_id');
+	}
 }

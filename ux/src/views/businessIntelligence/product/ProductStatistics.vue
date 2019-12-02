@@ -1,42 +1,47 @@
 <template>
-  <div v-loading="loading"
-       class="main-container">
-    <filtrate-handle-view class="filtrate-bar"
-                          moduleType="product"
-                          @load="loading=true"
-                          @change="getProductDatalist">
-    </filtrate-handle-view>
+  <div
+    v-loading="loading"
+    class="main-container">
+    <filtrate-handle-view
+      class="filtrate-bar"
+      module-type="product"
+      @load="loading=true"
+      @change="getProductDatalist"/>
     <div class="content">
-      <el-table id="crm-table"
-                :data="newList"
-                :height="tableHeight"
-                :span-method="objectSpanMethod"
-                border
-                :cell-style="cellStyle"
-                @row-click="handleRowClick">
-        <el-table-column v-for="(item, index) in headFieldList"
-                         :key="index"
-                         align="center"
-                         header-align="center"
-                         show-overflow-tooltip
-                         :formatter="fieldFormatter"
-                         :prop="item.field"
-                         :label="item.name">
-        </el-table-column>
+      <el-table
+        id="crm-table"
+        :data="newList"
+        :height="tableHeight"
+        :span-method="objectSpanMethod"
+        :cell-style="cellStyle"
+        border
+        @row-click="handleRowClick">
+        <el-table-column
+          v-for="(item, index) in headFieldList"
+          :key="index"
+          :formatter="fieldFormatter"
+          :prop="item.field"
+          :label="item.name"
+          align="center"
+          header-align="center"
+          show-overflow-tooltip/>
       </el-table>
     </div>
-    <contract-detail v-if="showContractview"
-                     :id="rowID"
-                     @hide-view="showContractview=false"
-                     class="d-view"></contract-detail>
-    <customer-detail v-if="showCustomerView"
-                     :id="rowID"
-                     @hide-view="showCustomerView=false"
-                     class="d-view"></customer-detail>
-    <product-detail v-if="showProductview"
-                    :id="rowID"
-                    @hide-view="showProductview=false"
-                    class="d-view"></product-detail>
+    <contract-detail
+      v-if="showContractview"
+      :id="rowID"
+      class="d-view"
+      @hide-view="showContractview=false"/>
+    <customer-detail
+      v-if="showCustomerView"
+      :id="rowID"
+      class="d-view"
+      @hide-view="showCustomerView=false"/>
+    <product-detail
+      v-if="showProductview"
+      :id="rowID"
+      class="d-view"
+      @hide-view="showProductview=false"/>
   </div>
 </template>
 
@@ -56,12 +61,13 @@ function fieldFormatter(info) {
 
 export default {
   /** 产品销售情况统计 */
-  name: 'product-statistics',
+  name: 'ProductStatistics',
   components: {
     ContractDetail,
     CustomerDetail,
     ProductDetail
   },
+  mixins: [base],
   data() {
     return {
       loading: false,
@@ -97,7 +103,6 @@ export default {
       rowID: ''
     }
   },
-  mixins: [base],
   computed: {},
   mounted() {
     var self = this
@@ -224,13 +229,12 @@ export default {
       var allCount = 0 // 系列
       var allMoney = 0
 
-      var count
       for (let index = 0; index < this.list.length; index++) {
         const element = this.list[index]
 
         if (spanList.length == 0) {
-          seriesIndex = 0 //一个新系列的开始
-          productIndex = 0 //一个新产品的开始
+          seriesIndex = 0 // 一个新系列的开始
+          productIndex = 0 // 一个新产品的开始
           subCount = parseFloat(element.num) // 产品
           subMoney = parseFloat(element.subtotal)
           allCount = parseFloat(element.num) // 系列
@@ -249,19 +253,19 @@ export default {
           newList.push({ num: allCount, subtotal: allMoney }) // 系列小计数据
           spanList.push({ rowspan: 1, product_rowspan: 1, isAllSum: true }) // 系列小计style
 
-          /*** 新系列开始 */
+          /** * 新系列开始 */
           spanList.push({ rowspan: 1, product_rowspan: 1 }) // 新系列 新产品的 展示数据开始 style
           subCount = parseFloat(element.num) // 新产品的值 所以取消了重置为0
           subMoney = parseFloat(element.subtotal)
           allCount = parseFloat(element.num) // 系列
           allMoney = parseFloat(element.subtotal)
           newList.push(element) // 真实数据
-          seriesIndex = spanList.length - 1 //一个新系列的开始
-          productIndex = spanList.length - 1 //一个新产品的开始
+          seriesIndex = spanList.length - 1 // 一个新系列的开始
+          productIndex = spanList.length - 1 // 一个新产品的开始
         } else {
           var preItem = spanList[seriesIndex]
           preItem.rowspan += 1
-          /*** 相同产品 */
+          /** * 相同产品 */
           if (element.product_id == this.list[index - 1].product_id) {
             var preProItem = spanList[productIndex]
             preProItem.product_rowspan += 1
@@ -272,7 +276,7 @@ export default {
             allMoney += parseFloat(element.subtotal)
             newList.push(element) // 真实数据
           } else {
-            /*** 不相同产品 */
+            /** * 不相同产品 */
             // 需要添加一个小计
             preItem.rowspan += 1
 
@@ -280,9 +284,9 @@ export default {
             spanList.push({ rowspan: 0, product_rowspan: 1, isSum: true }) // 产品小计Style
 
             spanList.push({ rowspan: 0, product_rowspan: 1 }) // 新产品 第一条数据style
-            productIndex = spanList.length - 1 //一个新产品的开始=
+            productIndex = spanList.length - 1 // 一个新产品的开始=
             subCount = element.num
-            subMoney = parseFloat(element.subtotal) //开始了一个新的产品  所以没有 清空数据
+            subMoney = parseFloat(element.subtotal) // 开始了一个新的产品  所以没有 清空数据
             allCount += parseFloat(element.num) // 系列 继续 叠加
             allMoney += parseFloat(element.subtotal)
             newList.push(element) // 真实数据

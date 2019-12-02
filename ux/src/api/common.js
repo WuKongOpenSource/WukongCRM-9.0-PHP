@@ -3,16 +3,16 @@ import request from '@/utils/request'
 // 公共接口 涉及 员工 部门 等 使用频率较高 但分散 的接口
 // 权限范围内的用户列表
 /**
- * 
- * @param {*} data 
+ *
+ * @param {*} data
  * 1.默认全部
- * 
+ *
  * 2.模块下权限内
  * m
  * c
  * a
- * 
- * 
+ *
+ *
  */
 export function usersList(data) {
   return request({
@@ -131,3 +131,40 @@ export function adminIndexAuthList(data) {
     data: data
   })
 }
+
+// 文件静态资源下载
+export function adminFileDownload(data) {
+  return request({
+    url: 'admin/file/download',
+    method: 'post',
+    responseType: 'blob',
+    data: data
+  })
+}
+
+/**
+ * 员工导入模板下载
+ * @param {*} data
+ *
+ */
+export const userExcelDownloadURL = 'admin/users/excelDownload'
+
+
+// 员工导入
+export function userExcelImport(data) {
+  var param = new FormData()
+  Object.keys(data).forEach(key => {
+    param.append(key, data[key])
+  })
+  return request({
+    url: 'admin/users/import',
+    method: 'post',
+    data: param,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    timeout: 600000
+  })
+}
+
+

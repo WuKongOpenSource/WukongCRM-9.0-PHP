@@ -59,40 +59,36 @@ class Business extends ApiCommon
      */
     public function businessTrend()
     {
-        $businessModel = new \app\bi\model\Business();
+        $businessModel = new \app\crm\model\Business();
+        $param = $this->param;
         $userModel = new \app\admin\model\User();
-        $biCustomerModel = new \app\bi\model\Customer();
         $adminModel = new \app\admin\model\Admin(); 
         $param = $this->param;
         $perUserIds = $userModel->getUserByPer('bi', 'business', 'read'); //权限范围内userIds
         $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
-        $userIds = $whereArr['userIds'];        
-        
+        $userIds = $whereArr['userIds'];
+
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
-        }        
-        $company = $biCustomerModel->getParamByCompany($param);
-        $datas = array();
-        for ($i=1; $i <= $company['j']; $i++) { 
-            $whereArr = [];
-            $whereArr['create_user_id'] = array('in',$userIds);
-            $item = array();
-            $where_time = [];
-            //时间段
-            $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
-            $item['type'] = $timeArr['type'];
-            if ($timeArr['start_time'] && $timeArr['end_time']) {
-                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
-            }
-            $whereArr['create_time'] = $where_time;
-
-            $item['business_num'] = $businessModel->getDataCount($whereArr);
-            $item['business_money'] = $businessModel->getDataMoney($whereArr);
-            $item['start_time'] = $start_time;
-            $item['end_time'] = $end_time;
-            $datas[] = $item;
         }
-        return resultArray(['data' => $datas]);
+
+        $time = getTimeArray();
+        $where = [
+            'owner_user_id' => implode(',',$userIds),
+        ];
+        $sql = [];
+
+        foreach ($time['list'] as $val) {
+            $whereArr = $where;
+            $whereArr['type'] = $val['type'];
+            $whereArr['start_time'] = $val['start_time'];
+            $whereArr['end_time'] = $val['end_time'];
+            $sql[] = $businessModel->getTrendql($whereArr);
+        }
+
+        $sql = implode(' UNION ALL ', $sql);
+        $list = queryCache($sql);
+        return resultArray(['data' => $list]);
     }
 
     /**
@@ -105,11 +101,7 @@ class Business extends ApiCommon
         $crmBusinessModel = new \app\crm\model\Business();
         $userModel = new \app\admin\model\User();
         $param = $this->param;
-        if ($param['type']) {
-            $timeArr = getTimeByType($param['type']);
-            $param['start_time'] = $timeArr[0];
-            $param['end_time'] = $timeArr[1];
-        }        
+        
         $dataList = $businessModel->getDataList($param);
         foreach ($dataList as $k => $v) {
             $business_info = $crmBusinessModel->getDataById($v['business_id']);
@@ -125,6 +117,7 @@ class Business extends ApiCommon
             $dataList[$k]['status_id_info'] = db('crm_business_status')->where('status_id',$v['status_id'])->value('name');//销售阶段
             $dataList[$k]['type_id_info'] = db('crm_business_type')->where('type_id',$v['type_id'])->value('name');//商机状态组 
         }
+        
         return resultArray(['data' => $dataList]);
     }
     
@@ -136,46 +129,46 @@ class Business extends ApiCommon
      */
     public function win()
     {
-        $businessModel = new \app\bi\model\Business();
+        $businessModel = new \app\crm\model\Business();
         $userModel = new \app\admin\model\User();
-        $biCustomerModel = new \app\bi\model\Customer();
         $adminModel = new \app\admin\model\Admin(); 
         $param = $this->param;
-        $perUserIds = $userModel->getUserByPer('bi', 'business', 'read'); //权限范围内userIds
+        $perUserIds = $userModel->getUserByPer('bi', 'customer', 'read'); //权限范围内userIds
         $whereArr = $adminModel->getWhere($param, '', $perUserIds); //统计条件
         $userIds = $whereArr['userIds'];
-        
         if(empty($param['type']) && empty($param['start_time'])){
             $param['type'] = 'month';
         }
-        $company = $biCustomerModel->getParamByCompany($param);
-        $datas = array();
-        for ($i=1; $i <= $company['j']; $i++) { 
-            $whereArr = [];
-            $whereArr['create_user_id'] = array('in',$userIds);
-            $item = array();
-            $where_time = [];
-            //时间段
-            $timeArr = $biCustomerModel->getStartAndEnd($param,$company['year'],$i);
-            $item['type'] = $timeArr['type'];
-            if ($timeArr['start_time'] && $timeArr['end_time']) {
-                $where_time = array('between',array($timeArr['start_time'],$timeArr['end_time']));
-            }
-            $whereArr['create_time'] = $where_time;
 
-            $item['business_num'] = $businessModel->getDataCount($whereArr);
-            $whereArr['is_end'] = 1;
-            $item['business_end'] = $businessModel->getDataCount($whereArr);
-
-            if($item['business_num']== 0 || $item['business_end'] == 0){
-                $item['proportion'] = 0;
+        $time = getTimeArray();
+        $sql = $businessModel->field([
+                "FROM_UNIXTIME(create_time, '{$time['time_format']}')" => 'type',
+                'COUNT(*)' => 'business_num',
+                'SUM(
+                    CASE WHEN
+                        `is_end` = 1
+                    THEN 1 ELSE 0 END
+                )' => 'business_end'
+            ])
+            ->where([
+                'owner_user_id' => ['IN', $userIds],
+                'create_time' => ['BETWEEN', $time['between']]
+            ])
+            ->group('type')
+            ->fetchSql()
+            ->select();
+        $res = queryCache($sql);
+        $res = array_column($res, null, 'type');
+        foreach ($time['list'] as $key =>$val) {
+            $val['business_num'] = (int) $res[$val['type']]['business_num'];
+            $val['business_end'] = (int) $res[$val['type']]['business_end'];
+            if($res[$val['type']]['business_num']== 0 || $res[$val['type']]['business_end'] == 0){
+                $val['proportion'] = 0;
             }else{
-                $item['proportion'] = round(($item['business_end']/$item['business_num']),4)*100;
+                $val['proportion'] = round(($res[$val['type']]['business_end']/$res[$val['type']]['business_num']),4)*100;
             }
-            $item['start_time'] = $start_time;
-            $item['end_time'] = $end_time;
-            $datas[] = $item;
+            $time['list'][$key] = $val;
         }
-        return resultArray(['data' => $datas]);
+        return resultArray(['data' => $time['list']]);
     }
 }

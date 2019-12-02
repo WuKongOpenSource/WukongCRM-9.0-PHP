@@ -1,32 +1,32 @@
 <template>
   <div class="box-wrapper">
-    <div class="title"><span>{{attr.is_null ? '*' : ''}}</span>{{attr.name}}<span v-if="attr.input_tips">{{'（'+attr.input_tips+'）'}}</span></div>
+    <div class="title"><span>{{ attr.is_null ? '*' : '' }}</span>{{ attr.name }}<span v-if="attr.input_tips">{{ '（'+attr.input_tips+'）' }}</span></div>
     <div class="box">
       <flexbox class="select-box">
-          <div>{{attr.default_value ? attr.default_value :'请选择' }}</div>
-          <i class="el-icon-arrow-down el-icon--right"></i>
+        <div>{{ attr.default_value ? attr.default_value :'请选择' }}</div>
+        <i class="el-icon-arrow-down el-icon--right"/>
       </flexbox>
     </div>
-    <span class="el-icon-delete control" @click="handleDelete" v-if="isShow"></span>
+    <span v-if="isShow" class="el-icon-delete control" @click="handleDelete"/>
   </div>
 </template>
 
 <script>
-  /**
+/**
    * 选项
    */
-  import mixins from './mixin'
+import mixins from './mixin'
 
-  export default {
-    name: "SelectForm",
-    mixins: [mixins],
-    computed: {
-    },
-    data() {
-      return {
-      }
+export default {
+  name: 'SelectForm',
+  mixins: [mixins],
+  data() {
+    return {
     }
+  },
+  computed: {
   }
+}
 </script>
 
 <style scoped lang="scss">

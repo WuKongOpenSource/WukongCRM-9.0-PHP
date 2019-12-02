@@ -5,11 +5,11 @@ import request from '@/utils/request'
  * @param {*} data
  */
 export function workTaskArchListAPI(data) {
-    return request({
-        url: 'work/task/archList',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/task/archList',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -17,11 +17,11 @@ export function workTaskArchListAPI(data) {
  * @param {*} data
  */
 export function workWorkReadAPI(data) {
-    return request({
-        url: 'work/work/read',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/read',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -29,11 +29,11 @@ export function workWorkReadAPI(data) {
  * @param {*} data
  */
 export function workWorkDeleteAPI(data) {
-    return request({
-        url: 'work/work/delete',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/delete',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -41,11 +41,11 @@ export function workWorkDeleteAPI(data) {
  * @param {*} data
  */
 export function workWorkSaveAPI(data) {
-    return request({
-        url: 'work/work/save',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/save',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -53,11 +53,11 @@ export function workWorkSaveAPI(data) {
  * @param {*} data
  */
 export function workWorkLeaveAPI(data) {
-    return request({
-        url: 'work/work/leave',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/leave',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -65,11 +65,11 @@ export function workWorkLeaveAPI(data) {
  * @param {*} data
  */
 export function workTaskIndexAPI(data) {
-    return request({
-        url: 'work/task/index',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/task/index',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -77,11 +77,11 @@ export function workTaskIndexAPI(data) {
  * @param {*} data
  */
 export function workWorkArchiveAPI(data) {
-    return request({
-        url: 'work/work/archive',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/archive',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -89,11 +89,11 @@ export function workWorkArchiveAPI(data) {
  * @param {*} data
  */
 export function workTaskclassSaveAPI(data) {
-    return request({
-        url: 'work/taskclass/save',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/taskclass/save',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -101,11 +101,11 @@ export function workTaskclassSaveAPI(data) {
  * @param {*} data
  */
 export function workTaskclassRenameAPI(data) {
-    return request({
-        url: 'work/taskclass/rename',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/taskclass/rename',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -113,11 +113,11 @@ export function workTaskclassRenameAPI(data) {
  * @param {*} data
  */
 export function workTaskclassDeleteAPI(data) {
-    return request({
-        url: 'work/taskclass/delete',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/taskclass/delete',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -125,11 +125,11 @@ export function workTaskclassDeleteAPI(data) {
  * @param {*} data
  */
 export function workWorkFileListAPI(data) {
-    return request({
-        url: 'work/work/fileList',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/fileList',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -137,11 +137,11 @@ export function workWorkFileListAPI(data) {
  * @param {*} data
  */
 export function workWorkUpdateAPI(data) {
-    return request({
-        url: 'work/work/update',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/update',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -149,11 +149,11 @@ export function workWorkUpdateAPI(data) {
  * @param {*} data
  */
 export function workWorkOwnerListAPI(data) {
-    return request({
-        url: 'work/work/ownerList',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/ownerList',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -161,11 +161,11 @@ export function workWorkOwnerListAPI(data) {
  * @param {*} data
  */
 export function workWorkOwnerAddAPI(data) {
-    return request({
-        url: 'work/work/ownerAdd',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/ownerAdd',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -173,11 +173,11 @@ export function workWorkOwnerAddAPI(data) {
  * @param {*} data
  */
 export function workWorkOwnerDelAPI(data) {
-    return request({
-        url: 'work/work/ownerDel',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/ownerDel',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -185,11 +185,11 @@ export function workWorkOwnerDelAPI(data) {
  * @param {*} data
  */
 export function workTaskArchiveTaskAPI(data) {
-    return request({
-        url: 'work/task/archiveTask',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/task/archiveTask',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -197,11 +197,11 @@ export function workTaskArchiveTaskAPI(data) {
  * @param {*} data
  */
 export function workTaskUpdateOrderAPI(data) {
-    return request({
-        url: 'work/task/updateOrder',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/task/updateOrder',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -209,11 +209,11 @@ export function workTaskUpdateOrderAPI(data) {
  * @param {*} data
  */
 export function workTaskUpdateClassOrderAPI(data) {
-    return request({
-        url: 'work/task/updateClassOrder',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/task/updateClassOrder',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -221,21 +221,21 @@ export function workTaskUpdateClassOrderAPI(data) {
  * @param {*} data
  */
 export function workWorkAddUserGroupAPI(data) {
-    return request({
-        url: 'work/work/addUserGroup',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/addUserGroup',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
  * 项目成员角色列表
- * @param {*} data 
+ * @param {*} data
  */
 export function workWorkGroupListAPI(data) {
-    return request({
-        url: 'work/work/groupList',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/groupList',
+    method: 'post',
+    data: data
+  })
 }

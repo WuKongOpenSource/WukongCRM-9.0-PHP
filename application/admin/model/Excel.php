@@ -8,13 +8,20 @@
 namespace app\admin\model;
 
 use app\admin\model\Common;
+use app\admin\model\Message;
 use com\PseudoQueue as Queue;
 use think\Cache;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class Excel extends Common
 {
-	private $types_arr = ['crm_leads','crm_customer','crm_contacts','crm_product']; //支持自定义字段的表，不包含表前缀
+	private $types_arr = [
+		'crm_leads',
+		'crm_customer',
+		'crm_contacts',
+		'crm_product',
+		'admin_user'
+	]; //支持自定义字段的表，不包含表前缀
 
 	/**
 	 * 导入锁缓存名称
@@ -192,6 +199,7 @@ class Excel extends Common
 			case 'crm_bbusiness' : $types_name = '商机信息'; break;
 			case 'crm_contract' : $types_name = '合同信息'; break;
 			case 'crm_receivables' : $types_name = '回款信息'; break;
+			case 'admin_user' : $types_name = '员工信息'; break;
 			default : $types_name = '悟空软件'; break;
 		}		
         $content = $types_name.'（*代表必填项）';
@@ -439,7 +447,6 @@ class Excel extends Common
 
 		// 取消导入
 		if ($param['page'] == -1) {
-			$queue->dequeue();
 			@unlink(UPLOAD_PATH . $param['temp_file']);
 			$this->error = [
 				'msg' => '导入已取消',
@@ -447,7 +454,22 @@ class Excel extends Common
 			];
 			if ($param['error']) {
 				$this->error['error_file_path'] = 'temp/' . $param['error_file'];
+			} else {
+				@unlink(TEMP_DIR . $param['error_file']);
 			}
+
+			$temp = $queue->cache('last_import_cache');
+
+			(new ImportRecord())->createData([
+				'type' => $types,
+				'total' => $temp['total'],
+				'done' => $temp['done'],
+				'cover' => $temp['cover'],
+				'error' => $temp['error'],
+				'error_data_file_path' => $temp['error'] ? 'temp/' . $error_data_file_name : ''
+			]);
+
+			$queue->dequeue();
 			return true;
 		}
 
@@ -555,6 +577,10 @@ class Excel extends Common
 					// 产品分类
 					$productCategory = db('crm_product_category')->select();
 					$productCategoryArr = array_column($productCategory, 'category_id', 'name');
+					break;
+				case 'admin_user' :
+					$dataModel = new User(); 
+					$db_id = 'id';
 					break;
 			}
 
@@ -770,15 +796,35 @@ class Excel extends Common
 				'import_queue_index' => $import_queue_index
 			];
 
+			$queue->cache('last_import_cache', [
+				'total' => $total,
+				'done' => $done,
+				'cover' => $cover,
+				'error' => $error
+			]);
+
 			// 执行完成
 			if ($done >= $total) {
 				// 出队
-				@unlink($save_path);
 				$queue->dequeue();
 				// 错误数据文件路径
 				$this->error['error_file_path'] = 'temp/' . $error_data_file_name;
 				// 删除导入文件
 				@unlink($save_path);
+
+				// 没有错误数据时，删除错误文件
+				if ($error == 0) {
+					@unlink($error_path);
+				}
+
+				(new ImportRecord())->createData([
+					'type' => $types,
+					'total' => $total,
+					'done' => $done,
+					'cover' => $cover,
+					'error' => $error,
+					'error_data_file_path' => $error ? 'temp/' . $error_data_file_name : ''
+				]);
 			}
 
 	        return true;
@@ -1323,14 +1369,11 @@ class Excel extends Common
 	 */
 	public function handleData($value, $field)
 	{
-		if ($value == '') {
-			return '';
-		}
 		switch ($field['form_type']) {
 			case 'address':
 				return $value;
 			case 'date':
-				return date('Y-m-d', strtotime($value));
+				return $value ? date('Y-m-d', strtotime($value)) : null;
 			case 'datetime':
 				return strtotime($value);
 			case 'customer':

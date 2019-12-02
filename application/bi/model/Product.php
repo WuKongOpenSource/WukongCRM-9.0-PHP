@@ -38,13 +38,15 @@ class Product extends Common
 			['__CRM_PRODUCT_CATEGORY__ product_category', 'product_category.category_id = product.category_id', 'LEFT'],
 		];
 
-		$list = db('crm_contract_product')
+		$sql = db('crm_contract_product')
 				->alias('a')
 				->where($where)
 				->join($join)
 				->group('a.product_id')
 				->field('a.product_id,sum(a.num) as num,product.name as product_name,product_category.name as category_id_info,product_category.category_id')
+				->fetchSql()
 				->select();
+		$list = queryCache($sql);
         return $list;
     }
 
@@ -124,14 +126,16 @@ class Product extends Common
 			['__CRM_PRODUCT_CATEGORY__ product_category', 'product_category.category_id = product.category_id', 'LEFT'],
 		];
 
-		$list = db('crm_contract_product')
+		$sql = db('crm_contract_product')
 				->alias('a')
 				->where($where)
 				->join($join)
 				->order('num desc')
 				->group('contract.owner_user_id')
 				->field('sum(a.num) as num,contract.owner_user_id')
+				->fetchSql()
 				->select();
+		$list = queryCache($sql);
         return $list;
     }
 

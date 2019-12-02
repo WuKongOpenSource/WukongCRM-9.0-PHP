@@ -8,6 +8,8 @@
 namespace app\oa\controller;
 
 use app\admin\controller\ApiCommon;
+use app\admin\model\Message;
+use app\admin\model\User;
 use think\Hook;
 use think\Request;
 use think\Db;
@@ -484,17 +486,37 @@ class Examine extends ApiCommon
             $resRecord = $examineRecordModel->createData($checkData);
             //审核通过
             if ($is_end == 1 && !empty($status)) {
-                //发送站内信
-                $sendContent = '您的'.$dataInfo['category_name'].','.$userInfo['realname'].'已审核通过,审批结束';
-                $resMessage = sendMessage($dataInfo['create_user_id'], $sendContent, $param['id'], 1);
+                // 审批通过消息告知审批提交人
+                (new Message())->send(
+					Message::EXAMINE_PASS,
+					[
+						'title' => $dataInfo['category_name'],
+						'action_id' => $param['id']
+					],
+					$dataInfo['create_user_id']
+				);
             } else {
                 if ($status) {
-                    //发送站内信
-                    $sendContent = '您的'.$dataInfo['category_name'].','.$userInfo['realname'].'已审核通过';
-                    $resMessage = sendMessage($dataInfo['create_user_id'], $sendContent, $param['id'], 1);
+                    // 通过后发送消息给下一审批人
+                    (new Message())->send(
+                        Message::EXAMINE_TO_DO,
+                        [
+                            'from_user' => User::where(['id' => $dataInfo['create_user_id']])->value('realname'),
+                            'title' => $dataInfo['category_name'],
+                            'action_id' => $param['id']
+                        ],
+                        stringToArray($examineData['check_user_id'])
+                    );
                 } else {
-                    $sendContent = '您的'.$dataInfo['category_name'].','.$userInfo['realname'].'已审核拒绝,审核意见：'.$param['content'];
-                    $resMessage = sendMessage($dataInfo['create_user_id'], $sendContent, $param['id'], 1);
+                    // 审批驳回消息告知审批提交人
+                    (new Message())->send(
+                        Message::EXAMINE_REJECT,
+                        [
+                            'title' => $dataInfo['category_name'],
+                            'action_id' => $param['id']
+                        ],
+                        $dataInfo['create_user_id']
+                    );
                 }                
             }
             return resultArray(['data' => '审批成功']);            
@@ -554,7 +576,7 @@ class Examine extends ApiCommon
         $resExamine = db('oa_examine')->where(['examine_id' => $examine_id])->update($examineData);
         if ($resExamine) {
             //将审批记录至为无效
-            // $examineRecordModel->setEnd(['types' => 'oa_examine','types_id' => $examine_id]);
+            $examineRecordModel->setEnd(['types' => 'oa_examine','types_id' => $examine_id]);
             //审批记录
             $resRecord = $examineRecordModel->createData($checkData);
             return resultArray(['data' => '撤销成功']);            

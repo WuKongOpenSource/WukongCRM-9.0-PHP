@@ -8,6 +8,8 @@ namespace app\oa\model;
 
 use think\Db;
 use app\admin\model\Common;
+use app\admin\model\Message;
+use app\admin\model\User;
 use think\Request;
 use think\Validate;
 
@@ -191,6 +193,14 @@ class Log extends Common
 			unset($param[$value]);
 		}
 		
+		if ($param['category_id'] == 1) {
+			$param['title'] = date('Y-m-d') . '-日报';
+		} else if ($param['category_id'] == 2) {
+			$param['title'] = date('Y-m-d') . '-周报';
+		} else if ($param['category_id'] == 3) {
+			$param['title'] = date('Y-m-d') . '-月报';
+		}
+
 		if ($this->data($param)->allowField(true)->save()) {
 			$log_id = $this->log_id;
 			//操作记录
@@ -203,10 +213,17 @@ class Log extends Common
 		        	$this->error = '附件上传失败';
 		        	return false;
 		        }
-	        }
-	        //抄送站内信
-			$content = $param['create_user_name'].'创建了工作日志';
-			if ($param['send_user_ids']) sendMessage($senduserArray,$content,1);
+			}
+			
+			$temp = User::where(['structure_id' => ['in', $param['send_structure_ids']]])->column('id');
+			(new Message())->send(
+				Message::LOG_SEND,
+				[
+					'title' => $param['title'],
+					'action_id' => $log_id
+				],
+				array_merge($temp, $senduserArray)
+			);
 
 			//返回数据，前端动态追加使用
 			$data = [];
@@ -284,7 +301,8 @@ class Log extends Common
 	
 		if ($this->allowField(true)->save($param, ['log_id' => $log_id])) {
 			//操作日志
-			actionLog($log_id, $dataInfo['send_user_ids'], $dataInfo['send_structure_ids'],'修改了日志');
+			Db::name('AdminActionLog')->where(['action_id' => $log_id])->update(['join_user_ids' => $this->send_user_ids, 'structure_ids' => $this->send_structure_ids]);
+			actionLog($log_id, $this->send_user_ids, $this->send_structure_ids,'修改了日志');
 			//处理附件关系
 	        if ($fileArr) {
 	            $fileModel = new \app\admin\model\File();

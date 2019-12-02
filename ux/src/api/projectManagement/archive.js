@@ -5,11 +5,11 @@ import request from '@/utils/request'
  * @param {*} data
  */
 export function workWorkArchiveListAPI(data) {
-    return request({
-        url: 'work/work/archiveList',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/archiveList',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -17,9 +17,9 @@ export function workWorkArchiveListAPI(data) {
  * @param {*} data
  */
 export function workWorkArRecoverAPI(data) {
-    return request({
-        url: 'work/work/arRecover',
-        method: 'post',
-        data: data
-    })
+  return request({
+    url: 'work/work/arRecover',
+    method: 'post',
+    data: data
+  })
 }

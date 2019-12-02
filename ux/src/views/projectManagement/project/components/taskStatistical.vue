@@ -1,22 +1,27 @@
 <template>
-  <div class="statistical"
-       v-loading="loading">
-    <statistical-overview class="statistical-overview"
-                          :data="detailData.dataCount"
-                          :list="detailData.ownerList"></statistical-overview>
+  <div
+    v-loading="loading"
+    class="statistical">
+    <statistical-overview
+      :data="detailData.dataCount"
+      :list="detailData.ownerList"
+      class="statistical-overview"/>
     <flexbox class="statistical-task">
-      <statistical-task class="statistical-task-item"
-                        type="task"
-                        :list="detailData.classList"
-                        title="任务列表"></statistical-task>
-      <statistical-task class="statistical-task-item"
-                        type="label"
-                        :list="detailData.labelList"
-                        title="标签分析"></statistical-task>
+      <statistical-task
+        :list="detailData.classList"
+        class="statistical-task-item"
+        type="task"
+        title="任务列表"/>
+      <statistical-task
+        :list="detailData.labelList"
+        class="statistical-task-item"
+        type="label"
+        title="标签分析"/>
     </flexbox>
 
-    <statistical-member class="statistical-member"
-                        :list="detailData.userList"></statistical-member>
+    <statistical-member
+      :list="detailData.userList"
+      class="statistical-member"/>
   </div>
 </template>
 
@@ -34,6 +39,10 @@ export default {
     StatisticalMember
   },
 
+  props: {
+    workId: String
+  },
+
   data() {
     return {
       loading: false,
@@ -46,10 +55,6 @@ export default {
     workId() {
       this.getDetail(true)
     }
-  },
-
-  props: {
-    workId: String
   },
 
   mounted() {},
@@ -76,7 +81,7 @@ export default {
           this.detailData = res.data
           this.loading = false
         })
-        .catch(err => {
+        .catch(() => {
           this.loading = false
         })
     }

@@ -10,6 +10,7 @@ use think\Db;
 use app\admin\model\Common;
 use think\Request;
 use think\Validate;
+use app\crm\model\Business as CrmBusinessModel;
 
 class Business extends Common
 {
@@ -376,29 +377,43 @@ class Business extends Common
 		$default_type_id = db('crm_business_type')->order('type_id asc')->value('type_id');
 		$type_id = $request['type_id'] ? $request['type_id'] : $default_type_id;
 		$statusList = db('crm_business_status')->where(['type_id' => $type_id])->select();
-		$str = getFieldArray($statusList,'status_id');
-
-		//赢单
 		$map = []; 
 		$map['create_time'] = $where['create_time'];
 		$map['owner_user_id'] = ['in',$userIds];
-		$sum_ying = Db::name('CrmBusiness')->where($map)->where('status_id=1')->sum('money');
-		//输单
-		$sum_shu = Db::name('CrmBusiness')->where($map)->where('status_id=2')->sum('money');
+
+		$sql_a = CrmBusinessModel::field([
+		                'SUM(CASE WHEN status_id = 1 THEN money ELSE 0 END) AS sum_ying',
+		                'SUM(CASE WHEN status_id = 2 THEN money ELSE 0 END) AS sum_shu'
+		            ])
+					->where($map)
+					->fetchSql()
+					->select();
+		$res_a = queryCache($sql_a, 200);
+		$sql = CrmBusinessModel::field([
+                "status_id",
+                'COUNT(*)' => 'count',
+                'SUM(`money`)' => 'sum'
+            ])
+            ->where($where)
+            ->group('status_id')
+            ->fetchSql()
+            ->select();
+        $res = queryCache($sql, 200);
+        $res = array_column($res, null, 'status_id');
+
 		$sum_money = 0;
-		$dataAry = array();
 		foreach ($statusList as $k=>$v) {
-			$where['type_id'] = $type_id;
-			$where['status_id'] = $v['status_id'];
-			$statusList[$k]['status_name'] = $v['name'];
-			$statusList[$k]['count'] = db('crm_business')->where($where)->count(); 
-			$statusList[$k]['money'] = db('crm_business')->where($where)->sum('money'); //商机金额
-			$sum_money += $statusList[$k]['money'];
+			$v['count'] = $res[$v['status_id']]['count'] ? : 0;
+			$v['money'] = $res[$v['status_id']]['sum'] ? : 0;
+			$v['status_name'] = $v['name']; 
+			
+			$sum_money += $v['money'];
+			$statusList[$k] = $v;
 		}
 		$data['list'] = $statusList;
-		$data['sum_ying'] = $sum_ying;
-		$data['sum_shu'] = $sum_shu;
-		$data['sum_money'] = $sum_money;
+		$data['sum_ying'] = $res_a[0]['sum_ying'] ? : 0;
+		$data['sum_shu'] = $res_a[0]['sum_shu'] ? : 0;
+		$data['sum_money'] = $sum_money ? : 0;
         return $data ? : [];
     } 
 
@@ -438,5 +453,78 @@ class Business extends Common
     	} else {
     		return true;
     	}
-    }    	
+    }  
+
+    /**
+     * [商机统计]
+     * @param 
+     * @return                   
+     */		
+	public function getTrendql($map)
+	{
+		$prefix = config('database.prefix');
+		$sql = "SELECT
+					'{$map['type']}' AS type,
+					'{$map['start_time']}' AS start_time,
+					'{$map['end_time']}' AS end_time,
+					IFNULL(
+						(
+							SELECT
+								sum(money)
+							FROM
+								{$prefix}crm_business
+							WHERE
+								create_time BETWEEN {$map['start_time']} AND {$map['end_time']}
+							AND owner_user_id IN ({$map['owner_user_id']})
+						),
+						0
+					) AS business_money,
+					IFNULL(
+						count(business_id),
+						0
+					) AS business_num
+				FROM
+					{$prefix}crm_business
+				WHERE
+					create_time BETWEEN {$map['start_time']} AND {$map['end_time']}
+					AND owner_user_id IN ({$map['owner_user_id']})";
+		return $sql;	
+	}
+
+	/**
+     * [赢单机会转化率趋势分析]
+     * @param 
+     * @return                   
+     */		
+	public function getWinSql($map)
+	{
+		$prefix = config('database.prefix');
+		$sql = "SELECT
+					'{$map['type']}' AS type,
+					'{$map['start_time']}' AS start_time,
+					'{$map['end_time']}' AS end_time,
+					IFNULL(
+						(
+							SELECT
+								count(business_id)
+							FROM
+								{$prefix}crm_business
+							WHERE
+								create_time BETWEEN {$map['start_time']} AND {$map['end_time']}
+							AND owner_user_id IN ({$map['owner_user_id']})
+							AND is_end = 1 
+						),
+						0
+					) AS business_end,
+					IFNULL(
+						count(business_id),
+						0
+					) AS business_num
+				FROM
+					{$prefix}crm_business
+				WHERE
+					create_time BETWEEN {$map['start_time']} AND {$map['end_time']}
+					AND owner_user_id IN ({$map['owner_user_id']})";
+		return $sql;	
+	}
 }

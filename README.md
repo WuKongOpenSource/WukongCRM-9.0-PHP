@@ -1,4 +1,4 @@
-### WukongCRM (Version 9.0)
+<!-- ### WukongCRM (Version 9.0)
 Wukong Software has long provided enterprises with information services such as R&D, implementation, marketing, consulting, training and service of enterprise management software (CRM/HRM/OA/ERP, etc.). We have taken high technology as its starting point, technology as the core, and perfect after-sales service as its backing. With the spirit of stability and development, factualism and innovation, it has provided services for thousands of enterprises at home and abroad.
 
 The development of Wukong benefits from open source and vice versa. In 2019, Wukong CRM will continue to adhere to the concept of “embracing openness, cooperation and win-win, creating value”, move forward on the road of open source, and make positive contributions to open source at home and abroad with more community developers.
@@ -66,7 +66,7 @@ Modify the internal configuration and request address or domain name: modify BAS
 
 Note: The front-end service starts, it will occupy port 8080 by default, so before starting the front-end service, please make sure that port 8080 is not occupied. The Server port needs to be set up before the program runs.
 
----
+--- -->
 
 ### 悟空CRM（9.0版本）
 悟空软件长期为企业提供企业管理软件(CRM/HRM/OA/ERP等)的研发、实施、营销、咨询、培训、服务于一体的信息化服务。悟空软件以高科技为起点，以技术为核心、以完善的售后服务为后盾，秉承稳固与发展、求实与创新的精神，已为国内外上千家企业提供服务。

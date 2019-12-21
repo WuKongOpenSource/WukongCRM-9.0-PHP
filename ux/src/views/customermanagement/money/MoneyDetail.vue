@@ -152,14 +152,14 @@ export default {
             ? res.data.customer_id_info.name
             : ''
           this.headDetails[1].value = res.data.contract_id_info
-            ? res.data.contract_id_info.money
+            ? this.moneyFormat(res.data.contract_id_info.money)
             : ''
           this.headDetails[2].value = res.data.contract_id_info
             ? res.data.contract_id_info.name
             : ''
           this.headDetails[3].value =
             res.data.return_time == '0000-00-00' ? '' : res.data.return_time
-          this.headDetails[4].value = res.data.money
+          this.headDetails[4].value = this.moneyFormat(res.data.money)
           this.headDetails[5].value = res.data.owner_user_id_info
             ? res.data.owner_user_id_info.realname
             : ''

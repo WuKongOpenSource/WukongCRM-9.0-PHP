@@ -406,10 +406,15 @@ export default {
           return item[self.crmType + '_id']
         })
         let request
+        // 是否客户池
+        let isSeas = 0
         if (this.crmType == 'leads') {
           request = crmLeadsDelete
         } else if (this.crmType == 'customer') {
           request = crmCustomerDelete
+          if (this.isSeas === true) {
+            isSeas = 1
+          }
         } else if (this.crmType == 'contacts') {
           request = crmContactsDelete
         } else if (this.crmType == 'business') {
@@ -422,7 +427,8 @@ export default {
           request = crmProductDelete
         }
         request({
-          id: ids
+          id: ids,
+          isSeas
         })
           .then(res => {
             this.$message({
@@ -536,7 +542,8 @@ export default {
           return this.forSelectionHandleItems(handleInfos, [
             'alloc',
             'get',
-            'export'
+            'export',
+            'delete'
           ])
         } else {
           return this.forSelectionHandleItems(handleInfos, [

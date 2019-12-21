@@ -571,13 +571,19 @@ class Users extends ApiCommon
         if (in_array($parent_id, $user_id_list)) {
             return resultArray(['error' => '直属上级不能为员工自己']);
         }
+        
+        foreach ($user_id_list as $val) {
+            if (in_array($parent_id, getSubUserId(true, 0, (int) $val))) {
+                return resultArray(['error' => '直属上级不能是自己下属（包含下属的下属）']);
+            }
+        }
 
-        if (UserModel::where(['id' => ['IN', $user_id_list]])->update(['parent_id' => $parent_id])) {
+        $a = new UserModel;
+        if ($a->where(['id' => ['IN', $user_id_list]])->update(['parent_id' => $parent_id])) {
             Cache::clear('user_info');
-
             return resultArray(['data' => '员工直属上级设置成功']);
         } else {
-            return resultArray(['data' => '员工直属上级设置失败' . (new UserModel)->getError()]);
+            return resultArray(['error' => '员工直属上级设置失败' . $a->getError()]);
         }
     } 
 }

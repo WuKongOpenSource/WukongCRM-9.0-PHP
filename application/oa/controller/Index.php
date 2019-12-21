@@ -47,6 +47,10 @@ class Index extends ApiCommon
 		$structureModel = new \app\admin\model\Structure();
 		$fileModel = new \app\admin\model\File();
 		$commonModel = new \app\admin\model\Comment();
+		$BusinessModel = new \app\crm\model\Business();
+		$ContactsModel = new \app\crm\model\Contacts();
+		$ContractModel = new \app\crm\model\Contract();
+		$CustomerModel = new \app\crm\model\Customer();
 
 		if ($param['type'] == 1) { //日志
 			$where = ' controller_name = "log" and  module_name = "oa" ';
@@ -130,6 +134,11 @@ class Index extends ApiCommon
 					$actionList[$key]['ownerList'] =  $userModel->getDataByStr($eventInfo['owner_user_ids']);
 					$actionList[$key]['type'] = 2;
 					$actionList[$key]['type_name'] = "日程";
+					$relation = Db::name('OaEventRelation')->where('event_id ='.$value['action_id'])->find();
+					$actionList[$key]['businessList'] = $relation['business_ids'] ? $BusinessModel->getDataByStr($relation['business_ids']) : []; //商机
+					$actionList[$key]['contactsList'] = $relation['contacts_ids'] ? $ContactsModel->getDataByStr($relation['contacts_ids']) : []; //联系人
+					$actionList[$key]['contractList'] = $relation['contract_ids'] ? $ContractModel->getDataByStr($relation['contract_ids']) : []; //合同
+					$actionList[$key]['customerList'] = $relation['customer_ids'] ? $CustomerModel->getDataByStr($relation['customer_ids']) : []; //客户
 				} else {
 					unset($actionList[$key]);
 				}
@@ -286,7 +295,6 @@ class Index extends ApiCommon
 					$query->where(['owner_user_ids' => ['like','%,'.$userInfo['id'].',%']])
 					->whereOr(['create_user_id' => $userInfo['id']]);
 				})->select(); 
-			$eventList = [];
 			if (count($eventList)) {
 				foreach ($eventList as $k=>$v){
 					$eventList[$k]['ownList']= $userModel->getDataByStr($v['owner_user_ids']);

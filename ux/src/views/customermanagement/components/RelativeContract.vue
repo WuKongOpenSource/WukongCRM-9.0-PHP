@@ -47,6 +47,7 @@
 import loading from '../mixins/loading'
 import CRMCreateView from './CRMCreateView'
 import { crmContractIndex } from '@/api/customermanagement/contract'
+import { moneyFormat } from '@/utils'
 
 export default {
   name: 'RelativeContract', // 相关联系人  可能再很多地方展示 放到客户管理目录下
@@ -141,12 +142,14 @@ export default {
         })
     },
     /** 格式化字段 */
-    fieldFormatter(row, column) {
+    fieldFormatter(row, column, cellValue) {
       // 如果需要格式化
       if (column.property === 'customer_id') {
         return row.customer_id_info.name
       } else if (column.property === 'check_status') {
         return this.getStatusName(row.check_status)
+      } else if (['money'].includes(column.property)) {
+        return moneyFormat(cellValue)
       }
       return row[column.property]
     },

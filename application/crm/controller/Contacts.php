@@ -212,6 +212,8 @@ class Contacts extends ApiCommon
         if (!$param['owner_user_id']) {
             return resultArray(['error' => '变更负责人不能为空']);
         }
+        $owner_user_info = $userModel->getUserById($param['owner_user_id']);
+
         if (!$param['contacts_id'] || !is_array($param['contacts_id'])) {
             return resultArray(['error' => '请选择需要转移的联系人']); 
         }
@@ -224,6 +226,9 @@ class Contacts extends ApiCommon
         $data['update_time'] = time();
         $errorMessage = [];
         foreach ($param['contacts_id'] as $contacts_id) {
+            // 转移至当前负责人的直接跳过
+            if ($param['owner_user_id'] == $userInfo['id']) continue;
+            
             $contactsInfo = $contactsModel->getDataById($contacts_id);
             if (!$contactsInfo) {
                 $errorMessage[] = '名称:为《'.$contactsInfo['name'].'》的联系人转移失败，错误原因：数据不存在；';
@@ -239,6 +244,7 @@ class Contacts extends ApiCommon
                 $errorMessage[] = $contactsInfo['name'].'"转移失败，错误原因：数据出错；';
                 continue;
             }
+			updateActionLog($userInfo['id'], 'crm_contacts', $contacts_id, '', '', '将联系人转移给：' . $owner_user_info['realname']);			
         }
         if (!$errorMessage) {
             return resultArray(['data' => '转移成功']);

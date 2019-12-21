@@ -74,8 +74,19 @@ class ReceivablesPlan extends Common
 								};
 			}
 		}
-		if ($types == 1) {
-			$map['receivables_plan.receivables_id']  = ['eq',0];
+		// @ymob 2019-12-11 17:51:54
+		// 修改回款时，回款计划选项列表应该包含该回款对应的回款计划 不能过滤
+		// 原来的 $types 不知道是啥 没备注
+		if ($request['map']['receivables_id']) {
+			$map = " 
+				`receivables_plan`.`contract_id` = {$request['map']['contract_id']} 
+				AND (
+					`receivables_plan`.`receivables_id` = 0
+					OR `receivables_plan`.`receivables_id`= {$request['map']['receivables_id']}
+				)
+			";
+		} elseif ($types == 1) {
+			$map['receivables_plan.receivables_id']  = 0;
 		}
 		$list = db('crm_receivables_plan')
 				->alias('receivables_plan')

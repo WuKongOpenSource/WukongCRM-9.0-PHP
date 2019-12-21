@@ -1446,3 +1446,9 @@ CREATE TABLE `5kcrm_admin_import_record` (
   `create_time` int(10) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='导入数据记录表';
+
+--
+-- 公海删除权限 2019-12-10 13:47:39
+--
+INSERT INTO `5kcrm_admin_rule`(`id`, `types`, `title`, `name`, `level`, `pid`, `status`) VALUES 
+(150, 2, '删除', 'poolDelete', 3, 29, 1);

@@ -288,7 +288,7 @@ export default {
             ? res.data.customer_id_info.name
             : ''
 
-          this.headDetails[1].value = res.data.money
+          this.headDetails[1].value = this.moneyFormat(res.data.money)
           this.headDetails[2].value = res.data.status_id_info
           // // 负责人
           this.headDetails[3].value = res.data.owner_user_id_info

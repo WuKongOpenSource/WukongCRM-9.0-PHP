@@ -9,6 +9,7 @@ namespace app\crm\model;
 use think\Db;
 use app\admin\model\Common;
 use app\admin\model\User as UserModel;
+use app\admin\model\Record as RecordModel;
 use think\Request;
 use think\Validate;
 
@@ -200,18 +201,21 @@ class Customer extends Common
         $updateAuthIds = $userModel->getUserByPer('crm', 'customer', 'update');
 		$deleteAuthIds = $userModel->getUserByPer('crm', 'customer', 'delete');
         if (!empty($list)) {
+			$customer_id_list = array_column($list, 'customer_id');
 			$business_count = db('crm_business')
 				->field([
 					'COUNT(*)' => 'count',
 					'customer_id'
 				])
 				->where([
-					'customer_id' => ['IN', array_column($list, 'customer_id')]
+					'customer_id' => ['IN', $customer_id_list]
 				])
 				->group('customer_id')
 				->select();
 			$business_count = array_column($business_count, null, 'customer_id');
+			$record_list = RecordModel::getLastRecord('crm_customer', $customer_id_list);
 			foreach ($list as $k => $v) {
+				$list[$k]['last_record'] = $record_list[$v['customer_id']] ?: '';
 	        	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
 				$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];	        	
 	        	foreach ($userField as $key => $val) {
@@ -381,7 +385,6 @@ class Customer extends Common
 			$param[$v] = arrayToString($param[$v]);
 		}
 		$param['follow'] = '已跟进';
-		$param['aa'] = '111';
 		if ($this->update($param, ['customer_id' => $customer_id], true)) {
 			//修改记录
 			updateActionLog($user_id, 'crm_customer', $customer_id, $dataInfo->data, $param);

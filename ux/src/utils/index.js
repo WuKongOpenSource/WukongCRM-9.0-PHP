@@ -254,3 +254,14 @@ export function dataURLtoBlob(dataurl) {
     type: mime
   })
 }
+
+/**
+ * 金额格式化 增加千分符
+ * @param {*} val
+ */
+export function moneyFormat(val) {
+  if (!val) return '0.00'
+  const i = Math.floor(val)
+  const d = val.split('.')[1] || '00'
+  return i.toLocaleString('en-US') + '.' + d
+}

@@ -146,6 +146,14 @@
             </flexbox>
 
             <flexbox
+              v-else-if="item.form_type === 'floatnumber'"
+              align="stretch"
+              class="b-cell-b">
+              <div class="b-cell-name">{{ item.name }}</div>
+              <div class="b-cell-value">{{ moneyFormat(item.value) }}</div>
+            </flexbox>
+
+            <flexbox
               v-else
               align="stretch"
               class="b-cell-b">
@@ -172,7 +180,7 @@ import { filedGetField } from '@/api/customermanagement/common'
 import { getDateFromTimestamp } from '@/utils'
 import moment from 'moment'
 import MapView from '@/components/MapView' // 地图详情
-import { downloadFile } from '@/utils'
+import { downloadFile, moneyFormat } from '@/utils'
 
 export default {
   /** 客户管理 的 基本信息*/
@@ -279,6 +287,9 @@ export default {
       } else if (type === 'download') {
         downloadFile({ path: item.file_path, name: item.name })
       }
+    },
+    moneyFormat(val) {
+      return moneyFormat(val)
     }
   }
 }

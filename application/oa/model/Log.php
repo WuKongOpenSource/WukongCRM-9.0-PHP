@@ -401,7 +401,7 @@ class Log extends Common
 	        $fileModel->delRFileByModule('oa_log',$param['log_id']);
 	        //删除相关评论
 	        $commentModel->delDataById(['type'=>'oa_log','type_id'=>$param['log_id']]);
-			actionLog($param['log_id'],$dataInfo['send_structure_ids'],$dataInfo['send_structure_ids'],'删除了日志');
+			actionLog($param['log_id'],$dataInfo['send_user_ids'],$dataInfo['send_structure_ids'],'删除了日志');
 			return true;
 		} else {
 			$this->error = '操作失败';

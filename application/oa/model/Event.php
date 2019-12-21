@@ -104,6 +104,7 @@ class Event extends Common
 		$param['start_time'] = $param['start_time'] ? : $today_time[0];
 		$param['end_time'] = $param['end_time'] ?$param['end_time'] : $today_time[1];
 		$param['create_time'] = time();
+		$owner_user_id_list = $param['owner_user_ids'];
 		$param['owner_user_ids'] = count($param['owner_user_ids']) ? arrayToString($param['owner_user_ids']) : '';
 		$rdata['customer_ids'] = count($param['customer_ids']) ? arrayToString($param['customer_ids']) : ''; 
 		$rdata['contacts_ids'] = count($param['contacts_ids']) ? arrayToString($param['contacts_ids']) : ''; 
@@ -146,7 +147,7 @@ class Event extends Common
 					'title' => $param['title'],
 					'action_id' => $event_id
 				],
-				$param['owner_user_ids']
+				$owner_user_id_list
 			);
 			actionLog($event_id ,$param['owner_user_ids'],'','创建了日程'); //
 			$data = [];
@@ -198,7 +199,7 @@ class Event extends Common
 		$param['create_time'] = time();
 		$param['owner_user_ids'] = count($param['owner_user_ids']) ? arrayToString($param['owner_user_ids']) : ''; //参与人
 		if ($this->allowField(true)->save($param, ['event_id' => $event_id])) {
-			actionLog($event_id,'',$param['owner_user_ids'],'修改了日程');
+			actionLog($event_id, $param['owner_user_ids'], '', '修改了日程');
 			if ($param['is_repeat']) {
 				$repeatData['event_id'] = $event_id;
 				if ($repeatData['noticetype'] == '1') { //天

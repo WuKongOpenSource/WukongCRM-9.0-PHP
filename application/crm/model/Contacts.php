@@ -198,6 +198,7 @@ class Contacts extends Common
 			$param[$v] = arrayToString($param[$v]);
 		}
 		if ($this->data($param)->allowField(true)->isUpdate(false)->save()) {
+			updateActionLog($param['create_user_id'], 'crm_contacts', $this->contacts_id, '', '', '创建了联系人');			
 			$data = [];
 			$data['contacts_id'] = $this->contacts_id;
 			return $data;

@@ -26,7 +26,7 @@ class Customer extends ApiCommon
     public function _initialize()
     {
         $action = [
-            'permission'=>['exceldownload','setfollow'],
+            'permission'=>['exceldownload','setfollow', 'delete'],
             'allow'=>['']            
         ];
         Hook::listen('check_auth',$action);
@@ -152,12 +152,21 @@ class Customer extends ApiCommon
      */
     public function delete()
     {
+        $param = $this->param;
+        // 是否客户池
+        if ($param['isSeas'] == 1) {
+            $permission = checkPerByAction('crm', 'customer', 'poolDelete');
+        } else {
+            $permission = checkPerByAction('crm', 'customer', 'delete');
+        }
+        if ($permission == false) {
+            return resultArray(['error' => '无权操作']);
+        }
         $customerModel = model('Customer');
         $userModel = new \app\admin\model\User();
         $recordModel = new \app\admin\model\Record();
         $fileModel = new \app\admin\model\File();
         $actionRecordModel = new \app\admin\model\ActionRecord();
-        $param = $this->param;
         if (!is_array($param['id'])) {
             $customer_id[] = $param['id'];
         } else {
@@ -186,12 +195,12 @@ class Customer extends ApiCommon
                 $errorMessage[] = '名称为'.$data['name'].'的客户删除失败,错误原因：无权操作';
                 continue;
             }
-            //公海
-            if ($resPool && !in_array($data['owner_user_id'],$adminId)) {
-                $isDel = false;
-                $errorMessage[] = '名称为'.$data['name'].'的客户删除失败,错误原因：无权操作';
-                continue;
-            }
+            // 公海 (原逻辑，公海仅允许管理员删除，修改为授权，不再限制)
+            // if ($resPool && !in_array($data['owner_user_id'],$adminId)) {
+            //     $isDel = false;
+            //     $errorMessage[] = '名称为'.$data['name'].'的客户删除失败,错误原因：无权操作';
+            //     continue;
+            // }
             //有商机、合同、联系人则不能删除 
             $resBusiness = db('crm_business')->where(['customer_id' => $v])->find();
             if ($resBusiness) {
@@ -633,11 +642,12 @@ class Customer extends ApiCommon
         $userInfo = $this->userInfo;
         $excelModel = new \app\admin\model\Excel();
 
-        // 导出的字段列表
+        // 导入的字段列表
         $fieldModel = new \app\admin\model\Field();
         $fieldParam['types'] = 'crm_customer'; 
         $fieldParam['action'] = 'excel'; 
         $field_list = $fieldModel->field($fieldParam);
+        // vdd($field_list);
         $excelModel->excelImportDownload($field_list, 'crm_customer', $save_path);
     }
 

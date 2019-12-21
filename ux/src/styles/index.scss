@@ -210,3 +210,8 @@ div[lazy=loading] {
 * :focus {
   outline: none;
 }
+
+// 全局提示文字限制宽度
+.el-tooltip__popper {
+  max-width: 300px !important;
+}

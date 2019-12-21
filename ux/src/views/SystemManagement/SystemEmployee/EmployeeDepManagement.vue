@@ -610,7 +610,8 @@ export default {
       showCRMImport: false,
       // 直属上级
       parentForm: {},
-      parent_id: null
+      parent_id: 0,
+      tableHeight: document.documentElement.clientHeight - 260
     }
   },
   computed: {
@@ -737,20 +738,21 @@ export default {
         return !val.groups || !val.s_name
       })
       return temp.length > 0
-    },
-    tableHeight() {
-      let temp = document.documentElement.clientHeight - 260
-      if (this.userNoStructureGroup) {
-        temp -= 38
+    }
+  },
+  watch: {
+    userNoStructureGroup(val) {
+      if (val) {
+        this.tableHeight -= 38
+      } else {
+        this.tableHeight = document.documentElement.clientHeight - 260
       }
-      return temp
     }
   },
   mounted() {
-    var self = this
     /** 控制table的高度 */
-    window.onresize = function() {
-      self.tableHeight = document.documentElement.clientHeight - 260
+    window.onresize = () => {
+      this.tableHeight = document.documentElement.clientHeight - 260
     }
 
     // 部门树形列表
@@ -1155,14 +1157,6 @@ export default {
         }
       })
     },
-
-    /**
-     * 批量设置直属上级
-     */
-    multipleSetParent(val) {
-      console.log(233)
-    },
-
     // 更改每页展示数量
     handleSizeChange(val) {
       this.pageSize = val
@@ -1244,7 +1238,7 @@ export default {
     },
     // 刷新列表
     listRefresh() {
-      console.log('刷新列表')
+      this.usersListFun()
     }
   }
 }

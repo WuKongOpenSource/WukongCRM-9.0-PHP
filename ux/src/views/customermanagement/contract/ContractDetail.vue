@@ -193,12 +193,10 @@ export default {
           this.headDetails[1].value = res.data.customer_id_info
             ? res.data.customer_id_info.name
             : ''
-          this.headDetails[2].value = res.data.money
+          this.headDetails[2].value = this.moneyFormat(res.data.money)
           this.headDetails[3].value =
             res.data.order_date == '0000-00-00' ? '' : res.data.order_date
-          this.headDetails[4].value = res.data.receivablesMoney
-            ? res.data.receivablesMoney.doneMoney
-            : ''
+          this.headDetails[4].value = this.moneyFormat(res.data.receivablesMoney.doneMoney)
           this.headDetails[5].value = res.data.owner_user_id_info
             ? res.data.owner_user_id_info.realname
             : ''

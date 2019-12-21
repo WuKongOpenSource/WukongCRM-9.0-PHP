@@ -49,6 +49,7 @@
                     :item="item"
                     :relation="item.relation"
                     :radio="false"
+                    :types_id="action.id"
                     :disabled="item.disabled"
                     @value-change="fieldValueChange"/>
                 </el-form-item>
@@ -439,6 +440,16 @@ export default {
               break
             }
           }
+        } else if (item.data.form_type == 'receivables_plan') {
+          this.crmForm.crmFields.forEach(item => {
+            if (item.key == 'return_time') {
+              item.value = data.plan.return_date
+            } else if (item.key == 'return_type') {
+              item.value = data.plan.return_type
+            } else if (item.key == 'money') {
+              item.value = data.plan.money
+            }
+          })
         }
       }
 

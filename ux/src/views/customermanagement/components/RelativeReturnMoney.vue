@@ -86,7 +86,7 @@ import {
   crmReceivablesPlanIndex,
   crmReceivablesPlanDeleteAPI
 } from '@/api/customermanagement/money'
-import { timestampToFormatTime } from '@/utils'
+import { timestampToFormatTime, moneyFormat } from '@/utils'
 
 export default {
   name: 'RelativeReturnMoney', // 相关回款  可能再很多地方展示 放到客户管理目录下
@@ -314,7 +314,7 @@ export default {
     /**
      * 格式化字段
      */
-    fieldFormatter(row, column) {
+    fieldFormatter(row, column, cellValue) {
       // 如果需要格式化
       if (column.property === 'contract_id') {
         return row.contract_id_info.name
@@ -328,6 +328,8 @@ export default {
         return row.plan_id_info
       } else if (column.property === 'check_status') {
         return this.getStatusName(row.check_status)
+      } else if (['contract_money', 'money', ''].includes(column.property)) {
+        return moneyFormat(cellValue)
       }
       return row[column.property]
     },

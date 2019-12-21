@@ -534,4 +534,39 @@ class Record extends Common
         $fileModel->delRFileByModule('admin_record',$record_ids);
 		return true;
 	}	
+
+    /**
+     * 查询最近更进记录
+     *
+     * @param string $types 关联类型
+     * @param array $types_id_list 类型ID
+     * @return array
+     * @author Ymob
+     * @datetime 2019-12-11 10:43:04
+     */
+    public static function getLastRecord($types, $types_id_list)
+    {
+		$prefix = config('database.prefix');
+		$types_ids = implode(',', $types_id_list) ?: '-1';
+        $list = self::field(['types_id', 'content'])
+        ->where("
+            `record_id` IN (
+				SELECT
+					MAX(`record_id`)
+				FROM
+					`{$prefix}admin_record`
+				WHERE
+					`types` = '{$types}'
+					AND `types_id` IN ({$types_ids})
+				GROUP BY
+					`types_id`
+            )
+		")
+		->select();
+		$res = [];
+		foreach ($list as $val) {
+			$res[$val['types_id']] = $val['content'];
+		}
+		return $res;
+    }
 }

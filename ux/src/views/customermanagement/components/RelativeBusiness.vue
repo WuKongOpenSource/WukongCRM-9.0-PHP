@@ -86,6 +86,7 @@ import CRMCreateView from './CRMCreateView'
 import { crmBusinessIndex } from '@/api/customermanagement/business'
 import { crmContactsRelationAPI } from '@/api/customermanagement/contacts'
 import CrmRelative from '@/components/CreateCom/CrmRelative'
+import { moneyFormat } from '@/utils'
 
 export default {
   name: 'RelativeBusiness', // 相关联系人商机  可能再很多地方展示 放到客户管理目录下（新建时仅和客户进行关联）
@@ -275,7 +276,10 @@ export default {
         })
     },
     /** 格式化字段 */
-    fieldFormatter(row, column) {
+    fieldFormatter(row, column, cellValue) {
+      if (['money'].includes(column.property)) {
+        return moneyFormat(cellValue)
+      }
       // 如果需要格式化
       var aRules = this.formatterRules[column.property]
       if (aRules) {

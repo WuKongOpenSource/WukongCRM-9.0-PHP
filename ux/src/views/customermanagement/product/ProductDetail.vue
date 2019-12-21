@@ -143,7 +143,7 @@ export default {
 
           this.headDetails[0].value = res.data.category_id_info
           this.headDetails[1].value = res.data.unit
-          this.headDetails[2].value = res.data.price
+          this.headDetails[2].value = this.moneyFormat(res.data.price)
           this.headDetails[3].value = res.data.num
         })
         .catch(err => {

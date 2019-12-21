@@ -38,7 +38,8 @@ import {
   crmReceivablesIndex
 } from '@/api/customermanagement/money'
 import {
-  getDateFromTimestamp
+  getDateFromTimestamp,
+  moneyFormat
 } from '@/utils'
 import moment from 'moment'
 import { Loading } from 'element-ui'
@@ -254,6 +255,13 @@ export default {
                   type: 'crm',
                   formatter: function fieldFormatter(info) {
                     return info || ''
+                  }
+                }
+              } else if (element.form_type === 'floatnumber') {
+                this.formatterRules[element.field] = {
+                  type: 'floatnumber',
+                  formatter: function fieldFormatter(info) {
+                    return moneyFormat(info)
                   }
                 }
               }

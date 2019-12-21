@@ -325,10 +325,14 @@ export default {
           .catch(() => {})
       } else if (type === 'delete') {
         let request
+        let isSeas = 0
         if (this.crmType == 'leads') {
           request = crmLeadsDelete
         } else if (this.crmType == 'customer') {
           request = crmCustomerDelete
+          if (this.isSeas === true) {
+            isSeas = 1
+          }
         } else if (this.crmType == 'contacts') {
           request = crmContactsDelete
         } else if (this.crmType == 'business') {
@@ -339,7 +343,8 @@ export default {
           request = crmReceivablesDelete
         }
         request({
-          id: [this.id]
+          id: [this.id],
+          isSeas
         })
           .then(res => {
             this.$message({

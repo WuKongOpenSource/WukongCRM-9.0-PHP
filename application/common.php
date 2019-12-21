@@ -462,13 +462,17 @@ function getSubUserId($self = true, $type = 0, $user_id = '')
  * 获取下属userId
  * @author Michael_xu
  */
-function getSubUser($userId)
+function getSubUser($userId, $queried = [])
 {
     $sub_user = db('admin_user')->where(['parent_id'=>$userId])->column('id');
     if ($sub_user) {
         foreach ($sub_user as $v) {
+            if (in_array($v, $queried)) {
+                continue;
+            }
+            $queried[] = $v;
             $son_user = [];
-            $son_user = getSubUser($v);
+            $son_user = getSubUser($v, $queried);
             if (!empty($son_user)) {
                 $sub_user = array_merge($sub_user, $son_user);
             }
@@ -1767,4 +1771,37 @@ function getTimeArray($start = null, $end = null)
 function tt($s = 0)
 {
     die((string) round(microtime(1) - ($s ?: THINK_START_TIME), 3));
+}
+
+/**
+ * 数据库备份
+ */
+function DBBackup($file = '')
+{
+    $type = config('database.type');
+    $host = config('database.hostname');
+    $port = config('database.hostport');
+    $dbname = config('database.database');
+    $username = config('database.username');
+    $password = config('database.password');
+    $dsn = "{$type}:host={$host};dbname={$dbname};port={$port}";
+    
+    $save_path = dirname(APP_PATH) . DS . 'data' . DS . date('Ym') . DS;
+    if (!file_exists($save_path) && !mkdir($save_path)) {
+        return 'data目录无写入权限';
+    }
+    $file = $save_path . 'upgrade_' . date('d_H_i') . '.sql';
+
+    if (file_exists($file)) {
+        return '数据库已备份，两次间隔不小于1分钟。';
+    }
+
+    try {
+        $backup = new \com\Mysqldump($dsn, $username, $password);
+        $backup->start($file);
+        return true;
+    } catch (\Exception $e) {
+        return '备份失败，请手动备份。错误原因：' . $e->getMessage();
+    }
+
 }

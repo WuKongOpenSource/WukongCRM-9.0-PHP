@@ -884,8 +884,8 @@ class User extends Common
 	public function getAdminId()
 	{
 		$adminGroupUser = db('admin_access')->where(['group_id' => 1])->column('user_id');
-		$userIDs = $adminGroupUser ? array_merge($adminGroupUser,['1']) : ['1'];
-		return $userIDs ? : ['1'];
+		$userIDs = $adminGroupUser ? array_merge($adminGroupUser, [1]) : [1];
+		return $userIDs ? : [1];
 	}
 
 	/**

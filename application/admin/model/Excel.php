@@ -15,13 +15,23 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class Excel extends Common
 {
+	/**
+	 * 支持自定义字段的表，不包含表前缀
+	 *
+	 * @var array
+	 */
 	private $types_arr = [
 		'crm_leads',
 		'crm_customer',
 		'crm_contacts',
 		'crm_product',
 		'admin_user'
-	]; //支持自定义字段的表，不包含表前缀
+	];
+	
+	/**
+	 * 字段类型为 map_address 的地址类型字段，导入导出时占四个字段，四个单元格
+	 */
+	private $map_address = ['省', '市', '区/县', '详细地址'];
 
 	/**
 	 * 导入锁缓存名称
@@ -99,15 +109,15 @@ class Excel extends Common
             $k = 0;
         }
         foreach ($field_list as $field) {
-        	$objActSheet->getColumnDimension($this->stringFromColumnIndex($k))->setWidth(20); //设置单元格宽度
-			if ($field['form_type'] == 'address') {
+			if ($field['form_type'] == 'map_address' && $types == 'crm_customer') {
 				for ($a=0; $a<=3; $a++){
-					$address = array('所在省','所在市','所在县','街道信息');
+					$objActSheet->getColumnDimension($this->stringFromColumnIndex($k))->setWidth(20); //设置单元格宽度
                     //如果是所在省的话
-					$objActSheet->setCellValue($this->stringFromColumnIndex($k).'2', $address[$a]);
+					$objActSheet->setCellValue($this->stringFromColumnIndex($k).'2', $this->map_address[$a]);
 					$k++;
 				}
 			} else {
+				$objActSheet->getColumnDimension($this->stringFromColumnIndex($k))->setWidth(20); //设置单元格宽度
 				if ($field['form_type'] == 'select' || $field['form_type'] == 'checkbox' || $field['form_type'] == 'radio' || $field['form_type'] == 'category') {
                     //产品类别
                     if ($field['form_type'] == 'category' && $field['types'] == 'crm_product') {
@@ -202,7 +212,7 @@ class Excel extends Common
 			case 'admin_user' : $types_name = '员工信息'; break;
 			default : $types_name = '悟空软件'; break;
 		}		
-        $content = $types_name.'（*代表必填项）';
+        $content = $types_name.'（*代表必填项；时间格式：2001-01-01 19:01:01）';
         $objActSheet->setCellValue('A1', $content);
 		$objWriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xls');
 		ob_end_clean();
@@ -340,8 +350,14 @@ class Excel extends Common
 			
 			$fp = fopen($file_path, 'a');
 			$title_cell = [];
-			foreach ($field_list as $i => $v) {    
-				$title_cell[$i] = $v['name'];    
+			foreach ($field_list as $v) {    
+				if ($v['form_type'] == 'customer_address') {
+					$title_cell[] = $this->map_address[0];
+					$title_cell[] = $this->map_address[1];
+					$title_cell[] = $this->map_address[2];
+				} else {
+					$title_cell[] = $v['name'];    
+				}
 			}
 			fputcsv($fp, $title_cell);
 			$temp_file = \substr($file_path, strlen(TEMP_DIR));
@@ -376,7 +392,14 @@ class Excel extends Common
 			foreach ($data['list'] as $val) {
 				$rows = [];
 		    	foreach ($field_list as $rule) {
-		    		$rows[] = $fieldModel->getValueByFormtype($val[$rule['field']], $val['form_type']);
+					if ($rule['form_type'] == 'customer_address') {
+						$address_arr = explode(chr(10), $val['address']);
+						$rows[] = $address_arr[0] ?: '';
+						$rows[] = $address_arr[1] ?: '';
+						$rows[] = $address_arr[2] ?: '';
+					} else {
+						$rows[] = $fieldModel->getValueByFormtype($val[$rule['field']], $val['form_type']);
+					}
 				}
 		        fputcsv($fp, $rows);				
 			}
@@ -607,18 +630,30 @@ class Excel extends Common
 			// 总行数
 			$max_row = $sheet->getHighestRow();
 			// 最大列数
-			$max_col = \PHPExcel_Cell::stringFromColumnIndex(count($field_list) - 1);
-
+			$max_col_num = count($field_list) - 1;
+			// customer_address地址类字段 占4列
+			$max_col_num += 3 * array_count_values(array_column($field_list, 'form_type'))['map_address'];
+			$max_col = \PHPExcel_Cell::stringFromColumnIndex($max_col_num);
 			// 检测导入文件是否使用最新模板
 			$header = $sheet->rangeToArray("A2:{$max_col}2")[0];
 			$temp = 0;
-			foreach ($field_list as $key => $field) {
+			for ($i = 0; $i < count($field_list); $i++) {
 				if (
-					$field['name'] == $header[$key]
-					|| $header[$key] == '*' . $field['name']
+					$header[$i] == $field_list[$i]['name']
+					|| $header[$i] == '*' . $field_list[$i]['name']
 				) {
-					$temp++;	
-				}
+					$temp++;
+				// 字段为地址时，占四列
+				} elseif ($field_list[$i]['form_type'] == 'map_address') {
+					if (
+						$header[$i] == $this->map_address[0]
+						&& $header[$i + 1] == $this->map_address[1]
+						&& $header[$i + 2] == $this->map_address[2]
+						&& $header[$i + 3] == $this->map_address[3]
+					) {
+						$temp++;
+					}
+				} 
 			}
 			if ($temp !== count($field_list)) {
 				$this->error = '请使用最新导入模板';
@@ -673,8 +708,21 @@ class Excel extends Common
 				$unique_where = [];
 				$empty_count = 0;
 				$not_null_field = [];
-				foreach ($field_list as $fk => $field) {
-					$temp_value = trim($val[$fk]);
+				$fk = 0;
+				foreach ($field_list as $field) {
+					if ($field['form_type'] == 'map_address') {
+						$data['address'] = $address = [
+							trim((string) $val[$fk]),
+							trim((string) $val[$fk + 1]),
+							trim((string) $val[$fk + 2]),
+						];
+						$data['detail_address'] = trim($val[$fk + 3]);
+						$fk += 4;
+						continue;
+					} else {
+						$temp_value = trim($val[$fk]);
+					}
+					
 
 					if ($field['field'] == 'category_id' && $types == 'crm_product') {
 						$data['category_id'] = $productCategoryArr[$temp_value] ?: 0;
@@ -695,6 +743,7 @@ class Excel extends Common
 						}
 						$empty_count++;
 					}
+					$fk++;
 				}
 				if (!empty($not_null_field)) {
 					$error_data_func($val, implode(', ', $not_null_field) . '不能为空');
@@ -870,9 +919,10 @@ class Excel extends Common
 	public function upload($file)
 	{
 		$get_filesize_byte = get_upload_max_filesize_byte();
-		$info = $file->validate(['size'=>$get_filesize_byte,'ext'=>'xls,xlsx,csv'])->move(FILE_PATH . 'public' . DS . 'uploads'); //验证规则
+		$info = $file->validate(['size'=>$get_filesize_byte,'ext'=>'xls'])->move(FILE_PATH . 'public' . DS . 'uploads'); //验证规则
 		if (!$info) {
-			return resultArray(['error' => $file->getError()]);
+			$this->error = $file->getError();
+			return false;
 		}
 		$saveName = $info->getSaveName(); //保存路径	
 		if (!$saveName) {
@@ -1375,7 +1425,7 @@ class Excel extends Common
 			case 'date':
 				return $value ? date('Y-m-d', strtotime($value)) : null;
 			case 'datetime':
-				return strtotime($value);
+				return strtotime($value) ?: 0;
 			case 'customer':
 			case 'contacts':
 			case 'business':

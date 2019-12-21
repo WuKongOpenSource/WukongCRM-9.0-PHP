@@ -38,6 +38,7 @@
 import loading from '../mixins/loading'
 import { crmBusinessProduct } from '@/api/customermanagement/business'
 import { crmContractProduct } from '@/api/customermanagement/contract'
+import { moneyFormat } from '@/utils'
 
 export default {
   name: 'RelativeProduct', // 相关产品  可能再很多地方展示 放到客户管理目录下
@@ -127,7 +128,7 @@ export default {
           this.nopermission = false
           this.loading = false
           this.list = res.data.list
-          this.totalInfo.total_price = res.data.total_price
+          this.totalInfo.total_price = moneyFormat(res.data.total_price)
           this.totalInfo.discount_rate = res.data.discount_rate
         })
         .catch(data => {
@@ -156,7 +157,10 @@ export default {
       }
     },
     /** 格式化字段 */
-    fieldFormatter(row, column) {
+    fieldFormatter(row, column, cellValue) {
+      if (['sales_price', 'price', 'subtotal'].includes(column.property)) {
+        return moneyFormat(cellValue)
+      }
       // 如果需要格式化
       var aRules = this.formatterRules[column.property]
       if (aRules) {

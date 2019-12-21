@@ -9,7 +9,7 @@ namespace app\crm\controller;
 
 use app\admin\controller\ApiCommon;
 use app\crm\model\Product as ProductModel;
-use app\Admin\model\File as FileModel;
+use app\admin\model\File as FileModel;
 use think\Hook;
 use think\Request;
 

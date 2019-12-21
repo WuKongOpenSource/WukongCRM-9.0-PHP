@@ -40,26 +40,54 @@ class Field extends Model
 	 * 列表展示额外关联字段
 	 */
 	public $orther_field_list = [
-		'crm_contract' => [
+		'crm_customer' => [
 			[
-		        "field" => "done_money",
-		        "name" => "已回款",
-		        "form_type" => "text",
-		        "width" => ""
+		        'field' => 'last_record',
+		        'name' => '跟进记录',
+		        'form_type' => 'text',
+		        'width' => ''
 			],
 			[
-		        "field" => "un_money",
-		        "name" => "未回款",
-		        "form_type" => "text",
-		        "width" => ""
+		        'field' => 'address',
+				'name' => '省、市、区/县',
+		        'form_type' => 'customer_address',
+		        'width' => ''
+			],
+			[
+		        'field' => 'detail_address',
+		        'name' => '详细地址',
+		        'form_type' => 'text',
+		        'width' => ''
+			]
+		],
+		'crm_leads' => [
+			[
+		        'field' => 'last_record',
+		        'name' => '跟进记录',
+		        'form_type' => 'text',
+		        'width' => ''
+			]
+		],
+		'crm_contract' => [
+			[
+		        'field' => 'done_money',
+		        'name' => '已回款',
+		        'form_type' => 'floatnumber',
+		        'width' => ''
+			],
+			[
+		        'field' => 'un_money',
+		        'name' => '未回款',
+		        'form_type' => 'floatnumber',
+		        'width' => ''
 		    ]
 		],
 		'crm_receivables' => [
 			[
-		        "field" => "contract_money",
-		        "name" => "合同金额",
-		        "form_type" => "text",
-		        "width" => ""
+		        'field' => 'contract_money',
+		        'name' => '合同金额',
+		        'form_type' => 'floatnumber',
+		        'width' => ''
 		    ]
 		]
 	];
@@ -541,7 +569,7 @@ class Field extends Model
 		} else {
 			$field_list = $this->where($map)->field('field,types,name,form_type,default_value,is_unique,is_null,input_tips,setting')->order($order)->select();
 			//客户
-			if (in_array($param['types'],['crm_customer']) && $param['action'] !== 'excel') {
+			if (in_array($param['types'],['crm_customer'])) {
 				$new_field_list[] = [
 					'field' => 'customer_address',
 		            'name' => '地区定位',
@@ -948,7 +976,8 @@ class Field extends Model
 		$userFieldModel = new \app\admin\model\UserField();
 		$userFieldData = $userFieldModel->getConfig($types, $user_id);
 		$userFieldData = $userFieldData ? json_decode($userFieldData, true) : [];
-		$unField = ['pool_day','business-check','call'];
+		$othor_un_field = array_column($this->orther_field_list[$types], 'field');
+		$unField = array_merge(['pool_day','business-check','call'], $othor_un_field);
 		$where = [];
 		if ($userFieldData) {
 			$dataList = [];
@@ -976,7 +1005,7 @@ class Field extends Model
 					$sysField = ['business.business_id','business.customer_id','business.create_time','business.update_time','business.status_id','business.type_id','business.create_user_id','business.owner_user_id','business.ro_user_id','business.rw_user_id'];
 					break;
 				case 'crm_customer' : 
-					$sysField = ['customer_id','deal_time','create_time','update_time','is_lock','deal_status','create_user_id','owner_user_id','ro_user_id','rw_user_id'];
+					$sysField = ['customer_id','deal_time','create_time','update_time','is_lock','deal_status','create_user_id','owner_user_id','ro_user_id','rw_user_id', 'address', 'detail_address'];
 					break;	
 				case 'crm_contacts' : 
 					$newList = [];

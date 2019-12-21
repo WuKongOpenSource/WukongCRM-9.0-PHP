@@ -8,6 +8,7 @@ namespace app\crm\model;
 
 use think\Db;
 use app\admin\model\Common;
+use app\admin\model\Record as RecordModel;
 use think\Request;
 use think\Validate;
 
@@ -120,8 +121,10 @@ class Leads extends Common
         		->field(implode(',',$indexField))
         		->orderRaw($order)
         		->select();	
-        $dataCount = db('crm_leads')->alias('leads')->where($map)->where($searchMap)->where($authMap)->count('leads_id');
+		$dataCount = db('crm_leads')->alias('leads')->where($map)->where($searchMap)->where($authMap)->count('leads_id');
+		$record_list = RecordModel::getLastRecord('crm_leads', array_column($list, 'leads_id'));
         foreach ($list as $k=>$v) {
+			$list[$k]['last_record'] = $record_list[$v['leads_id']] ?: '';
         	$list[$k]['create_user_id_info'] = isset($v['create_user_id']) ? $userModel->getUserById($v['create_user_id']) : [];
         	$list[$k]['owner_user_id_info'] = isset($v['owner_user_id']) ? $userModel->getUserById($v['owner_user_id']) : [];
         	// $list[$k]['name'] = isset($v['name']) ? msubstr($v['name'], 0, 15) : '';

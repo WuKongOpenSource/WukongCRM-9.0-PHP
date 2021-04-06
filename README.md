@@ -81,6 +81,8 @@ Note: The front-end service starts, it will occupy port 8080 by default, so befo
 
 演示地址：[demo9.5kcrm.net](http://demo9.5kcrm.net/)(帐号：18888888888   密码：123456)
 
+请转移至组织仓库：https://github.com/wukong-72crm
+
 QQ群交流群⑩群：[486745026](https:////shang.qq.com/wpa/qunwpa?idkey=f4687b809bf63f08f707aa1c56dee8dbcb9526237c429c4532222021d65bf83c)
 
 JAVA版下载地址：[https://github.com/72crm/72crm-java](https://note.youdao.com/)

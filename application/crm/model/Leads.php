@@ -117,9 +117,10 @@ class Leads extends Common
 				->where($map)
 				->where($searchMap)
 				->where($authMap)
+			->orderRaw($order)
         		->limit(($request['page']-1)*$request['limit'], $request['limit'])
         		->field(implode(',',$indexField))
-        		->orderRaw($order)
+        		
         		->select();	
 		$dataCount = db('crm_leads')->alias('leads')->where($map)->where($searchMap)->where($authMap)->count('leads_id');
 		$record_list = RecordModel::getLastRecord('crm_leads', array_column($list, 'leads_id'));
